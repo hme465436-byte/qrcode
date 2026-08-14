@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -68,7 +69,7 @@ export function Footer() {
                   { label: 'Text Repeater', href: '/repeater' },
                   { label: 'Converter', href: '/code-converter' },
                 ].map((link) => (
-                  <a key={link.href} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
+                  <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
                     {link.label} <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
                   </a>
                 ))}
@@ -83,7 +84,7 @@ export function Footer() {
                   { label: 'About Studio', href: '/about' },
                   { label: 'Studio Mission', href: '/about' },
                 ].map((link) => (
-                  <a key={link.href} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
+                  <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
                     {link.label} <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
                   </a>
                 ))}
@@ -98,7 +99,7 @@ export function Footer() {
                   { label: 'Terms of Use', href: '/terms' },
                   { label: 'Cookie Policy', href: '/cookies' },
                 ].map((link) => (
-                  <a key={link.href} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
+                  <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
                     {link.label} <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
                   </a>
                 ))}
