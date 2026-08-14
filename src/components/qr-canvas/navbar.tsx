@@ -12,6 +12,8 @@ import {
   Layers,
   Info,
   HelpCircle,
+  Repeat,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -73,6 +75,7 @@ export function Navbar() {
     { label: 'Home', href: '/', icon: Home },
     { label: 'Single QR', href: '/single', icon: QrCode },
     { label: 'Bulk Mode', href: '/bulk', icon: Layers },
+    { label: 'Repeater', href: '/repeater', icon: Repeat },
     { label: 'FAQ', href: '/faq', icon: HelpCircle },
     { label: 'About', href: '/about', icon: Info },
   ];
