@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { 
   Menu, 
@@ -19,11 +19,16 @@ import {
   FileText,
   ImageIcon,
   FileCode,
-  Music
+  Music,
+  Search,
+  ArrowRight,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, iconOnly?: boolean }) => (
   <div className={cn("flex items-center gap-3", className)}>
@@ -49,9 +54,24 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
   </div>
 );
 
+const NAV_ITEMS = [
+  { label: 'Home', href: '/', icon: Home, keywords: ['start', 'dashboard', 'main'] },
+  { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
+  { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
+  { label: 'Photo Editor', href: '/photo-editor', icon: ImageIcon, keywords: ['image', 'edit', 'crop', 'filter', 'manipulate'] },
+  { label: 'Video to MP3', href: '/video-to-audio', icon: Music, keywords: ['audio', 'extract', 'mp4', 'sound', 'convert'] },
+  { label: 'OCR Text', href: '/ocr', icon: FileText, keywords: ['ocr', 'extract', 'recognize', 'scan', 'read'] },
+  { label: 'Dot Art', href: '/dot-art', icon: Grid3X3, keywords: ['dots', 'braille', 'creative', 'art', 'matrix'] },
+  { label: 'Repeater', href: '/repeater', icon: Repeat, keywords: ['repeat', 'text', 'emoji', 'spam', 'cloner'] },
+  { label: 'Hex Converter', href: '/hex-converter', icon: FileCode, keywords: ['binary', 'hexadecimal', 'bytes', 'dump'] },
+  { label: 'AOB Converter', href: '/code-converter', icon: Binary, keywords: ['aob', 'pattern', 'trainer', 'hex', 'convert'] },
+];
+
 export function Navbar() {
   const pathname = usePathname();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -77,18 +97,26 @@ export function Navbar() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const navItems = [
-    { label: 'Home', href: '/', icon: Home },
-    { label: 'Single QR', href: '/single', icon: QrCode },
-    { label: 'Bulk Mode', href: '/bulk', icon: Layers },
-    { label: 'Photo Editor', href: '/photo-editor', icon: ImageIcon },
-    { label: 'Video to MP3', href: '/video-to-audio', icon: Music },
-    { label: 'OCR Text', href: '/ocr', icon: FileText },
-    { label: 'Dot Art', href: '/dot-art', icon: Grid3X3 },
-    { label: 'Repeater', href: '/repeater', icon: Repeat },
-    { label: 'Hex Converter', href: '/hex-converter', icon: FileCode },
-    { label: 'AOB Converter', href: '/code-converter', icon: Binary },
-  ];
+  const filteredNavItems = useMemo(() => {
+    if (!searchQuery.trim()) return NAV_ITEMS;
+    const words = searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+    return NAV_ITEMS.filter(item => {
+      const targetString = `${item.label} ${item.keywords.join(' ')}`.toLowerCase();
+      return words.every(word => targetString.includes(word));
+    });
+  }, [searchQuery]);
+
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <>
@@ -99,7 +127,7 @@ export function Navbar() {
           </a>
           
           <nav className="hidden xl:flex items-center gap-6">
-            {navItems.map((item) => (
+            {NAV_ITEMS.slice(0, 5).map((item) => (
               <a 
                 key={item.label} 
                 href={item.href}
@@ -114,6 +142,15 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-3">
+             <button 
+                onClick={() => setIsSearchOpen(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:text-[#2563eb] transition-all group"
+                aria-label="Search Tools"
+             >
+               <Search className="w-4 h-4 transition-transform group-hover:scale-110" />
+               <span className="sr-only">Search</span>
+             </button>
+
              <button 
                 onClick={toggleTheme}
                 className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:text-[#2563eb] transition-all"
@@ -149,7 +186,7 @@ export function Navbar() {
                     </SheetHeader>
                     <SheetDescription className="sr-only">Studio navigation menu</SheetDescription>
                     <nav className="flex-1 p-4 flex flex-col gap-2 overflow-y-auto custom-scrollbar">
-                      {navItems.map((item) => (
+                      {NAV_ITEMS.map((item) => (
                         <a 
                           key={item.label} 
                           href={item.href}
@@ -177,6 +214,60 @@ export function Navbar() {
           </div>
         </div>
       </header>
+
+      {/* Global Search Dialog */}
+      <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+        <DialogContent className="glass-card max-w-2xl border-white/20 p-0 overflow-hidden outline-none text-foreground top-[15%] translate-y-0">
+          <DialogHeader className="p-6 border-b border-white/10 bg-white/5">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20" />
+              <Input 
+                autoFocus
+                placeholder="Search studio tools... (CMD+K)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-14 pl-12 bg-secondary/50 border-white/10 rounded-2xl text-lg font-medium"
+              />
+            </div>
+            <DialogDescription className="sr-only">Global studio search</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
+            {filteredNavItems.length > 0 ? (
+              <div className="grid grid-cols-1 gap-1">
+                {filteredNavItems.map((item) => (
+                  <a 
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
+                    className="flex items-center justify-between p-4 rounded-2xl hover:bg-primary/10 group transition-all"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 group-hover:text-primary group-hover:bg-primary/20 transition-all">
+                        <item.icon className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-foreground group-hover:text-primary">{item.label}</p>
+                        <p className="text-[9px] text-foreground/40 font-medium uppercase tracking-tight">{item.keywords.join(', ')}</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-foreground/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 text-center space-y-4">
+                <Search className="w-12 h-12 text-foreground/10 mx-auto" />
+                <p className="text-xs font-black uppercase tracking-widest text-foreground/30">No matching studio tools found</p>
+              </div>
+            )}
+          </div>
+          <div className="p-4 bg-secondary/30 border-t border-white/10 flex items-center justify-between text-[8px] font-black uppercase tracking-[0.2em] text-foreground/20">
+            <span>MY KIT TOOL REGISTRY</span>
+            <span>ESC to close</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <QrScannerModal isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} />
     </>
   );

@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { 
   QrCode, 
@@ -11,7 +11,6 @@ import {
   Palette, 
   Download,
   ArrowRight,
-  Sparkles,
   Smartphone,
   Repeat,
   Binary,
@@ -20,22 +19,109 @@ import {
   ImageIcon,
   FileCode,
   Music,
-  Heart
+  Heart,
+  Search,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+
+const TOOLS = [
+  { 
+    href: '/single', 
+    icon: QrCode, 
+    title: 'Single Studio', 
+    desc: 'Branded QR codes with logos and AI backgrounds.', 
+    label: 'PRO MODE', 
+    color: 'bg-primary/50',
+    keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan']
+  },
+  { 
+    href: '/bulk', 
+    icon: Layers, 
+    title: 'Bulk Production', 
+    desc: 'Generate hundreds of high-res assets in seconds.', 
+    label: 'BATCH', 
+    color: 'bg-primary/50',
+    keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/photo-editor', 
+    icon: ImageIcon, 
+    title: 'Photo Studio', 
+    desc: 'Professional filters and local image editing.', 
+    label: 'EDITOR', 
+    color: 'bg-primary/50',
+    keywords: ['photo', 'image', 'edit', 'crop', 'filter', 'editor', 'picture', 'manipulate', 'brightness', 'contrast']
+  },
+  { 
+    href: '/video-to-audio', 
+    icon: Music, 
+    title: 'Video to MP3', 
+    desc: 'Extract high-quality audio tracks from videos.', 
+    label: 'MEDIA', 
+    color: 'bg-primary/50',
+    keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
+  },
+  { 
+    href: '/ocr', 
+    icon: FileText, 
+    title: 'OCR Extraction', 
+    desc: 'Extract text from images locally and securely.', 
+    label: 'INTEL', 
+    color: 'bg-primary/40',
+    keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'tesseract', 'read']
+  },
+  { 
+    href: '/hex-converter', 
+    icon: FileCode, 
+    title: 'Hex Converter', 
+    desc: 'Convert binary files to hexadecimal matrix.', 
+    label: 'BINARY', 
+    color: 'bg-primary/40',
+    keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
+  },
+  { 
+    href: '/dot-art', 
+    icon: Grid3X3, 
+    title: 'Dot Art Studio', 
+    desc: 'Intricate Braille Unicode artistic generation.', 
+    label: 'ART', 
+    color: 'bg-primary/40',
+    keywords: ['braille', 'dots', 'ascii art', 'image to dots', 'matrix', 'creative', 'text art']
+  },
+  { 
+    href: '/repeater', 
+    icon: Repeat, 
+    title: 'Text Repeater', 
+    desc: 'Professional emoji and text multiplication.', 
+    label: 'UTIL', 
+    color: 'bg-primary/30',
+    keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner']
+  },
+  { 
+    href: '/code-converter', 
+    icon: Binary, 
+    title: 'AOB Converter', 
+    desc: 'Professional AOB pattern conversion utility.', 
+    label: 'DEV', 
+    color: 'bg-primary/30',
+    keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
+  }
+];
 
 export default function Home() {
-  const tools = [
-    { href: '/single', icon: QrCode, title: 'Single Studio', desc: 'Branded QR codes with logos and AI backgrounds.', label: 'PRO MODE', color: 'bg-primary/50' },
-    { href: '/bulk', icon: Layers, title: 'Bulk Production', desc: 'Generate hundreds of high-res assets in seconds.', label: 'BATCH', color: 'bg-primary/50' },
-    { href: '/photo-editor', icon: ImageIcon, title: 'Photo Studio', desc: 'Professional filters and local image editing.', label: 'EDITOR', color: 'bg-primary/50' },
-    { href: '/video-to-audio', icon: Music, title: 'Video to MP3', desc: 'Extract high-quality audio tracks from videos.', label: 'MEDIA', color: 'bg-primary/50' },
-    { href: '/ocr', icon: FileText, title: 'OCR Extraction', desc: 'Extract text from images locally and securely.', label: 'INTEL', color: 'bg-primary/40' },
-    { href: '/hex-converter', icon: FileCode, title: 'Hex Converter', desc: 'Convert binary files to hexadecimal matrix.', label: 'BINARY', color: 'bg-primary/40' },
-    { href: '/dot-art', icon: Grid3X3, title: 'Dot Art Studio', desc: 'Intricate Braille Unicode artistic generation.', label: 'ART', color: 'bg-primary/40' },
-    { href: '/repeater', icon: Repeat, title: 'Text Repeater', desc: 'Professional emoji and text multiplication.', label: 'UTIL', color: 'bg-primary/30' },
-    { href: '/code-converter', icon: Binary, title: 'AOB Converter', desc: 'Professional AOB pattern conversion utility.', label: 'DEV', color: 'bg-primary/30' }
-  ];
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredTools = useMemo(() => {
+    if (!searchQuery.trim()) return TOOLS;
+    const words = searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+    
+    return TOOLS.filter(tool => {
+      const targetString = `${tool.title} ${tool.desc} ${tool.keywords.join(' ')}`.toLowerCase();
+      return words.every(word => targetString.includes(word));
+    });
+  }, [searchQuery]);
 
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden">
@@ -50,32 +136,78 @@ export default function Home() {
             <span className="text-foreground/80">MY KIT TOOL</span>
           </h1>
           <p className="text-sm sm:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium mb-12 sm:mb-16 px-2">
-            The world's most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
+            The world&apos;s most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
           </p>
 
+          {/* Search Bar Implementation */}
+          <div className="max-w-xl mx-auto mb-16 px-4 group">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
+              </div>
+              <Input 
+                type="text"
+                placeholder="Search tools... (e.g. qr, photo, mp3, hex)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-16 pl-14 pr-14 bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-border hover:border-primary/40 focus:border-primary/60 rounded-3xl text-lg font-medium shadow-2xl transition-all"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-primary/60">
+                Found {filteredTools.length} {filteredTools.length === 1 ? 'utility' : 'utilities'} matching your search
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full">
-            {tools.map((item, i) => (
-              <Link key={i} href={item.href} className="group h-full w-full">
-                <div className="glass-card p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-2xl hover:shadow-primary/20">
-                  <div className="absolute top-0 right-0 w-32 h-32 sm:w-40 sm:h-40 bg-primary/30 rounded-full -mr-16 -mt-16 sm:-mr-20 sm:-mt-20 group-hover:bg-primary/40 transition-all blur-3xl" />
-                  <div className={cn("w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[1.8rem] flex items-center justify-center text-primary mb-6 sm:mb-8 border border-primary/60 shadow-inner group-hover:scale-110 transition-transform duration-500", item.color)}>
-                    <item.icon className="w-6 h-6 sm:w-8 sm:h-8" />
-                  </div>
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-lg sm:text-xl font-headline font-black text-foreground uppercase tracking-tight">{item.title}</h3>
-                      <span className="text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-widest shrink-0">{item.label}</span>
+            {filteredTools.length > 0 ? (
+              filteredTools.map((item, i) => (
+                <Link key={i} href={item.href} className="group h-full w-full animate-in fade-in zoom-in duration-500">
+                  <div className="glass-card p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-2xl hover:shadow-primary/20">
+                    <div className="absolute top-0 right-0 w-32 h-32 sm:w-40 sm:h-40 bg-primary/30 rounded-full -mr-16 -mt-16 sm:-mr-20 sm:-mt-20 group-hover:bg-primary/40 transition-all blur-3xl" />
+                    <div className={cn("w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[1.8rem] flex items-center justify-center text-primary mb-6 sm:mb-8 border border-primary/60 shadow-inner group-hover:scale-110 transition-transform duration-500", item.color)}>
+                      <item.icon className="w-6 h-6 sm:w-8 sm:h-8" />
                     </div>
-                    <p className="text-[11px] sm:text-[12px] text-foreground/40 leading-relaxed font-medium">
-                      {item.desc}
-                    </p>
-                    <div className="flex items-center gap-2 sm:gap-3 pt-2 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary opacity-60 group-hover:opacity-100 transition-opacity">
-                      Open Studio <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-2 transition-transform duration-500" />
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-lg sm:text-xl font-headline font-black text-foreground uppercase tracking-tight">{item.title}</h3>
+                        <span className="text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-widest shrink-0">{item.label}</span>
+                      </div>
+                      <p className="text-[11px] sm:text-[12px] text-foreground/40 leading-relaxed font-medium">
+                        {item.desc}
+                      </p>
+                      <div className="flex items-center gap-2 sm:gap-3 pt-2 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary opacity-60 group-hover:opacity-100 transition-opacity">
+                        Open Studio <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-2 transition-transform duration-500" />
+                      </div>
                     </div>
                   </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full py-20 glass-card rounded-[3rem] border-dashed border-border flex flex-col items-center justify-center gap-6">
+                <Search className="w-16 h-16 text-foreground/10" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
+                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;qr&quot; or &quot;binary&quot;</p>
                 </div>
-              </Link>
-            ))}
+                <Button 
+                  onClick={() => setSearchQuery('')}
+                  variant="outline"
+                  className="rounded-xl font-black uppercase text-[10px] tracking-widest border-primary/20 text-primary"
+                >
+                  Clear Search
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -141,5 +273,21 @@ export default function Home() {
         </div>
       </section>
     </div>
+  );
+}
+
+function Button({ children, onClick, variant, className, disabled }: any) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "px-6 py-3 rounded-xl transition-all active:scale-95 disabled:opacity-50",
+        variant === 'outline' ? "border border-border bg-background hover:bg-secondary" : "bg-primary text-primary-foreground hover:bg-primary/90",
+        className
+      )}
+    >
+      {children}
+    </button>
   );
 }
