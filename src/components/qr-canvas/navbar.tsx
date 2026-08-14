@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +18,8 @@ import {
   Grid3X3,
   FileText,
   ImageIcon,
-  FileCode
+  FileCode,
+  Music
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -80,6 +82,7 @@ export function Navbar() {
     { label: 'Single QR', href: '/single', icon: QrCode },
     { label: 'Bulk Mode', href: '/bulk', icon: Layers },
     { label: 'Photo Editor', href: '/photo-editor', icon: ImageIcon },
+    { label: 'Video to MP3', href: '/video-to-audio', icon: Music },
     { label: 'OCR Text', href: '/ocr', icon: FileText },
     { label: 'Dot Art', href: '/dot-art', icon: Grid3X3 },
     { label: 'Repeater', href: '/repeater', icon: Repeat },

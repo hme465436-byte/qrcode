@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -18,6 +19,7 @@ import {
   FileText,
   ImageIcon,
   FileCode,
+  Music,
   Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -27,6 +29,7 @@ export default function Home() {
     { href: '/single', icon: QrCode, title: 'Single Studio', desc: 'Branded QR codes with logos and AI backgrounds.', label: 'PRO MODE', color: 'bg-primary/50' },
     { href: '/bulk', icon: Layers, title: 'Bulk Production', desc: 'Generate hundreds of high-res assets in seconds.', label: 'BATCH', color: 'bg-primary/50' },
     { href: '/photo-editor', icon: ImageIcon, title: 'Photo Studio', desc: 'Professional filters and local image editing.', label: 'EDITOR', color: 'bg-primary/50' },
+    { href: '/video-to-audio', icon: Music, title: 'Video to MP3', desc: 'Extract high-quality audio tracks from videos.', label: 'MEDIA', color: 'bg-primary/50' },
     { href: '/ocr', icon: FileText, title: 'OCR Extraction', desc: 'Extract text from images locally and securely.', label: 'INTEL', color: 'bg-primary/40' },
     { href: '/hex-converter', icon: FileCode, title: 'Hex Converter', desc: 'Convert binary files to hexadecimal matrix.', label: 'BINARY', color: 'bg-primary/40' },
     { href: '/dot-art', icon: Grid3X3, title: 'Dot Art Studio', desc: 'Intricate Braille Unicode artistic generation.', label: 'ART', color: 'bg-primary/40' },
