@@ -16,7 +16,8 @@ import {
   Repeat,
   Binary,
   X,
-  Grid3X3
+  Grid3X3,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -78,6 +79,7 @@ export function Navbar() {
     { label: 'Home', href: '/', icon: Home },
     { label: 'Single QR', href: '/single', icon: QrCode },
     { label: 'Bulk Mode', href: '/bulk', icon: Layers },
+    { label: 'OCR Text', href: '/ocr', icon: FileText },
     { label: 'Dot Art', href: '/dot-art', icon: Grid3X3 },
     { label: 'Repeater', href: '/repeater', icon: Repeat },
     { label: 'Converter', href: '/code-converter', icon: Binary },
@@ -93,13 +95,13 @@ export function Navbar() {
             <Logo />
           </a>
           
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden xl:flex items-center gap-6">
             {navItems.map((item) => (
               <a 
                 key={item.label} 
                 href={item.href}
                 className={cn(
-                  "text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 hover:text-[#2563eb] relative py-1",
+                  "text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 hover:text-[#2563eb] relative py-1",
                   pathname === item.href ? "text-[#2563eb] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#2563eb] after:rounded-full" : "text-foreground/50"
                 )}
               >
@@ -127,7 +129,7 @@ export function Navbar() {
 
              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <button className="lg:hidden w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500">
+                  <button className="xl:hidden w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500">
                     <Menu className="w-4 h-4" />
                   </button>
                 </SheetTrigger>

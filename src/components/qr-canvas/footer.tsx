@@ -66,6 +66,7 @@ export function Footer() {
               <nav className="flex flex-col gap-4">
                 <a href="/single" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Single QR</a>
                 <a href="/bulk" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Bulk Mode</a>
+                <a href="/ocr" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">OCR Extraction</a>
                 <a href="/dot-art" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Dot Art Studio</a>
                 <a href="/repeater" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Text Repeater</a>
                 <a href="/code-converter" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Code Converter</a>
