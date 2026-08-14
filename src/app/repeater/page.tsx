@@ -39,14 +39,18 @@ export default function TextRepeaterPage() {
       return;
     }
 
-    const count = Math.min(Math.max(1, times), 5000);
-    if (times > 5000) {
-      setTimes(5000);
-      toast({ title: "Safety Cap Applied", description: "Repetitions limited to 5,000 for performance." });
+    const count = Math.max(1, times);
+    
+    try {
+      const repeated = new Array(count).fill(inputText).join(separator);
+      setOutputText(repeated);
+    } catch (e) {
+      toast({ 
+        variant: "destructive", 
+        title: "Repetition Error", 
+        description: "The requested volume exceeds browser memory limits. Please try a smaller number." 
+      });
     }
-
-    const repeated = new Array(count).fill(inputText).join(separator);
-    setOutputText(repeated);
   };
 
   const handleCopy = () => {
@@ -88,7 +92,7 @@ export default function TextRepeaterPage() {
           <Card className="glass-card border-border shadow-2xl overflow-hidden">
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
               <CardTitle className="text-xl font-headline flex items-center gap-4 text-foreground">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner">
                   <Type className="w-6 h-6" />
                 </div>
                 Configure Input
@@ -98,7 +102,7 @@ export default function TextRepeaterPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Source Content</Label>
-                  <div className="flex items-center gap-3 px-3 py-1 rounded-lg bg-secondary border border-border text-[9px] font-black text-primary uppercase tracking-widest">
+                  <div className="flex items-center gap-3 px-3 py-1 rounded-lg bg-secondary border border-border text-[9px] font-black text-primary uppercase tracking-widest shadow-sm">
                     <span>Words: {wordCount}</span>
                     <span className="opacity-20">|</span>
                     <span>Characters: {charCount}</span>
@@ -108,7 +112,7 @@ export default function TextRepeaterPage() {
                   placeholder="Enter text or paste emojis here..."
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  className="min-h-[140px] bg-secondary border-border text-lg rounded-3xl focus:ring-primary/40 p-6 text-foreground leading-relaxed resize-none transition-all"
+                  className="min-h-[140px] bg-secondary border-border text-lg rounded-3xl focus:ring-primary/40 p-6 text-foreground leading-relaxed resize-none transition-all hover:bg-secondary/80 focus:bg-secondary/80"
                 />
               </div>
 
@@ -151,7 +155,6 @@ export default function TextRepeaterPage() {
                   <Input 
                     type="number"
                     min="1"
-                    max="5000"
                     value={times}
                     onChange={(e) => setTimes(parseInt(e.target.value) || 0)}
                     className="h-14 bg-secondary border-border rounded-2xl text-foreground font-mono font-bold"
@@ -180,15 +183,15 @@ export default function TextRepeaterPage() {
               <div className="flex gap-4 pt-4">
                 <Button 
                   onClick={handleRepeat}
-                  className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95"
+                  className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
-                  <Sparkles className="w-6 h-6" />
+                  <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />
                   Repeat Text
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={handleClear}
-                  className="w-16 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all"
+                  className="w-16 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
                 >
                   <Trash2 className="w-6 h-6" />
                 </Button>
@@ -198,8 +201,8 @@ export default function TextRepeaterPage() {
         </div>
 
         {/* Output Section */}
-        <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative">
+        <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-border bg-secondary/30">
               <div className="flex items-center justify-between">
@@ -208,22 +211,22 @@ export default function TextRepeaterPage() {
                   Generated Output
                 </CardTitle>
                 {outputText && (
-                  <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-mono text-primary font-black uppercase tracking-widest">
+                  <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-mono text-primary font-black uppercase tracking-widest shadow-sm">
                     {outputText.length.toLocaleString()} Chars
                   </div>
                 )}
               </div>
             </CardHeader>
             <CardContent className="pt-10 space-y-8">
-              <div className="relative group">
+              <div className="relative group/output">
                 <Textarea 
                   readOnly
                   value={outputText}
                   placeholder="Result will appear here..."
-                  className="min-h-[300px] bg-white dark:bg-black/20 border-border text-foreground rounded-[2.5rem] p-8 text-lg leading-relaxed resize-none shadow-inner custom-scrollbar"
+                  className="min-h-[300px] bg-white dark:bg-black/20 border-border text-foreground rounded-[2.5rem] p-8 text-lg leading-relaxed resize-none shadow-inner custom-scrollbar transition-all"
                 />
                 {!outputText && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
                     <Repeat className="w-20 h-20 text-primary mb-4" />
                     <p className="text-xs font-black uppercase tracking-[0.3em]">Standby</p>
                   </div>
@@ -233,21 +236,22 @@ export default function TextRepeaterPage() {
               <Button 
                 onClick={handleCopy}
                 disabled={!outputText}
-                className="w-full h-16 bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-xl shadow-lg transition-all active:scale-95"
+                className={cn(
+                  "w-full h-16 bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-xl shadow-lg transition-all active:scale-95",
+                  outputText ? "text-primary border-primary/20" : "opacity-50"
+                )}
               >
                 {isCopied ? <CheckCircle2 className="w-6 h-6 text-primary" /> : <Copy className="w-6 h-6 text-primary" />}
                 {isCopied ? 'Copied to Clipboard' : 'Copy All Text'}
               </Button>
 
-              <div className="p-6 rounded-2xl bg-secondary border border-border space-y-4">
-                <div className="flex items-start gap-4">
-                  <AlertCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Unicode Support</p>
-                    <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
-                      Optimized for Emojis, Cyrillic, Asian scripts, and professional formatting symbols. No data is stored on our servers.
-                    </p>
-                  </div>
+              <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-4 group-hover:bg-primary/10 transition-colors">
+                <AlertCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">Unlimited Production</p>
+                  <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
+                    Optimized for Emojis, Cyrillic, Asian scripts, and professional formatting symbols. No artificial volume caps applied.
+                  </p>
                 </div>
               </div>
             </CardContent>
