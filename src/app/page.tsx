@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Sparkles,
   Smartphone,
-  HelpCircle,
   Repeat,
   Binary,
   Grid3X3,
@@ -22,6 +21,16 @@ import {
 import { cn } from '@/lib/utils';
 
 export default function Home() {
+  const tools = [
+    { href: '/single', icon: QrCode, title: 'Single Studio', desc: 'Branded QR codes with logos and AI backgrounds.', label: 'PRO MODE', color: 'bg-primary/50' },
+    { href: '/bulk', icon: Layers, title: 'Bulk Production', desc: 'Generate hundreds of high-res assets in seconds.', label: 'BATCH', color: 'bg-primary/50' },
+    { href: '/photo-editor', icon: ImageIcon, title: 'Photo Studio', desc: 'Professional filters and local image editing.', label: 'EDITOR', color: 'bg-primary/50' },
+    { href: '/ocr', icon: FileText, title: 'OCR Extraction', desc: 'Extract text from images locally and securely.', label: 'INTEL', color: 'bg-primary/40' },
+    { href: '/dot-art', icon: Grid3X3, title: 'Dot Art Studio', desc: 'Intricate Braille Unicode artistic generation.', label: 'ART', color: 'bg-primary/40' },
+    { href: '/repeater', icon: Repeat, title: 'Text Repeater', desc: 'Professional emoji and text multiplication.', label: 'UTIL', color: 'bg-primary/30' },
+    { href: '/code-converter', icon: Binary, title: 'Code Converter', desc: 'Professional AOB pattern conversion utility.', label: 'DEV', color: 'bg-primary/30' }
+  ];
+
   return (
     <div className="flex flex-col items-center">
       {/* HERO SECTION */}
@@ -43,14 +52,7 @@ export default function Home() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
-            {[
-              { href: '/single', icon: QrCode, title: 'Single Studio', desc: 'Branded QR codes with logos and AI backgrounds.', label: 'PRO MODE', color: 'bg-primary/50' },
-              { href: '/bulk', icon: Layers, title: 'Bulk Production', desc: 'Generate hundreds of high-res assets in seconds.', label: 'BATCH', color: 'bg-primary/50' },
-              { href: '/photo-editor', icon: ImageIcon, title: 'Photo Studio', desc: 'Professional filters and local image editing.', label: 'EDITOR', color: 'bg-primary/50' },
-              { href: '/ocr', icon: FileText, title: 'OCR Extraction', desc: 'Extract text from images locally and securely.', label: 'INTEL', color: 'bg-primary/40' },
-              { href: '/dot-art', icon: Grid3X3, title: 'Dot Art Studio', desc: 'Intricate Braille Unicode artistic generation.', label: 'ART', color: 'bg-primary/40' },
-              { href: '/repeater', icon: Repeat, title: 'Text Repeater', desc: 'Professional emoji and text multiplication.', label: 'UTIL', color: 'bg-primary/30' }
-            ].map((item, i) => (
+            {tools.map((item, i) => (
               <Link key={i} href={item.href} className="group h-full">
                 <div className="glass-card p-10 rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-3 text-left relative overflow-hidden h-full shadow-2xl hover:shadow-primary/20">
                   <div className="absolute top-0 right-0 w-40 h-40 bg-primary/30 rounded-full -mr-20 -mt-20 group-hover:bg-primary/40 transition-all blur-3xl" />
