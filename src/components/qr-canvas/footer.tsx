@@ -67,7 +67,8 @@ export function Footer() {
                   { label: 'OCR Extract', href: '/ocr' },
                   { label: 'Dot Art', href: '/dot-art' },
                   { label: 'Text Repeater', href: '/repeater' },
-                  { label: 'Converter', href: '/code-converter' },
+                  { label: 'Hex Converter', href: '/hex-converter' },
+                  { label: 'AOB Converter', href: '/code-converter' },
                 ].map((link) => (
                   <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
                     {link.label} <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />

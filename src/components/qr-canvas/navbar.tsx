@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +18,8 @@ import {
   X,
   Grid3X3,
   FileText,
-  ImageIcon
+  ImageIcon,
+  FileCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -83,7 +85,8 @@ export function Navbar() {
     { label: 'OCR Text', href: '/ocr', icon: FileText },
     { label: 'Dot Art', href: '/dot-art', icon: Grid3X3 },
     { label: 'Repeater', href: '/repeater', icon: Repeat },
-    { label: 'Converter', href: '/code-converter', icon: Binary },
+    { label: 'Hex Converter', href: '/hex-converter', icon: FileCode },
+    { label: 'AOB Converter', href: '/code-converter', icon: Binary },
   ];
 
   return (

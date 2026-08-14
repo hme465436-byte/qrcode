@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -16,7 +17,8 @@ import {
   Binary,
   Grid3X3,
   FileText,
-  ImageIcon
+  ImageIcon,
+  FileCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,9 +28,10 @@ export default function Home() {
     { href: '/bulk', icon: Layers, title: 'Bulk Production', desc: 'Generate hundreds of high-res assets in seconds.', label: 'BATCH', color: 'bg-primary/50' },
     { href: '/photo-editor', icon: ImageIcon, title: 'Photo Studio', desc: 'Professional filters and local image editing.', label: 'EDITOR', color: 'bg-primary/50' },
     { href: '/ocr', icon: FileText, title: 'OCR Extraction', desc: 'Extract text from images locally and securely.', label: 'INTEL', color: 'bg-primary/40' },
+    { href: '/hex-converter', icon: FileCode, title: 'Hex Converter', desc: 'Convert binary files to hexadecimal matrix.', label: 'BINARY', color: 'bg-primary/40' },
     { href: '/dot-art', icon: Grid3X3, title: 'Dot Art Studio', desc: 'Intricate Braille Unicode artistic generation.', label: 'ART', color: 'bg-primary/40' },
     { href: '/repeater', icon: Repeat, title: 'Text Repeater', desc: 'Professional emoji and text multiplication.', label: 'UTIL', color: 'bg-primary/30' },
-    { href: '/code-converter', icon: Binary, title: 'Code Converter', desc: 'Professional AOB pattern conversion utility.', label: 'DEV', color: 'bg-primary/30' }
+    { href: '/code-converter', icon: Binary, title: 'AOB Converter', desc: 'Professional AOB pattern conversion utility.', label: 'DEV', color: 'bg-primary/30' }
   ];
 
   return (
