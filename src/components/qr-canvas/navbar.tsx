@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -13,6 +14,7 @@ import {
   Info,
   HelpCircle,
   Repeat,
+  Binary,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -76,6 +78,7 @@ export function Navbar() {
     { label: 'Single QR', href: '/single', icon: QrCode },
     { label: 'Bulk Mode', href: '/bulk', icon: Layers },
     { label: 'Repeater', href: '/repeater', icon: Repeat },
+    { label: 'Converter', href: '/code-converter', icon: Binary },
     { label: 'FAQ', href: '/faq', icon: HelpCircle },
     { label: 'About', href: '/about', icon: Info },
   ];

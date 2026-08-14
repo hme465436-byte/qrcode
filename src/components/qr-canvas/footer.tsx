@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -66,6 +67,7 @@ export function Footer() {
                 <a href="/single" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Single QR</a>
                 <a href="/bulk" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Bulk Mode</a>
                 <a href="/repeater" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Text Repeater</a>
+                <a href="/code-converter" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Code Converter</a>
                 <a href="/" className="text-[11px] font-bold text-foreground/50 hover:text-[#2563eb] transition-colors uppercase tracking-widest">Live Scanner</a>
               </nav>
             </div>
