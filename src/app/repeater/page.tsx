@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from 'react';
@@ -30,6 +29,9 @@ export default function TextRepeaterPage() {
   const [times, setTimes] = useState(5);
   const [outputText, setOutputText] = useState('');
   const [isCopied, setIsCopied] = useState(false);
+
+  const wordCount = inputText.trim() === '' ? 0 : inputText.trim().split(/\s+/).length;
+  const charCount = inputText.length;
 
   const handleRepeat = () => {
     if (!inputText) {
@@ -94,7 +96,14 @@ export default function TextRepeaterPage() {
             </CardHeader>
             <CardContent className="pt-10 space-y-8">
               <div className="space-y-4">
-                <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Source Content</Label>
+                <div className="flex justify-between items-center">
+                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Source Content</Label>
+                  <div className="flex items-center gap-3 px-3 py-1 rounded-lg bg-secondary border border-border text-[9px] font-black text-primary uppercase tracking-widest">
+                    <span>Words: {wordCount}</span>
+                    <span className="opacity-20">|</span>
+                    <span>Characters: {charCount}</span>
+                  </div>
+                </div>
                 <Textarea 
                   placeholder="Enter text or paste emojis here..."
                   value={inputText}
