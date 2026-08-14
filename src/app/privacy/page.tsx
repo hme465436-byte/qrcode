@@ -9,12 +9,12 @@ export default function PrivacyPolicyPage() {
     {
       icon: EyeOff,
       title: "Zero-Storage Policy",
-      content: "QR CANVAS is built on a privacy-first architecture. We do not store, log, or transmit the data you input into our QR generator. All QR code generation happens locally within your browser using JavaScript."
+      content: "MY KIT TOOL is built on a privacy-first architecture. We do not store, log, or transmit the data you input into our generators or converters. All digital production happens locally within your browser using JavaScript."
     },
     {
       icon: Lock,
       title: "Data Security",
-      content: "Since no data is sent to our servers for storage, your sensitive information (Wi-Fi passwords, contact details, private URLs) remains strictly on your device. We use industry-standard encryption protocols only when interacting with our AI services."
+      content: "Since no data is sent to our servers for storage, your sensitive information (passwords, contact details, private URLs, binary files) remains strictly on your device. We use industry-standard encryption protocols only when interacting with our AI services."
     },
     {
       icon: Scale,
@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
           Privacy <span className="text-primary italic">Policy</span>
         </h1>
         <p className="text-lg text-foreground/50 leading-relaxed font-medium">
-          Last Updated: March 2024. Your privacy is not a feature; it is our foundation.
+          Last Updated: March 2024. Your privacy is not a feature; it is our foundation at MY KIT TOOL.
         </p>
       </div>
 

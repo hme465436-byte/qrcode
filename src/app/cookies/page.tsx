@@ -9,7 +9,7 @@ export default function CookiePolicyPage() {
     {
       icon: Settings,
       title: "Essential Storage",
-      content: "We use 'Local Storage' to remember your studio preferences, such as your selected brand colors, active dot styles, and theme settings. This allows you to resume your design work across sessions."
+      content: "We use 'Local Storage' to remember your studio preferences, such as your selected brand colors, active tool styles, and theme settings. This allows you to resume your design work across sessions."
     },
     {
       icon: Database,
@@ -19,7 +19,7 @@ export default function CookiePolicyPage() {
     {
       icon: Info,
       title: "How to Manage",
-      content: "You can clear all stored data by resetting the studio parameters within the app or by clearing your browser's cache and site data for qrcanvas.app."
+      content: "You can clear all stored data by resetting the studio parameters within the app or by clearing your browser's cache and site data for mykittool.app."
     }
   ];
 
@@ -59,7 +59,7 @@ export default function CookiePolicyPage() {
       <div className="glass-card p-10 rounded-[3rem] border-border animate-reveal stagger-3 text-center">
         <h2 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight mb-6">Zero Tracking Guarantee</h2>
         <p className="text-sm text-foreground/50 leading-relaxed font-medium max-w-xl mx-auto">
-          Unlike other QR generators, we do not use third-party advertising cookies that follow you across the web. Your studio activity is private and localized.
+          Unlike other utility suites, MY KIT TOOL does not use third-party advertising cookies that follow you across the web. Your studio activity is private and localized.
         </p>
       </div>
     </div>

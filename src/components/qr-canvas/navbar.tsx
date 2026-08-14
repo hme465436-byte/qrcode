@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +14,6 @@ import {
   HelpCircle,
   Repeat,
   Binary,
-  X,
   Grid3X3,
   FileText,
   ImageIcon,
@@ -42,8 +40,8 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
     
     {!iconOnly && (
       <div className="font-headline font-black text-2xl tracking-tighter leading-none flex items-center">
-        <span className="text-[#0f172a] dark:text-white">QR</span>
-        <span className="text-[#2563eb] ml-2 italic">Canvas</span>
+        <span className="text-[#0f172a] dark:text-white">MY KIT</span>
+        <span className="text-[#2563eb] ml-2 italic">TOOL</span>
       </div>
     )}
   </div>
@@ -56,7 +54,7 @@ export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('qr_canvas_theme') as 'light' | 'dark' | null;
+    const savedTheme = localStorage.getItem('mykit_theme') as 'light' | 'dark' | null;
     if (savedTheme) {
       setTheme(savedTheme);
     } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -70,7 +68,7 @@ export function Navbar() {
     } else {
       document.documentElement.classList.remove('dark');
     }
-    localStorage.setItem('qr_canvas_theme', theme);
+    localStorage.setItem('mykit_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

@@ -11,24 +11,24 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'QR CANVAS | Professional AI-Powered QR Code Studio',
-  description: 'The ultimate free professional QR code generator. Create high-resolution branded QR codes with logos, AI backgrounds, and bulk processing in seconds. 100% private and permanent.',
-  keywords: 'qr code generator, free qr code maker, bulk qr code generator, qr code with logo, qr code scanner, custom qr code background, professional qr studio, qr canvas',
-  authors: [{ name: 'QR CANVAS Studio Team' }],
-  metadataBase: new URL('https://qrcanvas.app'), 
+  title: 'MY KIT TOOL | Professional AI-Powered Digital Studio',
+  description: 'The ultimate free professional utility suite. Create high-resolution branded QR codes, edit photos, extract text with OCR, and use advanced technical converters. 100% private and permanent.',
+  keywords: 'digital tools, free utilities, qr code generator, photo editor, ocr text extraction, hex converter, aob converter, professional studio, my kit tool',
+  authors: [{ name: 'MY KIT TOOL Team' }],
+  metadataBase: new URL('https://mykittool.app'), 
   openGraph: {
-    title: 'QR CANVAS | Premium Branded QR Code Studio',
-    description: 'Design high-resolution, branded QR codes for your marketing campaigns. Support for logos, AI backgrounds, and bulk production.',
+    title: 'MY KIT TOOL | Premium Professional Utility Studio',
+    description: 'Design high-resolution assets and use technical utilities for your workflow. Support for QR, Photo Editing, OCR, and more.',
     type: 'website',
-    url: 'https://qrcanvas.app',
-    siteName: 'QR CANVAS',
-    images: [{ url: 'https://picsum.photos/seed/qr-seo/1200/630' }],
+    url: 'https://mykittool.app',
+    siteName: 'MY KIT TOOL',
+    images: [{ url: 'https://picsum.photos/seed/mykit-seo/1200/630' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'QR CANVAS | Free Professional QR Generator',
-    description: 'Create beautiful, branded QR codes with logos and AI backgrounds for free.',
-    images: ['https://picsum.photos/seed/qr-twitter/1200/630'],
+    title: 'MY KIT TOOL | Free Professional Utility Studio',
+    description: 'Create beautiful, branded QR codes and use professional digital tools for free.',
+    images: ['https://picsum.photos/seed/mykit-twitter/1200/630'],
   },
 };
 

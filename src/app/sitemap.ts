@@ -1,10 +1,9 @@
-
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: 'https://qrcanvas.app',
+      url: 'https://mykittool.app',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1,

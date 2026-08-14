@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from 'react';
@@ -18,7 +17,8 @@ import {
   Grid3X3,
   FileText,
   ImageIcon,
-  FileCode
+  FileCode,
+  Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -44,14 +44,14 @@ export default function Home() {
         <div className="max-w-4xl mx-auto animate-reveal relative z-10">
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-primary/15 border border-primary/30 text-[11px] font-black tracking-[0.3em] text-primary mb-10 shadow-2xl shadow-primary/10">
             <Sparkles className="w-4 h-4" />
-            <span>PREMIUM BRANDING STUDIO</span>
+            <span>PREMIUM UTILITY STUDIO</span>
           </div>
           <h1 className="text-4xl md:text-7xl lg:text-8xl font-headline font-black mb-8 leading-[1.05] tracking-tighter text-foreground uppercase">
-            Artistic <span className="text-primary italic">Precision</span> <br />
-            <span className="text-foreground/80">QR Studio</span>
+            Digital <span className="text-primary italic">Excellence</span> <br />
+            <span className="text-foreground/80">MY KIT TOOL</span>
           </h1>
           <p className="text-lg md:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium mb-16 px-4">
-            The world's most advanced professional QR studio. Generate high-resolution, branded assets for global marketing campaigns with AI-powered creativity.
+            The world's most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
@@ -85,15 +85,15 @@ export default function Home() {
       <section className="w-full bg-secondary/20 py-32 border-y border-border">
         <div className="container mx-auto px-6">
           <div className="text-center mb-24 max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tight mb-6">Built for <span className="text-primary italic">Excellence</span></h2>
-            <p className="text-foreground/40 font-medium leading-relaxed">High-performance technical assets with a focus on privacy and precision scannability.</p>
+            <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tight mb-6">Built for <span className="text-primary italic">Reliability</span></h2>
+            <p className="text-foreground/40 font-medium leading-relaxed">High-performance technical assets with a focus on privacy and professional scannability.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 max-w-6xl mx-auto">
             {[
               { icon: Palette, title: 'Artistic Branding', desc: 'Custom dot patterns, corner geometries, and integrated business logos for consistent brand identity.' },
               { icon: Download, title: 'Vector Exports', desc: 'Download in PNG, JPG, or professional SVG formats suitable for large-format billboards and print.' },
               { icon: Smartphone, title: 'PWA Native', desc: 'Install as a high-performance native app on your mobile device for offline studio access anytime.' },
-              { icon: Zap, title: 'Instant Engine', desc: 'Real-time studio preview with advanced error correction level adjustment and scannability scores.' },
+              { icon: Zap, title: 'Instant Engine', desc: 'Real-time studio preview with advanced error correction level adjustment and technical scores.' },
               { icon: ShieldCheck, title: 'Privacy Absolute', desc: 'Zero data storage. All generation, OCR, and editing happens locally in your secure browser session.' },
               { icon: Binary, title: 'Technical Tools', desc: 'Code converters, AOB pattern processors, and developer-centric utilities for modern workflows.' },
             ].map((item, i) => (
@@ -119,7 +119,7 @@ export default function Home() {
            
            <h2 className="text-3xl md:text-6xl font-headline font-black uppercase tracking-tight mb-8 relative z-10">Start Your <span className="text-primary italic">Production</span></h2>
            <p className="text-lg text-foreground/40 font-medium mb-12 max-w-2xl mx-auto relative z-10">
-             Join thousands of marketing professionals creating premium branded assets for free. No credit card, no signup, just performance.
+             Join thousands of professionals using MY KIT TOOL for premium branded assets and technical utilities. No credit card, no signup, just performance.
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 relative z-10">
              <Link href="/single" className="w-full sm:w-auto px-10 py-5 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
@@ -128,6 +128,16 @@ export default function Home() {
              <Link href="/faq" className="w-full sm:w-auto px-10 py-5 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-secondary/80 transition-all">
                View Documentation
              </Link>
+           </div>
+        </div>
+        
+        {/* Attribution Section */}
+        <div className="mt-20 animate-reveal stagger-4">
+           <div className="inline-flex flex-col items-center gap-2 p-6 rounded-3xl bg-secondary/30 border border-border">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Crafted with Excellence</span>
+              <p className="text-sm font-bold text-foreground">
+                Developed by <span className="text-primary">Umar Farooq</span> <Heart className="inline w-4 h-4 text-red-500 fill-red-500 ml-1" />
+              </p>
            </div>
         </div>
       </section>

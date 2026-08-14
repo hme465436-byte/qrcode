@@ -12,53 +12,53 @@ import { HelpCircle, Sparkles, Shield, Zap, Globe, Layers, Download, QrCode } fr
 const FAQ_DATA = [
   {
     icon: Globe,
-    q: "Is QR Canvas completely free to use?",
-    a: "Yes! QR Canvas is 100% free for both personal and commercial use. We do not charge subscriptions, per-scan fees, or for high-resolution downloads."
+    q: "Is MY KIT TOOL completely free to use?",
+    a: "Yes! MY KIT TOOL is 100% free for both personal and commercial use. We do not charge subscriptions, usage fees, or for high-resolution downloads."
   },
   {
     icon: Shield,
-    q: "Are the generated QR codes permanent?",
-    a: "Absolutely. We generate static QR codes, which means the data is encoded directly into the pattern. They will never expire and do not require our servers to function once generated."
+    q: "Are the generated assets permanent?",
+    a: "Absolutely. We generate static assets (like QR codes), which means the data is encoded directly into the pattern. They will never expire and do not require our servers to function once generated."
   },
   {
     icon: Sparkles,
-    q: "Can I add my business logo to the QR code?",
-    a: "Yes. Our Single Studio allows you to upload any brand icon. We use advanced error correction (Level H) to ensure your QR code remains perfectly scannable even with a central logo."
+    q: "Can I add my business logo to QR codes?",
+    a: "Yes. Our Single Studio allows you to upload any brand icon. We use advanced error correction to ensure your QR code remains perfectly scannable even with a central logo."
   },
   {
     icon: Layers,
     q: "How does the Bulk Production mode work?",
-    a: "Bulk mode allows you to paste a list of URLs or text strings (one per line). Our engine then renders each one into a high-resolution asset and bundles them into a single ZIP file for you."
+    a: "Bulk mode allows you to paste a list of URLs or text strings. Our engine then renders each one into a high-resolution asset and bundles them into a single ZIP file for you."
   },
   {
     icon: Zap,
-    q: "What is an AI-Generated QR Background?",
-    a: "We integrate with Google Imagen to generate artistic backgrounds based on your text prompts. These are specifically optimized for scannability, ensuring your QR code looks stunning without losing functionality."
+    q: "What is an AI-Generated Background?",
+    a: "We integrate with Google Imagen to generate artistic backgrounds based on your text prompts. These are specifically optimized for scannability and aesthetics."
   },
   {
     icon: Download,
     q: "What file formats can I download?",
-    a: "You can export your assets in high-resolution PNG, JPG, and professional vector SVG formats, suitable for everything from social media to large-format print billboards."
+    a: "You can export your assets in high-resolution PNG, JPG, and professional vector SVG formats, suitable for everything from social media to large-format print."
   },
   {
     icon: QrCode,
-    q: "Does the scanner support all QR types?",
-    a: "Our Live Studio Scanner supports standard QR codes, Data Matrix, and Aztec formats. It can decode URLs, Wi-Fi credentials, vCards, and plain text instantly."
+    q: "Does the scanner support all technical types?",
+    a: "Our Live Studio Scanner supports standard QR codes, Data Matrix, and Aztec formats. It can decode URLs, Wi-Fi credentials, and plain text instantly."
   },
   {
     icon: Shield,
     q: "Is my data stored on your servers?",
-    a: "Never. Privacy is our core principle. All QR generation and scanning happens locally in your browser. We never see or store the data you encode."
+    a: "Never. Privacy is our core principle. All generation, OCR extraction, and image editing happens locally in your browser. We never see or store the data you process."
   },
   {
     icon: Zap,
-    q: "What is the Scannability Score?",
-    a: "It's a real-time technical analysis of your design. We calculate contrast ratios and pattern density to give you a confidence rating (80%+ is recommended for professional use)."
+    q: "What is the Technical Score?",
+    a: "It's a real-time analysis of your design. We calculate contrast ratios and pattern density to give you a confidence rating (80%+ is recommended for professional use)."
   },
   {
     icon: Layers,
-    q: "Can I use QR Canvas offline?",
-    a: "Yes! QR Canvas is a Progressive Web App (PWA). Once installed on your device, you can generate and scan QR codes even without an internet connection."
+    q: "Can I use MY KIT TOOL offline?",
+    a: "Yes! MY KIT TOOL is a Progressive Web App (PWA). Once installed on your device, you can use most features even without an internet connection."
   }
 ];
 
@@ -73,7 +73,7 @@ export default function FAQPage() {
           Frequent <span className="text-primary italic">Questions</span>
         </h1>
         <p className="text-lg text-foreground/50 leading-relaxed font-medium">
-          Everything you need to know about creating professional, branded QR assets.
+          Everything you need to know about using MY KIT TOOL for your professional workflow.
         </p>
       </div>
 
@@ -100,14 +100,14 @@ export default function FAQPage() {
       <div className="mt-20 glass-card p-12 rounded-[3rem] border-border text-center animate-reveal stagger-2">
         <h2 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight mb-4 text-center">Still have questions?</h2>
         <p className="text-sm text-foreground/40 font-medium mb-10 text-center">
-          Our studio is built for ease of use. Try generating a single QR code to see how simple professional branding can be.
+          Our studio is built for ease of use. Try one of our professional tools to see how simple digital production can be.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-6">
           <div className="px-8 py-3 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 cursor-default">
-            v5.0 Stable
+            Developed by Umar Farooq 💝
           </div>
           <div className="px-8 py-3 rounded-2xl bg-secondary border border-border text-[10px] font-black uppercase tracking-widest text-foreground/40 cursor-default">
-            Pro Engine
+            Studio Engine v6.0
           </div>
         </div>
       </div>

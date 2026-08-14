@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'QR Canvas Official Logo';
+export const alt = 'MY KIT TOOL Official Logo';
 export const size = {
   width: 512,
   height: 512,
@@ -75,7 +75,7 @@ export default function Icon() {
             letterSpacing: '-5px',
             marginTop: '20px',
             textTransform: 'uppercase'
-          }}>QR</span>
+          }}>MY KIT</span>
         </div>
       </div>
     ),

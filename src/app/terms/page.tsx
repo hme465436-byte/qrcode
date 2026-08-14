@@ -9,17 +9,17 @@ export default function TermsOfServicePage() {
     {
       icon: CheckCircle,
       title: "Ownership of Assets",
-      content: "All QR codes generated through QR CANVAS are the sole property of the user. You hold full commercial rights to use, print, and distribute the generated assets without any attribution to this studio."
+      content: "All assets generated through MY KIT TOOL are the sole property of the user. You hold full commercial rights to use, print, and distribute the generated assets without any attribution to this studio."
     },
     {
       icon: Gavel,
       title: "Acceptable Use",
-      content: "You agree not to use QR CANVAS to generate codes that link to malicious software, phishing sites, or content that violates international laws. We reserve the right to block access to users found abusing our technical infrastructure."
+      content: "You agree not to use MY KIT TOOL to generate codes or content that link to malicious software, phishing sites, or content that violates international laws. We reserve the right to block access to users found abusing our technical infrastructure."
     },
     {
       icon: AlertCircle,
       title: "No Warranty",
-      content: "QR CANVAS provides its services 'as is'. While we strive for 100% scannability using advanced error correction, we are not liable for any printing costs or marketing failures resulting from unscannable codes. Always test your codes before mass production."
+      content: "MY KIT TOOL provides its services 'as is'. While we strive for 100% precision using advanced algorithms, we are not liable for any technical failures or marketing outcomes resulting from processed assets. Always test your results before mass production."
     }
   ];
 
@@ -36,7 +36,7 @@ export default function TermsOfServicePage() {
           Terms of <span className="text-primary italic">Service</span>
         </h1>
         <p className="text-lg text-foreground/50 leading-relaxed font-medium">
-          By using our studio, you agree to these professional standards.
+          By using MY KIT TOOL, you agree to these professional standards.
         </p>
       </div>
 
@@ -60,7 +60,7 @@ export default function TermsOfServicePage() {
         <h2 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight mb-6 text-center">Service Availability</h2>
         <div className="space-y-6 text-sm text-foreground/50 leading-relaxed font-medium">
           <p>
-            QR CANVAS is a free utility. While we aim for 99.9% uptime, we do not guarantee uninterrupted access to our AI features or bulk rendering engine. We may update or modify features at any time to improve technical performance.
+            MY KIT TOOL is a free utility. While we aim for maximum uptime, we do not guarantee uninterrupted access to our AI features or bulk rendering engine. We may update or modify features at any time to improve technical performance.
           </p>
         </div>
       </div>

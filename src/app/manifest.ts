@@ -1,15 +1,14 @@
-
 import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'QR CANVAS Professional Studio',
-    short_name: 'QR CANVAS',
-    description: 'Premium AI-Powered Branded QR Code Generator Studio. Bulk support and logo integration.',
+    name: 'MY KIT TOOL Professional Studio',
+    short_name: 'MY KIT TOOL',
+    description: 'Premium AI-Powered Digital Utility Studio. Professional assets and technical tools.',
     start_url: '/',
     display: 'standalone',
     background_color: '#060907',
-    theme_color: '#26EA56',
+    theme_color: '#3b82f6',
     icons: [
       {
         src: '/icon?size=192',
@@ -27,10 +26,10 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['productivity', 'utilities', 'business'],
     screenshots: [
       {
-        src: 'https://picsum.photos/seed/qr-mobile-ss/400/800',
+        src: 'https://picsum.photos/seed/mykit-ss/400/800',
         sizes: '400x800',
         type: 'image/png',
-        label: 'QR CANVAS Studio Dashboard'
+        label: 'MY KIT TOOL Studio Dashboard'
       }
     ]
   };

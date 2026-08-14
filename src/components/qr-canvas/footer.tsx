@@ -1,9 +1,8 @@
-
 "use client"
 
 import React from 'react';
 import { CopyrightYear } from './copyright-year';
-import { Shield, Lock, Zap, ArrowUpRight } from 'lucide-react';
+import { Shield, Lock, Zap, ArrowUpRight, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Logo = ({ className = "h-8" }: { className?: string }) => (
@@ -22,8 +21,8 @@ const Logo = ({ className = "h-8" }: { className?: string }) => (
     </div>
     
     <div className="font-headline font-black text-2xl tracking-tighter leading-none flex items-center">
-      <span className="text-[#0f172a] dark:text-white uppercase">QR</span>
-      <span className="text-[#2563eb] ml-2 italic">Canvas</span>
+      <span className="text-[#0f172a] dark:text-white uppercase">MY KIT</span>
+      <span className="text-[#2563eb] ml-2 italic">TOOL</span>
     </div>
   </div>
 );
@@ -40,8 +39,16 @@ export function Footer() {
           <div className="lg:col-span-5 space-y-8">
             <Logo />
             <p className="text-[15px] text-foreground/50 font-medium leading-relaxed max-w-sm">
-              The world's premier artistic QR generator studio. Create high-resolution, branded technical assets instantly. 100% private, client-side, and free forever.
+              The world's premier artistic digital utility studio. Create high-resolution, branded technical assets instantly. 100% private, client-side, and free forever.
             </p>
+            
+            <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 inline-flex flex-col gap-2">
+               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60">Creative Engineer</span>
+               <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                  Developed by <span className="text-primary">Umar Farooq</span> <Heart className="w-3 h-3 text-red-500 fill-red-500" />
+               </div>
+            </div>
+
             <div className="flex flex-wrap items-center gap-8 pt-2">
               <div className="flex items-center gap-2.5 text-[11px] font-black uppercase tracking-widest text-foreground/30">
                 <Shield className="w-4 h-4 text-[#2563eb]" /> Secure
@@ -118,7 +125,7 @@ export function Footer() {
           
           <div className="text-center md:text-right space-y-3">
             <p className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground/40">
-              &copy; <CopyrightYear /> QR CANVAS STUDIO. PROFESSIONAL ASSET PRODUCTION.
+              &copy; <CopyrightYear /> MY KIT TOOL. PROFESSIONAL ASSET PRODUCTION.
             </p>
             <p className="text-[10px] font-medium text-foreground/20 uppercase tracking-[0.4em]">
               DIGITAL EXCELLENCE. PRIVACY FIRST.
