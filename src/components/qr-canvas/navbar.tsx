@@ -17,7 +17,8 @@ import {
   Binary,
   X,
   Grid3X3,
-  FileText
+  FileText,
+  ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -79,6 +80,7 @@ export function Navbar() {
     { label: 'Home', href: '/', icon: Home },
     { label: 'Single QR', href: '/single', icon: QrCode },
     { label: 'Bulk Mode', href: '/bulk', icon: Layers },
+    { label: 'Photo Editor', href: '/photo-editor', icon: ImageIcon },
     { label: 'OCR Text', href: '/ocr', icon: FileText },
     { label: 'Dot Art', href: '/dot-art', icon: Grid3X3 },
     { label: 'Repeater', href: '/repeater', icon: Repeat },
