@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -21,10 +20,12 @@ import {
   Music,
   Heart,
   Search,
-  X
+  X,
+  Maximize
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Button as ShadButton } from '@/components/ui/button';
 
 const TOOLS = [
   { 
@@ -44,6 +45,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/image-compressor', 
+    icon: Maximize, 
+    title: 'Image Compressor', 
+    desc: 'Reduce file size locally with quality control.', 
+    label: 'OPTIMIZE', 
+    color: 'bg-primary/50',
+    keywords: ['compress', 'image compressor', 'reduce size', 'jpg', 'photo size', 'optimize', 'shrink', 'smaller']
   },
   { 
     href: '/photo-editor', 
@@ -139,15 +149,17 @@ export default function Home() {
             The world&apos;s most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
           </p>
 
-          {/* Search Bar Implementation */}
-          <div className="max-w-xl mx-auto mb-16 px-4 group">
+          {/* Search Bar Implementation with Glow */}
+          <div className="max-w-xl mx-auto mb-16 px-4 group relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 rounded-[3rem] blur-2xl opacity-50 group-focus-within:opacity-100 group-focus-within:blur-3xl transition-all duration-700 animate-pulse pointer-events-none" />
+            
             <div className="relative">
               <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                 <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
               </div>
               <Input 
                 type="text"
-                placeholder="Search tools... (e.g. qr, photo, mp3, hex)"
+                placeholder="Search tools... (e.g. compress, qr, hex)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-16 pl-14 pr-14 bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-border hover:border-primary/40 focus:border-primary/60 rounded-3xl text-lg font-medium shadow-2xl transition-all"
@@ -197,15 +209,15 @@ export default function Home() {
                 <Search className="w-16 h-16 text-foreground/10" />
                 <div className="space-y-2">
                   <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
-                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;qr&quot; or &quot;binary&quot;</p>
+                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;compress&quot; or &quot;qr&quot;</p>
                 </div>
-                <Button 
+                <ShadButton 
                   onClick={() => setSearchQuery('')}
                   variant="outline"
                   className="rounded-xl font-black uppercase text-[10px] tracking-widest border-primary/20 text-primary"
                 >
                   Clear Search
-                </Button>
+                </ShadButton>
               </div>
             )}
           </div>
@@ -273,21 +285,5 @@ export default function Home() {
         </div>
       </section>
     </div>
-  );
-}
-
-function Button({ children, onClick, variant, className, disabled }: any) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "px-6 py-3 rounded-xl transition-all active:scale-95 disabled:opacity-50",
-        variant === 'outline' ? "border border-border bg-background hover:bg-secondary" : "bg-primary text-primary-foreground hover:bg-primary/90",
-        className
-      )}
-    >
-      {children}
-    </button>
   );
 }

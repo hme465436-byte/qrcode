@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -22,7 +21,8 @@ import {
   Music,
   Search,
   ArrowRight,
-  X
+  X,
+  Scaling
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -58,6 +58,7 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home, keywords: ['start', 'dashboard', 'main'] },
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
+  { label: 'Compressor', href: '/image-compressor', icon: Scaling, keywords: ['compress', 'image', 'reduce', 'optimize', 'shrink'] },
   { label: 'Photo Editor', href: '/photo-editor', icon: ImageIcon, keywords: ['image', 'edit', 'crop', 'filter', 'manipulate'] },
   { label: 'Video to MP3', href: '/video-to-audio', icon: Music, keywords: ['audio', 'extract', 'mp4', 'sound', 'convert'] },
   { label: 'OCR Text', href: '/ocr', icon: FileText, keywords: ['ocr', 'extract', 'recognize', 'scan', 'read'] },
@@ -127,7 +128,7 @@ export function Navbar() {
           </a>
           
           <nav className="hidden xl:flex items-center gap-6">
-            {NAV_ITEMS.slice(0, 5).map((item) => (
+            {NAV_ITEMS.slice(0, 6).map((item) => (
               <a 
                 key={item.label} 
                 href={item.href}
