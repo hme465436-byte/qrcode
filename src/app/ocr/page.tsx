@@ -55,37 +55,53 @@ export default function OCRPage() {
   };
 
   const extractText = async () => {
-    if (!image) return;
+    if (!image) {
+      toast({ variant: "destructive", title: "No Image", description: "Please upload or select an image first." });
+      return;
+    }
     
     setIsProcessing(true);
     setProgress(0);
     setStatus('Initializing Engine...');
 
     try {
+      // Use Tesseract.recognize which is highly reliable in client-side Next.js
       const { data: { text } } = await Tesseract.recognize(
         image,
         language,
         {
           logger: m => {
             if (m.status === 'recognizing text') {
-              setProgress(Math.round(m.progress * 100));
-              setStatus(`Extracting Matrix... ${Math.round(m.progress * 100)}%`);
+              const p = Math.round(m.progress * 100);
+              setProgress(p);
+              setStatus(`Extracting Matrix... ${p}%`);
             } else {
-              setStatus(m.status.charAt(0).toUpperCase() + m.status.slice(1));
+              // Handle other statuses like 'loading tesseract core', 'initializing api', etc.
+              setStatus(m.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
             }
           }
         }
       );
 
-      setResult(text.trim());
-      if (!text.trim()) {
-        toast({ variant: "destructive", title: "No Text Found", description: "The matrix yielded no identifiable characters." });
+      const trimmedText = text.trim();
+      setResult(trimmedText);
+      
+      if (!trimmedText) {
+        toast({ 
+          variant: "destructive", 
+          title: "No Text Identified", 
+          description: "Try a higher contrast or clearer image." 
+        });
       } else {
         toast({ title: "Extraction Complete", description: "Text matrix decoded successfully." });
       }
     } catch (err: any) {
-      console.error(err);
-      toast({ variant: "destructive", title: "OCR Failed", description: "An error occurred during optical analysis." });
+      console.error('OCR Error:', err);
+      toast({ 
+        variant: "destructive", 
+        title: "Optical Analysis Failed", 
+        description: err.message || "An unexpected error occurred during recognition." 
+      });
     } finally {
       setIsProcessing(false);
       setProgress(0);
@@ -105,6 +121,7 @@ export default function OCRPage() {
   const handleClear = () => {
     setImage(null);
     setResult('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
     toast({ title: "Studio Reset", description: "All fields cleared." });
   };
 
@@ -150,10 +167,11 @@ export default function OCRPage() {
                 </div>
                 
                 <div 
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => !isProcessing && fileInputRef.current?.click()}
                   className={cn(
                     "relative group/upload h-64 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer",
-                    image && "border-solid"
+                    image && "border-solid",
+                    isProcessing && "cursor-not-allowed opacity-80"
                   )}
                 >
                   {image ? (
@@ -183,7 +201,7 @@ export default function OCRPage() {
                 <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] flex items-center gap-2">
                   <Languages className="w-3.5 h-3.5" /> Linguistic Profile
                 </Label>
-                <Select value={language} onValueChange={setLanguage}>
+                <Select value={language} onValueChange={setLanguage} disabled={isProcessing}>
                   <SelectTrigger className="h-14 bg-secondary border-border rounded-2xl text-foreground font-bold">
                     <SelectValue />
                   </SelectTrigger>
@@ -191,9 +209,6 @@ export default function OCRPage() {
                     <SelectItem value="eng" className="text-xs font-bold uppercase">English (Latin)</SelectItem>
                     <SelectItem value="urd" className="text-xs font-bold uppercase">Urdu (Nastaliq)</SelectItem>
                     <SelectItem value="eng+urd" className="text-xs font-bold uppercase">English + Urdu (Bilingual)</SelectItem>
-                    <SelectItem value="fra" className="text-xs font-bold uppercase">French</SelectItem>
-                    <SelectItem value="deu" className="text-xs font-bold uppercase">German</SelectItem>
-                    <SelectItem value="spa" className="text-xs font-bold uppercase">Spanish</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -277,7 +292,7 @@ export default function OCRPage() {
                 {isProcessing && (
                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/40 backdrop-blur-[2px] rounded-[2.5rem] z-10">
                       <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Analyzing Matrix...</p>
+                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{status}</p>
                    </div>
                 )}
               </div>
