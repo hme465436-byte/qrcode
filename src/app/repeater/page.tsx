@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from 'react';
@@ -10,7 +11,9 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronRight,
-  Split
+  Split,
+  CornerDownLeft,
+  Space
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -61,7 +64,7 @@ export default function TextRepeaterPage() {
     toast({ title: "Cleared", description: "All fields have been reset." });
   };
 
-  const presets = [5, 10, 50, 100, 500, 1000];
+  const volumePresets = [5, 10, 50, 100, 500, 1000];
 
   return (
     <div className="container mx-auto px-6 py-12 md:py-20">
@@ -102,14 +105,37 @@ export default function TextRepeaterPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Separator (Optional)</Label>
+                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Separator Settings</Label>
                   <Input 
-                    placeholder="Space, comma, | ..."
-                    value={separator}
+                    placeholder="Enter custom separator..."
+                    value={separator === '\n' ? '↵ [New Line]' : separator}
                     onChange={(e) => setSeparator(e.target.value)}
                     className="h-14 bg-secondary border-border rounded-2xl text-foreground"
                   />
-                  <p className="text-[9px] text-foreground/30 font-medium">Leave empty for no spacing.</p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSeparator(' ')}
+                      className={cn(
+                        "h-9 flex-1 text-[9px] font-black uppercase tracking-widest rounded-xl border-border",
+                        separator === ' ' ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground/40 hover:text-primary"
+                      )}
+                    >
+                      <Space className="w-3.5 h-3.5 mr-1.5" /> Space
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSeparator('\n')}
+                      className={cn(
+                        "h-9 flex-1 text-[9px] font-black uppercase tracking-widest rounded-xl border-border",
+                        separator === '\n' ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground/40 hover:text-primary"
+                      )}
+                    >
+                      <CornerDownLeft className="w-3.5 h-3.5 mr-1.5" /> New Line
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Repeat Count</Label>
@@ -127,7 +153,7 @@ export default function TextRepeaterPage() {
               <div className="space-y-4">
                 <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Volume Presets</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {presets.map((p) => (
+                  {volumePresets.map((p) => (
                     <button
                       key={p}
                       onClick={() => setTimes(p)}
