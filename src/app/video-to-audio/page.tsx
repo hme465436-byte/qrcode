@@ -56,7 +56,6 @@ export default function VideoToAudioPage() {
     
     ffmpeg.on('log', ({ message }) => {
       setLogs(prev => [...prev.slice(-4), message]);
-      // Attempt to parse progress from logs if possible, though 'progress' event is better
     });
 
     ffmpeg.on('progress', ({ progress: p }) => {
@@ -320,7 +319,7 @@ export default function VideoToAudioPage() {
                       </div>
                       {logs.map((log, i) => (
                         <div key={i} className="truncate whitespace-nowrap opacity-70 hover:opacity-100 transition-opacity">
-                          > {log}
+                          &gt; {log}
                         </div>
                       ))}
                     </div>
