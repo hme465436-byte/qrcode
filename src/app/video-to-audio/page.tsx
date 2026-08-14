@@ -36,7 +36,8 @@ export default function VideoToAudioPage() {
   const [mp3Url, setMp3Url] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
-  const ffmpegRef = useRef(new FFmpeg());
+  // Fix: Use null as initial value to prevent instantiation during SSR/pre-rendering
+  const ffmpegRef = useRef<FFmpeg | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -47,10 +48,16 @@ export default function VideoToAudioPage() {
   }, [mp3Url]);
 
   const loadFFmpeg = async () => {
-    if (isLoaded) return true;
+    if (isLoaded && ffmpegRef.current) return true;
     
     setStatus('Initializing FFmpeg Engine...');
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+    
+    // Fix: Instantiate FFmpeg ONLY on the client inside this function
+    if (!ffmpegRef.current) {
+      ffmpegRef.current = new FFmpeg();
+    }
+    
     const ffmpeg = ffmpegRef.current;
     
     ffmpeg.on('log', ({ message }) => {
@@ -105,7 +112,7 @@ export default function VideoToAudioPage() {
     setLogs([]);
     
     const ready = await loadFFmpeg();
-    if (!ready) {
+    if (!ready || !ffmpegRef.current) {
       setIsProcessing(false);
       return;
     }
@@ -264,7 +271,7 @@ export default function VideoToAudioPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Absolute</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our FFmpeg engine runs entirely within your browser's sandbox via WebAssembly. No data is transmitted, ensuring 100% security for your media payloads.
+                Our FFmpeg engine runs entirely within your browser&apos;s sandbox via WebAssembly. No data is transmitted, ensuring 100% security for your media payloads.
               </p>
             </div>
           </div>
@@ -339,7 +346,7 @@ export default function VideoToAudioPage() {
                     </div>
                     <Button 
                       asChild
-                      className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-xl shadow-xl shadow-primary/30 transition-all active:scale-95"
+                      className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95"
                     >
                       <a href={mp3Url} download={`${file?.name.split('.')[0] || 'master'}.mp3`}>
                         <Download className="w-6 h-6" />
