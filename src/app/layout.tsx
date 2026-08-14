@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 5,
   themeColor: '#3b82f6',
 };
 
@@ -49,11 +50,11 @@ export default function RootLayout({
         />
       </head>
       <body 
-        className="font-body bg-background text-foreground antialiased selection:bg-primary/20 selection:text-foreground"
+        className="font-body bg-background text-foreground antialiased selection:bg-primary/20 selection:text-foreground overflow-x-hidden w-full max-w-full"
         suppressHydrationWarning
       >
         <Navbar />
-        <main className="min-h-screen pt-16">
+        <main className="min-h-screen pt-16 w-full max-w-full">
           {children}
         </main>
         <Footer />

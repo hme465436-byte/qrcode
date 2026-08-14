@@ -50,16 +50,24 @@
 }
 
 @layer base {
+  html, body {
+    @apply overflow-x-hidden w-full;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
   * {
     @apply border-border;
+    box-sizing: border-box;
   }
+  
   body {
     @apply bg-background text-foreground antialiased transition-colors duration-500;
     background-image: radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.08) 0px, transparent 50%),
                       radial-gradient(at 100% 100%, hsla(217, 91%, 60%, 0.05) 0px, transparent 50%);
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline tracking-tight;
+    @apply font-headline tracking-tight overflow-wrap-anywhere;
   }
 }
 
@@ -114,3 +122,8 @@
 .stagger-2 { animation-delay: 300ms; }
 .stagger-3 { animation-delay: 450ms; }
 .stagger-4 { animation-delay: 600ms; }
+
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
