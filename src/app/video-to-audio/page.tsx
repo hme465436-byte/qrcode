@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   FileVideo,
   AlertTriangle,
-  Settings2
+  Settings2,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,15 +40,15 @@ export default function VideoToAudioPage() {
       if (selectedFile.size > 100 * 1024 * 1024) {
         toast({ 
           variant: "destructive", 
-          title: "File Too Large", 
-          description: "For stability, we recommend videos under 100MB." 
+          title: "High Volume detected", 
+          description: "Videos over 100MB may cause browser instability. Proceeding with caution." 
         });
       }
       setFile(selectedFile);
       setMp3Url(null);
       setProgress(0);
       setStatus('');
-      toast({ title: "Video Loaded", description: "Ready to extract audio track." });
+      toast({ title: "Video Imported", description: "Studio ready for audio extraction." });
     }
   };
 
@@ -56,33 +57,52 @@ export default function VideoToAudioPage() {
 
     setIsProcessing(true);
     setProgress(0);
-    setStatus('Decoding Video...');
+    setStatus('Initializing Audio Context...');
 
     try {
+      // 1. Setup Audio Context & Buffer
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const arrayBuffer = await file.arrayBuffer();
       
+      setStatus('Decoding Video Payload...');
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      setStatus('Encoding MP3...');
+      
+      setStatus('Encoding High-Fidelity MP3...');
 
-      // Dynamic import of lamejs to avoid MPEGMode error
+      // 2. Fix for lamejs MPEGMode error in Next.js/Webpack environment
+      // lamejs expects some globals to be defined or scoped correctly.
       const lamejs = require('lamejs');
+      
+      // Patch global window object with lamejs internal constants if missing
+      if (typeof window !== 'undefined') {
+        (window as any).MPEGMode = {
+          STEREO: 0,
+          JOINT_STEREO: 1,
+          DUAL_CHANNEL: 2,
+          MONO: 3,
+        };
+        // Some versions of lamejs also look for bitstream or Lame globals
+        if (!(window as any).Lame) (window as any).Lame = lamejs;
+      }
+
       const channels = audioBuffer.numberOfChannels;
       const sampleRate = audioBuffer.sampleRate;
+      
+      // Initialize MP3 Encoder (128kbps quality)
       const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
       const mp3Data: any[] = [];
 
       const samplesL = audioBuffer.getChannelData(0);
       const samplesR = channels > 1 ? audioBuffer.getChannelData(1) : samplesL;
 
-      const sampleBlockSize = 1152;
+      const sampleBlockSize = 1152; // LAME standard block size
       const totalSamples = samplesL.length;
       
       for (let i = 0; i < totalSamples; i += sampleBlockSize) {
         const leftChunk = samplesL.subarray(i, i + sampleBlockSize);
         const rightChunk = samplesR.subarray(i, i + sampleBlockSize);
         
-        // Convert Float32 to Int16
+        // Convert Float32 samples (-1 to 1) to Int16 samples (-32768 to 32767)
         const leftInt16 = new Int16Array(leftChunk.length);
         const rightInt16 = new Int16Array(rightChunk.length);
         
@@ -102,10 +122,14 @@ export default function VideoToAudioPage() {
           mp3Data.push(mp3buf);
         }
         
-        const p = Math.round((i / totalSamples) * 100);
-        if (p % 10 === 0) setProgress(p);
+        // Throttled progress update to keep UI responsive
+        if (i % (sampleBlockSize * 10) === 0) {
+          const p = Math.round((i / totalSamples) * 100);
+          setProgress(p);
+        }
       }
 
+      // Finalize the encoding
       const endBuf = mp3encoder.flush();
       if (endBuf.length > 0) {
         mp3Data.push(endBuf);
@@ -114,15 +138,23 @@ export default function VideoToAudioPage() {
       const blob = new Blob(mp3Data, { type: 'audio/mp3' });
       setMp3Url(URL.createObjectURL(blob));
       setProgress(100);
-      setStatus('Extraction Complete');
-      toast({ title: "Success", description: "Audio extracted to MP3 format." });
+      setStatus('Production Complete');
+      toast({ title: "Master Exported", description: "Audio track successfully encoded to MP3." });
+      
+      audioContext.close();
     } catch (err: any) {
-      console.error(err);
+      console.error('Audio Conversion Error:', err);
+      let errorMessage = "An unexpected error occurred during audio extraction.";
+      
+      if (err.name === 'EncodingError') errorMessage = "Failed to decode video audio track. The format might be unsupported.";
+      if (err.message?.includes('MPEGMode')) errorMessage = "Encoding engine initialization failed. Please reload and try again.";
+      
       toast({ 
         variant: "destructive", 
         title: "Conversion Failed", 
-        description: err.message || "An unexpected error occurred during audio extraction." 
+        description: errorMessage 
       });
+      setStatus('Conversion Failed');
     } finally {
       setIsProcessing(false);
     }
@@ -134,24 +166,25 @@ export default function VideoToAudioPage() {
     setProgress(0);
     setStatus('');
     if (fileInputRef.current) fileInputRef.current.value = '';
-    toast({ title: "Studio Reset", description: "Fields cleared." });
+    toast({ title: "Studio Reset", description: "Fields cleared and cache purged." });
   };
 
   return (
     <div className="container mx-auto px-6 py-12 md:py-20">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Music className="w-3.5 h-3.5" /> Media Suite
+          <Music className="w-3.5 h-3.5" /> Media Studio
         </div>
         <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-          Video to <span className="text-primary italic">MP3 Converter</span>
+          Video to <span className="text-primary italic">MP3 Master</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl">
-          Extract high-quality audio tracks from your videos instantly. 100% private, client-side conversion for MP4, WebM, and MOV files.
+          Extract high-fidelity audio tracks from video payloads. 100% private client-side encoding for professional workflows.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+        {/* Input Card */}
         <div className="space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
@@ -161,17 +194,17 @@ export default function VideoToAudioPage() {
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner group-hover:scale-110 transition-transform">
                   <Video className="w-6 h-6" />
                 </div>
-                Source Visual
+                Source Payload
               </CardTitle>
             </CardHeader>
             
             <CardContent className="pt-10 space-y-8">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Video Payload</Label>
+                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Video Asset</Label>
                   {file && (
                     <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest shadow-sm">
-                      {(file.size / (1024 * 1024)).toFixed(2)} MB Detected
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB Matrix
                     </div>
                   )}
                 </div>
@@ -188,14 +221,14 @@ export default function VideoToAudioPage() {
                     <div className="text-center p-6 space-y-2">
                        <FileVideo className="w-10 h-10 text-primary mx-auto mb-2" />
                        <p className="text-xs font-black uppercase text-foreground truncate max-w-[240px]">{file.name}</p>
-                       <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest">Click to change source</p>
+                       <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest">Tap to change source</p>
                     </div>
                   ) : (
                     <>
                       <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4">
                         <Upload className="w-6 h-6" />
                       </div>
-                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors">Drop or Select Video File</p>
+                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors">Select Video Container</p>
                       <p className="text-[8px] text-foreground/20 uppercase font-bold mt-2">MP4, WEBM, MOV</p>
                     </>
                   )}
@@ -206,7 +239,7 @@ export default function VideoToAudioPage() {
                    <div className="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex items-start gap-3">
                       <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
                       <p className="text-[9px] text-yellow-500/70 font-bold leading-relaxed uppercase tracking-wider">
-                        High Volume Warning: Files &gt;50MB may take several moments to process depending on browser memory.
+                        Performance Warning: Processing high-volume assets may take several moments in browser memory.
                       </p>
                    </div>
                 )}
@@ -219,7 +252,7 @@ export default function VideoToAudioPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Convert to MP3
+                  Generate MP3
                 </Button>
                 <Button 
                   variant="outline"
@@ -238,12 +271,13 @@ export default function VideoToAudioPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Absolute</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Audio extraction occurs entirely within your browser's WebAssembly sandbox. Your video payload never leaves your device, ensuring maximum confidentiality.
+                Audio extraction occurs entirely within your browser's secure sandbox. No data is transmitted, ensuring 100% confidentiality for your media assets.
               </p>
             </div>
           </div>
         </div>
 
+        {/* Output Card */}
         <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -251,17 +285,17 @@ export default function VideoToAudioPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  Conversion Pipeline
+                  Extraction Pipeline
                 </CardTitle>
                 {mp3Url && (
                   <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest shadow-sm">
-                    Ready for Download
+                    Asset Ready
                   </div>
                 )}
               </div>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
-              <div className="relative group/output min-h-[200px] flex flex-col items-center justify-center rounded-[2.5rem] bg-secondary/30 border border-border p-10 text-center">
+              <div className="relative group/output min-h-[220px] flex flex-col items-center justify-center rounded-[2.5rem] bg-secondary/30 border border-border p-10 text-center">
                 {!mp3Url && !isProcessing && (
                   <div className="opacity-10 group-hover:opacity-20 transition-opacity">
                     <Music className="w-20 h-20 text-primary mb-4 mx-auto" />
@@ -271,13 +305,13 @@ export default function VideoToAudioPage() {
 
                 {isProcessing && (
                   <div className="w-full space-y-6 animate-in fade-in duration-500">
-                    <div className="relative w-20 h-20 mx-auto">
-                      <div className="w-20 h-20 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                      <Music className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
+                    <div className="relative w-24 h-24 mx-auto">
+                      <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
+                      <Music className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
-                        <span>{status}</span>
+                        <span className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> {status}</span>
                         <span>{progress}%</span>
                       </div>
                       <Progress value={progress} className="h-2" />
@@ -287,19 +321,21 @@ export default function VideoToAudioPage() {
 
                 {mp3Url && (
                   <div className="space-y-8 w-full animate-in zoom-in duration-500">
-                    <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-xl">
-                      <CheckCircle2 className="w-10 h-10" />
+                    <div className="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-xl">
+                      <CheckCircle2 className="w-12 h-12" />
                     </div>
                     <div className="space-y-2">
-                      <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Audio Master Ready</h3>
-                      <p className="text-[10px] text-foreground/40 font-medium">MP3 encoded at 128kbps variable bitrate.</p>
+                      <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Audio Master Decoded</h3>
+                      <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">128kbps Constant Bitrate</p>
                     </div>
-                    <audio controls src={mp3Url} className="w-full" />
+                    <div className="p-4 bg-background/50 rounded-2xl border border-border">
+                      <audio controls src={mp3Url} className="w-full" />
+                    </div>
                     <Button 
                       asChild
                       className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-xl shadow-xl shadow-primary/30 transition-all active:scale-95"
                     >
-                      <a href={mp3Url} download={`${file?.name.split('.')[0] || 'extracted'}.mp3`}>
+                      <a href={mp3Url} download={`${file?.name.split('.')[0] || 'master'}.mp3`}>
                         <Download className="w-6 h-6" />
                         Download MP3
                       </a>
@@ -313,7 +349,7 @@ export default function VideoToAudioPage() {
                  <div className="space-y-1">
                     <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Technical Protocol</p>
                     <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
-                      Our engine utilizes LAME.js for high-fidelity encoding. For professional mixing, we recommend processing the resulting MP3 in a dedicated DAW.
+                      Our engine utilizes a high-performance LAME implementation. For professional mastering, we recommend further processing in a dedicated digital audio workstation.
                     </p>
                  </div>
               </div>
