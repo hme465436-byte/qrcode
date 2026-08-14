@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -233,7 +232,7 @@ export default function VideoToAudioPage() {
                    <div className="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex items-start gap-3">
                       <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
                       <p className="text-[9px] text-yellow-500/70 font-bold leading-relaxed uppercase tracking-wider">
-                        Performance Warning: Processing high-volume containers (>50MB) may impact browser stability on mobile.
+                        Performance Warning: Processing high-volume containers (&gt;50MB) may impact browser stability on mobile.
                       </p>
                    </div>
                 )}
