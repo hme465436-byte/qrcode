@@ -42,10 +42,6 @@ export default function Home() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] sm:w-[600px] sm:h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
         
         <div className="max-w-4xl mx-auto animate-reveal relative z-10">
-          <div className="inline-flex items-center gap-2 sm:gap-3 px-4 py-2 rounded-full bg-primary/15 border border-primary/30 text-[9px] sm:text-[11px] font-black tracking-[0.2em] sm:tracking-[0.3em] text-primary mb-8 sm:mb-10 shadow-2xl shadow-primary/10">
-            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>PREMIUM UTILITY STUDIO</span>
-          </div>
           <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-6 sm:mb-8 leading-[1.1] tracking-tighter text-foreground uppercase overflow-wrap-anywhere">
             Digital <span className="text-primary italic">Excellence</span> <br />
             <span className="text-foreground/80">MY KIT TOOL</span>
@@ -115,7 +111,7 @@ export default function Home() {
       <section className="w-full px-4 sm:px-6 py-20 sm:py-32 text-center overflow-hidden">
         <div className="glass-card p-10 sm:p-24 rounded-[3rem] sm:rounded-[4rem] max-w-5xl mx-auto border-border relative overflow-hidden">
            <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-primary/10 rounded-full blur-[80px] -mr-24 -mt-24 sm:-mr-32 sm:-mt-32" />
-           <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-64 sm:h-64 bg-primary/5 rounded-full blur-[80px] -ml-24 -mb-24 sm:-ml-32 sm:-mb-32" />
+           <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-64 sm:h-64 bg-primary/5 rounded-full blur-[80px] -ml-24 -mb-24 sm:-ml-32 -mb-32" />
            
            <h2 className="text-2xl sm:text-6xl font-headline font-black uppercase tracking-tight mb-6 sm:mb-8 relative z-10">Start Your <span className="text-primary italic">Production</span></h2>
            <p className="text-sm sm:text-lg text-foreground/40 font-medium mb-10 sm:mb-12 max-w-2xl mx-auto relative z-10">
