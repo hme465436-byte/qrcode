@@ -39,11 +39,24 @@ export default function TextRepeaterPage() {
       return;
     }
 
+    if (times > 5000) {
+      toast({ 
+        variant: "destructive", 
+        title: "Limit Exceeded", 
+        description: "For stability, production is capped at 5,000 repetitions per batch." 
+      });
+      return;
+    }
+
     const count = Math.max(1, times);
     
     try {
       const repeated = new Array(count).fill(inputText).join(separator);
       setOutputText(repeated);
+      toast({
+        title: "Repetition Complete",
+        description: `Generated ${count.toLocaleString()} instances.`,
+      });
     } catch (e) {
       toast({ 
         variant: "destructive", 
@@ -87,7 +100,6 @@ export default function TextRepeaterPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-        {/* Input Controls */}
         <div className="space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden">
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
@@ -151,10 +163,11 @@ export default function TextRepeaterPage() {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Repeat Count</Label>
+                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Repeat Count (Max 5000)</Label>
                   <Input 
                     type="number"
                     min="1"
+                    max="5000"
                     value={times}
                     onChange={(e) => setTimes(parseInt(e.target.value) || 0)}
                     className="h-14 bg-secondary border-border rounded-2xl text-foreground font-mono font-bold"
@@ -200,7 +213,6 @@ export default function TextRepeaterPage() {
           </Card>
         </div>
 
-        {/* Output Section */}
         <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -248,9 +260,9 @@ export default function TextRepeaterPage() {
               <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-4 group-hover:bg-primary/10 transition-colors">
                 <AlertCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">Unlimited Production</p>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">Stability Protection</p>
                   <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
-                    Optimized for Emojis, Cyrillic, Asian scripts, and professional formatting symbols. No artificial volume caps applied.
+                    Output is capped at 5,000 repetitions per operation to ensure optimal browser performance and responsiveness.
                   </p>
                 </div>
               </div>
