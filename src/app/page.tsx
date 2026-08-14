@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from 'react';
@@ -26,142 +25,105 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center">
       {/* HERO SECTION */}
-      <section className="container mx-auto px-6 pt-12 pb-20 md:pt-16 md:pb-32 text-center">
-        <div className="max-w-4xl mx-auto animate-reveal">
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-primary/15 border border-primary/30 text-[10px] font-black tracking-[0.2em] text-primary mb-10 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5" />
+      <section className="container mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-40 text-center relative">
+        {/* Ambient Glows */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="max-w-4xl mx-auto animate-reveal relative z-10">
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-primary/15 border border-primary/30 text-[11px] font-black tracking-[0.3em] text-primary mb-10 shadow-2xl shadow-primary/10">
+            <Sparkles className="w-4 h-4" />
             <span>PREMIUM BRANDING STUDIO</span>
           </div>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-headline font-black mb-8 leading-[1.1] tracking-tight text-foreground">
-            The World's Most <br />
-            <span className="text-primary italic">Artistic QR Studio</span>
+          <h1 className="text-4xl md:text-7xl lg:text-8xl font-headline font-black mb-8 leading-[1.05] tracking-tighter text-foreground uppercase">
+            Artistic <span className="text-primary italic">Precision</span> <br />
+            <span className="text-foreground/80">QR Studio</span>
           </h1>
-          <p className="text-lg md:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium mb-16">
-            Generate high-resolution, branded QR codes for your marketing campaigns. 100% free, high-speed bulk production, and AI-powered backgrounds.
+          <p className="text-lg md:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium mb-16 px-4">
+            The world's most advanced professional QR studio. Generate high-resolution, branded assets for global marketing campaigns with AI-powered creativity.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            <Link href="/single" className="group h-full">
-              <div className="glass-card p-8 rounded-[2.5rem] border-border hover:border-primary/40 transition-all hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-lg hover:shadow-primary/10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/40 rounded-full -mr-16 -mt-16 group-hover:bg-primary/50 transition-all blur-2xl" />
-                <div className="w-14 h-14 rounded-[1.5rem] bg-primary/50 flex items-center justify-center text-primary mb-6 border border-primary/60 shadow-inner group-hover:scale-110 transition-transform">
-                  <QrCode className="w-7 h-7" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
+            {[
+              { href: '/single', icon: QrCode, title: 'Single Studio', desc: 'Branded QR codes with logos and AI backgrounds.', label: 'PRO MODE', color: 'bg-primary/50' },
+              { href: '/bulk', icon: Layers, title: 'Bulk Production', desc: 'Generate hundreds of high-res assets in seconds.', label: 'BATCH', color: 'bg-primary/50' },
+              { href: '/photo-editor', icon: ImageIcon, title: 'Photo Studio', desc: 'Professional filters and local image editing.', label: 'EDITOR', color: 'bg-primary/50' },
+              { href: '/ocr', icon: FileText, title: 'OCR Extraction', desc: 'Extract text from images locally and securely.', label: 'INTEL', color: 'bg-primary/40' },
+              { href: '/dot-art', icon: Grid3X3, title: 'Dot Art Studio', desc: 'Intricate Braille Unicode artistic generation.', label: 'ART', color: 'bg-primary/40' },
+              { href: '/repeater', icon: Repeat, title: 'Text Repeater', desc: 'Professional emoji and text multiplication.', label: 'UTIL', color: 'bg-primary/30' }
+            ].map((item, i) => (
+              <Link key={i} href={item.href} className="group h-full">
+                <div className="glass-card p-10 rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-3 text-left relative overflow-hidden h-full shadow-2xl hover:shadow-primary/20">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-primary/30 rounded-full -mr-20 -mt-20 group-hover:bg-primary/40 transition-all blur-3xl" />
+                  <div className={cn("w-16 h-16 rounded-[1.8rem] flex items-center justify-center text-primary mb-8 border border-primary/60 shadow-inner group-hover:scale-110 transition-transform duration-500", item.color)}>
+                    <item.icon className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">{item.title}</h3>
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-widest">{item.label}</span>
+                    </div>
+                    <p className="text-[12px] text-foreground/40 leading-relaxed font-medium">
+                      {item.desc}
+                    </p>
+                    <div className="flex items-center gap-3 pt-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary opacity-60 group-hover:opacity-100 transition-opacity">
+                      Open Studio <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-500" />
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-xl font-headline font-bold text-foreground mb-3 uppercase tracking-tight">Single QR</h3>
-                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium mb-6">
-                  Branded QR codes with custom logos and AI backgrounds.
-                </p>
-                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-primary">
-                  Studio <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/bulk" className="group h-full">
-              <div className="glass-card p-8 rounded-[2.5rem] border-border hover:border-primary/40 transition-all hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-lg hover:shadow-primary/10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/40 rounded-full -mr-16 -mt-16 group-hover:bg-primary/50 transition-all blur-2xl" />
-                <div className="w-14 h-14 rounded-[1.5rem] bg-primary/50 flex items-center justify-center text-primary mb-6 border border-primary/60 shadow-inner group-hover:scale-110 transition-transform">
-                  <Layers className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-headline font-bold text-foreground mb-3 uppercase tracking-tight">Bulk Mode</h3>
-                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium mb-6">
-                  Generate hundreds of high-res QR codes in seconds.
-                </p>
-                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-primary">
-                  Batch <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/photo-editor" className="group h-full">
-              <div className="glass-card p-8 rounded-[2.5rem] border-border hover:border-primary/40 transition-all hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-lg hover:shadow-primary/10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/40 rounded-full -mr-16 -mt-16 group-hover:bg-primary/50 transition-all blur-2xl" />
-                <div className="w-14 h-14 rounded-[1.5rem] bg-primary/50 flex items-center justify-center text-primary mb-6 border border-primary/60 shadow-inner group-hover:scale-110 transition-transform">
-                  <ImageIcon className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-headline font-bold text-foreground mb-3 uppercase tracking-tight">Photo Editor</h3>
-                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium mb-6">
-                  Professional filters, transformations, and local editing.
-                </p>
-                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-primary">
-                  Studio <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/ocr" className="group h-full">
-              <div className="glass-card p-8 rounded-[2.5rem] border-border hover:border-primary/40 transition-all hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-lg hover:shadow-primary/10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/30 rounded-full -mr-16 -mt-16 group-hover:bg-primary/40 transition-all blur-2xl" />
-                <div className="w-14 h-14 rounded-[1.5rem] bg-primary/40 flex items-center justify-center text-primary mb-6 border border-primary/50 shadow-inner group-hover:scale-110 transition-transform">
-                  <FileText className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-headline font-bold text-foreground mb-3 uppercase tracking-tight">OCR Text</h3>
-                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium mb-6">
-                  Extract text from images and documents locally.
-                </p>
-                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-primary">
-                  Extract <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/dot-art" className="group h-full">
-              <div className="glass-card p-8 rounded-[2.5rem] border-border hover:border-primary/40 transition-all hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-lg hover:shadow-primary/10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/30 rounded-full -mr-16 -mt-16 group-hover:bg-primary/40 transition-all blur-2xl" />
-                <div className="w-14 h-14 rounded-[1.5rem] bg-primary/40 flex items-center justify-center text-primary mb-6 border border-primary/50 shadow-inner group-hover:scale-110 transition-transform">
-                  <Grid3X3 className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-headline font-bold text-foreground mb-3 uppercase tracking-tight">Dot Art</h3>
-                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium mb-6">
-                  Convert images to intricate Braille Unicode text art.
-                </p>
-                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-primary">
-                  Generate <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/repeater" className="group h-full">
-              <div className="glass-card p-8 rounded-[2.5rem] border-border hover:border-primary/40 transition-all hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-lg hover:shadow-primary/10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -mr-16 -mt-16 group-hover:bg-primary/30 transition-all blur-2xl" />
-                <div className="w-14 h-14 rounded-[1.5rem] bg-primary/30 flex items-center justify-center text-primary mb-6 border border-primary/40 shadow-inner group-hover:scale-110 transition-transform">
-                  <Repeat className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-headline font-bold text-foreground mb-3 uppercase tracking-tight">Repeater</h3>
-                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium mb-6">
-                  Multiply text and emojis with professional formatting.
-                </p>
-                <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-primary">
-                  Multiply <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
       {/* FEATURES GRID */}
-      <section className="container mx-auto px-6 py-24 border-t border-border bg-secondary/10">
-        <h2 className="sr-only">Studio Features</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl mx-auto">
-          {[
-            { icon: Palette, title: 'Artistic Branding', desc: 'Custom dot patterns, corner geometries, and integrated business logos.' },
-            { icon: Download, title: 'Vector Exports', desc: 'Download in PNG, JPG, or professional SVG formats for large-format printing.' },
-            { icon: Smartphone, title: 'PWA Ready', desc: 'Install as a high-performance native app on your mobile device for offline scanning.' },
-            { icon: Zap, title: 'Instant Render', desc: 'Real-time studio preview with advanced error correction level adjustment.' },
-            { icon: ShieldCheck, title: 'Privacy First', desc: 'Zero data storage. All generation happens locally in your browser session.' },
-            { icon: HelpCircle, title: 'Expert Support', desc: 'Detailed FAQ and knowledge base to help you create the perfect QR assets.' },
-          ].map((item, i) => (
-            <div key={i} className="flex gap-6">
-              <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-sm">
-                <item.icon className="w-5 h-5" />
+      <section className="w-full bg-secondary/20 py-32 border-y border-border">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-24 max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tight mb-6">Built for <span className="text-primary italic">Excellence</span></h2>
+            <p className="text-foreground/40 font-medium leading-relaxed">High-performance technical assets with a focus on privacy and precision scannability.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 max-w-6xl mx-auto">
+            {[
+              { icon: Palette, title: 'Artistic Branding', desc: 'Custom dot patterns, corner geometries, and integrated business logos for consistent brand identity.' },
+              { icon: Download, title: 'Vector Exports', desc: 'Download in PNG, JPG, or professional SVG formats suitable for large-format billboards and print.' },
+              { icon: Smartphone, title: 'PWA Native', desc: 'Install as a high-performance native app on your mobile device for offline studio access anytime.' },
+              { icon: Zap, title: 'Instant Engine', desc: 'Real-time studio preview with advanced error correction level adjustment and scannability scores.' },
+              { icon: ShieldCheck, title: 'Privacy Absolute', desc: 'Zero data storage. All generation, OCR, and editing happens locally in your secure browser session.' },
+              { icon: Binary, title: 'Technical Tools', desc: 'Code converters, AOB pattern processors, and developer-centric utilities for modern workflows.' },
+            ].map((item, i) => (
+              <div key={i} className="flex gap-8 group">
+                <div className="w-16 h-16 rounded-[1.8rem] bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-xl group-hover:border-primary/40 transition-all duration-500">
+                  <item.icon className="w-7 h-7" />
+                </div>
+                <div className="space-y-3">
+                  <h4 className="text-base font-black uppercase tracking-widest text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
+                  <p className="text-[13px] text-foreground/40 leading-relaxed font-medium">{item.desc}</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <h4 className="text-sm font-black uppercase tracking-widest text-foreground">{item.title}</h4>
-                <p className="text-xs text-foreground/40 leading-relaxed font-medium">{item.desc}</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA SECTION */}
+      <section className="container mx-auto px-6 py-32 text-center">
+        <div className="glass-card p-16 md:p-24 rounded-[4rem] max-w-5xl mx-auto border-border relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -mr-32 -mt-32" />
+           <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -ml-32 -mb-32" />
+           
+           <h2 className="text-3xl md:text-6xl font-headline font-black uppercase tracking-tight mb-8 relative z-10">Start Your <span className="text-primary italic">Production</span></h2>
+           <p className="text-lg text-foreground/40 font-medium mb-12 max-w-2xl mx-auto relative z-10">
+             Join thousands of marketing professionals creating premium branded assets for free. No credit card, no signup, just performance.
+           </p>
+           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 relative z-10">
+             <Link href="/single" className="w-full sm:w-auto px-10 py-5 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
+               Open Studio
+             </Link>
+             <Link href="/faq" className="w-full sm:w-auto px-10 py-5 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-secondary/80 transition-all">
+               View Documentation
+             </Link>
+           </div>
         </div>
       </section>
     </div>

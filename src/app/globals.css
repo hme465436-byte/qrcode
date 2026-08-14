@@ -55,8 +55,8 @@
   }
   body {
     @apply bg-background text-foreground antialiased transition-colors duration-500;
-    background-image: radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.05) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, hsla(217, 91%, 60%, 0.03) 0px, transparent 50%);
+    background-image: radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.08) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, hsla(217, 91%, 60%, 0.05) 0px, transparent 50%);
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline tracking-tight;
@@ -68,7 +68,7 @@
 }
 
 .glass-card:hover {
-  @apply border-primary/30 bg-white/60 dark:bg-black/60;
+  @apply border-primary/40 bg-white/60 dark:bg-black/60 shadow-primary/10;
 }
 
 .blue-glow {
