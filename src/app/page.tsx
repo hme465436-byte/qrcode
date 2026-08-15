@@ -45,7 +45,8 @@ import {
   FileArchive,
   ArrowRightLeft,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -81,6 +82,16 @@ const TOOLS = [
     color: 'text-violet-600 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/whatsapp-dp-maker', 
+    icon: User, 
+    title: 'WhatsApp DP', 
+    desc: 'Make full-size WhatsApp profile pics without quality loss.', 
+    label: 'IDENTITY', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['whatsapp dp maker', 'profile picture', 'uncut dp', 'whatsapp quality', 'whatsquality', 'hd dp', 'profile maker']
   },
   { 
     href: '/pdf-merger', 
@@ -426,7 +437,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. pdf, age, compress, qr)"
+                  placeholder="Search tools... (e.g. dp maker, pdf, compress, logo)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
@@ -480,7 +491,7 @@ export default function Home() {
                 <Search className="w-16 h-16 text-foreground/10" />
                 <div className="space-y-2">
                   <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
-                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;age&quot; or &quot;qr&quot;</p>
+                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;age&quot; or &quot;dp&quot;</p>
                 </div>
                 <ShadButton 
                   onClick={() => setSearchQuery('')}
