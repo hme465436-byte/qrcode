@@ -27,7 +27,8 @@ import {
   Plus,
   RefreshCcw,
   Maximize,
-  Filter
+  Filter,
+  ClipboardType
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -432,7 +433,7 @@ export default function DuplicateFinderPage() {
                 </div>
                 <div className="space-y-1">
                    <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Master Bundle Logic</p>
-                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">Unified project architectures allow for efficient large-scale redundancy cleaning.</p>
+                   <p className="text-[11px] text-foreground/40 font-medium leading-relaxed">Unified project architectures allow for efficient large-scale redundancy cleaning.</p>
                 </div>
              </div>
           </div>
@@ -455,7 +456,3 @@ export default function DuplicateFinderPage() {
     </div>
   );
 }
-
-const useMemo = (fn: () => any, deps: any[]) => {
-  return React.useMemo(fn, deps);
-};
