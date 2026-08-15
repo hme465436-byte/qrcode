@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -68,7 +69,7 @@ export default function PasswordGeneratorPage() {
   // Initial generation
   useEffect(() => {
     generatePassword();
-  }, []);
+  }, [generatePassword]);
 
   const getStrength = () => {
     if (!password) return { label: 'None', color: 'bg-secondary', percent: 0 };
@@ -269,14 +270,14 @@ export default function PasswordGeneratorPage() {
                     <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="space-y-1">
                        <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Instant Provision</p>
-                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium">Password is generated immediately upon protocol change.</p>
+                       <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">Password is generated immediately upon protocol change.</p>
                     </div>
                  </div>
                  <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
                     <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="space-y-1">
                        <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Zero Transmission</p>
-                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium">Your data never leaves your machine. 100% private.</p>
+                       <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">Your data never leaves your machine. 100% private.</p>
                     </div>
                  </div>
               </div>

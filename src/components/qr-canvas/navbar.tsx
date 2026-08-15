@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -38,7 +39,8 @@ import {
   FileEdit,
   AlignLeft,
   Youtube,
-  Lock
+  Lock,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -74,6 +76,7 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home, keywords: ['start', 'dashboard', 'main'] },
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
+  { label: 'Age Studio', href: '/age-calculator', icon: Clock, keywords: ['age', 'birthday', 'how old am i', 'dob'] },
   { label: 'Passwords', href: '/password-generator', icon: Lock, keywords: ['password', 'generator', 'safe', 'secure', 'entropy'] },
   { label: 'YouTube Banner', href: '/youtube-banner-maker', icon: Youtube, keywords: ['youtube', 'banner', 'channel art', 'yt cover'] },
   { label: 'Collage', href: '/collage-maker', icon: Grid2X2, keywords: ['collage maker', 'photo grid', 'merge photos', '2x2 collage', 'photo collage'] },

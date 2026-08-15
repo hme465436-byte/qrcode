@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -37,7 +38,9 @@ import {
   FileEdit,
   AlignLeft,
   Youtube,
-  Lock
+  Lock,
+  Clock,
+  Baby
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -61,6 +64,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/age-calculator', 
+    icon: Clock, 
+    title: 'Age Calculator', 
+    desc: 'Calculate exact age and birthday countdowns.', 
+    label: 'STATS', 
+    color: 'bg-primary/50',
+    keywords: ['age calculator', 'date of birth', 'how old am i', 'birthday', 'chronos', 'time lived']
   },
   { 
     href: '/password-generator', 
@@ -261,15 +273,6 @@ const TOOLS = [
     keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
   },
   { 
-    href: '/dot-art', 
-    icon: Grid3X3, 
-    title: 'Dot Art Studio', 
-    desc: 'Intricate Braille Unicode artistic generation.', 
-    label: 'ART', 
-    color: 'bg-primary/40',
-    keywords: ['braille', 'dots', 'ascii art', 'image to dots', 'matrix', 'creative', 'text art']
-  },
-  { 
     href: '/repeater', 
     icon: Repeat, 
     title: 'Text Repeater', 
@@ -318,7 +321,7 @@ export default function Home() {
           {/* Search Bar with Moving Border Trace Effect */}
           <div className="max-w-xl mx-auto mb-16 px-4 group relative">
             <div className="relative h-16 w-full rounded-3xl p-[3px] overflow-hidden transition-all duration-500 shadow-2xl group-focus-within:ring-4 group-focus-within:ring-primary/10">
-              {/* Border Trace Animation - Refined for premium aesthetic */}
+              {/* Border Trace Animation */}
               <div 
                 className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] opacity-80 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity blur-[4px]"
                 style={{
@@ -333,7 +336,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. compress, qr, edit)"
+                  placeholder="Search tools... (e.g. age, compress, qr)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
@@ -385,7 +388,7 @@ export default function Home() {
                 <Search className="w-16 h-16 text-foreground/10" />
                 <div className="space-y-2">
                   <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
-                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;compress&quot; or &quot;qr&quot;</p>
+                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;age&quot; or &quot;qr&quot;</p>
                 </div>
                 <ShadButton 
                   onClick={() => setSearchQuery('')}
@@ -441,12 +444,12 @@ export default function Home() {
              Join thousands of professionals using MY KIT TOOL for premium branded assets and technical utilities. No signup, just performance.
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 relative z-10">
-             <Link href="/single" className="w-full sm:w-auto px-10 py-5 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
+             <a href="/single" className="w-full sm:w-auto px-10 py-5 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-center">
                Open Studio
-             </Link>
-             <Link href="/faq" className="w-full sm:w-auto px-10 py-5 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-secondary/80 transition-all">
+             </a>
+             <a href="/faq" className="w-full sm:w-auto px-10 py-5 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-secondary/80 transition-all text-center">
                View Documentation
-             </Link>
+             </a>
            </div>
         </div>
         

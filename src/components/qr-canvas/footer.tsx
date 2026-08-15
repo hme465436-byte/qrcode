@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -70,6 +71,7 @@ export function Footer() {
                 {[
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
+                  { label: 'Age Studio', href: '/age-calculator' },
                   { label: 'Password Studio', href: '/password-generator' },
                   { label: 'YouTube Studio', href: '/youtube-banner-maker' },
                   { label: 'Collage Maker', href: '/collage-maker' },
