@@ -46,7 +46,9 @@ import {
   ArrowRightLeft,
   User,
   DownloadCloud,
-  Fingerprint
+  Fingerprint,
+  Files,
+  Copy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -82,6 +84,16 @@ const TOOLS = [
     color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/duplicate-finder', 
+    icon: Files, 
+    title: 'Duplicate Purge', 
+    desc: 'Find and remove redundant files from projects or ZIPs.', 
+    label: 'STUDIO', 
+    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+    glowClass: 'bg-amber-500/10',
+    keywords: ['duplicate finder', 'clean files', 'remove duplicate', 'zip cleaner', 'project optimization', 'duplicates']
   },
   { 
     href: '/whatsapp-dp-maker', 
@@ -349,7 +361,7 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },
