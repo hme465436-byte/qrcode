@@ -348,16 +348,16 @@ export default function Home() {
             The world&apos;s most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
           </p>
 
-          {/* Search Bar with Enhanced outer glow and clear buttons */}
+          {/* Search Bar with MAX GLOW */}
           <div className="max-w-xl mx-auto mb-16 px-4 group relative">
-            <div className="relative h-16 w-full rounded-3xl p-[3.5px] overflow-hidden transition-all duration-500 shadow-[0_20px_50px_-20px_rgba(37,99,235,0.3)] group-focus-within:shadow-[0_20px_60px_-15px_rgba(37,99,235,0.4)] group-focus-within:ring-8 group-focus-within:ring-primary/10">
+            <div className="relative h-16 w-full rounded-3xl p-[3.5px] overflow-hidden transition-all duration-500 shadow-[0_0_50px_-5px_rgba(37,99,235,0.25),0_10px_20px_-5px_rgba(37,99,235,0.2)] group-focus-within:shadow-[0_0_80px_-5px_rgba(37,99,235,0.5),0_20px_30px_-10px_rgba(37,99,235,0.4)] group-focus-within:ring-[12px] group-focus-within:ring-primary/5">
               <div 
-                className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] opacity-80 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity blur-[12px]"
+                className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] opacity-90 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity blur-[25px]"
                 style={{
                   background: 'conic-gradient(from 0deg, transparent 0, transparent 45%, #2563eb 50%, transparent 55%, transparent 100%)'
                 }}
               />
-              <div className="relative flex items-center w-full h-full bg-white/95 dark:bg-black/95 backdrop-blur-3xl rounded-[calc(1.5rem-3.5px)] overflow-hidden">
+              <div className="relative flex items-center w-full h-full bg-white dark:bg-black backdrop-blur-3xl rounded-[calc(1.5rem-3.5px)] overflow-hidden">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                   <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
                 </div>
