@@ -45,8 +45,7 @@ import {
   FileArchive,
   ArrowRightLeft,
   User,
-  DownloadCloud,
-  Compass
+  DownloadCloud
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -82,7 +81,6 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home, keywords: ['start', 'dashboard', 'main'] },
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
-  { label: 'EXIF Explorer', href: '/exif-viewer', icon: Compass, keywords: ['exif', 'metadata', 'gps', 'photo data', 'camera'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
   { label: 'WhatsApp DP', href: '/whatsapp-dp-maker', icon: User, keywords: ['whatsapp dp maker', 'profile picture', 'uncut dp', 'whatsapp quality', 'whatsquality', 'hd dp', 'profile maker'] },
   { label: 'PDF Merger', href: '/pdf-merger', icon: FileStack, keywords: ['pdf merge', 'combine pdf', 'join pdf', 'multiple pdfs', 'document joiner'] },

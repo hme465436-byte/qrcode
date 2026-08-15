@@ -46,7 +46,6 @@ import {
   ArrowRightLeft,
   User,
   DownloadCloud,
-  Compass,
   Fingerprint
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -73,16 +72,6 @@ const TOOLS = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
-  },
-  { 
-    href: '/exif-viewer', 
-    icon: Compass, 
-    title: 'EXIF Explorer', 
-    desc: 'Deep clinical inspection of image metadata and GPS.', 
-    label: 'ANALYSIS', 
-    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
-    glowClass: 'bg-orange-500/10',
-    keywords: ['exif viewer', 'metadata reader', 'image info', 'gps coordinates', 'camera settings', 'photo data']
   },
   { 
     href: '/logo-maker', 
@@ -330,7 +319,7 @@ const TOOLS = [
     title: 'Audio Joiner', 
     desc: 'Merge multiple audio files into a single master track.', 
     label: 'PRODUCTION', 
-    color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
+    color: 'text-blue-600 bg-blue-500/10 border-blue-600/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound']
   },
