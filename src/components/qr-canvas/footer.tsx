@@ -70,6 +70,7 @@ export function Footer() {
                 {[
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
+                  { label: 'Speech to Text', href: '/speech-to-text' },
                   { label: 'Password Studio', href: '/password-generator' },
                   { label: 'YouTube Studio', href: '/youtube-banner-maker' },
                   { label: 'Collage Maker', href: '/collage-maker' },
