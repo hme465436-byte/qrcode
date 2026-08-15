@@ -1,8 +1,7 @@
-
 "use client"
 
 import React, { useState, useMemo } from 'react';
-import Link from 'next/navigation';
+import Link from 'next/link';
 import { 
   QrCode, 
   Layers, 
@@ -341,7 +340,7 @@ const TOOLS = [
     label: 'INTEL', 
     color: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'tesseract', 'read']
+    keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },
   { 
     href: '/hex-converter', 
