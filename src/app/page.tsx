@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -40,7 +39,8 @@ import {
   Youtube,
   Lock,
   Clock,
-  Baby
+  Baby,
+  MonitorPlay
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -66,6 +66,24 @@ const TOOLS = [
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
   },
   { 
+    href: '/youtube-thumbnail-maker', 
+    icon: MonitorPlay, 
+    title: 'YT Thumbnail', 
+    desc: 'Resize and frame images for 1280x720 thumbnails.', 
+    label: 'YOUTUBE', 
+    color: 'bg-red-500/20',
+    keywords: ['youtube thumbnail size', '1280x720', 'yt thumbnail maker', 'thumbnail resizer', 'youtube thumbnail resizer']
+  },
+  { 
+    href: '/youtube-banner-maker', 
+    icon: Youtube, 
+    title: 'YouTube Banner', 
+    desc: 'Create 2560x1440 channel art with safe-zone guides.', 
+    label: 'YOUTUBE', 
+    color: 'bg-red-500/20',
+    keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area']
+  },
+  { 
     href: '/age-calculator', 
     icon: Clock, 
     title: 'Age Calculator', 
@@ -82,15 +100,6 @@ const TOOLS = [
     label: 'SECURITY', 
     color: 'bg-primary/50',
     keywords: ['password generator', 'random password', 'strong password', 'security', 'safe', 'key']
-  },
-  { 
-    href: '/youtube-banner-maker', 
-    icon: Youtube, 
-    title: 'YouTube Banner', 
-    desc: 'Create 2560x1440 channel art with safe-zone guides.', 
-    label: 'YOUTUBE', 
-    color: 'bg-red-500/20',
-    keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area']
   },
   { 
     href: '/collage-maker', 
