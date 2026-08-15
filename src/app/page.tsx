@@ -25,7 +25,8 @@ import {
   Maximize,
   FileStack,
   CaseSensitive,
-  Scaling
+  Scaling,
+  RefreshCcw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -49,6 +50,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/image-converter', 
+    icon: RefreshCcw, 
+    title: 'Image Converter', 
+    desc: 'Seamlessly switch between PNG and JPG formats.', 
+    label: 'FORMAT', 
+    color: 'bg-primary/50',
+    keywords: ['png to jpg', 'jpg to png', 'convert image', 'png jpg converter', 'jpeg', 'image format']
   },
   { 
     href: '/image-resizer', 
