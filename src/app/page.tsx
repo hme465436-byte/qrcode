@@ -76,13 +76,13 @@ const TOOLS = [
   },
   { 
     href: '/media-downloader', 
-    icon: DownloadCloud, 
-    title: 'Media Downloader', 
-    desc: 'Universal video and audio downloader for all formats.', 
+    icon: Youtube, 
+    title: 'YT & Media Download', 
+    desc: 'Extract YouTube videos and audio in all high-res formats.', 
     label: 'EXTRACT', 
-    color: 'text-sky-600 bg-sky-500/10 border-sky-500/20',
-    glowClass: 'bg-sky-500/10',
-    keywords: ['video downloader', 'audio downloader', 'download mp4', 'download mp3', 'media extract', 'save video']
+    color: 'text-red-600 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['youtube downloader', 'video downloader', 'audio downloader', 'download mp4', 'download mp3', 'media extract', 'save video', 'yt', 'social']
   },
   { 
     href: '/logo-maker', 
@@ -448,7 +448,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. video, dp maker, pdf, logo)"
+                  placeholder="Search tools... (e.g. youtube, video, pdf, logo)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
