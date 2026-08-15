@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -397,17 +396,17 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));`,
                   </CardHeader>
                   <CardContent className="p-0">
                     <Tabs defaultValue="html" className="w-full">
-                       <div className="flex bg-background border-b border-border overflow-x-auto no-scrollbar">
+                       <TabsList className="h-auto w-full justify-start rounded-none bg-background border-b border-border p-0 overflow-x-auto no-scrollbar">
                          {Object.keys(SNIPPETS).map((key) => (
                            <TabsTrigger 
                              key={key} 
                              value={key} 
-                             className="px-6 py-4 rounded-none text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary/5 data-[state=active]:text-primary border-r border-border transition-all"
+                             className="h-full px-6 py-4 rounded-none text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary/5 data-[state=active]:text-primary border-r border-border transition-all"
                            >
                              {key}
                            </TabsTrigger>
                          ))}
-                       </div>
+                       </TabsList>
                        
                        {Object.entries(SNIPPETS).map(([key, code]) => (
                          <TabsContent key={key} value={key} className="m-0 p-8 space-y-6 animate-in fade-in duration-500">
