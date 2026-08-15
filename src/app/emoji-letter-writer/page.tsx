@@ -8,12 +8,12 @@ import {
   Sparkles, 
   CheckCircle2, 
   Info,
-  Settings2,
   WholeWord,
   LayoutGrid,
   AlignLeft,
   Type,
-  Maximize2
+  Maximize2,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,12 +68,12 @@ export default function EmojiLetterWriterPage() {
   const { toast } = useToast();
   const [text, setText] = useState('');
   const [emojis, setEmojis] = useState('❤️');
-  const [size, setSize] = useState<'sm' | 'md' | 'lg'>('md');
+  const [spacing, setSpacing] = useState<'sm' | 'md' | 'lg'>('md');
   const [isCopied, setIsCopied] = useState(false);
 
-  // Correctly split emojis handling surrogate pairs
+  // Split emojis to support multi-emoji cycling
   const emojiList = useMemo(() => {
-    return Array.from(emojis).filter(e => e.trim().length > 0 && e !== ' ');
+    return Array.from(emojis).filter(e => e.trim().length > 0);
   }, [emojis]);
 
   // Synthesis Logic
@@ -84,9 +84,9 @@ export default function EmojiLetterWriterPage() {
     let finalResult = '';
     let emojiCounter = 0;
 
-    // Standard emoji width stabilizer: Ideographic Space (U+3000)
-    const offChar = '　'; 
-    const charGapWidth = size === 'sm' ? 1 : size === 'md' ? 2 : 3;
+    // Use Ideographic Space (U+3000) to match emoji width perfectly
+    const emptyChar = '　'; 
+    const charGap = spacing === 'sm' ? 1 : spacing === 'md' ? 2 : 3;
 
     lines.forEach((line) => {
       // Loop through each of the 7 rows of the matrix
@@ -96,30 +96,30 @@ export default function EmojiLetterWriterPage() {
           const char = line[i];
           const pattern = CHAR_MAP[char] || CHAR_MAP[' '];
           
-          for (let pCol = 0; pCol < 5; pCol++) {
+          for (let col = 0; pCol < 5; pCol++) {
             if (pattern[row][pCol] === 1) {
               rowStr += emojiList[emojiCounter % emojiList.length];
               emojiCounter++;
             } else {
-              rowStr += offChar;
+              rowStr += emptyChar;
             }
           }
           // Horizontal gap between characters
-          rowStr += offChar.repeat(charGapWidth);
+          rowStr += emptyChar.repeat(charGap);
         }
         finalResult += rowStr + '\n';
       }
-      finalResult += '\n'; // Add spacing between lines of text
+      finalResult += '\n'; // spacing between lines of text
     });
 
     return finalResult;
-  }, [text, emojiList, size]);
+  }, [text, emojiList, spacing]);
 
   const handleCopy = () => {
     if (output) {
       navigator.clipboard.writeText(output);
       setIsCopied(true);
-      toast({ title: "Matrix Copied", description: "High-legibility art saved to clipboard." });
+      toast({ title: "Matrix Copied", description: "Emoji art saved to clipboard." });
       setTimeout(() => setIsCopied(false), 2000);
     }
   };
@@ -133,7 +133,7 @@ export default function EmojiLetterWriterPage() {
   const setSample = (val: string, emo: string) => {
     setText(val);
     setEmojis(emo);
-    toast({ title: "Template Injected", description: `"${val}" pattern loaded.` });
+    toast({ title: "Template Loaded", description: `"${val}" pattern active.` });
   };
 
   return (
@@ -146,7 +146,7 @@ export default function EmojiLetterWriterPage() {
           Emoji <span className="text-primary italic">Letter Writer</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          High-resolution 7x5 block art synthesis. Transform alphanumeric strings into massive emoji matrices stabilized for perfect mobile sharing.
+          High-resolution 7x5 block art synthesis. Transform text into massive emoji matrices stabilized for perfect mobile sharing.
         </p>
       </div>
 
@@ -167,18 +167,18 @@ export default function EmojiLetterWriterPage() {
             
             <CardContent className="pt-10 space-y-10">
               <div className="space-y-4">
-                <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Linguistic Payload</Label>
+                <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Linguistic Payload</豆
                 <Input 
                   placeholder="Type A-Z or 0-9..."
                   value={text}
-                  onChange={(e) => setText(e.target.value.substring(0, 40))}
+                  onChange={(e) => setText(e.target.value.substring(0, 30))}
                   className="h-14 bg-secondary border-border rounded-2xl text-foreground font-headline font-bold text-lg focus:ring-primary/40"
                 />
                 <div className="flex justify-between items-center px-1">
                    <p className="text-[9px] text-foreground/30 font-bold uppercase tracking-widest flex items-center gap-2">
                     <Type className="w-3 h-3" /> Binary Grid Active
                   </p>
-                  <span className="text-[9px] font-mono text-primary/60">{text.length}/40</span>
+                  <span className="text-[9px] font-mono text-primary/60">{text.length}/30</span>
                 </div>
               </div>
 
@@ -196,19 +196,19 @@ export default function EmojiLetterWriterPage() {
               </div>
 
               <div className="space-y-4">
-                <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Horizontal Spacing Matrix</Label>
+                <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Letter Gaps</Label>
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { id: 'sm', label: 'Tight' },
-                    { id: 'md', label: 'Balanced' },
-                    { id: 'lg', label: 'Spacious' },
+                    { id: 'md', label: 'Normal' },
+                    { id: 'lg', label: 'Wide' },
                   ].map((s) => (
                     <button
                       key={s.id}
-                      onClick={() => setSize(s.id as any)}
+                      onClick={() => setSpacing(s.id as any)}
                       className={cn(
                         "h-12 rounded-xl border flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all",
-                        size === s.id ? "bg-primary text-primary-foreground border-primary shadow-lg" : "bg-background border-border text-foreground/40 hover:text-foreground"
+                        spacing === s.id ? "bg-primary text-primary-foreground border-primary shadow-lg" : "bg-background border-border text-foreground/40 hover:text-foreground"
                       )}
                     >
                       {s.label}
@@ -220,10 +220,10 @@ export default function EmojiLetterWriterPage() {
               <div className="space-y-3 pt-4 border-t border-border">
                 <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Rapid Templates</Label>
                 <div className="grid grid-cols-2 gap-3">
-                   <button onClick={() => setSample('HELLO', '👋✨')} className="h-11 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-secondary transition-all">Hello Matrix</button>
-                   <button onClick={() => setSample('HAPPY', '🎂🎉')} className="h-11 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-secondary transition-all">Happy Mode</button>
-                   <button onClick={() => setSample('LOVE', '❤️🔥')} className="h-11 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-secondary transition-all">Love Pattern</button>
-                   <button onClick={() => setSample('123', '🔢💎')} className="h-11 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-secondary transition-all">Numeric Test</button>
+                   <button onClick={() => setSample('HELLO', '👋')} className="h-11 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-secondary transition-all">Hello Matrix</button>
+                   <button onClick={() => setSample('HAPPY', '🎉')} className="h-11 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-secondary transition-all">Happy Mode</button>
+                   <button onClick={() => setSample('LOVE', '❤️')} className="h-11 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-secondary transition-all">Love Pattern</button>
+                   <button onClick={() => setSample('123', '🔢')} className="h-11 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-secondary transition-all">Numeric Test</button>
                 </div>
               </div>
 
@@ -234,7 +234,7 @@ export default function EmojiLetterWriterPage() {
                   className="flex-[2] h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isCopied ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
-                  Copy Master
+                  Copy Matrix
                 </Button>
                 <Button 
                   variant="outline"
@@ -252,7 +252,7 @@ export default function EmojiLetterWriterPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Alignment Protocol</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our rebuilt engine uses the Ideographic Space (U+3000) for "off" cells. This matches the native pixel width of emojis on iOS, Android, and Windows, ensuring your block letters never collapse or skew during sharing.
+                Our engine uses the Ideographic Space (U+3000) for "off" cells. This matches the native width of emojis on mobile platforms, ensuring your art stays perfectly aligned on WhatsApp.
               </p>
             </div>
           </div>
@@ -279,13 +279,13 @@ export default function EmojiLetterWriterPage() {
                 <textarea 
                   readOnly
                   value={output}
-                  placeholder="Linguistic matrix will appear here..."
+                  placeholder="Emoji art will appear here..."
                   className="w-full h-full p-8 sm:p-12 font-mono text-[10px] sm:text-xs leading-none resize-none focus:outline-none bg-transparent text-foreground custom-scrollbar overflow-auto whitespace-pre tracking-normal"
                 />
                 {!output && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
                     <LayoutGrid className="w-24 h-24 text-primary mb-6" />
-                    <p className="text-xs font-black uppercase tracking-[0.3em]">Awaiting Input Payload</p>
+                    <p className="text-xs font-black uppercase tracking-[0.3em]">Awaiting Matrix Payload</p>
                   </div>
                 )}
               </div>
@@ -304,7 +304,7 @@ export default function EmojiLetterWriterPage() {
                          <Maximize2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                          <div className="space-y-1">
                             <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Cross-Platform</p>
-                            <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">Fixed-width stabilizers ensure perfect alignment on WhatsApp/Discord.</p>
+                            <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">Ideographic stabilizers ensure perfect alignment on WhatsApp/Discord.</p>
                          </div>
                       </div>
                    </div>
@@ -316,4 +316,27 @@ export default function EmojiLetterWriterPage() {
       </div>
     </div>
   );
+}
+
+// Fixed Row Logic
+function getRowString(rowIdx: number, line: string, emojiList: string[], emojiCounter: { current: number }, spacing: string) {
+  const emptyChar = '　';
+  const charGapWidth = spacing === 'sm' ? 1 : spacing === 'md' ? 2 : 3;
+  let rowStr = '';
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const pattern = CHAR_MAP[char] || CHAR_MAP[' '];
+    
+    for (let pCol = 0; pCol < 5; pCol++) {
+      if (pattern[rowIdx][pCol] === 1) {
+        rowStr += emojiList[emojiCounter.current % emojiList.length];
+        emojiCounter.current++;
+      } else {
+        rowStr += emptyChar;
+      }
+    }
+    rowStr += emptyChar.repeat(charGapWidth);
+  }
+  return rowStr;
 }
