@@ -36,8 +36,7 @@ import {
   MicOff,
   FileEdit,
   AlignLeft,
-  Youtube,
-  Smile
+  Youtube
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -70,15 +69,6 @@ const TOOLS = [
     label: 'YOUTUBE', 
     color: 'bg-red-500/20',
     keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area']
-  },
-  { 
-    href: '/emoji-letter-writer', 
-    icon: Smile, 
-    title: 'Emoji Writer', 
-    desc: 'Transform text into massive emoji-pattern block art.', 
-    label: 'ART', 
-    color: 'bg-primary/30',
-    keywords: ['emoji letter', 'emoji text art', 'emoji writer', 'emoji alphabet', 'text to emoji']
   },
   { 
     href: '/collage-maker', 
