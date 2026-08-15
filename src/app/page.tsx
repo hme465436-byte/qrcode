@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -26,7 +25,8 @@ import {
   FileStack,
   CaseSensitive,
   Scaling,
-  RefreshCcw
+  RefreshCcw,
+  Pipette
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -50,6 +50,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/color-picker', 
+    icon: Pipette, 
+    title: 'Color Picker', 
+    desc: 'Extract HEX, RGB, and HSL from any image.', 
+    label: 'DESIGN', 
+    color: 'bg-primary/50',
+    keywords: ['color picker', 'pick color from image', 'hex', 'rgb', 'eye dropper', 'color from photo', 'palette']
   },
   { 
     href: '/image-converter', 
