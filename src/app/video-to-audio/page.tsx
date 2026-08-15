@@ -45,9 +45,6 @@ const AUDIO_FORMATS = [
   { id: 'wav', label: 'WAV (Uncompressed)', codec: 'pcm_s16le', ext: 'wav', supportsBitrate: false },
   { id: 'flac', label: 'FLAC (Lossless)', codec: 'flac', ext: 'flac', supportsBitrate: false },
   { id: 'ogg', label: 'OGG (Vorbis)', codec: 'libvorbis', ext: 'ogg', supportsBitrate: true },
-  { id: 'opus', label: 'OPUS (Low Latency)', codec: 'libopus', ext: 'opus', supportsBitrate: true },
-  { id: 'wma', label: 'WMA (Windows)', codec: 'wmav2', ext: 'wma', supportsBitrate: true },
-  { id: 'ac3', label: 'AC3 (Dolby)', codec: 'ac3', ext: 'ac3', supportsBitrate: true },
 ];
 
 export default function VideoToAudioPage() {
@@ -331,7 +328,6 @@ export default function VideoToAudioPage() {
                 </div>
               </div>
 
-              {/* Trimming Controls */}
               {file && totalDuration > 0 && (
                 <div className="space-y-10 pt-6 border-t border-border animate-in fade-in zoom-in duration-500">
                   <div className="space-y-6">
@@ -454,13 +450,12 @@ export default function VideoToAudioPage() {
                   disabled={!file || isProcessing || !isValidRange}
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
-                  {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
+                  {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
                   Generate Master
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={handleClear}
-                  disabled={isProcessing}
                   className="w-16 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
                 >
                   <Trash2 className="w-6 h-6" />
@@ -484,7 +479,7 @@ export default function VideoToAudioPage() {
               <div className="relative group/output min-h-[300px] flex flex-col items-center justify-center rounded-[2.5rem] bg-secondary/30 border border-border p-10 text-center">
                 {!audioUrl && !isProcessing && (
                   <div className="opacity-10 group-hover:opacity-20 transition-opacity space-y-4">
-                    <Activity className="w-20 h-20 text-primary mx-auto" />
+                    <Activity className="w-20 h-20 text-primary mb-4 mx-auto" />
                     <p className="text-xs font-black uppercase tracking-[0.3em]">Studio Standby</p>
                   </div>
                 )}
