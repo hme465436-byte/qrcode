@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -15,11 +16,21 @@ import {
   Monitor,
   Smartphone,
   MousePointer2,
-  Box
+  Box,
+  Copy,
+  Code2,
+  Terminal,
+  FileCode,
+  Layers,
+  Sparkles,
+  Search,
+  Globe,
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import JSZip from 'jszip';
@@ -27,16 +38,20 @@ import JSZip from 'jszip';
 interface FaviconSize {
   size: number;
   label: string;
+  filename: string;
   desc: string;
   icon: any;
   dataUrl: string | null;
 }
 
-const TARGET_SIZES = [
-  { size: 16, label: '16x16', desc: 'Browser Tab', icon: MousePointer2 },
-  { size: 32, label: '32x32', desc: 'Desktop Shortcut', icon: Monitor },
-  { size: 48, label: '48x48', desc: 'Taskbar Icon', icon: Box },
-  { size: 180, label: '180x180', desc: 'Apple Touch', icon: Smartphone },
+const TARGET_SIZES: Omit<FaviconSize, 'dataUrl'>[] = [
+  { size: 16, label: '16x16', filename: 'favicon-16x16.png', desc: 'Standard Browser Tab', icon: MousePointer2 },
+  { size: 32, label: '32x32', filename: 'favicon-32x32.png', desc: 'High-Res Browser Tab', icon: Monitor },
+  { size: 48, label: '48x48', filename: 'favicon-48x48.png', desc: 'Desktop Taskbar', icon: Box },
+  { size: 96, label: '96x96', filename: 'favicon-96x96.png', desc: 'High-DPI Desktop', icon: Monitor },
+  { size: 180, label: '180x180', filename: 'apple-touch-icon.png', desc: 'iOS Home Screen', icon: Smartphone },
+  { size: 192, label: '192x192', filename: 'android-chrome-192x192.png', desc: 'Android PWA Small', icon: Layers },
+  { size: 512, label: '512x512', filename: 'android-chrome-512x512.png', desc: 'Android PWA Large', icon: LayoutGrid },
 ];
 
 export default function FaviconGeneratorPage() {
@@ -47,21 +62,22 @@ export default function FaviconGeneratorPage() {
     TARGET_SIZES.map(s => ({ ...s, dataUrl: null }))
   );
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCopied, setIsCopied] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Heavy Payload", description: "Standard limit for icons is 10MB." });
+      if (file.size > 20 * 1024 * 1024) {
+        toast({ variant: "destructive", title: "Heavy Payload", description: "Standard limit for icons is 20MB." });
         return;
       }
       setFileInfo({ name: file.name, size: file.size });
       const reader = new FileReader();
       reader.onloadend = () => {
         setSourceImage(reader.result as string);
-        toast({ title: "Asset Imported", description: "Ready for favicon synthesis." });
+        toast({ title: "Asset Imported", description: "Ready for studio synthesis." });
       };
       reader.readAsDataURL(file);
     }
@@ -77,7 +93,6 @@ export default function FaviconGeneratorPage() {
     img.onload = () => {
       const updatedFavicons = [...favicons];
       
-      // Determine square crop bounds
       const minDim = Math.min(img.width, img.height);
       const sx = (img.width - minDim) / 2;
       const sy = (img.height - minDim) / 2;
@@ -89,26 +104,30 @@ export default function FaviconGeneratorPage() {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Use high-quality scaling
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        
         ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, favicon.size, favicon.size);
         updatedFavicons[index].dataUrl = canvas.toDataURL('image/png');
       });
 
       setFavicons(updatedFavicons);
       setIsProcessing(false);
-      toast({ title: "Synthesis Complete", description: "All sizes generated with auto-square cropping." });
+      toast({ title: "Synthesis Complete", description: "All sizes generated with 1:1 pixel mapping." });
     };
   }, [sourceImage, favicons, toast]);
 
-  // Auto-generate on upload
   useEffect(() => {
     if (sourceImage) {
       generateFavicons();
     }
   }, [sourceImage]);
+
+  const handleCopyCode = (code: string, label: string) => {
+    navigator.clipboard.writeText(code);
+    setIsCopied(label);
+    toast({ title: "Snippet Copied", description: `${label} implementation ready.` });
+    setTimeout(() => setIsCopied(null), 2000);
+  };
 
   const downloadZip = async () => {
     const hasIcons = favicons.some(f => f.dataUrl);
@@ -117,21 +136,64 @@ export default function FaviconGeneratorPage() {
     setIsProcessing(true);
     const zip = new JSZip();
     
+    // Add all PNGs
     favicons.forEach(f => {
       if (f.dataUrl) {
         const base64Data = f.dataUrl.split(',')[1];
-        zip.file(`favicon-${f.size}x${f.size}.png`, base64Data, { base64: true });
+        zip.file(f.filename, base64Data, { base64: true });
+        
+        // Also map 32x32 to favicon.ico for standard naming
+        if (f.size === 32) {
+           zip.file('favicon.ico', base64Data, { base64: true });
+        }
       }
     });
+
+    // Create simple SVG wrapper
+    if (favicons[6]?.dataUrl) {
+       const svgContent = `<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <image href="${favicons[6].dataUrl}" width="512" height="512"/>
+</svg>`;
+       zip.file('favicon.svg', svgContent);
+    }
+
+    // Create site.webmanifest
+    const manifest = {
+      name: "Brand Master App",
+      short_name: "App",
+      icons: [
+        { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+        { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" }
+      ],
+      theme_color: "#ffffff",
+      background_color: "#ffffff",
+      display: "standalone"
+    };
+    zip.file('site.webmanifest', JSON.stringify(manifest, null, 2));
+
+    // Create README
+    const readme = `# Favicon Master Bundle
+Generated via MY KIT TOOL
+
+## Implementation
+1. Place all files in your web project's root directory (or /public).
+2. Copy the corresponding code snippet from the studio.
+3. Verify that paths match your folder structure.
+
+## Metadata
+Created: ${new Date().toLocaleString()}
+Engine: Hardware-Accelerated Canvas Synthesis
+`;
+    zip.file('README.md', readme);
 
     const content = await zip.generateAsync({ type: "blob" });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(content);
-    link.download = `favicon-bundle-${Date.now()}.zip`;
+    link.download = `favicon-master-bundle-${Date.now()}.zip`;
     link.click();
     
     setIsProcessing(false);
-    toast({ title: "Bundle Exported", description: "All icon sizes saved to ZIP." });
+    toast({ title: "Bundle Exported", description: "Full icon set and protocols saved to ZIP." });
   };
 
   const handleClear = () => {
@@ -142,23 +204,73 @@ export default function FaviconGeneratorPage() {
     toast({ title: "Studio Reset", description: "Buffers cleared." });
   };
 
+  const SNIPPETS = {
+    html: `<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">`,
+    
+    react: `// Add to your main layout or index.html
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+<link rel="manifest" href="/site.webmanifest" />`,
+
+    nextjs: `// In your app/layout.tsx
+export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/site.webmanifest',
+};`,
+
+    rails: `<%= favicon_link_tag 'favicon.ico' %>
+<%= favicon_link_tag 'apple-touch-icon.png', rel: 'apple-touch-icon', type: 'image/png' %>`,
+
+    node: `// Express.js setup
+app.use(express.static('public'));
+// Favicon usually handled via serve-favicon middleware
+const favicon = require('serve-favicon');
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));`,
+
+    gulp: `gulp.task('icons', function() {
+  return gulp.src('src/icons/**/*')
+    .pipe(gulp.dest('dist/'));
+});`,
+
+    grunt: `copy: {
+  main: {
+    expand: true,
+    cwd: 'src/icons/',
+    src: '**',
+    dest: 'dist/',
+  },
+},`
+  };
+
   return (
-    <div className="container mx-auto px-6 py-12 md:py-20">
+    <div className="container mx-auto px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <LayoutGrid className="w-3.5 h-3.5" /> Web Suite
+          <LayoutGrid className="w-3.5 h-3.5" /> Web Production Suite
         </div>
         <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-          Favicon <span className="text-primary italic">Generator</span>
+          Favicon <span className="text-primary italic">Master Studio</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl">
-          Professional browser-side icon synthesis. Transform any image into a standard favicon bundle with automated square cropping and multi-size scaling.
+          Professional-grade icon synthesis. Generate optimized bundles for iOS, Android, and all modern browsers with hard-coded implementation protocols.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* Input & Controls */}
-        <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             
@@ -171,7 +283,7 @@ export default function FaviconGeneratorPage() {
               </CardTitle>
             </CardHeader>
             
-            <CardContent className="pt-10 space-y-10">
+            <CardContent className="pt-10 space-y-8">
               <div 
                 onClick={() => !isProcessing && fileInputRef.current?.click()}
                 className={cn(
@@ -194,8 +306,8 @@ export default function FaviconGeneratorPage() {
                       <Upload className="w-8 h-8" />
                     </div>
                     <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors text-center px-10 leading-relaxed">
-                      Drop imagery for icon synthesis<br />
-                      <span className="text-[8px] opacity-60">(JPG, PNG, WebP)</span>
+                      Drop imagery for synthesis<br />
+                      <span className="text-[8px] opacity-60">(Square high-res logo recommended)</span>
                     </p>
                   </>
                 )}
@@ -203,17 +315,7 @@ export default function FaviconGeneratorPage() {
               </div>
 
               {sourceImage && (
-                <div className="space-y-6">
-                  <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-4">
-                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-primary uppercase tracking-widest">Square Crop Active</p>
-                      <p className="text-[10px] text-foreground/50 leading-relaxed font-medium">
-                        Our engine automatically identifies the center matrix to ensure a perfect 1:1 aspect ratio for all sizes.
-                      </p>
-                    </div>
-                  </div>
-
+                <div className="space-y-4">
                   <Button 
                     onClick={downloadZip}
                     disabled={isProcessing}
@@ -222,14 +324,8 @@ export default function FaviconGeneratorPage() {
                     {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <FileArchive className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
                     Download ZIP Bundle
                   </Button>
-
-                  <Button 
-                    variant="outline"
-                    onClick={handleClear}
-                    disabled={isProcessing}
-                    className="w-full h-14 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95 text-[10px] font-black uppercase tracking-widest"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" /> Reset Studio
+                  <Button variant="ghost" onClick={handleClear} className="w-full text-[9px] font-black uppercase tracking-widest text-foreground/30 hover:text-destructive transition-colors">
+                     Reset Workspace
                   </Button>
                 </div>
               )}
@@ -239,86 +335,135 @@ export default function FaviconGeneratorPage() {
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Guarantee</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Master Protocol</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Synthesis occurs entirely on your device via the Canvas rendering engine. Your imagery never leaves your browser session, ensuring 100% data security.
+                We utilize bi-linear interpolation for high-quality downsampling. All generated assets are sanitized of metadata for absolute performance and privacy.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Output Previews */}
-        <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {favicons.map((favicon) => (
-              <Card key={favicon.label} className="glass-card border-border shadow-xl overflow-hidden group">
-                <CardHeader className="py-5 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-colors">
-                      <favicon.icon className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-foreground">{favicon.label}</p>
-                      <p className="text-[8px] font-bold uppercase text-foreground/30">{favicon.desc}</p>
-                    </div>
-                  </div>
-                  {favicon.dataUrl && <CheckCircle2 className="w-3.5 h-3.5 text-primary" />}
-                </CardHeader>
-                <CardContent className="p-10 flex items-center justify-center min-h-[160px] bg-white/20 dark:bg-black/20">
-                  {favicon.dataUrl ? (
-                    <div className="relative group/icon">
-                       <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full opacity-0 group-hover/icon:opacity-100 transition-opacity" />
-                       <img 
-                        src={favicon.dataUrl} 
-                        alt={favicon.label} 
-                        style={{ width: favicon.size > 64 ? favicon.size : favicon.size * 2, height: favicon.size > 64 ? favicon.size : favicon.size * 2 }}
-                        className="relative z-10 shadow-lg bg-white ring-1 ring-border"
-                       />
-                       {favicon.size <= 32 && (
-                         <p className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-foreground/20 uppercase tracking-widest whitespace-nowrap">2x Preview Scale</p>
-                       )}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3 opacity-10">
-                      <Maximize className="w-10 h-10" />
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em]">Awaiting</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        {/* Preview & Implementation */}
+        <div className="lg:col-span-8 space-y-10 animate-in fade-in slide-in-from-right-6 duration-1000">
+          <Tabs defaultValue="preview" className="w-full">
+            <TabsList className="bg-secondary p-1.5 rounded-2xl h-14 mb-8">
+              <TabsTrigger value="preview" className="rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-background">
+                <LayoutGrid className="w-3.5 h-3.5 mr-2" /> Asset Grid
+              </TabsTrigger>
+              <TabsTrigger value="codes" className="rounded-xl text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-background">
+                <Code2 className="w-3.5 h-3.5 mr-2" /> Implementation
+              </TabsTrigger>
+            </TabsList>
 
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <CardHeader className="py-6 bg-secondary/30 border-b border-border">
-              <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-3">
-                 <Monitor className="w-4 h-4" /> Implementation Intel
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-8">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-[11px] font-medium text-foreground/50 leading-relaxed">
-                  <div className="space-y-3">
-                     <p className="text-foreground font-black uppercase tracking-widest border-b border-primary/20 pb-2">HTML Setup</p>
-                     <code className="block bg-secondary p-4 rounded-xl text-[9px] font-mono text-primary/80 overflow-x-auto whitespace-pre">
-{`<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">`}
-                     </code>
+            <TabsContent value="preview" className="mt-0">
+               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                 {favicons.map((favicon) => (
+                   <Card key={favicon.label} className="glass-card border-border shadow-xl overflow-hidden group hover:border-primary/20 transition-all">
+                     <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <favicon.icon className="w-3.5 h-3.5 text-primary/40 group-hover:text-primary transition-colors" />
+                         <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60">{favicon.label}</span>
+                       </div>
+                       {favicon.dataUrl && <CheckCircle2 className="w-3.5 h-3.5 text-primary" />}
+                     </CardHeader>
+                     <CardContent className="p-8 flex flex-col items-center justify-center min-h-[160px] relative">
+                       {favicon.dataUrl ? (
+                         <div className="space-y-4 text-center">
+                            <img 
+                             src={favicon.dataUrl} 
+                             alt={favicon.label} 
+                             style={{ width: Math.max(32, favicon.size > 128 ? 128 : favicon.size), height: 'auto' }}
+                             className="shadow-xl bg-white ring-1 ring-border mx-auto"
+                            />
+                            <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{favicon.desc}</p>
+                         </div>
+                       ) : (
+                         <div className="opacity-5">
+                            <Sparkles className="w-10 h-10" />
+                         </div>
+                       )}
+                     </CardContent>
+                   </Card>
+                 ))}
+               </div>
+            </TabsContent>
+
+            <TabsContent value="codes" className="mt-0 space-y-8">
+               <Card className="glass-card border-border shadow-2xl overflow-hidden">
+                  <CardHeader className="py-6 border-b border-border bg-secondary/30">
+                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-primary">
+                        <Terminal className="w-4 h-4" /> Code Protocols
+                     </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Tabs defaultValue="html" className="w-full">
+                       <div className="flex bg-background border-b border-border overflow-x-auto no-scrollbar">
+                         {Object.keys(SNIPPETS).map((key) => (
+                           <TabsTrigger 
+                             key={key} 
+                             value={key} 
+                             className="px-6 py-4 rounded-none text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary/5 data-[state=active]:text-primary border-r border-border transition-all"
+                           >
+                             {key}
+                           </TabsTrigger>
+                         ))}
+                       </div>
+                       
+                       {Object.entries(SNIPPETS).map(([key, code]) => (
+                         <TabsContent key={key} value={key} className="m-0 p-8 space-y-6 animate-in fade-in duration-500">
+                            <div className="relative group/snippet">
+                               <pre className="p-8 rounded-[2rem] bg-black/90 text-green-500/80 font-mono text-[11px] leading-relaxed overflow-x-auto shadow-inner border border-white/5 custom-scrollbar max-h-[300px]">
+                                 {code}
+                               </pre>
+                               <Button 
+                                 size="sm"
+                                 onClick={() => handleCopyCode(code, key.toUpperCase())}
+                                 className="absolute top-4 right-4 h-10 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-black text-[9px] uppercase tracking-widest backdrop-blur-md border border-white/10"
+                               >
+                                 {isCopied === key.toUpperCase() ? <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
+                                 {isCopied === key.toUpperCase() ? 'Copied' : 'Copy'}
+                               </Button>
+                            </div>
+                            
+                            <div className="flex items-center gap-3 text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
+                               <Settings2 className="w-3.5 h-3.5" />
+                               <span>Protocol: {key === 'nextjs' ? 'Metadata API' : 'Static Distribution'}</span>
+                            </div>
+                         </TabsContent>
+                       ))}
+                    </Tabs>
+                  </CardContent>
+               </Card>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
+                     <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all">
+                        <Globe className="w-5 h-5" />
+                     </div>
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Cross-Platform Sync</p>
+                        <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">Verified support for Safari, Chrome, Edge, and PWA environments.</p>
+                     </div>
                   </div>
-                  <div className="space-y-4 pt-1">
-                     <p className="text-foreground font-black uppercase tracking-widest border-b border-primary/20 pb-2">Synthesis Protocol</p>
-                     <p>Our generator utilizes hardware-accelerated bi-linear downsampling. This ensures that even high-resolution branding assets translate clearly to standard 16px and 32px tab grids.</p>
-                     <div className="flex items-center gap-3 text-primary">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span className="font-black uppercase tracking-widest text-[9px]">Production-Ready Assets</span>
+                  <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
+                     <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all">
+                        <Maximize className="w-5 h-5" />
+                     </div>
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Precision Raster</p>
+                        <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">1:1 pixel mapping ensures crisp clarity even at the 16px scale.</p>
                      </div>
                   </div>
                </div>
-            </CardContent>
-          </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
+      
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
