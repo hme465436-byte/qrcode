@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -41,7 +42,8 @@ import {
   Clock,
   MonitorPlay,
   Type,
-  Command
+  Command,
+  FileArchive
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -77,6 +79,16 @@ const TOOLS = [
     color: 'text-violet-600 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/file-compressor', 
+    icon: FileArchive, 
+    title: 'File Compressor', 
+    desc: 'Professional size reduction for visual and digital assets.', 
+    label: 'OPTIMIZE', 
+    color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
+    glowClass: 'bg-cyan-500/10',
+    keywords: ['compress file', 'reduce size', 'optimize', 'shrink', 'smaller', 'pdf compress', 'image compress']
   },
   { 
     href: '/youtube-thumbnail-maker', 
