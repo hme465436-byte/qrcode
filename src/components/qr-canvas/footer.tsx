@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from 'react';
@@ -71,6 +70,7 @@ export function Footer() {
                 {[
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
+                  { label: 'Dictionary', href: '/dictionary' },
                   { label: 'Collage Maker', href: '/collage-maker' },
                   { label: 'Favicon Studio', href: '/favicon-generator' },
                   { label: 'Privacy Purge', href: '/metadata-remover' },
@@ -94,7 +94,7 @@ export function Footer() {
                   { label: 'AOB Converter', href: '/code-converter' },
                 ].map((link) => (
                   <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
-                    {link.label} <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
+                    {link.label} <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
                   </a>
                 ))}
               </nav>
@@ -109,7 +109,7 @@ export function Footer() {
                   { label: 'Studio Mission', href: '/about' },
                 ].map((link) => (
                   <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
-                    {link.label} <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
+                    {link.label} <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
                   </a>
                 ))}
               </nav>
@@ -124,7 +124,7 @@ export function Footer() {
                   { label: 'Cookie Policy', href: '/cookies' },
                 ].map((link) => (
                   <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
-                    {link.label} <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
+                    {link.label} <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
                   </a>
                 ))}
               </nav>
