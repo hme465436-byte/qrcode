@@ -185,6 +185,11 @@ export default function VideoToAudioPage() {
 
     try {
       setStatus('Writing Payload to Memory...');
+      
+      // Memory Protection: Purge previous entries to prevent 'out of bounds' errors
+      try { await ffmpeg.deleteFile(inputName); } catch(e) {}
+      try { await ffmpeg.deleteFile(outputName); } catch(e) {}
+
       await ffmpeg.writeFile(inputName, await fetchFile(file));
 
       setStatus(`Synthesizing Matrix (${selectedFormat.label})...`);
@@ -213,6 +218,10 @@ export default function VideoToAudioPage() {
       setProgress(100);
       setStatus(`Production Complete`);
       toast({ title: "Master Exported", description: `Audio track successfully encoded as ${selectedFormat.id.toUpperCase()}.` });
+      
+      // Final Cleanup
+      try { await ffmpeg.deleteFile(inputName); } catch(e) {}
+      try { await ffmpeg.deleteFile(outputName); } catch(e) {}
     } catch (err: any) {
       console.error('Conversion Error:', err);
       toast({ 
