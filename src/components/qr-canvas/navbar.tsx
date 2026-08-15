@@ -229,6 +229,7 @@ export function Navbar() {
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogContent className="glass-card max-w-2xl border-white/20 p-0 overflow-hidden outline-none text-foreground top-[15%] translate-y-0">
           <DialogHeader className="p-6 border-b border-white/10 bg-white/5">
+            <DialogTitle className="sr-only">Search Tools</DialogTitle>
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20" />
               <Input 
