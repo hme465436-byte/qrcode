@@ -40,7 +40,8 @@ import {
   Lock,
   Clock,
   Baby,
-  MonitorPlay
+  MonitorPlay,
+  Type
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -64,6 +65,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/logo-maker', 
+    icon: Type, 
+    title: 'Logo Text Studio', 
+    desc: 'Generate premium text-based logos and avatars.', 
+    label: 'BRANDING', 
+    color: 'bg-primary/40',
+    keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
   },
   { 
     href: '/youtube-thumbnail-maker', 
