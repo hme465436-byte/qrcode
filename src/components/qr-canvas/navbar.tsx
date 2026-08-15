@@ -112,15 +112,16 @@ export function Navbar() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('mykit_theme') as 'light' | 'dark' | null;
     if (savedTheme) {
       setTheme(savedTheme);
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark');
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      // If OS is light but no preference saved, we still respect OS if user explicitly wants light
+      // However, per user request, default is dark, so we only override if localStorage explicitly says light
     }
   }, []);
 
