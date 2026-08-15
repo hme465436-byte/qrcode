@@ -71,6 +71,7 @@ export function Footer() {
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
                   { label: 'YouTube Studio', href: '/youtube-banner-maker' },
+                  { label: 'Emoji Writer', href: '/emoji-letter-writer' },
                   { label: 'Collage Maker', href: '/collage-maker' },
                   { label: 'Favicon Studio', href: '/favicon-generator' },
                   { label: 'Privacy Purge', href: '/metadata-remover' },
