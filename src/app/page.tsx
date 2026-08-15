@@ -39,9 +39,9 @@ import {
   Youtube,
   Lock,
   Clock,
-  Baby,
   MonitorPlay,
-  Type
+  Type,
+  Command
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -54,7 +54,7 @@ const TOOLS = [
     title: 'Single Studio', 
     desc: 'Branded QR codes with logos and AI backgrounds.', 
     label: 'PRO MODE', 
-    color: 'bg-primary/50',
+    color: 'text-blue-600 bg-blue-500/10 border-blue-500/20 hover:shadow-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan']
   },
   { 
@@ -63,7 +63,7 @@ const TOOLS = [
     title: 'Bulk Production', 
     desc: 'Generate hundreds of high-res assets in seconds.', 
     label: 'BATCH', 
-    color: 'bg-primary/50',
+    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-500/20 hover:shadow-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
   },
   { 
@@ -72,7 +72,7 @@ const TOOLS = [
     title: 'Logo Text Studio', 
     desc: 'Generate premium text-based logos and avatars.', 
     label: 'BRANDING', 
-    color: 'bg-primary/40',
+    color: 'text-violet-600 bg-violet-500/10 border-violet-500/20 hover:shadow-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
   },
   { 
@@ -81,7 +81,7 @@ const TOOLS = [
     title: 'YT Thumbnail', 
     desc: 'Resize and frame images for 1280x720 thumbnails.', 
     label: 'YOUTUBE', 
-    color: 'bg-red-500/20',
+    color: 'text-rose-600 bg-rose-500/10 border-rose-500/20 hover:shadow-rose-500/10',
     keywords: ['youtube thumbnail size', '1280x720', 'yt thumbnail maker', 'thumbnail resizer', 'youtube thumbnail resizer']
   },
   { 
@@ -90,7 +90,7 @@ const TOOLS = [
     title: 'YouTube Banner', 
     desc: 'Create 2560x1440 channel art with safe-zone guides.', 
     label: 'YOUTUBE', 
-    color: 'bg-red-500/20',
+    color: 'text-red-600 bg-red-500/10 border-red-500/20 hover:shadow-red-500/10',
     keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area']
   },
   { 
@@ -99,7 +99,7 @@ const TOOLS = [
     title: 'Age Calculator', 
     desc: 'Calculate exact age and birthday countdowns.', 
     label: 'STATS', 
-    color: 'bg-primary/50',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20 hover:shadow-emerald-500/10',
     keywords: ['age calculator', 'date of birth', 'how old am i', 'birthday', 'chronos', 'time lived']
   },
   { 
@@ -108,7 +108,7 @@ const TOOLS = [
     title: 'Password Studio', 
     desc: 'Generate cryptographically-secure strong passwords.', 
     label: 'SECURITY', 
-    color: 'bg-primary/50',
+    color: 'text-slate-700 bg-slate-500/10 border-slate-500/20 hover:shadow-slate-500/10',
     keywords: ['password generator', 'random password', 'strong password', 'security', 'safe', 'key']
   },
   { 
@@ -117,7 +117,7 @@ const TOOLS = [
     title: 'Collage Studio', 
     desc: 'Combine multiple images into professional grid layouts.', 
     label: 'GRID', 
-    color: 'bg-primary/50',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20 hover:shadow-teal-500/10',
     keywords: ['collage maker', 'photo grid', 'merge photos', '2x2 collage', 'photo collage', 'combine images']
   },
   { 
@@ -126,7 +126,7 @@ const TOOLS = [
     title: 'Favicon Studio', 
     desc: 'Generate web icon sets from any image instantly.', 
     label: 'WEB', 
-    color: 'bg-primary/50',
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20 hover:shadow-blue-500/10',
     keywords: ['favicon generator', 'favicon from image', 'site icon', 'ico maker', 'favicon png', 'apple touch icon']
   },
   { 
@@ -135,7 +135,7 @@ const TOOLS = [
     title: 'Privacy Purge', 
     desc: 'Strip GPS and EXIF metadata from any photo.', 
     label: 'SECURE', 
-    color: 'bg-primary/50',
+    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20 hover:shadow-orange-500/10',
     keywords: ['remove exif', 'metadata remover', 'strip gps', 'privacy photo', 'remove location from image', 'exif']
   },
   { 
@@ -144,7 +144,7 @@ const TOOLS = [
     title: 'Word Counter', 
     desc: 'Live text analysis and reading time estimation.', 
     label: 'TEXT', 
-    color: 'bg-primary/50',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20 hover:shadow-amber-500/10',
     keywords: ['word counter', 'character count', 'reading time', 'word count tool', 'text counter', 'speaking time']
   },
   { 
@@ -153,7 +153,7 @@ const TOOLS = [
     title: 'Color Picker', 
     desc: 'Extract HEX, RGB, and HSL from any image.', 
     label: 'DESIGN', 
-    color: 'bg-primary/50',
+    color: 'text-pink-600 bg-rose-500/10 border-rose-500/20 hover:shadow-rose-500/10',
     keywords: ['color picker', 'pick color from image', 'hex', 'rgb', 'eye dropper', 'color from photo', 'palette']
   },
   { 
@@ -162,7 +162,7 @@ const TOOLS = [
     title: 'RGB Studio', 
     desc: 'Precision color picking and space conversion.', 
     label: 'ENGINE', 
-    color: 'bg-primary/50',
+    color: 'text-fuchsia-600 bg-fuchsia-500/10 border-fuchsia-500/20 hover:shadow-fuchsia-500/10',
     keywords: ['rgb picker', 'hex color', 'hsl', 'color converter', 'color picker', 'cmyk', 'hsv']
   },
   { 
@@ -171,7 +171,7 @@ const TOOLS = [
     title: 'Markdown Preview', 
     desc: 'Live Markdown to HTML synthesis with visual preview.', 
     label: 'MARKUP', 
-    color: 'bg-primary/40',
+    color: 'text-sky-600 bg-sky-500/10 border-sky-500/20 hover:shadow-sky-500/10',
     keywords: ['markdown preview', 'md to html', 'markdown editor', 'markdown to html', 'live markdown', 'markup']
   },
   { 
@@ -180,7 +180,7 @@ const TOOLS = [
     title: 'Image Converter', 
     desc: 'Seamlessly switch between PNG and JPG formats.', 
     label: 'FORMAT', 
-    color: 'bg-primary/50',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20 hover:shadow-cyan-500/10',
     keywords: ['png to jpg', 'jpg to png', 'convert image', 'png jpg converter', 'jpeg', 'image format']
   },
   { 
@@ -189,7 +189,7 @@ const TOOLS = [
     title: 'Image Resizer', 
     desc: 'Scale pixel dimensions with aspect ratio control.', 
     label: 'SCALE', 
-    color: 'bg-primary/50',
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20 hover:shadow-emerald-500/10',
     keywords: ['resize', 'resizer', 'image resizer', 'resize photo', 'change size', 'width height', 'px', 'scale image', 'dimension']
   },
   { 
@@ -198,7 +198,7 @@ const TOOLS = [
     title: 'Image Compressor', 
     desc: 'Reduce file size locally with quality control.', 
     label: 'OPTIMIZE', 
-    color: 'bg-primary/50',
+    color: 'text-lime-600 bg-lime-500/10 border-lime-500/20 hover:shadow-lime-500/10',
     keywords: ['compress', 'image compressor', 'reduce size', 'jpg', 'photo size', 'optimize', 'shrink', 'smaller']
   },
   { 
@@ -207,7 +207,7 @@ const TOOLS = [
     title: 'Image to PDF', 
     desc: 'Convert multiple images into a professional PDF.', 
     label: 'DOCUMENT', 
-    color: 'bg-primary/50',
+    color: 'text-red-700 bg-red-500/10 border-red-500/20 hover:shadow-red-500/10',
     keywords: ['image to pdf', 'jpg to pdf', 'png to pdf', 'photo pdf', 'convert pdf', 'bundle', 'pdf']
   },
   { 
@@ -216,7 +216,7 @@ const TOOLS = [
     title: 'Photo Studio', 
     desc: 'Professional filters and local image editing.', 
     label: 'EDITOR', 
-    color: 'bg-primary/50',
+    color: 'text-violet-500 bg-violet-500/10 border-violet-500/20 hover:shadow-violet-500/10',
     keywords: ['photo', 'image', 'edit', 'crop', 'filter', 'editor', 'picture', 'manipulate', 'brightness', 'contrast']
   },
   { 
@@ -225,7 +225,7 @@ const TOOLS = [
     title: 'Vocal Remover', 
     desc: 'Simple stereo matrix for vocal or music reduction.', 
     label: 'KARAOKE', 
-    color: 'bg-primary/50',
+    color: 'text-rose-700 bg-rose-500/10 border-rose-500/20 hover:shadow-rose-500/10',
     keywords: ['vocal remover', 'karaoke', 'remove vocals', 'instrumental', 'music separator', 'audio separator']
   },
   { 
@@ -234,7 +234,7 @@ const TOOLS = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'bg-primary/50',
+    color: 'text-amber-700 bg-amber-500/10 border-amber-500/20 hover:shadow-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
   },
   { 
@@ -243,7 +243,7 @@ const TOOLS = [
     title: 'Video to GIF', 
     desc: 'Synthesize high-quality animated GIFs from clips.', 
     label: 'ANIMATION', 
-    color: 'bg-primary/50',
+    color: 'text-orange-700 bg-orange-500/10 border-orange-500/20 hover:shadow-orange-500/10',
     keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip']
   },
   { 
@@ -252,7 +252,7 @@ const TOOLS = [
     title: 'Audio Joiner', 
     desc: 'Merge multiple audio files into a single master track.', 
     label: 'PRODUCTION', 
-    color: 'bg-primary/50',
+    color: 'text-blue-700 bg-blue-500/10 border-blue-500/20 hover:shadow-blue-500/10',
     keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound']
   },
   { 
@@ -261,7 +261,7 @@ const TOOLS = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'bg-primary/50',
+    color: 'text-teal-700 bg-teal-500/10 border-teal-500/20 hover:shadow-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav']
   },
   { 
@@ -270,7 +270,7 @@ const TOOLS = [
     title: 'Letter Art Studio', 
     desc: 'Image to text conversion using custom alphabets.', 
     label: 'ASCII', 
-    color: 'bg-primary/40',
+    color: 'text-slate-600 bg-slate-500/10 border-slate-500/20 hover:shadow-slate-500/10',
     keywords: ['image to text', 'ascii art', 'letters art', 'custom characters', 'image to alphabet', 'text art', 'alphabet art']
   },
   { 
@@ -279,7 +279,7 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'bg-primary/40',
+    color: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20 hover:shadow-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'tesseract', 'read']
   },
   { 
@@ -288,7 +288,7 @@ const TOOLS = [
     title: 'Hex Converter', 
     desc: 'Convert binary files to hexadecimal matrix.', 
     label: 'BINARY', 
-    color: 'bg-primary/40',
+    color: 'text-indigo-700 bg-indigo-500/10 border-indigo-500/20 hover:shadow-indigo-500/10',
     keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
   },
   { 
@@ -297,7 +297,7 @@ const TOOLS = [
     title: 'Text Repeater', 
     desc: 'Professional emoji and text multiplication.', 
     label: 'UTIL', 
-    color: 'bg-primary/30',
+    color: 'text-pink-700 bg-pink-500/10 border-pink-500/20 hover:shadow-pink-500/10',
     keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner']
   },
   { 
@@ -306,7 +306,7 @@ const TOOLS = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'bg-primary/30',
+    color: 'text-cyan-700 bg-cyan-500/10 border-cyan-500/20 hover:shadow-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
   }
 ];
@@ -329,6 +329,9 @@ export default function Home() {
       {/* HERO SECTION */}
       <section className="w-full px-4 sm:px-6 pt-12 pb-20 md:pt-24 md:pb-40 text-center relative overflow-hidden">
         <div className="max-w-4xl mx-auto animate-reveal relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
+            <Command className="w-3.5 h-3.5" /> Studio Protocol v6.0
+          </div>
           <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-6 sm:mb-8 leading-[1.1] tracking-tighter text-foreground uppercase overflow-wrap-anywhere">
             Digital <span className="text-primary italic">Excellence</span> <br />
             <span className="text-foreground/80">MY KIT TOOL</span>
@@ -340,15 +343,12 @@ export default function Home() {
           {/* Search Bar with Moving Border Trace Effect */}
           <div className="max-w-xl mx-auto mb-16 px-4 group relative">
             <div className="relative h-16 w-full rounded-3xl p-[3px] overflow-hidden transition-all duration-500 shadow-2xl group-focus-within:ring-4 group-focus-within:ring-primary/10">
-              {/* Border Trace Animation */}
               <div 
                 className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] opacity-80 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity blur-[4px]"
                 style={{
                   background: 'conic-gradient(from 0deg, transparent 0, transparent 45%, #2563eb 50%, transparent 55%, transparent 100%)'
                 }}
               />
-              
-              {/* Inner Input Area */}
               <div className="relative flex items-center w-full h-full bg-white/95 dark:bg-black/95 backdrop-blur-3xl rounded-[calc(1.5rem-3px)] overflow-hidden">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                   <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
@@ -370,27 +370,23 @@ export default function Home() {
                 )}
               </div>
             </div>
-
-            {searchQuery && (
-              <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-primary/60 animate-in fade-in slide-in-from-top-2">
-                Found {filteredTools.length} {filteredTools.length === 1 ? 'utility' : 'utilities'} matching your search
-              </p>
-            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full">
             {filteredTools.length > 0 ? (
               filteredTools.map((item, i) => (
                 <Link key={i} href={item.href} className="group h-full w-full animate-in fade-in zoom-in duration-500">
-                  <div className="glass-card p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-2xl hover:shadow-primary/20">
-                    <div className="absolute top-0 right-0 w-32 h-32 sm:w-40 sm:h-40 bg-primary/30 rounded-full -mr-16 -mt-16 sm:-mr-20 sm:-mt-20 group-hover:bg-primary/40 transition-all blur-3xl" />
-                    <div className={cn("w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[1.8rem] flex items-center justify-center text-primary mb-6 sm:mb-8 border border-primary/60 shadow-inner group-hover:scale-110 transition-transform duration-500", item.color)}>
+                  <div className="glass-card p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-2xl group-hover:shadow-xl">
+                    <div className={cn(
+                      "w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[1.8rem] flex items-center justify-center mb-6 sm:mb-8 border shadow-inner group-hover:scale-110 transition-transform duration-500",
+                      item.color
+                    )}>
                       <item.icon className="w-6 h-6 sm:w-8 sm:h-8" />
                     </div>
                     <div className="space-y-3 sm:space-y-4">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="text-lg sm:text-xl font-headline font-black text-foreground uppercase tracking-tight">{item.title}</h3>
-                        <span className="text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-widest shrink-0">{item.label}</span>
+                        <span className="text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded bg-foreground/5 text-foreground/40 uppercase tracking-widest shrink-0">{item.label}</span>
                       </div>
                       <p className="text-[11px] sm:text-[12px] text-foreground/40 leading-relaxed font-medium">
                         {item.desc}
@@ -463,12 +459,12 @@ export default function Home() {
              Join thousands of professionals using MY KIT TOOL for premium branded assets and technical utilities. No signup, just performance.
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 relative z-10">
-             <a href="/single" className="w-full sm:w-auto px-10 py-5 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-center">
+             <Link href="/single" className="w-full sm:w-auto px-10 py-5 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-center">
                Open Studio
-             </a>
-             <a href="/faq" className="w-full sm:w-auto px-10 py-5 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-secondary/80 transition-all text-center">
+             </Link>
+             <Link href="/faq" className="w-full sm:w-auto px-10 py-5 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-secondary/80 transition-all text-center">
                View Documentation
-             </a>
+             </Link>
            </div>
         </div>
         
