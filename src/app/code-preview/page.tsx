@@ -29,7 +29,8 @@ import {
   Settings2,
   Image as ImageIcon,
   CheckCircle2,
-  Loader2
+  Loader2,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
