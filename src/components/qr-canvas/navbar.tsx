@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -43,7 +42,8 @@ import {
   Clock,
   MonitorPlay,
   Type,
-  FileArchive
+  FileArchive,
+  ArrowRightLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -80,6 +80,7 @@ const NAV_ITEMS = [
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
+  { label: 'Image to File', href: '/image-to-file', icon: ArrowRightLeft, keywords: ['image to file', 'image converter', 'jpg to pdf', 'webp converter', 'png to webp', 'photo to pdf'] },
   { label: 'File Compressor', href: '/file-compressor', icon: FileArchive, keywords: ['compress', 'reduce size', 'optimize', 'shrink', 'smaller', 'pdf', 'image'] },
   { label: 'Thumbnails', href: '/youtube-thumbnail-maker', icon: MonitorPlay, keywords: ['youtube', 'thumbnail', '1280x720', 'yt'] },
   { label: 'Age Studio', href: '/age-calculator', icon: Clock, keywords: ['age', 'birthday', 'how old am i', 'dob'] },

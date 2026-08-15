@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -43,7 +42,8 @@ import {
   MonitorPlay,
   Type,
   Command,
-  FileArchive
+  FileArchive,
+  ArrowRightLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -79,6 +79,16 @@ const TOOLS = [
     color: 'text-violet-600 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/image-to-file', 
+    icon: ArrowRightLeft, 
+    title: 'Image to File', 
+    desc: 'Convert imagery to PNG, JPG, WebP, or single-page PDF.', 
+    label: 'CONVERT', 
+    color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    glowClass: 'bg-blue-400/10',
+    keywords: ['image to file', 'image converter', 'jpg to pdf', 'webp converter', 'png to webp', 'photo to pdf']
   },
   { 
     href: '/file-compressor', 
