@@ -81,6 +81,7 @@ export function Footer() {
                   { label: 'Video to MP3', href: '/video-to-audio' },
                   { label: 'Video to GIF', href: '/video-to-gif' },
                   { label: 'Audio Joiner', href: '/audio-joiner' },
+                  { label: 'Volume Booster', href: '/audio-booster' },
                   { label: 'Letter Art', href: '/letter-art' },
                   { label: 'OCR Extract', href: '/ocr' },
                   { label: 'Dot Art', href: '/dot-art' },

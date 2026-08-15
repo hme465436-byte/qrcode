@@ -30,7 +30,8 @@ import {
   Palette,
   EyeOff,
   ListMusic,
-  Film
+  Film,
+  Volume2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -77,6 +78,7 @@ const NAV_ITEMS = [
   { label: 'Video to MP3', href: '/video-to-audio', icon: Music, keywords: ['audio', 'extract', 'mp4', 'sound', 'convert'] },
   { label: 'Video to GIF', href: '/video-to-gif', icon: Film, keywords: ['gif', 'video to gif', 'animation', 'clip'] },
   { label: 'Audio Joiner', href: '/audio-joiner', icon: ListMusic, keywords: ['merge', 'combine', 'mp3', 'audio', 'join'] },
+  { label: 'Volume Booster', href: '/audio-booster', icon: Volume2, keywords: ['loud', 'gain', 'amplify', 'boost', 'audio', 'volume'] },
   { label: 'Letter Art', href: '/letter-art', icon: CaseSensitive, keywords: ['ascii', 'text art', 'alphabet', 'letters', 'image to text'] },
   { label: 'OCR Text', href: '/ocr', icon: FileText, keywords: ['ocr', 'extract', 'recognize', 'scan', 'read'] },
   { label: 'Dot Art', href: '/dot-art', icon: Grid3X3, keywords: ['dots', 'braille', 'creative', 'art', 'matrix'] },

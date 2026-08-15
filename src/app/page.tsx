@@ -29,7 +29,8 @@ import {
   ShieldAlert,
   EyeOff,
   ListMusic,
-  Film
+  Film,
+  Volume2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -152,6 +153,15 @@ const TOOLS = [
     label: 'PRODUCTION', 
     color: 'bg-primary/50',
     keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound']
+  },
+  { 
+    href: '/audio-booster', 
+    icon: Volume2, 
+    title: 'Volume Booster', 
+    desc: 'Amplify audio levels safely entirely in your browser.', 
+    label: 'BOOST', 
+    color: 'bg-primary/50',
+    keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav']
   },
   { 
     href: '/letter-art', 
