@@ -15,12 +15,14 @@ import {
   AlertTriangle,
   Settings2,
   Terminal,
-  Activity
+  Activity,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -35,6 +37,7 @@ export default function VideoToAudioPage() {
   const [status, setStatus] = useState('');
   const [mp3Url, setMp3Url] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [bitrate, setBitrate] = useState('128k');
 
   // Fix: Use null as initial value to prevent instantiation during SSR/pre-rendering
   const ffmpegRef = useRef<FFmpeg | null>(null);
@@ -125,15 +128,15 @@ export default function VideoToAudioPage() {
       setStatus('Writing Payload to Memory...');
       await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-      setStatus('Extracting Audio Matrix...');
+      setStatus(`Extracting Audio Matrix (${bitrate})...`);
       // -vn: disable video
       // -acodec libmp3lame: use mp3 encoder
-      // -q:a 2: high quality VBR (approx 190 kbps)
+      // -b:a: set bitrate
       await ffmpeg.exec([
         '-i', inputName,
         '-vn',
         '-acodec', 'libmp3lame',
-        '-q:a', '2',
+        '-b:a', bitrate,
         outputName
       ]);
 
@@ -143,8 +146,8 @@ export default function VideoToAudioPage() {
       
       setMp3Url(url);
       setProgress(100);
-      setStatus('Production Complete');
-      toast({ title: "Master Exported", description: "Audio track successfully encoded to MP3." });
+      setStatus(`Production Complete @ ${bitrate}`);
+      toast({ title: "Master Exported", description: `Audio track successfully encoded to MP3 at ${bitrate}.` });
     } catch (err: any) {
       console.error('Conversion Error:', err);
       toast({ 
@@ -245,6 +248,49 @@ export default function VideoToAudioPage() {
                 )}
               </div>
 
+              {/* Bitrate Selection */}
+              <div className="space-y-4 pt-4 border-t border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <Layers className="w-3 h-3 text-primary" /> Audio Fidelity Matrix
+                  </Label>
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">{bitrate} Bitrate</span>
+                </div>
+                
+                <RadioGroup 
+                  defaultValue="128k" 
+                  value={bitrate} 
+                  onValueChange={setBitrate}
+                  className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+                  disabled={isProcessing}
+                >
+                  {[
+                    { val: '70k', label: 'Economy' },
+                    { val: '128k', label: 'Standard' },
+                    { val: '160k', label: 'High' },
+                    { val: '320k', label: 'Master' },
+                  ].map((mode) => (
+                    <div key={mode.val} className="relative">
+                      <RadioGroupItem
+                        value={mode.val}
+                        id={`q-${mode.val}`}
+                        className="peer sr-only"
+                      />
+                      <Label
+                        htmlFor={`q-${mode.val}`}
+                        className={cn(
+                          "flex flex-col items-center justify-center p-3 rounded-xl border border-border bg-background cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-secondary",
+                          bitrate === mode.val && "border-primary bg-primary/5 ring-1 ring-primary/20"
+                        )}
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-widest">{mode.val}</span>
+                        <span className="text-[8px] font-bold text-foreground/30 uppercase mt-1">{mode.label}</span>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
               <div className="flex gap-4 pt-4">
                 <Button 
                   onClick={convertToMp3}
@@ -339,7 +385,7 @@ export default function VideoToAudioPage() {
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Audio Master Encoded</h3>
-                      <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">libmp3lame High-Quality VBR</p>
+                      <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">libmp3lame Fidelity: {bitrate}</p>
                     </div>
                     <div className="p-4 bg-background/50 rounded-2xl border border-border w-full">
                       <audio controls src={mp3Url} className="w-full h-10" />
@@ -348,7 +394,7 @@ export default function VideoToAudioPage() {
                       asChild
                       className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95"
                     >
-                      <a href={mp3Url} download={`${file?.name.split('.')[0] || 'master'}.mp3`}>
+                      <a href={mp3Url} download={`${file?.name.split('.')[0] || 'master'}_${bitrate}.mp3`}>
                         <Download className="w-6 h-6" />
                         Download MP3
                       </a>
@@ -362,7 +408,7 @@ export default function VideoToAudioPage() {
                  <div className="space-y-1">
                     <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Technical Protocol</p>
                     <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
-                      Our engine utilizes the -acodec libmp3lame profile. For large-scale production, desktop browsers with hardware acceleration are recommended.
+                      Our engine utilizes the -acodec libmp3lame profile with specific bitstream alignment for {bitrate} production.
                     </p>
                  </div>
               </div>
