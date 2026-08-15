@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -33,7 +34,8 @@ import {
   Volume2,
   LayoutGrid,
   Grid2X2,
-  MicOff
+  MicOff,
+  FileEdit
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -102,6 +104,15 @@ const TOOLS = [
     label: 'ENGINE', 
     color: 'bg-primary/50',
     keywords: ['rgb picker', 'hex color', 'hsl', 'color converter', 'color picker', 'cmyk', 'hsv']
+  },
+  { 
+    href: '/markdown-preview', 
+    icon: FileEdit, 
+    title: 'Markdown Preview', 
+    desc: 'Live Markdown to HTML synthesis with visual preview.', 
+    label: 'MARKUP', 
+    color: 'bg-primary/40',
+    keywords: ['markdown preview', 'md to html', 'markdown editor', 'markdown to html', 'live markdown', 'markup']
   },
   { 
     href: '/image-converter', 

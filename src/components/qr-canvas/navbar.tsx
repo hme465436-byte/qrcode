@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -34,7 +35,8 @@ import {
   Volume2,
   LayoutGrid,
   Grid2X2,
-  MicOff
+  MicOff,
+  FileEdit
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -75,6 +77,7 @@ const NAV_ITEMS = [
   { label: 'Privacy Purge', href: '/metadata-remover', icon: EyeOff, keywords: ['exif', 'metadata', 'gps', 'privacy', 'strip'] },
   { label: 'Color Picker', href: '/color-picker', icon: Pipette, keywords: ['hex', 'rgb', 'hsl', 'design', 'palette', 'picker'] },
   { label: 'RGB Studio', href: '/rgb-picker', icon: Palette, keywords: ['rgb', 'hex', 'color', 'cmyk', 'converter'] },
+  { label: 'Markdown', href: '/markdown-preview', icon: FileEdit, keywords: ['markdown', 'md', 'html', 'preview', 'markup', 'editor'] },
   { label: 'Converter', href: '/image-converter', icon: RefreshCcw, keywords: ['png to jpg', 'jpg to png', 'format', 'convert'] },
   { label: 'Resizer', href: '/image-resizer', icon: Maximize, keywords: ['resize', 'image', 'dimensions', 'scale', 'px'] },
   { label: 'Compressor', href: '/image-compressor', icon: Maximize, keywords: ['compress', 'image', 'reduce', 'optimize', 'shrink'] },
@@ -153,7 +156,7 @@ export function Navbar() {
           </a>
           
           <nav className="hidden xl:flex items-center gap-6">
-            {NAV_ITEMS.slice(0, 8).map((item) => (
+            {NAV_ITEMS.slice(0, 9).map((item) => (
               <a 
                 key={item.label} 
                 href={item.href}

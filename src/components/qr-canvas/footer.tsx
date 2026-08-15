@@ -76,6 +76,7 @@ export function Footer() {
                   { label: 'Privacy Purge', href: '/metadata-remover' },
                   { label: 'Color Picker', href: '/color-picker' },
                   { label: 'RGB Studio', href: '/rgb-picker' },
+                  { label: 'Markdown View', href: '/markdown-preview' },
                   { label: 'Format Converter', href: '/image-converter' },
                   { label: 'Resizer', href: '/image-resizer' },
                   { label: 'Compressor', href: '/image-compressor' },
