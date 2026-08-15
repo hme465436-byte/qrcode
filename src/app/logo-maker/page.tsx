@@ -105,7 +105,6 @@ export default function LogoMakerPage() {
   const [weight, setWeight] = useState(700);
   const [spacing, setSpacing] = useState(4);
   const [fontSize, setFontSize] = useState(120);
-  const [lineHeight, setLineHeight] = useState(1.2);
   
   // Color State
   const [textColor, setTextColor] = useState('#000000');
@@ -319,24 +318,14 @@ export default function LogoMakerPage() {
       ctx.setLineDash([]);
     }
 
-    ctx.save();
-    ctx.translate(size / 2, size / 2);
-
     const selectedFont = FONTS[fontIndex];
-    const nameUpper = name.toUpperCase();
-    const tagUpper = tagline.toUpperCase();
+    const nameUpper = name.toUpperCase() || ' ';
+    const tagUpper = tagline.toUpperCase() || '';
 
-    // FX State
-    if (useShadow) {
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 20;
-      ctx.shadowOffsetY = 10;
-    }
-
-    const setContentStyle = (s: number) => {
-      ctx.font = `${selectedFont.style} ${weight} ${s}px ${selectedFont.family}`;
+    // Measurement & Setup
+    const setTextStyle = (s: number, w: number, f: string) => {
+      ctx.font = `${selectedFont.style} ${w} ${s}px ${f}`;
       ctx.letterSpacing = `${spacing}px`;
-      
       if (useTextGradient) {
         const textGrad = ctx.createLinearGradient(-300, 0, 300, 0);
         textGrad.addColorStop(0, textColor);
@@ -345,96 +334,160 @@ export default function LogoMakerPage() {
       } else {
         ctx.fillStyle = textColor;
       }
+      if (useShadow) {
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetY = 10;
+      } else {
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+      }
     };
 
-    if (layoutMode === 'text-only') {
-      setContentStyle(fontSize);
-      ctx.textAlign = 'center';
-      
-      const tw = ctx.measureText(nameUpper).width;
-      const finalS = tw > maxContentWidth ? fontSize * (maxContentWidth / tw) : fontSize;
-      if (tw > maxContentWidth) setContentStyle(finalS);
+    // Calculate dimensions
+    setTextStyle(fontSize, weight, selectedFont.family);
+    const nameMetrics = ctx.measureText(nameUpper);
+    const nameWidth = nameMetrics.width;
+    const nameHeight = fontSize * 0.8; // Approx x-height
 
-      ctx.fillText(nameUpper, 0, tagline ? -20 : 40);
+    let tagWidth = 0;
+    let tagHeight = 0;
+    const tagFontSize = fontSize * 0.3;
+    const tagSpacing = 10;
+
+    if (tagUpper) {
+      ctx.font = `500 ${tagFontSize}px "Inter", sans-serif`;
+      ctx.letterSpacing = `${tagSpacing}px`;
+      tagWidth = ctx.measureText(tagUpper).width;
+      tagHeight = tagFontSize;
+    }
+
+    const verticalGap = 30; // Gap between name and tagline
+
+    // Layout Calculations
+    let groupWidth = 0;
+    let groupHeight = 0;
+
+    if (layoutMode === 'text-only') {
+      groupWidth = Math.max(nameWidth, tagWidth);
+      groupHeight = tagline ? nameHeight + verticalGap + tagHeight : nameHeight;
+    } else if (layoutMode === 'icon-top') {
+      groupWidth = Math.max(iconSize, nameWidth, tagWidth);
+      groupHeight = iconSize + iconGap + nameHeight + (tagline ? verticalGap + tagHeight : 0);
+    } else if (layoutMode === 'icon-left' || layoutMode === 'icon-right') {
+      const textBlockHeight = tagline ? nameHeight + verticalGap + tagHeight : nameHeight;
+      groupWidth = iconSize + iconGap + Math.max(nameWidth, tagWidth);
+      groupHeight = Math.max(iconSize, textBlockHeight);
+    } else if (layoutMode === 'badge-only') {
+      const bw = nameWidth + 200;
+      const bh = tagline ? 380 : 250;
+      groupWidth = bw;
+      groupHeight = bh;
+    }
+
+    // Auto-Scaling for fitting group in canvas
+    let finalScale = 1;
+    if (groupWidth > maxContentWidth) finalScale = Math.min(finalScale, maxContentWidth / groupWidth);
+    if (groupHeight > maxContentWidth) finalScale = Math.min(finalScale, maxContentWidth / groupHeight);
+
+    ctx.save();
+    ctx.translate(size / 2, size / 2);
+    ctx.scale(finalScale, finalScale);
+
+    // Drawing
+    if (layoutMode === 'text-only') {
+      const startY = tagline ? -(nameHeight + verticalGap + tagHeight) / 2 + nameHeight : 0;
       
+      setTextStyle(fontSize, weight, selectedFont.family);
+      ctx.textAlign = 'center';
+      ctx.fillText(nameUpper, 0, startY);
       if (outlineWidth > 0) {
         ctx.strokeStyle = outlineColor;
         ctx.lineWidth = outlineWidth;
-        ctx.strokeText(nameUpper, 0, tagline ? -20 : 40);
+        ctx.strokeText(nameUpper, 0, startY);
       }
 
       if (tagline) {
-        ctx.font = `500 ${fontSize * 0.3}px "Inter", sans-serif`;
-        ctx.letterSpacing = '10px';
+        ctx.font = `500 ${tagFontSize}px "Inter", sans-serif`;
+        ctx.letterSpacing = `${tagSpacing}px`;
         ctx.globalAlpha = 0.5;
-        ctx.fillText(tagUpper, 0, 70);
+        ctx.fillText(tagUpper, 0, startY + verticalGap + tagHeight/2);
       }
     } else if (layoutMode === 'icon-top') {
-      const iSize = iconSize;
-      const iY = -size/4;
+      const startY = -groupHeight / 2 + iconSize / 2;
       
-      drawMark(ctx, iconMark, 0, iY, iSize * 0.6);
+      drawMark(ctx, iconMark, 0, startY, iconSize * 0.6);
       ctx.strokeStyle = iconColor;
       ctx.lineWidth = 10;
-      drawShape(ctx, badgeShape, -iSize/2, iY - iSize/2, iSize, iSize, false);
+      drawShape(ctx, badgeShape, -iconSize/2, startY - iconSize/2, iconSize, iconSize, false);
 
-      setContentStyle(fontSize * 0.8);
+      setTextStyle(fontSize * 0.8, weight, selectedFont.family);
       ctx.textAlign = 'center';
-      ctx.fillText(nameUpper, 0, iY + iSize/2 + iconGap + 40);
+      const textY = startY + iconSize/2 + iconGap + (fontSize * 0.8 * 0.4);
+      ctx.fillText(nameUpper, 0, textY);
+
       if (tagline) {
-        ctx.font = `500 ${fontSize * 0.25}px "Inter", sans-serif`;
+        ctx.font = `500 ${tagFontSize}px "Inter", sans-serif`;
         ctx.letterSpacing = '6px';
         ctx.globalAlpha = 0.4;
-        ctx.fillText(tagUpper, 0, iY + iSize/2 + iconGap + 100);
+        ctx.fillText(tagUpper, 0, textY + verticalGap + tagHeight/2);
       }
     } else if (layoutMode === 'icon-left' || layoutMode === 'icon-right') {
-      const iSize = iconSize * 0.8;
-      const totalGap = iconGap + 20;
+      const textBlockHeight = tagline ? nameHeight + verticalGap + tagHeight : nameHeight;
+      const startX = -groupWidth / 2;
       
-      setContentStyle(fontSize * 0.7);
-      const textWidth = ctx.measureText(nameUpper).width;
-      const totalWidth = iSize + totalGap + textWidth;
-      
-      // Auto constrain
-      let scale = 1;
-      if (totalWidth > maxContentWidth) {
-        scale = maxContentWidth / totalWidth;
-        setContentStyle(fontSize * 0.7 * scale);
-      }
-
-      const drawX = -(totalWidth * scale) / 2;
-
       if (layoutMode === 'icon-left') {
         // Icon
         ctx.save();
-        ctx.translate(drawX + (iSize*scale)/2, 0);
-        drawMark(ctx, iconMark, 0, 0, iSize * 0.5 * scale);
+        ctx.translate(startX + iconSize/2, 0);
+        drawMark(ctx, iconMark, 0, 0, iconSize * 0.5);
         ctx.strokeStyle = iconColor;
-        ctx.lineWidth = 8 * scale;
-        drawShape(ctx, badgeShape, -(iSize*scale)/2, -(iSize*scale)/2, iSize*scale, iSize*scale, false);
+        ctx.lineWidth = 8;
+        drawShape(ctx, badgeShape, -iconSize/2, -iconSize/2, iconSize, iconSize, false);
         ctx.restore();
 
-        // Text
-        ctx.textAlign = 'left';
-        ctx.fillText(nameUpper, drawX + (iSize + totalGap) * scale, tagline ? -10 : 30);
-      } else {
-        // Text first
-        ctx.textAlign = 'left';
-        ctx.fillText(nameUpper, drawX, tagline ? -10 : 30);
+        // Text Group
+        const textStartX = startX + iconSize + iconGap;
+        const textStartY = tagline ? -textBlockHeight / 2 + nameHeight : nameHeight / 2;
         
+        setTextStyle(fontSize, weight, selectedFont.family);
+        ctx.textAlign = 'left';
+        ctx.fillText(nameUpper, textStartX, textStartY);
+        
+        if (tagline) {
+          ctx.font = `500 ${tagFontSize}px "Inter", sans-serif`;
+          ctx.letterSpacing = '6px';
+          ctx.globalAlpha = 0.4;
+          ctx.fillText(tagUpper, textStartX, textStartY + verticalGap);
+        }
+      } else {
+        // Text Group
+        const textStartX = startX;
+        const textStartY = tagline ? -textBlockHeight / 2 + nameHeight : nameHeight / 2;
+        
+        setTextStyle(fontSize, weight, selectedFont.family);
+        ctx.textAlign = 'left';
+        ctx.fillText(nameUpper, textStartX, textStartY);
+        
+        if (tagline) {
+          ctx.font = `500 ${tagFontSize}px "Inter", sans-serif`;
+          ctx.letterSpacing = '6px';
+          ctx.globalAlpha = 0.4;
+          ctx.fillText(tagUpper, textStartX, textStartY + verticalGap);
+        }
+
         // Icon
+        const iconStartX = startX + Math.max(nameWidth, tagWidth) + iconGap + iconSize/2;
         ctx.save();
-        ctx.translate(drawX + (textWidth + totalGap + iSize/2) * scale, 0);
-        drawMark(ctx, iconMark, 0, 0, iSize * 0.5 * scale);
+        ctx.translate(iconStartX, 0);
+        drawMark(ctx, iconMark, 0, 0, iconSize * 0.5);
         ctx.strokeStyle = iconColor;
-        ctx.lineWidth = 8 * scale;
-        drawShape(ctx, badgeShape, -(iSize*scale)/2, -(iSize*scale)/2, iSize*scale, iSize*scale, false);
+        ctx.lineWidth = 8;
+        drawShape(ctx, badgeShape, -iconSize/2, -iconSize/2, iconSize, iconSize, false);
         ctx.restore();
       }
     } else if (layoutMode === 'badge-only') {
-      setContentStyle(fontSize * 0.8);
-      const tw = ctx.measureText(nameUpper).width;
-      const bw = tw + 200;
+      const bw = nameWidth + 200;
       const bh = tagline ? 380 : 250;
       
       ctx.fillStyle = textColor;
@@ -443,13 +496,16 @@ export default function LogoMakerPage() {
       ctx.fillStyle = bgColor === '#FFFFFF' ? '#000000' : '#FFFFFF';
       if (isTransparent) ctx.fillStyle = '#000000';
       
+      setTextStyle(fontSize * 0.8, weight, selectedFont.family);
       ctx.textAlign = 'center';
-      ctx.fillText(nameUpper, 0, tagline ? -30 : 40);
+      const textY = tagline ? -30 : 20;
+      ctx.fillText(nameUpper, 0, textY);
+      
       if (tagline) {
         ctx.font = `500 ${fontSize * 0.3}px "Inter", sans-serif`;
         ctx.letterSpacing = '10px';
         ctx.globalAlpha = 0.8;
-        ctx.fillText(tagUpper, 0, 60);
+        ctx.fillText(tagUpper, 0, textY + verticalGap + 40);
       }
     }
 
@@ -504,8 +560,8 @@ export default function LogoMakerPage() {
     const wasSafeZone = showSafeZone;
     setShowSafeZone(false);
     
-    // We need to re-render or just draw original onto scaled
-    // To ensure filters/gradients scale, we briefly resize main canvas or use drawImage
+    // We briefy wait for the state update to propagate before drawing if we were going to re-render,
+    // but here we just draw the source canvas scaled.
     tCtx?.drawImage(canvasRef.current, 0, 0, exportSize, exportSize);
     
     link.href = tempCanvas.toDataURL('image/png', 1.0);
