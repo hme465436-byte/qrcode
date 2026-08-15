@@ -54,7 +54,8 @@ const TOOLS = [
     title: 'Single Studio', 
     desc: 'Branded QR codes with logos and AI backgrounds.', 
     label: 'PRO MODE', 
-    color: 'text-blue-600 bg-blue-500/10 border-blue-500/20 hover:shadow-blue-500/10',
+    color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan']
   },
   { 
@@ -63,7 +64,8 @@ const TOOLS = [
     title: 'Bulk Production', 
     desc: 'Generate hundreds of high-res assets in seconds.', 
     label: 'BATCH', 
-    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-500/20 hover:shadow-indigo-500/10',
+    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-500/20',
+    glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
   },
   { 
@@ -72,7 +74,8 @@ const TOOLS = [
     title: 'Logo Text Studio', 
     desc: 'Generate premium text-based logos and avatars.', 
     label: 'BRANDING', 
-    color: 'text-violet-600 bg-violet-500/10 border-violet-500/20 hover:shadow-violet-500/10',
+    color: 'text-violet-600 bg-violet-500/10 border-violet-500/20',
+    glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
   },
   { 
@@ -81,7 +84,8 @@ const TOOLS = [
     title: 'YT Thumbnail', 
     desc: 'Resize and frame images for 1280x720 thumbnails.', 
     label: 'YOUTUBE', 
-    color: 'text-rose-600 bg-rose-500/10 border-rose-500/20 hover:shadow-rose-500/10',
+    color: 'text-rose-600 bg-rose-500/10 border-rose-500/20',
+    glowClass: 'bg-rose-500/10',
     keywords: ['youtube thumbnail size', '1280x720', 'yt thumbnail maker', 'thumbnail resizer', 'youtube thumbnail resizer']
   },
   { 
@@ -90,7 +94,8 @@ const TOOLS = [
     title: 'YouTube Banner', 
     desc: 'Create 2560x1440 channel art with safe-zone guides.', 
     label: 'YOUTUBE', 
-    color: 'text-red-600 bg-red-500/10 border-red-500/20 hover:shadow-red-500/10',
+    color: 'text-red-600 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
     keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area']
   },
   { 
@@ -99,7 +104,8 @@ const TOOLS = [
     title: 'Age Calculator', 
     desc: 'Calculate exact age and birthday countdowns.', 
     label: 'STATS', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20 hover:shadow-emerald-500/10',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
     keywords: ['age calculator', 'date of birth', 'how old am i', 'birthday', 'chronos', 'time lived']
   },
   { 
@@ -108,7 +114,8 @@ const TOOLS = [
     title: 'Password Studio', 
     desc: 'Generate cryptographically-secure strong passwords.', 
     label: 'SECURITY', 
-    color: 'text-slate-700 bg-slate-500/10 border-slate-500/20 hover:shadow-slate-500/10',
+    color: 'text-slate-700 bg-slate-500/10 border-slate-500/20',
+    glowClass: 'bg-slate-500/10',
     keywords: ['password generator', 'random password', 'strong password', 'security', 'safe', 'key']
   },
   { 
@@ -117,7 +124,8 @@ const TOOLS = [
     title: 'Collage Studio', 
     desc: 'Combine multiple images into professional grid layouts.', 
     label: 'GRID', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20 hover:shadow-teal-500/10',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
+    glowClass: 'bg-teal-500/10',
     keywords: ['collage maker', 'photo grid', 'merge photos', '2x2 collage', 'photo collage', 'combine images']
   },
   { 
@@ -126,7 +134,8 @@ const TOOLS = [
     title: 'Favicon Studio', 
     desc: 'Generate web icon sets from any image instantly.', 
     label: 'WEB', 
-    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20 hover:shadow-blue-500/10',
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
     keywords: ['favicon generator', 'favicon from image', 'site icon', 'ico maker', 'favicon png', 'apple touch icon']
   },
   { 
@@ -135,7 +144,8 @@ const TOOLS = [
     title: 'Privacy Purge', 
     desc: 'Strip GPS and EXIF metadata from any photo.', 
     label: 'SECURE', 
-    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20 hover:shadow-orange-500/10',
+    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
     keywords: ['remove exif', 'metadata remover', 'strip gps', 'privacy photo', 'remove location from image', 'exif']
   },
   { 
@@ -144,7 +154,8 @@ const TOOLS = [
     title: 'Word Counter', 
     desc: 'Live text analysis and reading time estimation.', 
     label: 'TEXT', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20 hover:shadow-amber-500/10',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    glowClass: 'bg-amber-500/10',
     keywords: ['word counter', 'character count', 'reading time', 'word count tool', 'text counter', 'speaking time']
   },
   { 
@@ -153,7 +164,8 @@ const TOOLS = [
     title: 'Color Picker', 
     desc: 'Extract HEX, RGB, and HSL from any image.', 
     label: 'DESIGN', 
-    color: 'text-pink-600 bg-rose-500/10 border-rose-500/20 hover:shadow-rose-500/10',
+    color: 'text-pink-600 bg-rose-500/10 border-rose-500/20',
+    glowClass: 'bg-pink-500/10',
     keywords: ['color picker', 'pick color from image', 'hex', 'rgb', 'eye dropper', 'color from photo', 'palette']
   },
   { 
@@ -162,7 +174,8 @@ const TOOLS = [
     title: 'RGB Studio', 
     desc: 'Precision color picking and space conversion.', 
     label: 'ENGINE', 
-    color: 'text-fuchsia-600 bg-fuchsia-500/10 border-fuchsia-500/20 hover:shadow-fuchsia-500/10',
+    color: 'text-fuchsia-600 bg-fuchsia-500/10 border-fuchsia-500/20',
+    glowClass: 'bg-fuchsia-500/10',
     keywords: ['rgb picker', 'hex color', 'hsl', 'color converter', 'color picker', 'cmyk', 'hsv']
   },
   { 
@@ -171,7 +184,8 @@ const TOOLS = [
     title: 'Markdown Preview', 
     desc: 'Live Markdown to HTML synthesis with visual preview.', 
     label: 'MARKUP', 
-    color: 'text-sky-600 bg-sky-500/10 border-sky-500/20 hover:shadow-sky-500/10',
+    color: 'text-sky-600 bg-sky-500/10 border-sky-500/20',
+    glowClass: 'bg-sky-500/10',
     keywords: ['markdown preview', 'md to html', 'markdown editor', 'markdown to html', 'live markdown', 'markup']
   },
   { 
@@ -180,7 +194,8 @@ const TOOLS = [
     title: 'Image Converter', 
     desc: 'Seamlessly switch between PNG and JPG formats.', 
     label: 'FORMAT', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20 hover:shadow-cyan-500/10',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    glowClass: 'bg-cyan-500/10',
     keywords: ['png to jpg', 'jpg to png', 'convert image', 'png jpg converter', 'jpeg', 'image format']
   },
   { 
@@ -189,7 +204,8 @@ const TOOLS = [
     title: 'Image Resizer', 
     desc: 'Scale pixel dimensions with aspect ratio control.', 
     label: 'SCALE', 
-    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20 hover:shadow-emerald-500/10',
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
     keywords: ['resize', 'resizer', 'image resizer', 'resize photo', 'change size', 'width height', 'px', 'scale image', 'dimension']
   },
   { 
@@ -198,7 +214,8 @@ const TOOLS = [
     title: 'Image Compressor', 
     desc: 'Reduce file size locally with quality control.', 
     label: 'OPTIMIZE', 
-    color: 'text-lime-600 bg-lime-500/10 border-lime-500/20 hover:shadow-lime-500/10',
+    color: 'text-lime-600 bg-lime-500/10 border-lime-500/20',
+    glowClass: 'bg-lime-500/10',
     keywords: ['compress', 'image compressor', 'reduce size', 'jpg', 'photo size', 'optimize', 'shrink', 'smaller']
   },
   { 
@@ -207,7 +224,8 @@ const TOOLS = [
     title: 'Image to PDF', 
     desc: 'Convert multiple images into a professional PDF.', 
     label: 'DOCUMENT', 
-    color: 'text-red-700 bg-red-500/10 border-red-500/20 hover:shadow-red-500/10',
+    color: 'text-red-700 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
     keywords: ['image to pdf', 'jpg to pdf', 'png to pdf', 'photo pdf', 'convert pdf', 'bundle', 'pdf']
   },
   { 
@@ -216,7 +234,8 @@ const TOOLS = [
     title: 'Photo Studio', 
     desc: 'Professional filters and local image editing.', 
     label: 'EDITOR', 
-    color: 'text-violet-500 bg-violet-500/10 border-violet-500/20 hover:shadow-violet-500/10',
+    color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
+    glowClass: 'bg-violet-500/10',
     keywords: ['photo', 'image', 'edit', 'crop', 'filter', 'editor', 'picture', 'manipulate', 'brightness', 'contrast']
   },
   { 
@@ -225,7 +244,8 @@ const TOOLS = [
     title: 'Vocal Remover', 
     desc: 'Simple stereo matrix for vocal or music reduction.', 
     label: 'KARAOKE', 
-    color: 'text-rose-700 bg-rose-500/10 border-rose-500/20 hover:shadow-rose-500/10',
+    color: 'text-rose-700 bg-rose-500/10 border-rose-500/20',
+    glowClass: 'bg-rose-500/10',
     keywords: ['vocal remover', 'karaoke', 'remove vocals', 'instrumental', 'music separator', 'audio separator']
   },
   { 
@@ -234,7 +254,8 @@ const TOOLS = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-700 bg-amber-500/10 border-amber-500/20 hover:shadow-amber-500/10',
+    color: 'text-amber-700 bg-amber-500/10 border-amber-500/20',
+    glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
   },
   { 
@@ -243,7 +264,8 @@ const TOOLS = [
     title: 'Video to GIF', 
     desc: 'Synthesize high-quality animated GIFs from clips.', 
     label: 'ANIMATION', 
-    color: 'text-orange-700 bg-orange-500/10 border-orange-500/20 hover:shadow-orange-500/10',
+    color: 'text-orange-700 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
     keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip']
   },
   { 
@@ -252,7 +274,8 @@ const TOOLS = [
     title: 'Audio Joiner', 
     desc: 'Merge multiple audio files into a single master track.', 
     label: 'PRODUCTION', 
-    color: 'text-blue-700 bg-blue-500/10 border-blue-500/20 hover:shadow-blue-500/10',
+    color: 'text-blue-700 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
     keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound']
   },
   { 
@@ -261,7 +284,8 @@ const TOOLS = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-700 bg-teal-500/10 border-teal-500/20 hover:shadow-teal-500/10',
+    color: 'text-teal-700 bg-teal-500/10 border-teal-500/20',
+    glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav']
   },
   { 
@@ -270,7 +294,8 @@ const TOOLS = [
     title: 'Letter Art Studio', 
     desc: 'Image to text conversion using custom alphabets.', 
     label: 'ASCII', 
-    color: 'text-slate-600 bg-slate-500/10 border-slate-500/20 hover:shadow-slate-500/10',
+    color: 'text-slate-600 bg-slate-500/10 border-slate-500/20',
+    glowClass: 'bg-slate-500/10',
     keywords: ['image to text', 'ascii art', 'letters art', 'custom characters', 'image to alphabet', 'text art', 'alphabet art']
   },
   { 
@@ -279,7 +304,8 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20 hover:shadow-emerald-500/10',
+    color: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'tesseract', 'read']
   },
   { 
@@ -288,7 +314,8 @@ const TOOLS = [
     title: 'Hex Converter', 
     desc: 'Convert binary files to hexadecimal matrix.', 
     label: 'BINARY', 
-    color: 'text-indigo-700 bg-indigo-500/10 border-indigo-500/20 hover:shadow-indigo-500/10',
+    color: 'text-indigo-700 bg-indigo-500/10 border-indigo-500/20',
+    glowClass: 'bg-indigo-500/10',
     keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
   },
   { 
@@ -297,7 +324,8 @@ const TOOLS = [
     title: 'Text Repeater', 
     desc: 'Professional emoji and text multiplication.', 
     label: 'UTIL', 
-    color: 'text-pink-700 bg-pink-500/10 border-pink-500/20 hover:shadow-pink-500/10',
+    color: 'text-pink-700 bg-pink-500/10 border-pink-500/20',
+    glowClass: 'bg-pink-500/10',
     keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner']
   },
   { 
@@ -306,7 +334,8 @@ const TOOLS = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-700 bg-cyan-500/10 border-cyan-500/20 hover:shadow-cyan-500/10',
+    color: 'text-cyan-700 bg-cyan-500/10 border-cyan-500/20',
+    glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
   }
 ];
@@ -383,8 +412,14 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full">
             {filteredTools.length > 0 ? (
               filteredTools.map((item, i) => (
-                <Link key={i} href={item.href} className="group h-full w-full animate-in fade-in zoom-in duration-500">
-                  <div className="glass-card p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-2xl group-hover:shadow-xl">
+                <Link key={i} href={item.href} className="group h-full w-full animate-in fade-in zoom-in duration-500 relative">
+                  {/* Atmospheric Back Glow */}
+                  <div className={cn(
+                    "absolute -inset-4 rounded-[4rem] blur-3xl opacity-20 group-hover:opacity-40 transition-all duration-500 pointer-events-none",
+                    item.glowClass
+                  )} />
+                  
+                  <div className="glass-card p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-2xl group-hover:shadow-xl z-10">
                     <div className={cn(
                       "w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[1.8rem] flex items-center justify-center mb-6 sm:mb-8 border shadow-inner group-hover:scale-110 transition-transform duration-500",
                       item.color
