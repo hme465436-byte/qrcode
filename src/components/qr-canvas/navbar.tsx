@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -34,7 +33,8 @@ import {
   Film,
   Volume2,
   LayoutGrid,
-  Grid2X2
+  Grid2X2,
+  MicOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -80,6 +80,7 @@ const NAV_ITEMS = [
   { label: 'Compressor', href: '/image-compressor', icon: Maximize, keywords: ['compress', 'image', 'reduce', 'optimize', 'shrink'] },
   { label: 'Image to PDF', href: '/image-to-pdf', icon: FileStack, keywords: ['pdf', 'convert', 'jpg to pdf', 'images', 'bundle'] },
   { label: 'Photo Editor', href: '/photo-editor', icon: ImageIcon, keywords: ['image', 'edit', 'crop', 'filter', 'manipulate'] },
+  { label: 'Vocal Remover', href: '/vocal-separator', icon: MicOff, keywords: ['vocal remover', 'karaoke', 'remove vocals', 'instrumental', 'music separator'] },
   { label: 'Video to MP3', href: '/video-to-audio', icon: Music, keywords: ['audio', 'extract', 'mp4', 'sound', 'convert'] },
   { label: 'Video to GIF', href: '/video-to-gif', icon: Film, keywords: ['gif', 'video to gif', 'animation', 'clip'] },
   { label: 'Audio Joiner', href: '/audio-joiner', icon: ListMusic, keywords: ['merge', 'combine', 'mp3', 'audio', 'join'] },

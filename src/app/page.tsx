@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -33,7 +32,8 @@ import {
   Film,
   Volume2,
   LayoutGrid,
-  Grid2X2
+  Grid2X2,
+  MicOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -147,6 +147,15 @@ const TOOLS = [
     label: 'EDITOR', 
     color: 'bg-primary/50',
     keywords: ['photo', 'image', 'edit', 'crop', 'filter', 'editor', 'picture', 'manipulate', 'brightness', 'contrast']
+  },
+  { 
+    href: '/vocal-separator', 
+    icon: MicOff, 
+    title: 'Vocal Remover', 
+    desc: 'Simple stereo matrix for vocal or music reduction.', 
+    label: 'KARAOKE', 
+    color: 'bg-primary/50',
+    keywords: ['vocal remover', 'karaoke', 'remove vocals', 'instrumental', 'music separator', 'audio separator']
   },
   { 
     href: '/video-to-audio', 
@@ -269,7 +278,7 @@ export default function Home() {
           {/* Search Bar with Moving Border Trace Effect */}
           <div className="max-w-xl mx-auto mb-16 px-4 group relative">
             <div className="relative h-16 w-full rounded-3xl p-[3px] overflow-hidden transition-all duration-500 shadow-2xl group-focus-within:ring-4 group-focus-within:ring-primary/10">
-              {/* Border Trace Animation - Enhanced thickness and glow */}
+              {/* Border Trace Animation - Refined for premium aesthetic */}
               <div 
                 className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] opacity-80 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity blur-[4px]"
                 style={{
@@ -277,7 +286,7 @@ export default function Home() {
                 }}
               />
               
-              {/* Inner Input Area - Adjusted border radius for sync */}
+              {/* Inner Input Area */}
               <div className="relative flex items-center w-full h-full bg-white/95 dark:bg-black/95 backdrop-blur-3xl rounded-[calc(1.5rem-3px)] overflow-hidden">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                   <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
