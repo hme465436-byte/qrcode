@@ -105,6 +105,7 @@ export default function LogoMakerPage() {
   const [weight, setWeight] = useState(700);
   const [spacing, setSpacing] = useState(4);
   const [fontSize, setFontSize] = useState(120);
+  const [taglineGap, setTaglineGap] = useState(30);
   
   // Color State
   const [textColor, setTextColor] = useState('#000000');
@@ -362,20 +363,18 @@ export default function LogoMakerPage() {
       tagHeight = tagFontSize;
     }
 
-    const verticalGap = 30; // Gap between name and tagline
-
     // Layout Calculations
     let groupWidth = 0;
     let groupHeight = 0;
 
     if (layoutMode === 'text-only') {
       groupWidth = Math.max(nameWidth, tagWidth);
-      groupHeight = tagline ? nameHeight + verticalGap + tagHeight : nameHeight;
+      groupHeight = tagUpper ? nameHeight + taglineGap + tagHeight : nameHeight;
     } else if (layoutMode === 'icon-top') {
       groupWidth = Math.max(iconSize, nameWidth, tagWidth);
-      groupHeight = iconSize + iconGap + nameHeight + (tagline ? verticalGap + tagHeight : 0);
+      groupHeight = iconSize + iconGap + nameHeight + (tagUpper ? taglineGap + tagHeight : 0);
     } else if (layoutMode === 'icon-left' || layoutMode === 'icon-right') {
-      const textBlockHeight = tagline ? nameHeight + verticalGap + tagHeight : nameHeight;
+      const textBlockHeight = tagUpper ? nameHeight + taglineGap + tagHeight : nameHeight;
       groupWidth = iconSize + iconGap + Math.max(nameWidth, tagWidth);
       groupHeight = Math.max(iconSize, textBlockHeight);
     } else if (layoutMode === 'badge-only') {
@@ -396,22 +395,17 @@ export default function LogoMakerPage() {
 
     // Drawing
     if (layoutMode === 'text-only') {
-      const startY = tagline ? -(nameHeight + verticalGap + tagHeight) / 2 + nameHeight : 0;
+      const startY = tagUpper ? -(nameHeight + taglineGap + tagHeight) / 2 + nameHeight : 0;
       
       setTextStyle(fontSize, weight, selectedFont.family);
       ctx.textAlign = 'center';
       ctx.fillText(nameUpper, 0, startY);
-      if (outlineWidth > 0) {
-        ctx.strokeStyle = outlineColor;
-        ctx.lineWidth = outlineWidth;
-        ctx.strokeText(nameUpper, 0, startY);
-      }
-
-      if (tagline) {
+      
+      if (tagUpper) {
         ctx.font = `500 ${tagFontSize}px "Inter", sans-serif`;
         ctx.letterSpacing = `${tagSpacing}px`;
         ctx.globalAlpha = 0.5;
-        ctx.fillText(tagUpper, 0, startY + verticalGap + tagHeight/2);
+        ctx.fillText(tagUpper, 0, startY + taglineGap + tagHeight/2);
       }
     } else if (layoutMode === 'icon-top') {
       const startY = -groupHeight / 2 + iconSize / 2;
@@ -426,14 +420,14 @@ export default function LogoMakerPage() {
       const textY = startY + iconSize/2 + iconGap + (fontSize * 0.8 * 0.4);
       ctx.fillText(nameUpper, 0, textY);
 
-      if (tagline) {
+      if (tagUpper) {
         ctx.font = `500 ${tagFontSize}px "Inter", sans-serif`;
         ctx.letterSpacing = '6px';
         ctx.globalAlpha = 0.4;
-        ctx.fillText(tagUpper, 0, textY + verticalGap + tagHeight/2);
+        ctx.fillText(tagUpper, 0, textY + taglineGap + tagHeight/2);
       }
     } else if (layoutMode === 'icon-left' || layoutMode === 'icon-right') {
-      const textBlockHeight = tagline ? nameHeight + verticalGap + tagHeight : nameHeight;
+      const textBlockHeight = tagUpper ? nameHeight + taglineGap + tagHeight : nameHeight;
       const startX = -groupWidth / 2;
       
       if (layoutMode === 'icon-left') {
@@ -448,36 +442,37 @@ export default function LogoMakerPage() {
 
         // Text Group
         const textStartX = startX + iconSize + iconGap;
-        const textStartY = tagline ? -textBlockHeight / 2 + nameHeight : nameHeight / 2;
+        const textStartY = tagUpper ? -textBlockHeight / 2 + nameHeight : nameHeight / 2;
         
         setTextStyle(fontSize, weight, selectedFont.family);
         ctx.textAlign = 'left';
         ctx.fillText(nameUpper, textStartX, textStartY);
         
-        if (tagline) {
+        if (tagUpper) {
           ctx.font = `500 ${tagFontSize}px "Inter", sans-serif`;
           ctx.letterSpacing = '6px';
           ctx.globalAlpha = 0.4;
-          ctx.fillText(tagUpper, textStartX, textStartY + verticalGap);
+          ctx.fillText(tagUpper, textStartX, textStartY + taglineGap);
         }
       } else {
         // Text Group
+        const textBlockWidth = Math.max(nameWidth, tagWidth);
         const textStartX = startX;
-        const textStartY = tagline ? -textBlockHeight / 2 + nameHeight : nameHeight / 2;
+        const textStartY = tagUpper ? -textBlockHeight / 2 + nameHeight : nameHeight / 2;
         
         setTextStyle(fontSize, weight, selectedFont.family);
         ctx.textAlign = 'left';
         ctx.fillText(nameUpper, textStartX, textStartY);
         
-        if (tagline) {
+        if (tagUpper) {
           ctx.font = `500 ${tagFontSize}px "Inter", sans-serif`;
           ctx.letterSpacing = '6px';
           ctx.globalAlpha = 0.4;
-          ctx.fillText(tagUpper, textStartX, textStartY + verticalGap);
+          ctx.fillText(tagUpper, textStartX, textStartY + taglineGap);
         }
 
         // Icon
-        const iconStartX = startX + Math.max(nameWidth, tagWidth) + iconGap + iconSize/2;
+        const iconStartX = startX + textBlockWidth + iconGap + iconSize/2;
         ctx.save();
         ctx.translate(iconStartX, 0);
         drawMark(ctx, iconMark, 0, 0, iconSize * 0.5);
@@ -488,7 +483,7 @@ export default function LogoMakerPage() {
       }
     } else if (layoutMode === 'badge-only') {
       const bw = nameWidth + 200;
-      const bh = tagline ? 380 : 250;
+      const bh = tagUpper ? 380 : 250;
       
       ctx.fillStyle = textColor;
       drawShape(ctx, badgeShape, -bw/2, -bh/2, bw, bh, true);
@@ -498,19 +493,19 @@ export default function LogoMakerPage() {
       
       setTextStyle(fontSize * 0.8, weight, selectedFont.family);
       ctx.textAlign = 'center';
-      const textY = tagline ? -30 : 20;
+      const textY = tagUpper ? -30 : 20;
       ctx.fillText(nameUpper, 0, textY);
       
-      if (tagline) {
+      if (tagUpper) {
         ctx.font = `500 ${fontSize * 0.3}px "Inter", sans-serif`;
         ctx.letterSpacing = '10px';
         ctx.globalAlpha = 0.8;
-        ctx.fillText(tagUpper, 0, textY + verticalGap + 40);
+        ctx.fillText(tagUpper, 0, textY + taglineGap + 10);
       }
     }
 
     ctx.restore();
-  }, [name, tagline, fontIndex, weight, spacing, fontSize, textColor, bgColor, iconColor, isTransparent, useBgGradient, useTextGradient, useShadow, outlineWidth, outlineColor, layoutMode, badgeShape, iconMark, iconSize, iconGap, showSafeZone]);
+  }, [name, tagline, fontIndex, weight, spacing, fontSize, textColor, bgColor, iconColor, isTransparent, useBgGradient, useTextGradient, useShadow, outlineWidth, outlineColor, layoutMode, badgeShape, iconMark, iconSize, iconGap, showSafeZone, taglineGap]);
 
   useEffect(() => {
     renderLogo();
@@ -671,8 +666,8 @@ export default function LogoMakerPage() {
             <TabsContent value="style" className="space-y-8 mt-0">
                <Card className="glass-card border-border shadow-xl overflow-hidden">
                   <CardContent className="pt-8 space-y-10">
-                     <div className="space-y-4">
-                        <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Typography</Label>
+                     <div className="space-y-8">
+                        <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Typography Matrix</Label>
                         <Select value={fontIndex.toString()} onValueChange={v => setFontIndex(parseInt(v))}>
                           <SelectTrigger className="h-12 bg-secondary border-border rounded-xl font-bold">
                             <SelectValue placeholder="Select Style" />
@@ -684,14 +679,27 @@ export default function LogoMakerPage() {
                           </SelectContent>
                         </Select>
                         
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
                            <div className="space-y-4">
-                              <p className="text-[8px] font-black text-foreground/30 uppercase">Base Size</p>
+                              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-foreground/30">
+                                 <span>Base Size</span>
+                                 <span className="text-primary">{fontSize}px</span>
+                              </div>
                               <Slider value={[fontSize]} min={40} max={250} step={1} onValueChange={v => setFontSize(v[0])} />
                            </div>
                            <div className="space-y-4">
-                              <p className="text-[8px] font-black text-foreground/30 uppercase">Kern spacing</p>
+                              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-foreground/30">
+                                 <span>Kern spacing</span>
+                                 <span className="text-primary">{spacing}px</span>
+                              </div>
                               <Slider value={[spacing]} min={-10} max={60} step={1} onValueChange={v => setSpacing(v[0])} />
+                           </div>
+                           <div className="space-y-4 col-span-full">
+                              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-foreground/30">
+                                 <span>Vertical Tagline Gap</span>
+                                 <span className="text-primary">{taglineGap}px</span>
+                              </div>
+                              <Slider value={[taglineGap]} min={0} max={100} step={1} onValueChange={v => setTaglineGap(v[0])} />
                            </div>
                         </div>
                      </div>
