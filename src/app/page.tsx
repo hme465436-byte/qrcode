@@ -324,14 +324,22 @@ export default function Home() {
     });
   }, [searchQuery]);
 
+  const totalTools = TOOLS.length;
+
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden">
       {/* HERO SECTION */}
       <section className="w-full px-4 sm:px-6 pt-12 pb-20 md:pt-24 md:pb-40 text-center relative overflow-hidden">
         <div className="max-w-4xl mx-auto animate-reveal relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
-            <Command className="w-3.5 h-3.5" /> Studio Protocol v6.0
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
+              <Command className="w-3.5 h-3.5" /> Studio Protocol v6.0
+            </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-foreground/5 border border-foreground/10 text-[9px] font-black text-foreground/40 uppercase tracking-widest">
+              Registry · {totalTools} Tools
+            </div>
           </div>
+          
           <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-6 sm:mb-8 leading-[1.1] tracking-tighter text-foreground uppercase overflow-wrap-anywhere">
             Digital <span className="text-primary italic">Excellence</span> <br />
             <span className="text-foreground/80">MY KIT TOOL</span>
