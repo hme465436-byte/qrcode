@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -21,20 +20,21 @@ import {
   Waves,
   AlertCircle,
   Pause,
-  RotateCcw
+  RotateCcw,
+  SlidersHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 export default function VocalSeparatorPage() {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isDecoding, setIsDecoding] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   
@@ -46,19 +46,20 @@ export default function VocalSeparatorPage() {
   
   // Settings
   const [mode, setMode] = useState<'vocal-reduce' | 'vocal-focus'>('vocal-reduce');
-  const [strength, setStrength] = useState(1.0); // 0 to 1
+  const [strength, setStrength] = useState(0.85); // Better default for stereo tracks
+  const [enableFilter, setEnableFilter] = useState(true);
 
   // Refs for Web Audio
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const gainMidRef = useRef<GainNode | null>(null);
   const gainSideRef = useRef<GainNode | null>(null);
+  const filterNodeRef = useRef<BiquadFilterNode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const startTimeRef = useRef<number>(0);
   const pauseOffsetRef = useRef<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize Audio Context on first interaction
   const getAudioContext = () => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -84,12 +85,12 @@ export default function VocalSeparatorPage() {
         toast({ 
           variant: "destructive", 
           title: "Mono Detected", 
-          description: "Stereo audio is required for phase-cancellation tools." 
+          description: "This tool requires a stereo field to perform phase-cancellation." 
         });
       } else {
         setAudioBuffer(decodedBuffer);
         setDuration(decodedBuffer.duration);
-        toast({ title: "Asset Decoded", description: `Matrix ready: ${decodedBuffer.numberOfChannels} channels.` });
+        toast({ title: "Asset Imported", description: `Stereo matrix decoded (${formatTime(decodedBuffer.duration)}).` });
       }
     } catch (err) {
       console.error(err);
@@ -99,89 +100,95 @@ export default function VocalSeparatorPage() {
     }
   };
 
-  const setupNodes = () => {
-    if (!audioBuffer) return;
-    const ctx = getAudioContext();
-    
-    // Cleanup old nodes
-    if (sourceNodeRef.current) {
-      sourceNodeRef.current.disconnect();
-    }
-
+  const setupNodes = (ctx: BaseAudioContext, buffer: AudioBuffer, isOffline = false) => {
     const source = ctx.createBufferSource();
-    source.buffer = audioBuffer;
+    source.buffer = buffer;
 
-    // Mid/Side Matrix Implementation using Web Audio Nodes
-    // 1. Split Channels
+    // 1. Mid/Side Splitter
     const splitter = ctx.createChannelSplitter(2);
     source.connect(splitter);
 
-    // 2. Create Sum (Mid) and Difference (Side)
-    // Mid = (L + R) / 2
-    // Side = (L - R) / 2
-    const midGain = ctx.createGain();
-    const sideGain = ctx.createGain();
-    midGain.gain.value = 0.5;
-    sideGain.gain.value = 0.5;
-
+    // 2. Sum (Mid) and Difference (Side)
+    // Mid = (L + R) * 0.5
+    // Side = (L - R) * 0.5
+    const midSum = ctx.createGain();
+    const sideSum = ctx.createGain();
     const inverter = ctx.createGain();
+    midSum.gain.value = 0.5;
+    sideSum.gain.value = 0.5;
     inverter.gain.value = -1;
 
     // Mid Path: L + R
-    splitter.connect(midGain, 0);
-    splitter.connect(midGain, 1);
+    splitter.connect(midSum, 0);
+    splitter.connect(midSum, 1);
 
     // Side Path: L - R
-    splitter.connect(sideGain, 0);
+    splitter.connect(sideSum, 0);
     splitter.connect(inverter, 1);
-    inverter.connect(sideGain);
+    inverter.connect(sideSum);
 
-    // 3. Apply Separation Strength
-    const finalMid = ctx.createGain();
-    const finalSide = ctx.createGain();
-    
-    // Vocal Reduce: Attenuate Mid
-    // Vocal Focus: Attenuate Side
+    // 3. Frequency Filtering (Target Vocal Range: 300Hz - 3.5kHz)
+    const midFilter = ctx.createBiquadFilter();
     if (mode === 'vocal-reduce') {
-      finalMid.gain.value = 1.0 - strength;
-      finalSide.gain.value = 1.0;
+      midFilter.type = 'peaking';
+      midFilter.frequency.value = 1000;
+      midFilter.Q.value = 0.5;
+      midFilter.gain.value = enableFilter ? -15 * strength : 0;
     } else {
-      finalMid.gain.value = 1.0;
-      finalSide.gain.value = 1.0 - strength;
+      midFilter.type = 'bandpass';
+      midFilter.frequency.value = 1000;
+      midFilter.Q.value = 0.8;
     }
 
-    midGain.connect(finalMid);
-    sideGain.connect(finalSide);
+    // 4. Final Gain Stage
+    const midFinal = ctx.createGain();
+    const sideFinal = ctx.createGain();
+    
+    if (mode === 'vocal-reduce') {
+      midFinal.gain.value = 1.0 - (strength * 0.95); // Avoid total silence for better blend
+      sideFinal.gain.value = 1.0;
+    } else {
+      midFinal.gain.value = 1.0;
+      sideFinal.gain.value = 1.0 - (strength * 0.95);
+    }
 
-    // 4. Rematrix to Stereo
+    midSum.connect(midFilter);
+    midFilter.connect(midFinal);
+    sideSum.connect(sideFinal);
+
+    // 5. Rematrix to Stereo
     // L = Mid + Side
     // R = Mid - Side
     const merger = ctx.createChannelMerger(2);
     const sideInverter = ctx.createGain();
     sideInverter.gain.value = -1;
 
-    finalMid.connect(merger, 0, 0);
-    finalSide.connect(merger, 0, 0);
+    midFinal.connect(merger, 0, 0);
+    sideFinal.connect(merger, 0, 0);
     
-    finalMid.connect(merger, 0, 1);
-    finalSide.connect(sideInverter);
+    midFinal.connect(merger, 0, 1);
+    sideFinal.connect(sideInverter);
     sideInverter.connect(merger, 0, 1);
 
-    merger.connect(ctx.destination);
+    // 6. Master Volume Adjust
+    const master = ctx.createGain();
+    master.gain.value = 1.2; // Compensate for phase loss
+    merger.connect(master);
+    master.connect(ctx.destination);
     
-    sourceNodeRef.current = source;
-    gainMidRef.current = finalMid;
-    gainSideRef.current = finalSide;
+    if (!isOffline) {
+      gainMidRef.current = midFinal;
+      gainSideRef.current = sideFinal;
+      filterNodeRef.current = midFilter;
+      sourceNodeRef.current = source;
+    }
 
     return source;
   };
 
   const togglePlayback = () => {
-    if (isPlaying) {
-      stopPlayback();
-    } else {
-      startPlayback();
-    }
+    if (isPlaying) stopPlayback();
+    else startPlayback();
   };
 
   const startPlayback = () => {
@@ -189,17 +196,7 @@ export default function VocalSeparatorPage() {
     const ctx = getAudioContext();
     if (ctx.state === 'suspended') ctx.resume();
 
-    const source = setupNodes();
-    if (!source) return;
-
-    source.onended = () => {
-      if (Math.abs(currentTime - duration) < 0.1) {
-        setIsPlaying(false);
-        setCurrentTime(0);
-        pauseOffsetRef.current = 0;
-      }
-    };
-
+    const source = setupNodes(ctx, audioBuffer);
     source.start(0, pauseOffsetRef.current);
     startTimeRef.current = ctx.currentTime - pauseOffsetRef.current;
     setIsPlaying(true);
@@ -220,92 +217,54 @@ export default function VocalSeparatorPage() {
     setIsPlaying(false);
   };
 
-  // Real-time strength update
   useEffect(() => {
-    if (gainMidRef.current && gainSideRef.current) {
+    if (gainMidRef.current && gainSideRef.current && filterNodeRef.current) {
+      const ctx = getAudioContext();
       if (mode === 'vocal-reduce') {
-        gainMidRef.current.gain.setTargetAtTime(1.0 - strength, getAudioContext().currentTime, 0.05);
-        gainSideRef.current.gain.setTargetAtTime(1.0, getAudioContext().currentTime, 0.05);
+        gainMidRef.current.gain.setTargetAtTime(1.0 - (strength * 0.95), ctx.currentTime, 0.05);
+        gainSideRef.current.gain.setTargetAtTime(1.0, ctx.currentTime, 0.05);
+        if (filterNodeRef.current.type === 'peaking') {
+          filterNodeRef.current.gain.setTargetAtTime(enableFilter ? -15 * strength : 0, ctx.currentTime, 0.05);
+        }
       } else {
-        gainMidRef.current.gain.setTargetAtTime(1.0, getAudioContext().currentTime, 0.05);
-        gainSideRef.current.gain.setTargetAtTime(1.0 - strength, getAudioContext().currentTime, 0.05);
+        gainMidRef.current.gain.setTargetAtTime(1.0, ctx.currentTime, 0.05);
+        gainSideRef.current.gain.setTargetAtTime(1.0 - (strength * 0.95), ctx.currentTime, 0.05);
       }
     }
-  }, [strength, mode]);
+  }, [strength, mode, enableFilter]);
 
   const exportWav = async () => {
     if (!audioBuffer) return;
     setIsExporting(true);
     
-    // Processing off-line to capture the result
-    const offlineCtx = new OfflineAudioContext(2, audioBuffer.length, audioBuffer.sampleRate);
-    const source = offlineCtx.createBufferSource();
-    source.buffer = audioBuffer;
-
-    const splitter = offlineCtx.createChannelSplitter(2);
-    source.connect(splitter);
-
-    const midGain = offlineCtx.createGain();
-    const sideGain = offlineCtx.createGain();
-    const inverter = offlineCtx.createGain();
-    midGain.gain.value = 0.5;
-    sideGain.gain.value = 0.5;
-    inverter.gain.value = -1;
-
-    splitter.connect(midGain, 0);
-    splitter.connect(midGain, 1);
-    splitter.connect(sideGain, 0);
-    splitter.connect(inverter, 1);
-    inverter.connect(sideGain);
-
-    const finalMid = offlineCtx.createGain();
-    const finalSide = offlineCtx.createGain();
-    if (mode === 'vocal-reduce') {
-      finalMid.gain.value = 1.0 - strength;
-      finalSide.gain.value = 1.0;
-    } else {
-      finalMid.gain.value = 1.0;
-      finalSide.gain.value = 1.0 - strength;
+    try {
+      const offlineCtx = new OfflineAudioContext(2, audioBuffer.length, audioBuffer.sampleRate);
+      const source = setupNodes(offlineCtx, audioBuffer, true);
+      source.start();
+      
+      const renderedBuffer = await offlineCtx.startRendering();
+      const wavBlob = audioBufferToWav(renderedBuffer);
+      const url = URL.createObjectURL(wavBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `qrcanvas-${mode}-${Math.round(strength * 100)}p.wav`;
+      link.click();
+      toast({ title: "Master Exported", description: "Studio quality separation saved as WAV." });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: "destructive", title: "Export Failed", description: "Internal audio rendering failed." });
+    } finally {
+      setIsExporting(false);
     }
-
-    midGain.connect(finalMid);
-    sideGain.connect(finalSide);
-
-    const merger = offlineCtx.createChannelMerger(2);
-    const sideInverter = offlineCtx.createGain();
-    sideInverter.gain.value = -1;
-    finalMid.connect(merger, 0, 0);
-    finalSide.connect(merger, 0, 0);
-    finalMid.connect(merger, 0, 1);
-    finalSide.connect(sideInverter);
-    sideInverter.connect(merger, 0, 1);
-    merger.connect(offlineCtx.destination);
-
-    source.start();
-    const renderedBuffer = await offlineCtx.startRendering();
-    
-    // Convert to WAV
-    const wavBlob = audioBufferToWav(renderedBuffer);
-    const url = URL.createObjectURL(wavBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `qrcanvas-${mode}-${Date.now()}.wav`;
-    link.click();
-    
-    setIsExporting(false);
-    toast({ title: "Master Exported", description: "WAV master saved to your device." });
   };
 
-  // Helper to convert AudioBuffer to WAV blob
   const audioBufferToWav = (buffer: AudioBuffer) => {
     const numChannels = buffer.numberOfChannels;
     const sampleRate = buffer.sampleRate;
     const format = 1; // PCM
     const bitDepth = 16;
-    
     const bytesPerSample = bitDepth / 8;
     const blockAlign = numChannels * bytesPerSample;
-    
     const length = buffer.length * numChannels * bytesPerSample;
     const arrayBuffer = new ArrayBuffer(44 + length);
     const view = new DataView(arrayBuffer);
@@ -340,7 +299,6 @@ export default function VocalSeparatorPage() {
         offset += 2;
       }
     }
-    
     return new Blob([arrayBuffer], { type: 'audio/wav' });
   };
 
@@ -351,7 +309,7 @@ export default function VocalSeparatorPage() {
     setCurrentTime(0);
     pauseOffsetRef.current = 0;
     if (fileInputRef.current) fileInputRef.current.value = '';
-    toast({ title: "Studio Reset", description: "Buffers cleared." });
+    toast({ title: "Studio Reset", description: "Buffers and memory purged." });
   };
 
   const formatTime = (time: number) => {
@@ -364,13 +322,13 @@ export default function VocalSeparatorPage() {
     <div className="container mx-auto px-6 py-12 md:py-20">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <MicOff className="w-3.5 h-3.5" /> Web Audio Suite
+          <MicOff className="w-3.5 h-3.5" /> Media Intelligence
         </div>
         <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-          Vocal & <span className="text-primary italic">Music Separator</span>
+          Vocal <span className="text-primary italic">Separator Master</span>
         </h1>
-        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl">
-          Professional phase-cancellation matrix. Reduce vocals for karaoke or isolate center tracks using high-fidelity real-time stereo math.
+        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+          Professional-grade stereo phase-cancellation. Isolate center-panned audio or reduce vocals for high-quality karaoke masters locally.
         </p>
       </div>
 
@@ -385,7 +343,7 @@ export default function VocalSeparatorPage() {
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner group-hover:scale-110 transition-transform">
                   <Waves className="w-6 h-6" />
                 </div>
-                Media Matrix
+                Production Matrix
               </CardTitle>
             </CardHeader>
             
@@ -402,21 +360,21 @@ export default function VocalSeparatorPage() {
                   {isDecoding ? (
                     <div className="text-center p-6 space-y-4">
                        <Loader2 className="w-10 h-10 text-primary mx-auto animate-spin" />
-                       <p className="text-[10px] font-black uppercase text-primary tracking-[0.2em]">Decoding Binary Matrix...</p>
+                       <p className="text-[10px] font-black uppercase text-primary tracking-[0.2em]">Analyzing Spectral Fields...</p>
                     </div>
                   ) : file ? (
                     <div className="text-center p-6 space-y-2">
                        <FileAudio className="w-10 h-10 text-primary mx-auto mb-2" />
                        <p className="text-xs font-black uppercase text-foreground truncate max-w-[240px]">{file.name}</p>
-                       <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest">{formatTime(duration)} Duration</p>
+                       <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest">{formatTime(duration)} Stereo Matrix</p>
                     </div>
                   ) : (
                     <>
                       <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4 shadow-xl">
                         <Upload className="w-6 h-6" />
                       </div>
-                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors text-center px-6">
-                        Import Stereo Asset<br/><span className="text-[8px] opacity-60">MP3, WAV, M4A up to 20MB</span>
+                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors text-center px-6 leading-relaxed">
+                        Import Stereo Track<br/><span className="text-[8px] opacity-60">MP3, WAV, M4A up to 20MB</span>
                       </p>
                     </>
                   )}
@@ -425,25 +383,25 @@ export default function VocalSeparatorPage() {
               </div>
 
               {audioBuffer && (
-                <div className="space-y-10 animate-in zoom-in duration-500">
+                <div className="space-y-12 animate-in zoom-in duration-500">
                   <div className="space-y-6">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Separation Protocol</Label>
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Extraction Mode</Label>
                     <div className="grid grid-cols-2 gap-4">
                        <button
                         onClick={() => setMode('vocal-reduce')}
                         className={cn(
-                          "flex flex-col items-center gap-3 p-6 rounded-3xl border transition-all",
+                          "flex flex-col items-center gap-3 p-6 rounded-[2rem] border transition-all",
                           mode === 'vocal-reduce' ? "bg-primary text-primary-foreground border-primary shadow-xl scale-105" : "bg-background border-border text-foreground/40 hover:text-primary"
                         )}
                        >
                          <MicOff className="w-6 h-6 mb-1" />
                          <span className="text-[10px] font-black uppercase tracking-widest">Vocal Reduce</span>
-                         <span className="text-[8px] opacity-60 uppercase font-bold">(Karaoke Mode)</span>
+                         <span className="text-[8px] opacity-60 uppercase font-bold">(Karaoke Engine)</span>
                        </button>
                        <button
                         onClick={() => setMode('vocal-focus')}
                         className={cn(
-                          "flex flex-col items-center gap-3 p-6 rounded-3xl border transition-all",
+                          "flex flex-col items-center gap-3 p-6 rounded-[2rem] border transition-all",
                           mode === 'vocal-focus' ? "bg-primary text-primary-foreground border-primary shadow-xl scale-105" : "bg-background border-border text-foreground/40 hover:text-primary"
                         )}
                        >
@@ -454,10 +412,13 @@ export default function VocalSeparatorPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <div className="flex justify-between items-center">
-                       <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Matrix Intensity</Label>
-                       <span className="text-sm font-headline font-black text-primary uppercase">{(strength * 100).toFixed(0)}% Depth</span>
+                       <div className="space-y-1">
+                        <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Separation Strength</Label>
+                        <p className="text-[9px] text-foreground/30 font-bold uppercase">Matrix Depth Intensity</p>
+                       </div>
+                       <span className="text-lg font-headline font-black text-primary uppercase">{(strength * 100).toFixed(0)}%</span>
                     </div>
                     <Slider 
                       value={[strength * 100]} 
@@ -469,14 +430,12 @@ export default function VocalSeparatorPage() {
                     />
                   </div>
 
-                  <div className="p-5 rounded-[2.5rem] bg-yellow-500/5 border border-yellow-500/10 flex items-start gap-5">
-                     <AlertCircle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                  <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-center justify-between">
                      <div className="space-y-1">
-                        <p className="text-[10px] font-black text-yellow-600/70 uppercase tracking-widest">Technical Protocol</p>
-                        <p className="text-[10px] text-foreground/40 leading-relaxed font-medium">
-                          This tool uses phase-cancellation. It works best on high-quality stereo tracks where vocals are center-panned. This is a local matrix utility, not an AI multi-stem split.
-                        </p>
+                        <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Frequency Masking</p>
+                        <p className="text-[10px] text-foreground/40 font-medium">Target 300Hz–3.5kHz vocal range</p>
                      </div>
+                     <Switch checked={enableFilter} onCheckedChange={setEnableFilter} />
                   </div>
                 </div>
               )}
@@ -502,7 +461,7 @@ export default function VocalSeparatorPage() {
           </Card>
         </div>
 
-        {/* Output Card */}
+        {/* Output Sidebar */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[300px]">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -527,7 +486,7 @@ export default function VocalSeparatorPage() {
                       <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                       <Volume2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                     </div>
-                    <p className="text-[11px] font-black uppercase text-primary tracking-widest">Analyzing Chromatic Phase...</p>
+                    <p className="text-[11px] font-black uppercase text-primary tracking-widest">Decoding Bitstream...</p>
                   </div>
                 )}
 
@@ -539,15 +498,15 @@ export default function VocalSeparatorPage() {
                     
                     <div className="space-y-4 w-full">
                        <div className="flex justify-between text-[10px] font-black text-foreground/40 uppercase tracking-widest">
-                          <span>Timeline</span>
+                          <span>Progress</span>
                           <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
                        </div>
                        <Progress value={(currentTime / duration) * 100} className="h-1.5" />
                     </div>
 
                     <div className="space-y-2">
-                      <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Separation Master Ready</h3>
-                      <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">Protocol: {mode.replace('-', ' ')}</p>
+                      <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Separation Ready</h3>
+                      <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">Logic: {mode.replace('-', ' ')} Matrix</p>
                     </div>
 
                     <Button 
@@ -556,18 +515,18 @@ export default function VocalSeparatorPage() {
                       className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95"
                     >
                       {isExporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Download className="w-6 h-6" />}
-                      Download WAV Master
+                      Download Master WAV
                     </Button>
                   </div>
                 )}
               </div>
 
-              <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
-                <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
+              <div className="p-6 rounded-[2rem] bg-yellow-500/5 border border-yellow-500/10 flex items-start gap-5">
+                <AlertCircle className="w-6 h-6 text-yellow-600 mt-1 shrink-0" />
                 <div className="space-y-2">
-                  <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Absolute</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                    Separation occurs entirely on your device via the Web Audio API. Your tracks never leave your browser sandbox, ensuring 100% data security.
+                  <h4 className="text-[11px] font-black text-yellow-700 uppercase tracking-widest">Production Note</h4>
+                  <p className="text-[11px] text-foreground/50 leading-relaxed font-medium">
+                    This tool works best on high-quality stereo tracks where vocals are center-panned. This is a local matrix utility, not an AI multi-stem split.
                   </p>
                 </div>
               </div>
@@ -575,8 +534,8 @@ export default function VocalSeparatorPage() {
               <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group transition-all hover:bg-secondary/80">
                 <Settings2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-[11px] font-black text-foreground uppercase tracking-widest">Studio Precision</p>
-                  <p className="text-[11px] text-foreground/60 leading-relaxed font-medium">Sampled at {audioBuffer?.sampleRate || 44100}Hz for peak bitstream integrity.</p>
+                  <p className="text-[11px] font-black text-foreground uppercase tracking-widest">Hardware Synthesis</p>
+                  <p className="text-[11px] text-foreground/60 leading-relaxed font-medium">Sampled at {audioBuffer?.sampleRate || 44100}Hz with 16-bit PCM precision.</p>
                 </div>
               </div>
             </CardContent>
