@@ -22,46 +22,46 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-// Hard-coded 7x5 Binary Matrix Map for high-legibility block art
-// 1 = emoji, 0 = space (U+3000)
-const CHAR_MAP: Record<string, number[][]> = {
-  'A': [[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],
-  'B': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0]],
-  'C': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0]],
-  'D': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0]],
-  'E': [[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],
-  'F': [[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0]],
-  'G': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-  'H': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],
-  'I': [[0,1,1,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,1,1,0]],
-  'J': [[0,0,1,1,1],[0,0,0,1,0],[0,0,0,1,0],[0,0,0,1,0],[0,0,0,1,0],[1,0,0,1,0],[0,1,1,0,0]],
-  'K': [[1,0,0,0,1],[1,0,0,1,0],[1,0,1,0,0],[1,1,0,0,0],[1,0,1,0,0],[1,0,0,1,0],[1,0,0,0,1]],
-  'L': [[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],
-  'M': [[1,0,0,0,1],[1,1,0,1,1],[1,0,1,0,1],[1,0,1,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],
-  'N': [[1,0,0,0,1],[1,1,0,0,1],[1,0,1,0,1],[1,0,1,0,1],[1,0,0,1,1],[1,0,0,0,1],[1,0,0,0,1]],
-  'O': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-  'P': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0]],
-  'Q': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,1,1],[0,1,1,1,1]],
-  'R': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,1,0],[1,0,0,0,1],[1,0,0,0,1]],
-  'S': [[0,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[0,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0]],
-  'T': [[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0]],
-  'U': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-  'V': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0]],
-  'W': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,1,0,1],[1,1,0,1,1],[1,0,0,0,1]],
-  'X': [[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[1,0,0,0,1]],
-  'Y': [[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0]],
-  'Z': [[1,1,1,1,1],[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],
-  '0': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,1,1],[1,0,1,0,1],[1,1,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-  '1': [[0,0,1,0,0],[0,1,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,1,1,0]],
-  '2': [[0,1,1,1,0],[1,0,0,0,1],[0,0,0,0,1],[0,0,1,1,0],[0,1,0,0,0],[1,0,0,0,0],[1,1,1,1,1]],
-  '3': [[1,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0]],
-  '4': [[0,0,0,1,0],[0,0,1,1,0],[0,1,0,1,0],[1,0,0,1,0],[1,1,1,1,1],[0,0,0,1,0],[0,0,0,1,0]],
-  '5': [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0]],
-  '6': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-  '7': [[1,1,1,1,1],[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[0,1,0,0,0],[0,1,0,0,0]],
-  '8': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-  '9': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,1],[0,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-  ' ': [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
+// High-Fidelity 7x5 String Matrix Map
+// # = Filled (Emoji), . = Empty (Ideographic Space)
+const LETTERS: Record<string, string[]> = {
+  'A': [" ### ", "#   #", "#   #", "#####", "#   #", "#   #", "#   #"],
+  'B': ["#### ", "#   #", "#   #", "#### ", "#   #", "#   #", "#### "],
+  'C': [" ####", "#    ", "#    ", "#    ", "#    ", "#    ", " ####"],
+  'D': ["#### ", "#   #", "#   #", "#   #", "#   #", "#   #", "#### "],
+  'E': ["#####", "#    ", "#    ", "#### ", "#    ", "#    ", "#####"],
+  'F': ["#####", "#    ", "#    ", "#### ", "#    ", "#    ", "#    "],
+  'G': [" ####", "#    ", "#    ", "#  ##", "#   #", "#   #", " ####"],
+  'H': ["#   #", "#   #", "#   #", "#####", "#   #", "#   #", "#   #"],
+  'I': ["#####", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "#####"],
+  'J': ["#####", "    #", "    #", "    #", "    #", "#   #", " ### "],
+  'K': ["#   #", "#  # ", "# #  ", "##   ", "# #  ", "#  # ", "#   #"],
+  'L': ["#    ", "#    ", "#    ", "#    ", "#    ", "#    ", "#####"],
+  'M': ["#   #", "## ##", "# # #", "#   #", "#   #", "#   #", "#   #"],
+  'N': ["#   #", "##  #", "# # #", "#  ##", "#   #", "#   #", "#   #"],
+  'O': [" ### ", "#   #", "#   #", "#   #", "#   #", "#   #", " ### "],
+  'P': ["#### ", "#   #", "#   #", "#### ", "#    ", "#    ", "#    "],
+  'Q': [" ### ", "#   #", "#   #", "#   #", "# # #", "#  ##", " ####"],
+  'R': ["#### ", "#   #", "#   #", "#### ", "# #  ", "#  # ", "#   #"],
+  'S': [" ####", "#    ", "#    ", " ### ", "    #", "    #", "#### "],
+  'T': ["#####", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  "],
+  'U': ["#   #", "#   #", "#   #", "#   #", "#   #", "#   #", " ### "],
+  'V': ["#   #", "#   #", "#   #", "#   #", "#   #", " # # ", "  #  "],
+  'W': ["#   #", "#   #", "#   #", "# # #", "## ##", "## ##", "#   #"],
+  'X': ["#   #", "#   #", " # # ", "  #  ", " # # ", "#   #", "#   #"],
+  'Y': ["#   #", "#   #", " # # ", "  #  ", "  #  ", "  #  ", "  #  "],
+  'Z': ["#####", "    #", "   # ", "  #  ", " #   ", "#    ", "#####"],
+  '0': [" ### ", "#   #", "#  ##", "# # #", "##  #", "#   #", " ### "],
+  '1': ["  #  ", " ##  ", "  #  ", "  #  ", "  #  ", "  #  ", "#####"],
+  '2': [" ### ", "#   #", "    #", "  ## ", " #   ", "#    ", "#####"],
+  '3': ["#### ", "    #", "    #", " ### ", "    #", "    #", "#### "],
+  '4': ["   # ", "  ## ", " # # ", "#  # ", "#####", "   # ", "   # "],
+  '5': ["#####", "#    ", "#### ", "    #", "    #", "    #", "#### "],
+  '6': [" ### ", "#    ", "#### ", "#   #", "#   #", "#   #", " ### "],
+  '7': ["#####", "    #", "   # ", "  #  ", " #   ", "#    ", "#    "],
+  '8': [" ### ", "#   #", "#   #", " ### ", "#   #", "#   #", " ### "],
+  '9': [" ### ", "#   #", "#   #", " ####", "    #", "    #", " ### "],
+  ' ': ["     ", "     ", "     ", "     ", "     ", "     ", "     "]
 };
 
 export default function EmojiLetterWriterPage() {
@@ -89,15 +89,18 @@ export default function EmojiLetterWriterPage() {
     const charGap = spacing === 'sm' ? 1 : spacing === 'md' ? 2 : 3;
 
     lines.forEach((line) => {
-      // Loop through each of the 7 rows of the matrix
+      // Each letter is 7 rows high
       for (let row = 0; row < 7; row++) {
         let rowStr = '';
         for (let i = 0; i < line.length; i++) {
           const char = line[i];
-          const pattern = CHAR_MAP[char] || CHAR_MAP[' '];
+          const pattern = LETTERS[char] || LETTERS[' '];
           
-          for (let col = 0; col < 5; col++) {
-            if (pattern[row][col] === 1) {
+          if (!pattern) continue;
+
+          const rowPattern = pattern[row];
+          for (let col = 0; col < rowPattern.length; col++) {
+            if (rowPattern[col] === '#') {
               rowStr += emojiList[emojiCounter % emojiList.length];
               emojiCounter++;
             } else {
@@ -109,7 +112,7 @@ export default function EmojiLetterWriterPage() {
         }
         finalResult += rowStr + '\n';
       }
-      finalResult += '\n'; // spacing between lines of text
+      finalResult += '\n'; // Spacing between lines of text
     });
 
     return finalResult;
@@ -146,7 +149,7 @@ export default function EmojiLetterWriterPage() {
           Emoji <span className="text-primary italic">Letter Writer</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          High-resolution 7x5 block art synthesis. Transform text into massive emoji-pattern block art stabilized for perfect mobile sharing.
+          High-resolution 7x5 block art synthesis. Transform text into massive emoji-pattern block art stabilized with Ideographic Spaces for perfect mobile sharing.
         </p>
       </div>
 
@@ -269,25 +272,23 @@ export default function EmojiLetterWriterPage() {
                 </CardTitle>
                 {output && (
                   <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
-                    7x5 High Res
+                    7x5 Monospace
                   </div>
                 )}
               </div>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col pt-10">
               <div className="flex-1 relative group/output rounded-[2rem] bg-white dark:bg-black/20 border border-border overflow-hidden shadow-inner">
-                <textarea 
-                  readOnly
-                  value={output}
-                  placeholder="Emoji art will appear here..."
-                  className="w-full h-full p-8 sm:p-12 font-mono text-[10px] sm:text-xs leading-none resize-none focus:outline-none bg-transparent text-foreground custom-scrollbar overflow-auto whitespace-pre tracking-normal"
-                />
-                {!output && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
-                    <LayoutGrid className="w-24 h-24 text-primary mb-6" />
-                    <p className="text-xs font-black uppercase tracking-[0.3em]">Awaiting Matrix Payload</p>
-                  </div>
-                )}
+                <pre 
+                  className="w-full h-full p-8 sm:p-12 font-mono text-[8px] sm:text-[10px] leading-tight focus:outline-none bg-transparent text-foreground custom-scrollbar overflow-auto whitespace-pre tracking-normal"
+                >
+                  {output || (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                      <LayoutGrid className="w-24 h-24 text-primary mb-6" />
+                      <p className="text-xs font-black uppercase tracking-[0.3em] font-sans">Awaiting Matrix Payload</p>
+                    </div>
+                  )}
+                </pre>
               </div>
 
               {output && (
