@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -36,7 +35,8 @@ import {
   LayoutGrid,
   Grid2X2,
   MicOff,
-  FileEdit
+  FileEdit,
+  AlignLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -75,6 +75,7 @@ const NAV_ITEMS = [
   { label: 'Collage', href: '/collage-maker', icon: Grid2X2, keywords: ['collage maker', 'photo grid', 'merge photos', '2x2 collage', 'photo collage'] },
   { label: 'Favicons', href: '/favicon-generator', icon: LayoutGrid, keywords: ['favicon', 'icon', 'apple touch', 'site icon', 'web'] },
   { label: 'Privacy Purge', href: '/metadata-remover', icon: EyeOff, keywords: ['exif', 'metadata', 'gps', 'privacy', 'strip'] },
+  { label: 'Word Counter', href: '/word-counter', icon: AlignLeft, keywords: ['word counter', 'character count', 'reading time', 'word count tool', 'text counter'] },
   { label: 'Color Picker', href: '/color-picker', icon: Pipette, keywords: ['hex', 'rgb', 'hsl', 'design', 'palette', 'picker'] },
   { label: 'RGB Studio', href: '/rgb-picker', icon: Palette, keywords: ['rgb', 'hex', 'color', 'cmyk', 'converter'] },
   { label: 'Markdown', href: '/markdown-preview', icon: FileEdit, keywords: ['markdown', 'md', 'html', 'preview', 'markup', 'editor'] },

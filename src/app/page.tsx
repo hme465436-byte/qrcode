@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -35,7 +34,8 @@ import {
   LayoutGrid,
   Grid2X2,
   MicOff,
-  FileEdit
+  FileEdit,
+  AlignLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -86,6 +86,15 @@ const TOOLS = [
     label: 'SECURE', 
     color: 'bg-primary/50',
     keywords: ['remove exif', 'metadata remover', 'strip gps', 'privacy photo', 'remove location from image', 'exif']
+  },
+  { 
+    href: '/word-counter', 
+    icon: AlignLeft, 
+    title: 'Word Counter', 
+    desc: 'Live text analysis and reading time estimation.', 
+    label: 'TEXT', 
+    color: 'bg-primary/50',
+    keywords: ['word counter', 'character count', 'reading time', 'word count tool', 'text counter', 'speaking time']
   },
   { 
     href: '/color-picker', 
