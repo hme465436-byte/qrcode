@@ -132,6 +132,7 @@ export default function LogoMakerPage() {
   const [showSafeZone, setShowSafeZone] = useState(true);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const recentRandoms = useRef<string[]>([]);
 
   const drawShape = (ctx: CanvasRenderingContext2D, shape: BadgeShape, x: number, y: number, w: number, h: number, fill: boolean) => {
     ctx.beginPath();
@@ -527,17 +528,45 @@ export default function LogoMakerPage() {
   };
 
   const randomize = () => {
-    setFontIndex(Math.floor(Math.random() * FONTS.length));
-    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-    setTextColor(randomColor.text);
-    setBgColor(randomColor.bg);
-    setIconColor(COLORS[Math.floor(Math.random() * COLORS.length)].bg);
-    setSpacing(Math.floor(Math.random() * 20));
-    setFontSize(100 + Math.floor(Math.random() * 50));
-    setBadgeShape(['circle', 'shield', 'hexagon', 'stamp', 'rounded', 'pill', 'diamond'][Math.floor(Math.random() * 7)] as BadgeShape);
-    setIconMark(ICON_MARKS[Math.floor(Math.random() * ICON_MARKS.length)]);
-    setLayoutMode(['icon-top', 'icon-left', 'icon-right', 'badge-only', 'text-only'][Math.floor(Math.random() * 5)] as LayoutMode);
-    toast({ title: "Brand Reimagined", description: "Identity matrix randomized." });
+    let attempt = 0;
+    let nextFont, nextColor, nextIconColor, nextShape, nextMark, nextLayout;
+
+    // Smart Randomization Logic: Force change at least 4 key properties
+    // Avoid repeating the same exact combo or too similar to recent history
+    do {
+      nextFont = Math.floor(Math.random() * FONTS.length);
+      const randomColorObj = COLORS[Math.floor(Math.random() * COLORS.length)];
+      nextColor = randomColorObj.text;
+      const nextBg = randomColorObj.bg;
+      nextIconColor = COLORS[Math.floor(Math.random() * COLORS.length)].bg;
+      nextShape = ['circle', 'shield', 'hexagon', 'stamp', 'rounded', 'pill', 'diamond', 'square', 'oval'][Math.floor(Math.random() * 9)] as BadgeShape;
+      nextMark = ICON_MARKS[Math.floor(Math.random() * ICON_MARKS.length)];
+      nextLayout = ['icon-top', 'icon-left', 'icon-right', 'badge-only', 'text-only'][Math.floor(Math.random() * 5)] as LayoutMode;
+
+      const fingerprint = `${nextFont}-${nextShape}-${nextMark}-${nextLayout}-${nextColor}`;
+      if (!recentRandoms.current.includes(fingerprint) || attempt > 5) {
+        recentRandoms.current = [fingerprint, ...recentRandoms.current.slice(0, 9)];
+        
+        setFontIndex(nextFont);
+        setTextColor(nextColor);
+        setBgColor(nextBg);
+        setIconColor(nextIconColor);
+        setBadgeShape(nextShape);
+        setIconMark(nextMark);
+        setLayoutMode(nextLayout);
+        
+        // Force variety in spacing and size too
+        setSpacing(Math.floor(Math.random() * 20) - 2);
+        setFontSize(100 + Math.floor(Math.random() * 60));
+        setWeight(Math.random() > 0.5 ? 700 : 900);
+        setTaglineGap(20 + Math.floor(Math.random() * 40));
+        
+        break;
+      }
+      attempt++;
+    } while (attempt < 10);
+
+    toast({ title: "Brand Reimagined", description: "Unique identity matrix synthesized." });
   };
 
   const handleDownload = () => {
@@ -702,7 +731,7 @@ export default function LogoMakerPage() {
                                  <SelectValue placeholder="Container" />
                               </SelectTrigger>
                               <SelectContent className="glass-card">
-                                 {['circle', 'square', 'rounded', 'shield', 'hexagon', 'diamond', 'stamp'].map(s => (
+                                 {['circle', 'square', 'rounded', 'shield', 'hexagon', 'diamond', 'stamp', 'oval', 'pill', 'ribbon', 'banner'].map(s => (
                                     <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
                                  ))}
                               </SelectContent>
@@ -834,7 +863,7 @@ export default function LogoMakerPage() {
               </div>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col items-center justify-center p-10 bg-black/5 dark:bg-black/60 relative">
-               <div className="relative w-full max-w-[500px] aspect-square rounded-[3.5rem] overflow-hidden shadow-2xl ring-1 ring-white/10 group/canvas bg-checkered">
+               <div className="relative w-full max-w-[500px] aspect-square rounded-[3.5rem] overflow-hidden shadow-2xl ring-1 ring-white/10 group/canvas cursor-move bg-checkered">
                   <canvas 
                     ref={canvasRef} 
                     className="w-full h-full object-contain"
