@@ -27,7 +27,8 @@ import {
   RefreshCcw,
   Pipette,
   ShieldAlert,
-  EyeOff
+  EyeOff,
+  ListMusic
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -132,6 +133,15 @@ const TOOLS = [
     label: 'MEDIA', 
     color: 'bg-primary/50',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
+  },
+  { 
+    href: '/audio-joiner', 
+    icon: ListMusic, 
+    title: 'Audio Joiner', 
+    desc: 'Merge multiple audio files into a single master track.', 
+    label: 'PRODUCTION', 
+    color: 'bg-primary/50',
+    keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound']
   },
   { 
     href: '/letter-art', 
