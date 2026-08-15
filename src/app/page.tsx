@@ -73,16 +73,6 @@ const TOOLS = [
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
   },
   { 
-    href: '/media-downloader', 
-    icon: Youtube, 
-    title: 'YT & Media Download', 
-    desc: 'Extract YouTube videos and audio in all high-res formats.', 
-    label: 'EXTRACT', 
-    color: 'text-red-500 bg-red-500/10 border-red-500/20',
-    glowClass: 'bg-red-500/10',
-    keywords: ['youtube downloader', 'video downloader', 'audio downloader', 'download mp4', 'download mp3', 'media extract', 'save video', 'yt', 'social']
-  },
-  { 
     href: '/logo-maker', 
     icon: Type, 
     title: 'Logo Text Studio', 
@@ -368,7 +358,7 @@ const TOOLS = [
     title: 'Hex Converter', 
     desc: 'Convert binary files to hexadecimal matrix.', 
     label: 'BINARY', 
-    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-500/20',
+    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-600/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
   },
@@ -517,7 +507,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16 sm:mb-24 max-w-3xl mx-auto">
             <h2 className="text-3xl sm:text-5xl font-headline font-black uppercase tracking-tight mb-4 sm:mb-6 leading-tight">Built for <span className="text-primary italic">Professional</span> Efficiency</h2>
-            <p className="text-sm sm:text-base text-foreground/40 font-medium leading-relaxed">High-performance technical assets with a focus on privacy and professional scannability.</p>
+            <p className="text-sm sm:base text-foreground/40 font-medium leading-relaxed">High-performance technical assets with a focus on privacy and professional scannability.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 sm:gap-16 max-w-6xl mx-auto">
             {[
