@@ -24,9 +24,10 @@ import {
   Maximize,
   FileStack,
   CaseSensitive,
-  Scaling,
   RefreshCcw,
-  Pipette
+  Pipette,
+  ShieldAlert,
+  EyeOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -50,6 +51,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/metadata-remover', 
+    icon: EyeOff, 
+    title: 'Privacy Purge', 
+    desc: 'Strip GPS and EXIF metadata from any photo.', 
+    label: 'SECURE', 
+    color: 'bg-primary/50',
+    keywords: ['remove exif', 'metadata remover', 'strip gps', 'privacy photo', 'remove location from image', 'exif']
   },
   { 
     href: '/color-picker', 
@@ -80,7 +90,7 @@ const TOOLS = [
   },
   { 
     href: '/image-resizer', 
-    icon: Scaling, 
+    icon: Maximize, 
     title: 'Image Resizer', 
     desc: 'Scale pixel dimensions with aspect ratio control.', 
     label: 'SCALE', 
