@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -70,6 +71,7 @@ export function Footer() {
                 {[
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
+                  { label: 'Collage Maker', href: '/collage-maker' },
                   { label: 'Favicon Studio', href: '/favicon-generator' },
                   { label: 'Privacy Purge', href: '/metadata-remover' },
                   { label: 'Color Picker', href: '/color-picker' },

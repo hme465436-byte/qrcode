@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -31,7 +32,8 @@ import {
   ListMusic,
   Film,
   Volume2,
-  LayoutGrid
+  LayoutGrid,
+  Grid2X2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -55,6 +57,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/collage-maker', 
+    icon: Grid2X2, 
+    title: 'Collage Studio', 
+    desc: 'Combine multiple images into professional grid layouts.', 
+    label: 'GRID', 
+    color: 'bg-primary/50',
+    keywords: ['collage maker', 'photo grid', 'merge photos', '2x2 collage', 'photo collage', 'combine images']
   },
   { 
     href: '/favicon-generator', 
