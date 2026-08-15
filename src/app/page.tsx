@@ -36,7 +36,8 @@ import {
   MicOff,
   FileEdit,
   AlignLeft,
-  Youtube
+  Youtube,
+  Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -60,6 +61,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/password-generator', 
+    icon: Lock, 
+    title: 'Password Studio', 
+    desc: 'Generate cryptographically-secure strong passwords.', 
+    label: 'SECURITY', 
+    color: 'bg-primary/50',
+    keywords: ['password generator', 'random password', 'strong password', 'security', 'safe', 'key']
   },
   { 
     href: '/youtube-banner-maker', 
