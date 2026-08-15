@@ -23,7 +23,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -31,12 +30,12 @@ const BANNER_WIDTH = 2560;
 const BANNER_HEIGHT = 1440;
 const SAFE_WIDTH = 1546;
 const SAFE_HEIGHT = 423;
-const DESKTOP_MAX_WIDTH = 2560;
 const DESKTOP_HEIGHT = 423;
 
 export default function YoutubeBannerPage() {
   const { toast } = useToast();
   const [image, setImage] = useState<string | null>(null);
+  const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -49,59 +48,8 @@ export default function YoutubeBannerPage() {
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
 
-  const renderCanvas = useCallback(() => {
-    if (!canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = BANNER_WIDTH;
-    canvas.height = BANNER_HEIGHT;
-
-    // 1. Draw Background
-    if (bgMode === 'color') {
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, BANNER_WIDTH, BANNER_HEIGHT);
-    } else if (image) {
-      // Draw blurred version for background
-      const img = new Image();
-      img.src = image;
-      img.onload = () => {
-        ctx.save();
-        ctx.filter = 'blur(100px) brightness(0.5)';
-        const scale = Math.max(BANNER_WIDTH / img.width, BANNER_HEIGHT / img.height);
-        ctx.drawImage(img, (BANNER_WIDTH - img.width * scale) / 2, (BANNER_HEIGHT - img.height * scale) / 2, img.width * scale, img.height * scale);
-        ctx.restore();
-        
-        // 2. Draw Main Image
-        ctx.save();
-        const drawImg = () => {
-          const w = img.width * zoom;
-          const h = img.height * zoom;
-          const centerX = BANNER_WIDTH / 2 + pos.x;
-          const centerY = BANNER_HEIGHT / 2 + pos.y;
-          ctx.drawImage(img, centerX - w / 2, centerY - h / 2, w, h);
-          ctx.restore();
-
-          // 3. Draw Guides
-          if (showGuides) {
-            drawGuideOverlays(ctx);
-          }
-        };
-        drawImg();
-      };
-    } else {
-      ctx.fillStyle = '#111';
-      ctx.fillRect(0, 0, BANNER_WIDTH, BANNER_HEIGHT);
-      if (showGuides) drawGuideOverlays(ctx);
-    }
-  }, [image, zoom, pos, bgMode, bgColor, showGuides]);
-
   const drawGuideOverlays = (ctx: CanvasRenderingContext2D) => {
     ctx.save();
-    
-    // Transparent dark mask for non-TV areas (though TV is the full 2560x1440)
-    // We actually want to highlight the Safe Area and Desktop Area
     
     // Safe Area (Mobile/Desktop/Tablet shared): 1546 x 423
     const safeX = (BANNER_WIDTH - SAFE_WIDTH) / 2;
@@ -135,7 +83,7 @@ export default function YoutubeBannerPage() {
 
     // Labels
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'black 32px Inter';
+    ctx.font = '900 32px Inter';
     ctx.textAlign = 'center';
     ctx.fillText('TV (2560 × 1440)', BANNER_WIDTH / 2, 80);
     
@@ -147,6 +95,47 @@ export default function YoutubeBannerPage() {
 
     ctx.restore();
   };
+
+  const renderCanvas = useCallback(() => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d', { alpha: false });
+    if (!ctx) return;
+
+    canvas.width = BANNER_WIDTH;
+    canvas.height = BANNER_HEIGHT;
+
+    // 1. Clear with base color
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, BANNER_WIDTH, BANNER_HEIGHT);
+
+    if (loadedImage) {
+      const img = loadedImage;
+      
+      // 2. Draw Background
+      if (bgMode === 'blur') {
+        ctx.save();
+        ctx.filter = 'blur(60px) brightness(0.4)';
+        const scale = Math.max(BANNER_WIDTH / img.width, BANNER_HEIGHT / img.height);
+        ctx.drawImage(img, (BANNER_WIDTH - img.width * scale) / 2, (BANNER_HEIGHT - img.height * scale) / 2, img.width * scale, img.height * scale);
+        ctx.restore();
+      }
+
+      // 3. Draw Main Image
+      ctx.save();
+      const w = img.width * zoom;
+      const h = img.height * zoom;
+      const centerX = BANNER_WIDTH / 2 + pos.x;
+      const centerY = BANNER_HEIGHT / 2 + pos.y;
+      ctx.drawImage(img, centerX - w / 2, centerY - h / 2, w, h);
+      ctx.restore();
+    }
+
+    // 4. Draw Guides
+    if (showGuides) {
+      drawGuideOverlays(ctx);
+    }
+  }, [loadedImage, zoom, pos, bgMode, bgColor, showGuides]);
 
   useEffect(() => {
     renderCanvas();
@@ -160,9 +149,11 @@ export default function YoutubeBannerPage() {
       reader.onload = (event) => {
         const result = event.target?.result as string;
         const img = new Image();
+        img.crossOrigin = "anonymous";
         img.onload = () => {
           setImage(result);
-          // Initial zoom to fit safe area width or height
+          setLoadedImage(img);
+          // Initial zoom to fit safe area height
           const scale = Math.max(SAFE_WIDTH / img.width, SAFE_HEIGHT / img.height);
           setZoom(scale);
           setPos({ x: 0, y: 0 });
@@ -175,23 +166,18 @@ export default function YoutubeBannerPage() {
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+  const handleDragStart = (clientX: number, clientY: number) => {
     if (!image) return;
     isDragging.current = true;
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     lastMousePos.current = { x: clientX, y: clientY };
   };
 
-  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+  const handleDragMove = (clientX: number, clientY: number) => {
     if (!isDragging.current || !image) return;
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     
     const deltaX = clientX - lastMousePos.current.x;
     const deltaY = clientY - lastMousePos.current.y;
 
-    // Adjust for canvas display scaling
     const container = canvasRef.current?.parentElement;
     if (container) {
       const scale = BANNER_WIDTH / container.clientWidth;
@@ -201,28 +187,31 @@ export default function YoutubeBannerPage() {
     lastMousePos.current = { x: clientX, y: clientY };
   };
 
-  const handleMouseUp = () => {
+  const handleDragEnd = () => {
     isDragging.current = false;
   };
 
   const handleDownload = () => {
     if (!canvasRef.current || !image) return;
-    const originalGuides = showGuides;
     
-    // Render once without guides for export
+    // Temporarily hide guides for export
+    const prevGuides = showGuides;
     setShowGuides(false);
+    
+    // We need to wait for one render cycle or manually call render without guides
     setTimeout(() => {
       const link = document.createElement('a');
       link.download = `youtube-banner-${Date.now()}.png`;
       link.href = canvasRef.current!.toDataURL('image/png', 1.0);
       link.click();
-      setShowGuides(originalGuides);
-      toast({ title: "Export Success", description: "2560x1440 banner saved for production." });
-    }, 100);
+      setShowGuides(prevGuides);
+      toast({ title: "Export Success", description: "2560x1440 banner saved." });
+    }, 50);
   };
 
   const handleClear = () => {
     setImage(null);
+    setLoadedImage(null);
     setPos({ x: 0, y: 0 });
     setZoom(1);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -256,7 +245,6 @@ export default function YoutubeBannerPage() {
             </CardHeader>
             
             <CardContent className="pt-10 space-y-10">
-              {/* Image Import */}
               <div className="space-y-4">
                 <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Source Payload</Label>
                 <div 
@@ -273,7 +261,7 @@ export default function YoutubeBannerPage() {
                     </div>
                   ) : (
                     <>
-                       <Upload className="w-5 h-5 text-foreground/10 mb-2" />
+                       {isProcessing ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Upload className="w-5 h-5 text-foreground/10 mb-2" />}
                        <span className="text-[9px] font-black uppercase text-foreground/30">Import Image</span>
                     </>
                   )}
@@ -379,7 +367,6 @@ export default function YoutubeBannerPage() {
             </CardHeader>
             <CardContent className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 bg-black/5 dark:bg-black/40">
               <div className="w-full max-w-[800px] space-y-8">
-                 {/* Main Canvas Container */}
                  <div className="relative w-full aspect-[16/9] rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10 group/canvas cursor-move bg-checkered">
                     {image && (
                       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 opacity-0 group-hover/canvas:opacity-100 transition-opacity pointer-events-none">
@@ -391,13 +378,13 @@ export default function YoutubeBannerPage() {
                     <canvas 
                       ref={canvasRef} 
                       className="w-full h-full object-contain"
-                      onMouseDown={handleMouseDown}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={handleMouseUp}
-                      onMouseLeave={handleMouseUp}
-                      onTouchStart={handleMouseDown}
-                      onTouchMove={handleMouseMove}
-                      onTouchEnd={handleMouseUp}
+                      onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
+                      onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
+                      onMouseUp={handleDragEnd}
+                      onMouseLeave={handleDragEnd}
+                      onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
+                      onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
+                      onTouchEnd={handleDragEnd}
                     />
                     
                     {!image && !isProcessing && (
@@ -408,7 +395,6 @@ export default function YoutubeBannerPage() {
                     )}
                  </div>
 
-                 {/* Legend */}
                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                        { icon: Tv, label: 'TV Full Matrix', color: 'bg-white/20', dim: '2560 × 1440' },
