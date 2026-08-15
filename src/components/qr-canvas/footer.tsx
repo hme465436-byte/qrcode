@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -70,6 +71,7 @@ export function Footer() {
                 {[
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
+                  { label: 'Resizer', href: '/image-resizer' },
                   { label: 'Compressor', href: '/image-compressor' },
                   { label: 'Image to PDF', href: '/image-to-pdf' },
                   { label: 'Photo Editor', href: '/photo-editor' },

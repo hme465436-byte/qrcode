@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -23,7 +24,8 @@ import {
   X,
   Maximize,
   FileStack,
-  CaseSensitive
+  CaseSensitive,
+  Scaling
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -47,6 +49,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/image-resizer', 
+    icon: Scaling, 
+    title: 'Image Resizer', 
+    desc: 'Scale pixel dimensions with aspect ratio control.', 
+    label: 'SCALE', 
+    color: 'bg-primary/50',
+    keywords: ['resize', 'resizer', 'image resizer', 'resize photo', 'change size', 'width height', 'px', 'scale image', 'dimension']
   },
   { 
     href: '/image-compressor', 
