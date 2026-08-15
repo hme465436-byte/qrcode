@@ -67,7 +67,7 @@ export default function SpeechToTextPage() {
       if (event.error === 'not-allowed') {
         setError("Microphone access denied. Please enable permissions in your browser settings.");
       } else if (event.error === 'network') {
-        setError("Network protocol failure. Cloud-based voice processing requires an active internet connection.");
+        setError("Voice typing needs internet (browser cloud). Check connection and try Chrome.");
       } else if (event.error === 'no-speech') {
         toast({ 
           variant: "default", 
@@ -75,7 +75,7 @@ export default function SpeechToTextPage() {
           description: "No linguistic data was identified in the last stream." 
         });
       } else {
-        setError(`System error: ${event.error}. Please check your hardware connectivity.`);
+        setError(`Linguistic error: ${event.error}. Please check your hardware connectivity.`);
       }
     };
 
@@ -97,6 +97,14 @@ export default function SpeechToTextPage() {
       toast({ title: "Recording Stopped", description: "Linguistic stream preserved." });
     } else {
       setError(null);
+      
+      // Pre-flight internet check
+      if (!window.navigator.onLine) {
+        setError("Internet required for voice recognition. Please connect to a network.");
+        toast({ variant: "destructive", title: "Offline Protocol", description: "Cloud-based voice processing is inactive." });
+        return;
+      }
+
       if (recognitionRef.current) {
         recognitionRef.current.lang = language;
         try {
@@ -104,7 +112,7 @@ export default function SpeechToTextPage() {
           setIsListening(true);
           toast({ title: "Recording Active", description: "Studio is listening for voice matrix." });
         } catch (e) {
-          // Errors handled by onerror
+          // Errors handled by onerror callback
         }
       }
     }
@@ -194,7 +202,7 @@ export default function SpeechToTextPage() {
                    ) : error ? (
                      <>
                         <AlertCircle className="w-12 h-12 text-destructive mb-4" />
-                        <p className="text-[10px] font-bold text-destructive uppercase tracking-widest text-center px-10">{error}</p>
+                        <p className="text-[10px] font-bold text-destructive uppercase tracking-widest text-center px-10 leading-relaxed">{error}</p>
                      </>
                    ) : (
                      <>
@@ -262,7 +270,7 @@ export default function SpeechToTextPage() {
                 </CardTitle>
                 {transcript && (
                   <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest shadow-sm">
-                    {transcript.split(/\s+/).length} Words Identified
+                    {transcript.split(/\s+/).filter(w => w.length > 0).length} Words Identified
                   </div>
                 )}
               </div>
