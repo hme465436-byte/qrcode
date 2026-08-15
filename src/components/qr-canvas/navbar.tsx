@@ -45,8 +45,7 @@ import {
   FileArchive,
   ArrowRightLeft,
   User,
-  DownloadCloud,
-  Code2
+  DownloadCloud
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -83,7 +82,6 @@ const NAV_ITEMS = [
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
-  { label: 'Code Preview', href: '/code-preview', icon: Code2, keywords: ['code', 'html', 'preview', 'sandbox', 'web', 'viewer'] },
   { label: 'WhatsApp DP', href: '/whatsapp-dp-maker', icon: User, keywords: ['whatsapp dp maker', 'profile picture', 'uncut dp', 'whatsapp quality', 'whatsquality', 'hd dp', 'profile maker'] },
   { label: 'PDF Merger', href: '/pdf-merger', icon: FileStack, keywords: ['pdf merge', 'combine pdf', 'join pdf', 'multiple pdfs', 'document joiner'] },
   { label: 'Image to File', href: '/image-to-file', icon: ArrowRightLeft, keywords: ['image to file', 'image converter', 'jpg to pdf', 'webp converter', 'png to webp', 'photo to pdf'] },

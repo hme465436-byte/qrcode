@@ -45,8 +45,7 @@ import {
   FileArchive,
   ArrowRightLeft,
   User,
-  DownloadCloud,
-  Code2
+  DownloadCloud
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -82,16 +81,6 @@ const TOOLS = [
     color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
-  },
-  { 
-    href: '/code-preview', 
-    icon: Code2, 
-    title: 'Code Preview Lab', 
-    desc: 'Upload and live preview HTML projects securely.', 
-    label: 'DEVELOPER', 
-    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
-    glowClass: 'bg-orange-500/10',
-    keywords: ['code preview', 'html viewer', 'web preview', 'sandbox', 'live code', 'website viewer', 'code lab']
   },
   { 
     href: '/whatsapp-dp-maker', 
@@ -364,14 +353,14 @@ const TOOLS = [
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },
   { 
-    href: '/hex-converter', 
-    icon: FileCode, 
-    title: 'Hex Converter', 
-    desc: 'Convert binary files to hexadecimal matrix.', 
-    label: 'BINARY', 
-    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-600/20',
+    href: '/dot-art', 
+    icon: Grid3X3, 
+    title: 'Dot Art Studio', 
+    desc: 'Convert images to intricate Braille character art.', 
+    label: 'CREATIVE', 
+    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
-    keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
+    keywords: ['dots', 'braille', 'art', 'image to text', 'ascii']
   },
   { 
     href: '/repeater', 
@@ -382,6 +371,16 @@ const TOOLS = [
     color: 'text-pink-600 bg-pink-500/10 border-pink-500/20',
     glowClass: 'bg-pink-500/10',
     keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner']
+  },
+  { 
+    href: '/hex-converter', 
+    icon: FileCode, 
+    title: 'Hex Converter', 
+    desc: 'Convert binary files to hexadecimal matrix.', 
+    label: 'BINARY', 
+    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-600/20',
+    glowClass: 'bg-indigo-500/10',
+    keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
   },
   { 
     href: '/code-converter', 
@@ -427,7 +426,7 @@ export default function Home() {
             <span className="text-foreground/80">MY KIT TOOL</span>
           </h1>
           <p className="text-sm sm:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium mb-12 sm:mb-16 px-2">
-            The world's most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
+            The world's most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with precision engine processing.
           </p>
 
           {/* Search Bar */}
@@ -445,7 +444,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. youtube, video, pdf, code)"
+                  placeholder="Search tools... (e.g. video, pdf, logo)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
@@ -498,7 +497,7 @@ export default function Home() {
                 <Search className="w-16 h-16 text-foreground/10" />
                 <div className="space-y-2">
                   <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
-                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;video&quot; or &quot;code&quot;</p>
+                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;video&quot; or &quot;audio&quot;</p>
                 </div>
                 <ShadButton 
                   onClick={() => setSearchQuery('')}
@@ -518,7 +517,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16 sm:mb-24 max-w-3xl mx-auto">
             <h2 className="text-3xl sm:text-5xl font-headline font-black uppercase tracking-tight mb-4 sm:mb-6 leading-tight">Built for <span className="text-primary italic">Professional</span> Efficiency</h2>
-            <p className="text-sm sm:base text-foreground/40 font-medium leading-relaxed">High-performance technical assets with a focus on privacy and professional scannability.</p>
+            <p className="text-sm sm:base text-foreground/40 font-medium leading-relaxed">High-performance technical assets with a focus on privacy and hardware acceleration.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 sm:gap-16 max-w-6xl mx-auto">
             {[
