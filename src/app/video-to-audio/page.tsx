@@ -16,11 +16,16 @@ import {
   Settings2,
   Terminal,
   Activity,
-  Layers
+  Layers,
+  Scissors,
+  Clock,
+  Timer,
+  FastForward
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from '@/hooks/use-toast';
@@ -39,12 +44,15 @@ export default function VideoToAudioPage() {
   const [logs, setLogs] = useState<string[]>([]);
   const [bitrate, setBitrate] = useState('128k');
 
-  // Fix: Use null as initial value to prevent instantiation during SSR/pre-rendering
+  // Trimming State
+  const [totalDuration, setTotalDuration] = useState(0);
+  const [startTime, setStartTime] = useState(0);
+  const [endTime, setEndTime] = useState(0);
+
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Cleanup URL on unmount
     return () => {
       if (mp3Url) URL.revokeObjectURL(mp3Url);
     };
@@ -56,7 +64,6 @@ export default function VideoToAudioPage() {
     setStatus('Initializing FFmpeg Engine...');
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
     
-    // Fix: Instantiate FFmpeg ONLY on the client inside this function
     if (!ffmpegRef.current) {
       ffmpegRef.current = new FFmpeg();
     }
@@ -83,10 +90,16 @@ export default function VideoToAudioPage() {
       toast({ 
         variant: "destructive", 
         title: "Engine Failure", 
-        description: "Failed to load FFmpeg. Please ensure your browser supports SharedArrayBuffer or try a desktop browser." 
+        description: "Failed to load FFmpeg. Please ensure your browser supports SharedArrayBuffer." 
       });
       return false;
     }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,20 +109,37 @@ export default function VideoToAudioPage() {
         toast({ 
           variant: "destructive", 
           title: "High Volume Asset", 
-          description: "Videos over 100MB may be slow. Recommended limit is 50MB for mobile." 
+          description: "Videos over 100MB may be slow to process." 
         });
       }
+      
+      // Get Duration
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        setTotalDuration(video.duration);
+        setEndTime(video.duration);
+        setStartTime(0);
+        window.URL.revokeObjectURL(video.src);
+      };
+      video.src = URL.createObjectURL(selectedFile);
+
       setFile(selectedFile);
       setMp3Url(null);
       setProgress(0);
       setStatus('');
       setLogs([]);
-      toast({ title: "Video Imported", description: "Studio ready for high-fidelity extraction." });
+      toast({ title: "Video Imported", description: "Studio analyzed media metadata." });
     }
   };
 
   const convertToMp3 = async () => {
     if (!file) return;
+
+    if (startTime >= endTime) {
+      toast({ variant: "destructive", title: "Invalid Range", description: "Start time must be before end time." });
+      return;
+    }
 
     setIsProcessing(true);
     setLogs([]);
@@ -128,12 +158,15 @@ export default function VideoToAudioPage() {
       setStatus('Writing Payload to Memory...');
       await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-      setStatus(`Extracting Audio Matrix (${bitrate})...`);
-      // -vn: disable video
-      // -acodec libmp3lame: use mp3 encoder
-      // -b:a: set bitrate
+      setStatus(`Extracting Matrix (${bitrate})...`);
+      
+      // FFmpeg seek and trim parameters
+      // -ss [start] -to [end] or -t [duration]
+      // Using -ss before -i for faster seeking, -to for precise end
       await ffmpeg.exec([
+        '-ss', startTime.toString(),
         '-i', inputName,
+        '-to', (endTime - startTime).toString(),
         '-vn',
         '-acodec', 'libmp3lame',
         '-b:a', bitrate,
@@ -147,13 +180,13 @@ export default function VideoToAudioPage() {
       setMp3Url(url);
       setProgress(100);
       setStatus(`Production Complete @ ${bitrate}`);
-      toast({ title: "Master Exported", description: `Audio track successfully encoded to MP3 at ${bitrate}.` });
+      toast({ title: "Master Exported", description: `Audio track successfully encoded and trimmed.` });
     } catch (err: any) {
       console.error('Conversion Error:', err);
       toast({ 
         variant: "destructive", 
         title: "Production Failed", 
-        description: "An error occurred during audio extraction. The file format may be unsupported." 
+        description: "An error occurred during extraction. The range or format may be invalid." 
       });
       setStatus('Extraction Failed');
     } finally {
@@ -168,6 +201,9 @@ export default function VideoToAudioPage() {
     setProgress(0);
     setStatus('');
     setLogs([]);
+    setTotalDuration(0);
+    setStartTime(0);
+    setEndTime(0);
     if (fileInputRef.current) fileInputRef.current.value = '';
     toast({ title: "Studio Reset", description: "Fields cleared and memory purged." });
   };
@@ -182,7 +218,7 @@ export default function VideoToAudioPage() {
           Video to <span className="text-primary italic">MP3 Master</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl">
-          Professional-grade audio extraction powered by FFmpeg.wasm. 100% private client-side processing for high-fidelity media production.
+          Professional-grade audio extraction with precision trimming. 100% private client-side processing for high-fidelity media production.
         </p>
       </div>
 
@@ -231,22 +267,81 @@ export default function VideoToAudioPage() {
                       <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4">
                         <Upload className="w-6 h-6" />
                       </div>
-                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors">Select Video Asset</p>
-                      <p className="text-[8px] text-foreground/20 uppercase font-bold mt-2">MP4, WEBM, MOV, MKV</p>
+                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors text-center">Select Video Asset<br/><span className="text-[8px] opacity-60">MP4, WEBM, MOV, MKV</span></p>
                     </>
                   )}
                   <input type="file" ref={fileInputRef} accept="video/*" onChange={handleFileChange} className="hidden" />
                 </div>
-
-                {file && file.size > 50 * 1024 * 1024 && (
-                   <div className="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex items-start gap-3">
-                      <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
-                      <p className="text-[9px] text-yellow-500/70 font-bold leading-relaxed uppercase tracking-wider">
-                        Performance Warning: Processing high-volume containers (&gt;50MB) may impact browser stability on mobile.
-                      </p>
-                   </div>
-                )}
               </div>
+
+              {/* Trimming Controls */}
+              {file && totalDuration > 0 && (
+                <div className="space-y-6 pt-6 border-t border-border animate-in fade-in zoom-in duration-500">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Scissors className="w-3 h-3 text-primary" /> Precision Trim Matrix
+                    </Label>
+                    <span className="text-[10px] font-mono text-primary font-black uppercase">Total: {formatDuration(totalDuration)}</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-[9px] font-black uppercase text-foreground/40">
+                        <Clock className="w-3 h-3" /> Start Mark
+                      </div>
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        max={endTime - 0.1}
+                        step="0.1"
+                        value={startTime} 
+                        onChange={(e) => setStartTime(Math.max(0, parseFloat(e.target.value) || 0))}
+                        className="h-12 bg-secondary border-border rounded-xl text-sm font-mono font-bold"
+                      />
+                      <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-tighter text-right">Seconds: {startTime.toFixed(1)}</p>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-[9px] font-black uppercase text-foreground/40">
+                        <Timer className="w-3 h-3" /> End Mark
+                      </div>
+                      <Input 
+                        type="number" 
+                        min={startTime + 0.1} 
+                        max={totalDuration}
+                        step="0.1"
+                        value={endTime} 
+                        onChange={(e) => setEndTime(Math.min(totalDuration, parseFloat(e.target.value) || totalDuration))}
+                        className="h-12 bg-secondary border-border rounded-xl text-sm font-mono font-bold"
+                      />
+                      <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-tighter text-right">Seconds: {endTime.toFixed(1)}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                     <p className="text-[9px] font-black text-foreground/30 uppercase tracking-widest">Trim Presets</p>
+                     <div className="grid grid-cols-3 gap-2">
+                        <button 
+                          onClick={() => { setStartTime(0); setEndTime(totalDuration); }}
+                          className="h-9 rounded-lg bg-secondary border border-border text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all"
+                        >
+                          Full
+                        </button>
+                        <button 
+                          onClick={() => { setStartTime(0); setEndTime(Math.min(30, totalDuration)); }}
+                          className="h-9 rounded-lg bg-secondary border border-border text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all"
+                        >
+                          First 30s
+                        </button>
+                        <button 
+                          onClick={() => { setStartTime(0); setEndTime(Math.min(60, totalDuration)); }}
+                          className="h-9 rounded-lg bg-secondary border border-border text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all"
+                        >
+                          First 60s
+                        </button>
+                     </div>
+                  </div>
+                </div>
+              )}
 
               {/* Bitrate Selection */}
               <div className="space-y-4 pt-4 border-t border-border">
@@ -298,7 +393,7 @@ export default function VideoToAudioPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Generate MP3
+                  Generate trimmed MP3
                 </Button>
                 <Button 
                   variant="outline"
@@ -317,7 +412,7 @@ export default function VideoToAudioPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Absolute</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our FFmpeg engine runs entirely within your browser&apos;s sandbox via WebAssembly. No data is transmitted, ensuring 100% security for your media payloads.
+                Our FFmpeg engine runs entirely within your browser&apos;s sandbox via WebAssembly. No data is transmitted, ensuring 100% security.
               </p>
             </div>
           </div>
@@ -353,7 +448,7 @@ export default function VideoToAudioPage() {
                   <div className="w-full space-y-6 animate-in fade-in duration-500">
                     <div className="relative w-24 h-24 mx-auto">
                       <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                      <Music className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
+                      <FastForward className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                     </div>
                     <div className="space-y-4">
                       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
@@ -363,7 +458,6 @@ export default function VideoToAudioPage() {
                       <Progress value={progress} className="h-2" />
                     </div>
                     
-                    {/* Log Terminal */}
                     <div className="mt-4 p-4 rounded-xl bg-black/90 border border-white/10 text-left font-mono text-[9px] text-green-500/80 overflow-hidden shadow-inner">
                       <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-2 text-white/40">
                         <Terminal className="w-3 h-3" />
@@ -385,7 +479,7 @@ export default function VideoToAudioPage() {
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Audio Master Encoded</h3>
-                      <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">libmp3lame Fidelity: {bitrate}</p>
+                      <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">Fidelity: {bitrate} | Range: {formatDuration(startTime)} - {formatDuration(endTime)}</p>
                     </div>
                     <div className="p-4 bg-background/50 rounded-2xl border border-border w-full">
                       <audio controls src={mp3Url} className="w-full h-10" />
@@ -394,7 +488,7 @@ export default function VideoToAudioPage() {
                       asChild
                       className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95"
                     >
-                      <a href={mp3Url} download={`${file?.name.split('.')[0] || 'master'}_${bitrate}.mp3`}>
+                      <a href={mp3Url} download={`${file?.name.split('.')[0] || 'master'}_trimmed_${bitrate}.mp3`}>
                         <Download className="w-6 h-6" />
                         Download MP3
                       </a>
@@ -408,7 +502,7 @@ export default function VideoToAudioPage() {
                  <div className="space-y-1">
                     <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Technical Protocol</p>
                     <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
-                      Our engine utilizes the -acodec libmp3lame profile with specific bitstream alignment for {bitrate} production.
+                      Our engine utilizes specific bitstream alignment for {bitrate} production with accurate start/end markers.
                     </p>
                  </div>
               </div>
