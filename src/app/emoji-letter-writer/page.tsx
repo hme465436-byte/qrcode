@@ -22,8 +22,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-// Professional 7x5 Matrix Map for high-legibility block art
-// 1 = emoji, 0 = space
+// Hard-coded 7x5 Binary Matrix Map for high-legibility block art
+// 1 = emoji, 0 = space (U+3000)
 const CHAR_MAP: Record<string, number[][]> = {
   'A': [[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1]],
   'B': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0]],
@@ -76,7 +76,7 @@ export default function EmojiLetterWriterPage() {
     return Array.from(emojis).filter(e => e.trim().length > 0 && e !== ' ');
   }, [emojis]);
 
-  // Rebuilt Synthesis Logic
+  // Synthesis Logic
   const output = useMemo(() => {
     if (!text.trim() || emojiList.length === 0) return '';
 
@@ -89,7 +89,7 @@ export default function EmojiLetterWriterPage() {
     const charGapWidth = size === 'sm' ? 1 : size === 'md' ? 2 : 3;
 
     lines.forEach((line) => {
-      // Each block character is now 7 rows high
+      // Loop through each of the 7 rows of the matrix
       for (let row = 0; row < 7; row++) {
         let rowStr = '';
         for (let i = 0; i < line.length; i++) {
@@ -109,7 +109,7 @@ export default function EmojiLetterWriterPage() {
         }
         finalResult += rowStr + '\n';
       }
-      finalResult += '\n'; // Row spacing for clarity
+      finalResult += '\n'; // Add spacing between lines of text
     });
 
     return finalResult;
