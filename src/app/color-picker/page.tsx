@@ -14,7 +14,8 @@ import {
   Maximize2,
   CopyCheck,
   Languages,
-  Zap
+  Zap,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +32,7 @@ type ColorData = {
 export default function ColorPickerPage() {
   const { toast } = useToast();
   const [image, setImage] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [pickedColor, setPickedColor] = useState<ColorData | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [isCopied, setIsCopied] = useState<string | null>(null);
@@ -62,30 +64,43 @@ export default function ColorPickerPage() {
     return `hsl(${Math.round(h * 360)}°, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
   };
 
+  // Handle drawing when image is set and canvas is rendered
+  useEffect(() => {
+    if (image && canvasRef.current) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+
+        // Set canvas size based on image but capped for UI performance
+        const maxWidth = 1600;
+        const scale = Math.min(1, maxWidth / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setIsProcessing(false);
+      };
+      img.src = image;
+    }
+  }, [image]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setIsProcessing(true);
       const reader = new FileReader();
       reader.onload = (event) => {
         const src = event.target?.result as string;
-        const img = new Image();
-        img.onload = () => {
-          setImage(src);
-          if (canvasRef.current) {
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            if (!ctx) return;
-
-            // Set canvas size based on image but capped for UI
-            const maxWidth = 1200;
-            const scale = Math.min(1, maxWidth / img.width);
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          }
-          toast({ title: "Asset Loaded", description: "Studio ready for chromatic sampling." });
-        };
-        img.src = src;
+        setImage(src);
+        toast({ title: "Asset Loaded", description: "Studio ready for chromatic sampling." });
+      };
+      reader.onerror = () => {
+        setIsProcessing(false);
+        toast({ variant: "destructive", title: "Load Error", description: "Failed to read the visual asset." });
       };
       reader.readAsDataURL(file);
     }
@@ -108,18 +123,22 @@ export default function ColorPickerPage() {
       y = e.clientY - rect.top;
     }
 
-    // Adjust for actual canvas pixels
+    // Adjust for actual canvas pixels relative to CSS display size
     const actualX = Math.floor(x * (canvas.width / rect.width));
     const actualY = Math.floor(y * (canvas.height / rect.height));
 
-    const pixel = ctx.getImageData(actualX, actualY, 1, 1).data;
-    const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
-    const rgb = `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
-    const hsl = rgbToHsl(pixel[0], pixel[1], pixel[2]);
+    try {
+      const pixel = ctx.getImageData(actualX, actualY, 1, 1).data;
+      const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+      const rgb = `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
+      const hsl = rgbToHsl(pixel[0], pixel[1], pixel[2]);
 
-    const newColor = { hex, rgb, hsl };
-    setPickedColor(newColor);
-    setHistory(prev => [hex, ...prev.filter(c => c !== hex)].slice(0, 8));
+      const newColor = { hex, rgb, hsl };
+      setPickedColor(newColor);
+      setHistory(prev => [hex, ...prev.filter(c => c !== hex)].slice(0, 8));
+    } catch (err) {
+      console.error("Sampling error", err);
+    }
   };
 
   const updateMagnifier = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -154,7 +173,7 @@ export default function ColorPickerPage() {
     magCtx.strokeStyle = 'white';
     magCtx.lineWidth = 1;
     magCtx.strokeRect(magCanvas.width / 2 - zoom / 2, magCanvas.height / 2 - zoom / 2, zoom, zoom);
-    magCtx.strokeStyle = 'black';
+    magCtx.strokeStyle = 'rgba(0,0,0,0.5)';
     magCtx.strokeRect(magCanvas.width / 2 - zoom / 2 - 1, magCanvas.height / 2 - zoom / 2 - 1, zoom + 2, zoom + 2);
   };
 
@@ -190,7 +209,7 @@ export default function ColorPickerPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* Main Canvas Area */}
         <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[480px]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             
             <CardHeader className="pb-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
@@ -205,23 +224,23 @@ export default function ColorPickerPage() {
               )}
             </CardHeader>
             
-            <CardContent className="pt-10">
+            <CardContent className="pt-10 h-full flex flex-col justify-center">
               {!image ? (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
                   className="relative group/upload h-[400px] rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer"
                 >
                   <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-6 shadow-xl">
-                    <Upload className="w-8 h-8" />
+                    {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Upload className="w-8 h-8" />}
                   </div>
                   <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors text-center px-10 leading-relaxed">
-                    Drop high-res imagery or click to browse<br />
+                    {isProcessing ? "Analyzing Binary Matrix..." : "Drop high-res imagery or click to browse"}<br />
                     <span className="text-[8px] opacity-60">(JPG, PNG, WebP)</span>
                   </p>
                   <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileUpload} className="hidden" />
                 </div>
               ) : (
-                <div className="relative cursor-crosshair overflow-hidden rounded-2xl bg-secondary shadow-inner">
+                <div className="relative cursor-crosshair overflow-hidden rounded-2xl bg-secondary shadow-inner border border-border">
                   <canvas 
                     ref={canvasRef} 
                     onClick={pickColor}
@@ -233,7 +252,7 @@ export default function ColorPickerPage() {
                   {/* Magnifier Follower */}
                   {magnifierData.show && (
                     <div 
-                      className="absolute pointer-events-none w-32 h-32 rounded-full border-4 border-white shadow-2xl overflow-hidden z-20 bg-background"
+                      className="absolute pointer-events-none w-32 h-32 rounded-full border-4 border-white shadow-2xl overflow-hidden z-20 bg-background ring-1 ring-black/10"
                       style={{ 
                         left: magnifierData.x, 
                         top: magnifierData.y, 
@@ -267,7 +286,7 @@ export default function ColorPickerPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Chromatic Intel</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our sampler uses 1:1 pixel mapping. If the image is large, it's scaled for performance while maintaining source data integrity. Sampling is performed entirely on your device.
+                Our sampler uses 1:1 pixel mapping. High-resolution visuals are rendered precisely for hardware sampling. Processing occurs entirely within your browser session for maximum security.
               </p>
             </div>
           </div>
