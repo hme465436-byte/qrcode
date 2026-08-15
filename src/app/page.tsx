@@ -61,6 +61,15 @@ const TOOLS = [
     keywords: ['color picker', 'pick color from image', 'hex', 'rgb', 'eye dropper', 'color from photo', 'palette']
   },
   { 
+    href: '/rgb-picker', 
+    icon: Palette, 
+    title: 'RGB Studio', 
+    desc: 'Precision color picking and space conversion.', 
+    label: 'ENGINE', 
+    color: 'bg-primary/50',
+    keywords: ['rgb picker', 'hex color', 'hsl', 'color converter', 'color picker', 'cmyk', 'hsv']
+  },
+  { 
     href: '/image-converter', 
     icon: RefreshCcw, 
     title: 'Image Converter', 

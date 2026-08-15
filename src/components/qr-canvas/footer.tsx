@@ -71,6 +71,7 @@ export function Footer() {
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
                   { label: 'Color Picker', href: '/color-picker' },
+                  { label: 'RGB Studio', href: '/rgb-picker' },
                   { label: 'Format Converter', href: '/image-converter' },
                   { label: 'Resizer', href: '/image-resizer' },
                   { label: 'Compressor', href: '/image-compressor' },

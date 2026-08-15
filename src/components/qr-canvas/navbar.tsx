@@ -27,7 +27,8 @@ import {
   CaseSensitive,
   Scaling,
   RefreshCcw,
-  Pipette
+  Pipette,
+  Palette
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -64,6 +65,7 @@ const NAV_ITEMS = [
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
   { label: 'Color Picker', href: '/color-picker', icon: Pipette, keywords: ['hex', 'rgb', 'hsl', 'design', 'palette', 'picker'] },
+  { label: 'RGB Studio', href: '/rgb-picker', icon: Palette, keywords: ['rgb', 'hex', 'color', 'cmyk', 'converter'] },
   { label: 'Converter', href: '/image-converter', icon: RefreshCcw, keywords: ['png to jpg', 'jpg to png', 'format', 'convert'] },
   { label: 'Resizer', href: '/image-resizer', icon: Scaling, keywords: ['resize', 'image', 'dimensions', 'scale', 'px'] },
   { label: 'Compressor', href: '/image-compressor', icon: Maximize, keywords: ['compress', 'image', 'reduce', 'optimize', 'shrink'] },
