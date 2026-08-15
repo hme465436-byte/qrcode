@@ -41,7 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-type LayoutMode = 'text-only' | 'icon-top' | 'icon-left' | 'badge-only' | 'badge-side';
+type LayoutMode = 'text-only' | 'icon-top' | 'icon-left' | 'icon-right' | 'badge-only';
 type BadgeShape = 'circle' | 'square' | 'rounded' | 'pill' | 'shield' | 'hexagon' | 'diamond' | 'banner' | 'stamp' | 'ribbon' | 'oval';
 
 const FONTS = [
@@ -239,6 +239,7 @@ export default function LogoMakerPage() {
     if (!ctx) return;
 
     const size = 1024;
+    const maxContentWidth = 920; // 50px padding each side
     canvas.width = size;
     canvas.height = size;
 
@@ -250,73 +251,148 @@ export default function LogoMakerPage() {
 
     ctx.save();
     ctx.translate(size / 2, size / 2);
-    ctx.textAlign = 'center';
     ctx.fillStyle = textColor;
     ctx.strokeStyle = textColor;
 
     const selectedFont = FONTS[fontIndex];
-    const nameFont = `${selectedFont.style} ${weight} 120px ${selectedFont.family}`;
-    const tagFont = `500 40px "Inter", sans-serif`;
+    let baseFontSize = 120;
+    let baseTagSize = 40;
+    
+    const applyFont = (size: number) => {
+      ctx.font = `${selectedFont.style} ${weight} ${size}px ${selectedFont.family}`;
+    };
+
+    const nameUpper = name.toUpperCase();
+    const tagUpper = tagline.toUpperCase();
 
     if (layoutMode === 'text-only') {
-      ctx.font = nameFont;
+      applyFont(baseFontSize);
       ctx.letterSpacing = `${spacing}px`;
-      ctx.fillText(name.toUpperCase(), 0, tagline ? -20 : 40);
+      let textWidth = ctx.measureText(nameUpper).width;
+      
+      // Auto-scale font for long names
+      if (textWidth > maxContentWidth) {
+        const scale = maxContentWidth / textWidth;
+        baseFontSize *= scale;
+        applyFont(baseFontSize);
+      }
+
+      ctx.textAlign = 'center';
+      ctx.fillText(nameUpper, 0, tagline ? -20 : 40);
+      
       if (tagline) {
-        ctx.font = tagFont;
+        ctx.font = `500 ${baseTagSize}px "Inter", sans-serif`;
         ctx.letterSpacing = '12px';
         ctx.fillStyle = `${textColor}CC`;
-        ctx.fillText(tagline.toUpperCase(), 0, 70);
+        ctx.fillText(tagUpper, 0, 70);
       }
     } else if (layoutMode === 'icon-top') {
-      drawShape(ctx, badgeShape, -120, -280, 240, 240, false);
-      drawMark(ctx, iconMark, 0, -160, 100);
+      const iconSize = 240;
+      const markSize = 100;
       
-      ctx.font = nameFont;
+      drawShape(ctx, badgeShape, -iconSize/2, -280, iconSize, iconSize, false);
+      drawMark(ctx, iconMark, 0, -160, markSize);
+      
+      applyFont(baseFontSize);
       ctx.letterSpacing = `${spacing}px`;
-      ctx.fillText(name.toUpperCase(), 0, 120);
+      let textWidth = ctx.measureText(nameUpper).width;
+      
+      if (textWidth > maxContentWidth) {
+        const scale = maxContentWidth / textWidth;
+        baseFontSize *= scale;
+        applyFont(baseFontSize);
+      }
+
+      ctx.textAlign = 'center';
+      ctx.fillText(nameUpper, 0, 120);
       if (tagline) {
-        ctx.font = tagFont;
+        ctx.font = `500 ${baseTagSize}px "Inter", sans-serif`;
         ctx.letterSpacing = '8px';
         ctx.fillStyle = `${textColor}AA`;
-        ctx.fillText(tagline.toUpperCase(), 0, 200);
+        ctx.fillText(tagUpper, 0, 200);
       }
-    } else if (layoutMode === 'icon-left') {
-      ctx.translate(-150, 0);
-      drawShape(ctx, badgeShape, -100, -100, 200, 200, false);
-      drawMark(ctx, iconMark, 0, 0, 80);
+    } else if (layoutMode === 'icon-left' || layoutMode === 'icon-right') {
+      const iconSize = 200;
+      const markSize = 80;
+      const innerPadding = 60;
       
-      ctx.translate(350, 0);
-      ctx.textAlign = 'left';
-      ctx.font = nameFont;
+      applyFont(baseFontSize);
       ctx.letterSpacing = `${spacing}px`;
-      ctx.fillText(name.toUpperCase(), 0, tagline ? -15 : 40);
-      if (tagline) {
-        ctx.font = tagFont;
-        ctx.letterSpacing = '6px';
-        ctx.fillStyle = `${textColor}AA`;
-        ctx.fillText(tagline.toUpperCase(), 0, 60);
+      let textWidth = ctx.measureText(nameUpper).width;
+      
+      // Constrain width: Icon + Padding + Text
+      const availableTextWidth = maxContentWidth - iconSize - innerPadding;
+      if (textWidth > availableTextWidth) {
+        const scale = availableTextWidth / textWidth;
+        baseFontSize *= scale;
+        applyFont(baseFontSize);
+        textWidth = ctx.measureText(nameUpper).width;
+      }
+
+      const totalGroupWidth = iconSize + innerPadding + textWidth;
+      const startX = -totalGroupWidth / 2;
+
+      if (layoutMode === 'icon-left') {
+        ctx.save();
+        ctx.translate(startX + iconSize/2, 0);
+        drawShape(ctx, badgeShape, -iconSize/2, -iconSize/2, iconSize, iconSize, false);
+        drawMark(ctx, iconMark, 0, 0, markSize);
+        ctx.restore();
+
+        ctx.textAlign = 'left';
+        ctx.fillText(nameUpper, startX + iconSize + innerPadding, tagline ? -15 : 40);
+        if (tagline) {
+          ctx.font = `500 ${baseTagSize * (baseFontSize/120)}px "Inter", sans-serif`;
+          ctx.letterSpacing = '6px';
+          ctx.fillStyle = `${textColor}AA`;
+          ctx.fillText(tagUpper, startX + iconSize + innerPadding, 60);
+        }
+      } else {
+        // icon-right
+        ctx.textAlign = 'left';
+        ctx.fillText(nameUpper, startX, tagline ? -15 : 40);
+        if (tagline) {
+          ctx.font = `500 ${baseTagSize * (baseFontSize/120)}px "Inter", sans-serif`;
+          ctx.letterSpacing = '6px';
+          ctx.fillStyle = `${textColor}AA`;
+          ctx.fillText(tagUpper, startX, 60);
+        }
+
+        ctx.save();
+        ctx.translate(startX + textWidth + innerPadding + iconSize/2, 0);
+        drawShape(ctx, badgeShape, -iconSize/2, -iconSize/2, iconSize, iconSize, false);
+        drawMark(ctx, iconMark, 0, 0, markSize);
+        ctx.restore();
       }
     } else if (layoutMode === 'badge-only') {
-      ctx.font = nameFont;
-      const metrics = ctx.measureText(name.toUpperCase());
-      const bw = Math.max(metrics.width + 250, 600);
+      applyFont(baseFontSize);
+      ctx.letterSpacing = `${spacing}px`;
+      let textWidth = ctx.measureText(nameUpper).width;
+
+      // Long text in badge auto-constrains
+      if (textWidth > maxContentWidth - 250) {
+        const scale = (maxContentWidth - 250) / textWidth;
+        baseFontSize *= scale;
+        applyFont(baseFontSize);
+        textWidth = ctx.measureText(nameUpper).width;
+      }
+
+      const bw = textWidth + 250;
       const bh = tagline ? 400 : 250;
       
       ctx.fillStyle = textColor;
       drawShape(ctx, badgeShape, -bw/2, -bh/2, bw, bh, true);
       
       ctx.fillStyle = bgColor === '#FFFFFF' ? '#000000' : '#FFFFFF';
-      if (isTransparent) ctx.fillStyle = '#FFFFFF';
+      if (isTransparent) ctx.fillStyle = '#000000';
       
-      ctx.font = nameFont;
-      ctx.letterSpacing = `${spacing}px`;
-      ctx.fillText(name.toUpperCase(), 0, tagline ? -30 : 40);
+      ctx.textAlign = 'center';
+      ctx.fillText(nameUpper, 0, tagline ? -30 : 40);
       if (tagline) {
-        ctx.font = tagFont;
+        ctx.font = `500 ${baseTagSize}px "Inter", sans-serif`;
         ctx.letterSpacing = '10px';
         ctx.globalAlpha = 0.8;
-        ctx.fillText(tagline.toUpperCase(), 0, 60);
+        ctx.fillText(tagUpper, 0, 60);
       }
     }
 
@@ -333,9 +409,9 @@ export default function LogoMakerPage() {
     setTextColor(randomColor.text);
     setBgColor(randomColor.bg);
     setSpacing(Math.floor(Math.random() * 15));
-    setBadgeShape(['circle', 'shield', 'hexagon', 'stamp', 'rounded'][Math.floor(Math.random() * 5)] as BadgeShape);
+    setBadgeShape(['circle', 'shield', 'hexagon', 'stamp', 'rounded', 'pill', 'diamond'][Math.floor(Math.random() * 7)] as BadgeShape);
     setIconMark(ICON_MARKS[Math.floor(Math.random() * ICON_MARKS.length)]);
-    setLayoutMode(['icon-top', 'icon-left', 'badge-only', 'text-only'][Math.floor(Math.random() * 4)] as LayoutMode);
+    setLayoutMode(['icon-top', 'icon-left', 'icon-right', 'badge-only', 'text-only'][Math.floor(Math.random() * 5)] as LayoutMode);
     toast({ title: "Brand Reimagined", description: "The Chaos Engine has synthesized a new identity." });
   };
 
@@ -492,7 +568,8 @@ export default function LogoMakerPage() {
                   {[
                     { id: 'text-only', label: 'Minimal Text' },
                     { id: 'icon-top', label: 'Symbol Top' },
-                    { id: 'icon-left', label: 'Symbol Side' },
+                    { id: 'icon-left', label: 'Symbol Left' },
+                    { id: 'icon-right', label: 'Symbol Right' },
                     { id: 'badge-only', label: 'Badge Layout' },
                   ].map((l) => (
                     <button
@@ -602,9 +679,9 @@ export default function LogoMakerPage() {
                         <Shapes className="w-5 h-5" />
                      </div>
                      <div className="space-y-1">
-                        <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Vector Geometry</p>
+                        <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Auto-Scale Protocol</p>
                         <p className="text-[11px] text-foreground/40 font-medium leading-relaxed">
-                          Precision Bezier rendering for pixel-perfect {badgeShape} pathing.
+                          Typography is dynamically constrained to ensure zero clipping in all layouts.
                         </p>
                      </div>
                   </div>
@@ -615,7 +692,7 @@ export default function LogoMakerPage() {
                      <div className="space-y-1">
                         <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Master Production</p>
                         <p className="text-[11px] text-foreground/40 font-medium leading-relaxed">
-                          High-density 1:1 hardware sampling for production-ready avatars.
+                          1:1 hardware sampling for high-fidelity brand Mark synthesis.
                         </p>
                      </div>
                   </div>
