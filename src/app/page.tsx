@@ -28,7 +28,8 @@ import {
   Pipette,
   ShieldAlert,
   EyeOff,
-  ListMusic
+  ListMusic,
+  Film
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -133,6 +134,15 @@ const TOOLS = [
     label: 'MEDIA', 
     color: 'bg-primary/50',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
+  },
+  { 
+    href: '/video-to-gif', 
+    icon: Film, 
+    title: 'Video to GIF', 
+    desc: 'Synthesize high-quality animated GIFs from clips.', 
+    label: 'ANIMATION', 
+    color: 'bg-primary/50',
+    keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip']
   },
   { 
     href: '/audio-joiner', 
