@@ -71,6 +71,7 @@ export function Footer() {
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
                   { label: 'Compressor', href: '/image-compressor' },
+                  { label: 'Image to PDF', href: '/image-to-pdf' },
                   { label: 'Photo Editor', href: '/photo-editor' },
                   { label: 'Video to MP3', href: '/video-to-audio' },
                   { label: 'OCR Extract', href: '/ocr' },

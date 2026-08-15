@@ -22,7 +22,8 @@ import {
   Search,
   ArrowRight,
   X,
-  Scaling
+  Maximize,
+  FileStack
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -58,7 +59,8 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home, keywords: ['start', 'dashboard', 'main'] },
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
-  { label: 'Compressor', href: '/image-compressor', icon: Scaling, keywords: ['compress', 'image', 'reduce', 'optimize', 'shrink'] },
+  { label: 'Compressor', href: '/image-compressor', icon: Maximize, keywords: ['compress', 'image', 'reduce', 'optimize', 'shrink'] },
+  { label: 'Image to PDF', href: '/image-to-pdf', icon: FileStack, keywords: ['pdf', 'convert', 'jpg to pdf', 'images', 'bundle'] },
   { label: 'Photo Editor', href: '/photo-editor', icon: ImageIcon, keywords: ['image', 'edit', 'crop', 'filter', 'manipulate'] },
   { label: 'Video to MP3', href: '/video-to-audio', icon: Music, keywords: ['audio', 'extract', 'mp4', 'sound', 'convert'] },
   { label: 'OCR Text', href: '/ocr', icon: FileText, keywords: ['ocr', 'extract', 'recognize', 'scan', 'read'] },

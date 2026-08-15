@@ -21,7 +21,8 @@ import {
   Heart,
   Search,
   X,
-  Maximize
+  Maximize,
+  FileStack
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -54,6 +55,15 @@ const TOOLS = [
     label: 'OPTIMIZE', 
     color: 'bg-primary/50',
     keywords: ['compress', 'image compressor', 'reduce size', 'jpg', 'photo size', 'optimize', 'shrink', 'smaller']
+  },
+  { 
+    href: '/image-to-pdf', 
+    icon: FileStack, 
+    title: 'Image to PDF', 
+    desc: 'Convert multiple images into a professional PDF.', 
+    label: 'DOCUMENT', 
+    color: 'bg-primary/50',
+    keywords: ['image to pdf', 'jpg to pdf', 'png to pdf', 'photo pdf', 'convert pdf', 'bundle', 'pdf']
   },
   { 
     href: '/photo-editor', 
@@ -257,8 +267,8 @@ export default function Home() {
       {/* CTA SECTION */}
       <section className="w-full px-4 sm:px-6 py-20 sm:py-32 text-center overflow-hidden">
         <div className="glass-card p-10 sm:p-24 rounded-[3rem] sm:rounded-[4rem] max-w-5xl mx-auto border-border relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-primary/10 rounded-full blur-[80px] -mr-24 -mt-24 sm:-mr-32 sm:-mt-32" />
-           <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-64 sm:h-64 bg-primary/5 rounded-full blur-[80px] -ml-24 -mb-24 sm:-ml-32 -mb-32" />
+           <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 h-64 bg-primary/10 rounded-full blur-[80px] -mr-24 -mt-24 sm:-mr-32 sm:-mt-32" />
+           <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-64 h-64 bg-primary/5 rounded-full blur-[80px] -ml-24 -mb-24 sm:-ml-32 -mb-32" />
            
            <h2 className="text-2xl sm:text-6xl font-headline font-black uppercase tracking-tight mb-6 sm:mb-8 relative z-10">Start Your <span className="text-primary italic">Production</span></h2>
            <p className="text-sm sm:text-lg text-foreground/40 font-medium mb-10 sm:mb-12 max-w-2xl mx-auto relative z-10">
