@@ -37,8 +37,7 @@ import {
   FileEdit,
   AlignLeft,
   Youtube,
-  Lock,
-  Mic
+  Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -62,15 +61,6 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
-  },
-  { 
-    href: '/speech-to-text', 
-    icon: Mic, 
-    title: 'Speech to Text', 
-    desc: 'Real-time voice transcription engine using your microphone.', 
-    label: 'VOICE', 
-    color: 'bg-primary/50',
-    keywords: ['speech to text', 'voice to text', 'mic to text', 'voice typing', 'transcribe', 'microphone']
   },
   { 
     href: '/password-generator', 
