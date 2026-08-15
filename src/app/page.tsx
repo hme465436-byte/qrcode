@@ -46,7 +46,8 @@ import {
   ArrowRightLeft,
   ArrowUp,
   ArrowDown,
-  User
+  User,
+  DownloadCloud
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -72,6 +73,16 @@ const TOOLS = [
     color: 'text-indigo-600 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/media-downloader', 
+    icon: DownloadCloud, 
+    title: 'Media Downloader', 
+    desc: 'Universal video and audio downloader for all formats.', 
+    label: 'EXTRACT', 
+    color: 'text-sky-600 bg-sky-500/10 border-sky-500/20',
+    glowClass: 'bg-sky-500/10',
+    keywords: ['video downloader', 'audio downloader', 'download mp4', 'download mp3', 'media extract', 'save video']
   },
   { 
     href: '/logo-maker', 
@@ -422,7 +433,7 @@ export default function Home() {
             The world's most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
           </p>
 
-          {/* Search Bar with MAX GLOW */}
+          {/* Search Bar */}
           <div className="max-w-xl mx-auto mb-16 px-4 group relative">
             <div className="relative h-16 w-full rounded-3xl p-[3.5px] overflow-hidden transition-all duration-500 shadow-[0_0_50px_-5px_rgba(37,99,235,0.25),0_10px_20px_-5px_rgba(37,99,235,0.2)] group-focus-within:shadow-[0_0_80px_-5px_rgba(37,99,235,0.5),0_20px_30px_-10px_rgba(37,99,235,0.4)] group-focus-within:ring-[12px] group-focus-within:ring-primary/5">
               <div 
@@ -437,7 +448,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. dp maker, pdf, compress, logo)"
+                  placeholder="Search tools... (e.g. video, dp maker, pdf, logo)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
@@ -491,7 +502,7 @@ export default function Home() {
                 <Search className="w-16 h-16 text-foreground/10" />
                 <div className="space-y-2">
                   <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
-                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;age&quot; or &quot;dp&quot;</p>
+                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;video&quot; or &quot;dp&quot;</p>
                 </div>
                 <ShadButton 
                   onClick={() => setSearchQuery('')}
