@@ -45,7 +45,8 @@ import {
   FileArchive,
   ArrowRightLeft,
   User,
-  DownloadCloud
+  DownloadCloud,
+  Code2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -81,6 +82,16 @@ const TOOLS = [
     color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/code-preview', 
+    icon: Code2, 
+    title: 'Code Preview Lab', 
+    desc: 'Upload and live preview HTML projects securely.', 
+    label: 'DEVELOPER', 
+    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
+    keywords: ['code preview', 'html viewer', 'web preview', 'sandbox', 'live code', 'website viewer', 'code lab']
   },
   { 
     href: '/whatsapp-dp-maker', 
@@ -378,7 +389,7 @@ const TOOLS = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
   }
@@ -434,7 +445,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. youtube, video, pdf, logo)"
+                  placeholder="Search tools... (e.g. youtube, video, pdf, code)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
@@ -487,7 +498,7 @@ export default function Home() {
                 <Search className="w-16 h-16 text-foreground/10" />
                 <div className="space-y-2">
                   <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
-                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;video&quot; or &quot;dp&quot;</p>
+                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;video&quot; or &quot;code&quot;</p>
                 </div>
                 <ShadButton 
                   onClick={() => setSearchQuery('')}
@@ -554,7 +565,7 @@ export default function Home() {
         
         <div className="mt-20 animate-reveal stagger-4">
            <div className="inline-flex flex-col items-center gap-3 p-6 rounded-[2.5rem] bg-secondary/30 border border-border">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Engineered with Precision</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30">Engineered with Precision</span>
               <p className="text-sm font-bold text-foreground">
                 Developed by <span className="text-primary">Umar Farooq</span> <Heart className="inline w-4 h-4 text-red-500 fill-red-500 ml-1.5" />
               </p>
