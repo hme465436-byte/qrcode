@@ -12,9 +12,8 @@ import {
   WholeWord,
   LayoutGrid,
   AlignLeft,
-  ChevronRight,
-  Maximize2,
-  Type
+  Type,
+  Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 // Refined 5x5 Matrix Map for high-legibility block art
+// 1 = emoji, 0 = space
 const CHAR_MAP: Record<string, number[][]> = {
   'A': [[0,1,1,1,0],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1]],
   'B': [[1,1,1,1,0],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,1],[1,1,1,1,0]],
@@ -71,7 +71,7 @@ export default function EmojiLetterWriterPage() {
   const [size, setSize] = useState<'sm' | 'md' | 'lg'>('md');
   const [isCopied, setIsCopied] = useState(false);
 
-  // Correctly split emojis handling surrogate pairs (e.g. multi-color/gender emojis)
+  // Correctly split emojis handling surrogate pairs
   const emojiList = useMemo(() => {
     return Array.from(emojis).filter(e => e.trim().length > 0 && e !== ' ');
   }, [emojis]);
@@ -84,8 +84,9 @@ export default function EmojiLetterWriterPage() {
     let finalResult = '';
     let emojiCounter = 0;
 
-    // Spacer characters
-    const offChar = '　'; // Ideographic Space for perfect mobile grid alignment
+    // Standard emoji width stabilizer: Ideographic Space (U+3000)
+    // This character has the same width as most emojis in mobile/pre contexts
+    const offChar = '　'; 
     const gapWidth = size === 'sm' ? 1 : size === 'md' ? 2 : 3;
 
     lines.forEach((line) => {
@@ -104,12 +105,12 @@ export default function EmojiLetterWriterPage() {
               rowStr += offChar;
             }
           }
-          // Horizontal gap between characters
-          rowStr += ' '.repeat(gapWidth);
+          // Horizontal gap between characters must use the same width stabilizer
+          rowStr += offChar.repeat(gapWidth);
         }
         finalResult += rowStr + '\n';
       }
-      finalResult += '\n'; // Double spacing between word lines
+      finalResult += '\n'; // Row spacing
     });
 
     return finalResult;
@@ -133,7 +134,7 @@ export default function EmojiLetterWriterPage() {
   const setSample = (val: string, emo: string) => {
     setText(val);
     setEmojis(emo);
-    toast({ title: "Sample Production", description: "Template injected into matrix." });
+    toast({ title: "Sample Loaded", description: `"${val}" template applied.` });
   };
 
   return (
@@ -146,7 +147,7 @@ export default function EmojiLetterWriterPage() {
           Emoji <span className="text-primary italic">Letter Writer</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          Professional block-art synthesis. Transform linguistic strings into massive emoji matrices optimized for mobile sharing and social impact.
+          Professional block-art synthesis. Transform linguistic strings into massive emoji matrices optimized for mobile sharing with high-stability alignment.
         </p>
       </div>
 
