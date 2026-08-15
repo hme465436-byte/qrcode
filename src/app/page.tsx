@@ -44,8 +44,6 @@ import {
   Command,
   FileArchive,
   ArrowRightLeft,
-  ArrowUp,
-  ArrowDown,
   User,
   DownloadCloud
 } from 'lucide-react';
@@ -60,7 +58,7 @@ const TOOLS = [
     title: 'Single Studio', 
     desc: 'Branded QR codes with logos and AI backgrounds.', 
     label: 'PRO MODE', 
-    color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan']
   },
@@ -70,7 +68,7 @@ const TOOLS = [
     title: 'Bulk Production', 
     desc: 'Generate hundreds of high-res assets in seconds.', 
     label: 'BATCH', 
-    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-500/20',
+    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
   },
@@ -80,7 +78,7 @@ const TOOLS = [
     title: 'YT & Media Download', 
     desc: 'Extract YouTube videos and audio in all high-res formats.', 
     label: 'EXTRACT', 
-    color: 'text-red-600 bg-red-500/10 border-red-500/20',
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
     glowClass: 'bg-red-500/10',
     keywords: ['youtube downloader', 'video downloader', 'audio downloader', 'download mp4', 'download mp3', 'media extract', 'save video', 'yt', 'social']
   },
@@ -90,7 +88,7 @@ const TOOLS = [
     title: 'Logo Text Studio', 
     desc: 'Generate premium text-based logos and avatars.', 
     label: 'BRANDING', 
-    color: 'text-violet-600 bg-violet-500/10 border-violet-500/20',
+    color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
   },
@@ -140,19 +138,9 @@ const TOOLS = [
     title: 'YT Thumbnail', 
     desc: 'Resize and frame images for 1280x720 thumbnails.', 
     label: 'YOUTUBE', 
-    color: 'text-rose-600 bg-rose-500/10 border-rose-500/20',
+    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
     glowClass: 'bg-rose-500/10',
     keywords: ['youtube thumbnail size', '1280x720', 'yt thumbnail maker', 'thumbnail resizer', 'youtube thumbnail resizer']
-  },
-  { 
-    href: '/youtube-banner-maker', 
-    icon: Youtube, 
-    title: 'YouTube Banner', 
-    desc: 'Create 2560x1440 channel art with safe-zone guides.', 
-    label: 'YOUTUBE', 
-    color: 'text-red-600 bg-red-500/10 border-red-500/20',
-    glowClass: 'bg-red-500/10',
-    keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area']
   },
   { 
     href: '/age-calculator', 
@@ -160,7 +148,7 @@ const TOOLS = [
     title: 'Age Calculator', 
     desc: 'Calculate exact age and birthday countdowns.', 
     label: 'STATS', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['age calculator', 'date of birth', 'how old am i', 'birthday', 'chronos', 'time lived']
   },
@@ -170,9 +158,19 @@ const TOOLS = [
     title: 'Password Studio', 
     desc: 'Generate cryptographically-secure strong passwords.', 
     label: 'SECURITY', 
-    color: 'text-slate-700 bg-slate-500/10 border-slate-500/20',
-    glowClass: 'bg-slate-500/10',
+    color: 'text-slate-400 bg-slate-400/10 border-slate-400/20',
+    glowClass: 'bg-slate-400/10',
     keywords: ['password generator', 'random password', 'strong password', 'security', 'safe', 'key']
+  },
+  { 
+    href: '/youtube-banner-maker', 
+    icon: Youtube, 
+    title: 'YouTube Banner', 
+    desc: 'Create 2560x1440 channel art with safe-zone guides.', 
+    label: 'YOUTUBE', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area']
   },
   { 
     href: '/collage-maker', 
@@ -180,7 +178,7 @@ const TOOLS = [
     title: 'Collage Studio', 
     desc: 'Combine multiple images into professional grid layouts.', 
     label: 'GRID', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
+    color: 'text-teal-500 bg-teal-500/10 border-teal-500/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['collage maker', 'photo grid', 'merge photos', '2x2 collage', 'photo collage', 'combine images']
   },
@@ -200,7 +198,7 @@ const TOOLS = [
     title: 'Privacy Purge', 
     desc: 'Strip GPS and EXIF metadata from any photo.', 
     label: 'SECURE', 
-    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
+    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
     glowClass: 'bg-orange-500/10',
     keywords: ['remove exif', 'metadata remover', 'strip gps', 'privacy photo', 'remove location from image', 'exif']
   },
@@ -210,7 +208,7 @@ const TOOLS = [
     title: 'Word Counter', 
     desc: 'Live text analysis and reading time estimation.', 
     label: 'TEXT', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['word counter', 'character count', 'reading time', 'word count tool', 'text counter', 'speaking time']
   },
@@ -220,7 +218,7 @@ const TOOLS = [
     title: 'Color Picker', 
     desc: 'Extract HEX, RGB, and HSL from any image.', 
     label: 'DESIGN', 
-    color: 'text-pink-600 bg-rose-500/10 border-rose-500/20',
+    color: 'text-pink-500 bg-rose-500/10 border-rose-500/20',
     glowClass: 'bg-pink-500/10',
     keywords: ['color picker', 'pick color from image', 'hex', 'rgb', 'eye dropper', 'color from photo', 'palette']
   },
@@ -230,7 +228,7 @@ const TOOLS = [
     title: 'RGB Studio', 
     desc: 'Precision color picking and space conversion.', 
     label: 'ENGINE', 
-    color: 'text-fuchsia-600 bg-fuchsia-500/10 border-fuchsia-500/20',
+    color: 'text-fuchsia-500 bg-fuchsia-500/10 border-fuchsia-500/20',
     glowClass: 'bg-fuchsia-500/10',
     keywords: ['rgb picker', 'hex color', 'hsl', 'color converter', 'color picker', 'cmyk', 'hsv']
   },
@@ -240,7 +238,7 @@ const TOOLS = [
     title: 'Markdown Preview', 
     desc: 'Live Markdown to HTML synthesis with visual preview.', 
     label: 'MARKUP', 
-    color: 'text-sky-600 bg-sky-500/10 border-sky-500/20',
+    color: 'text-sky-500 bg-sky-500/10 border-sky-500/20',
     glowClass: 'bg-sky-500/10',
     keywords: ['markdown preview', 'md to html', 'markdown editor', 'markdown to html', 'live markdown', 'markup']
   },
@@ -250,7 +248,7 @@ const TOOLS = [
     title: 'Image Converter', 
     desc: 'Seamlessly switch between PNG and JPG formats.', 
     label: 'FORMAT', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['png to jpg', 'jpg to png', 'convert image', 'png jpg converter', 'jpeg', 'image format']
   },
@@ -260,8 +258,8 @@ const TOOLS = [
     title: 'Image Resizer', 
     desc: 'Scale pixel dimensions with aspect ratio control.', 
     label: 'SCALE', 
-    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-    glowClass: 'bg-emerald-500/10',
+    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    glowClass: 'bg-emerald-400/10',
     keywords: ['resize', 'resizer', 'image resizer', 'resize photo', 'change size', 'width height', 'px', 'scale image', 'dimension']
   },
   { 
@@ -270,7 +268,7 @@ const TOOLS = [
     title: 'Image Compressor', 
     desc: 'Reduce file size locally with quality control.', 
     label: 'OPTIMIZE', 
-    color: 'text-lime-600 bg-lime-500/10 border-lime-500/20',
+    color: 'text-lime-500 bg-lime-500/10 border-lime-500/20',
     glowClass: 'bg-lime-500/10',
     keywords: ['compress', 'image compressor', 'reduce size', 'jpg', 'photo size', 'optimize', 'shrink', 'smaller']
   },
@@ -280,7 +278,7 @@ const TOOLS = [
     title: 'Image to PDF', 
     desc: 'Convert multiple images into a professional PDF.', 
     label: 'DOCUMENT', 
-    color: 'text-red-700 bg-red-500/10 border-red-500/20',
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
     glowClass: 'bg-red-500/10',
     keywords: ['image to pdf', 'jpg to pdf', 'png to pdf', 'photo pdf', 'convert pdf', 'bundle', 'pdf']
   },
@@ -300,7 +298,7 @@ const TOOLS = [
     title: 'Vocal Remover', 
     desc: 'Simple stereo matrix for vocal or music reduction.', 
     label: 'KARAOKE', 
-    color: 'text-rose-700 bg-rose-500/10 border-rose-500/20',
+    color: 'text-rose-600 bg-rose-500/10 border-rose-500/20',
     glowClass: 'bg-rose-500/10',
     keywords: ['vocal remover', 'karaoke', 'remove vocals', 'instrumental', 'music separator', 'audio separator']
   },
@@ -310,7 +308,7 @@ const TOOLS = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-700 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
   },
@@ -320,7 +318,7 @@ const TOOLS = [
     title: 'Video to GIF', 
     desc: 'Synthesize high-quality animated GIFs from clips.', 
     label: 'ANIMATION', 
-    color: 'text-orange-700 bg-orange-500/10 border-orange-500/20',
+    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
     glowClass: 'bg-orange-500/10',
     keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip']
   },
@@ -330,7 +328,7 @@ const TOOLS = [
     title: 'Audio Joiner', 
     desc: 'Merge multiple audio files into a single master track.', 
     label: 'PRODUCTION', 
-    color: 'text-blue-700 bg-blue-500/10 border-blue-500/20',
+    color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound']
   },
@@ -340,7 +338,7 @@ const TOOLS = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-700 bg-teal-500/10 border-teal-500/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav']
   },
@@ -350,7 +348,7 @@ const TOOLS = [
     title: 'Letter Art Studio', 
     desc: 'Image to text conversion using custom alphabets.', 
     label: 'ASCII', 
-    color: 'text-slate-600 bg-slate-500/10 border-slate-500/20',
+    color: 'text-slate-500 bg-slate-500/10 border-slate-500/20',
     glowClass: 'bg-slate-500/10',
     keywords: ['image to text', 'ascii art', 'letters art', 'custom characters', 'image to alphabet', 'text art', 'alphabet art']
   },
@@ -360,7 +358,7 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },
@@ -370,7 +368,7 @@ const TOOLS = [
     title: 'Hex Converter', 
     desc: 'Convert binary files to hexadecimal matrix.', 
     label: 'BINARY', 
-    color: 'text-indigo-700 bg-indigo-500/10 border-indigo-500/20',
+    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
   },
@@ -380,7 +378,7 @@ const TOOLS = [
     title: 'Text Repeater', 
     desc: 'Professional emoji and text multiplication.', 
     label: 'UTIL', 
-    color: 'text-pink-700 bg-pink-500/10 border-pink-500/20',
+    color: 'text-pink-600 bg-pink-500/10 border-pink-500/20',
     glowClass: 'bg-pink-500/10',
     keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner']
   },
@@ -390,7 +388,7 @@ const TOOLS = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-700 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
   }
@@ -409,8 +407,6 @@ export default function Home() {
     });
   }, [searchQuery]);
 
-  const totalTools = TOOLS.length;
-
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden">
       {/* HERO SECTION */}
@@ -421,11 +417,11 @@ export default function Home() {
               <Command className="w-3.5 h-3.5" /> Studio Protocol v6.0
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-foreground/5 border border-foreground/10 text-[9px] font-black text-foreground/40 uppercase tracking-widest">
-              Registry · {totalTools} Tools
+              Registry · {TOOLS.length} Tools
             </div>
           </div>
           
-          <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-6 sm:mb-8 leading-[1.1] tracking-tighter text-foreground uppercase overflow-wrap-anywhere">
+          <h1 className="text-4xl sm:text-7xl lg:text-8xl font-headline font-black mb-6 sm:mb-8 leading-[1.1] tracking-tighter text-foreground uppercase overflow-wrap-anywhere">
             Digital <span className="text-primary italic">Excellence</span> <br />
             <span className="text-foreground/80">MY KIT TOOL</span>
           </h1>
@@ -468,48 +464,47 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full">
             {filteredTools.length > 0 ? (
               filteredTools.map((item, i) => (
-                <Link key={i} href={item.href} className="group h-full w-full animate-in fade-in zoom-in duration-500 relative">
-                  {/* Atmospheric Back Glow */}
+                <Link key={i} href={item.href} className="group h-full w-full animate-in fade-in zoom-in duration-500 relative flex flex-col">
                   <div className={cn(
-                    "absolute -inset-4 rounded-[4rem] blur-3xl opacity-20 group-hover:opacity-40 transition-all duration-500 pointer-events-none",
+                    "absolute -inset-4 rounded-[3.5rem] blur-3xl opacity-20 group-hover:opacity-40 transition-all duration-700 pointer-events-none",
                     item.glowClass
                   )} />
                   
-                  <div className="glass-card p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden h-full shadow-2xl group-hover:shadow-xl z-10">
+                  <div className="glass-card p-8 sm:p-10 rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden flex-1 flex flex-col shadow-2xl group-hover:shadow-xl z-10">
                     <div className={cn(
-                      "w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[1.8rem] flex items-center justify-center mb-6 sm:mb-8 border shadow-inner group-hover:scale-110 transition-transform duration-500",
+                      "w-14 h-14 sm:w-16 sm:h-16 rounded-[1.8rem] flex items-center justify-center mb-8 border shadow-inner group-hover:scale-110 transition-transform duration-500",
                       item.color
                     )}>
-                      <item.icon className="w-6 h-6 sm:w-8 sm:h-8" />
+                      <item.icon className="w-7 h-7 sm:w-8 sm:h-8" />
                     </div>
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-lg sm:text-xl font-headline font-black text-foreground uppercase tracking-tight">{item.title}</h3>
-                        <span className="text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded bg-foreground/5 text-foreground/40 uppercase tracking-widest shrink-0">{item.label}</span>
+                    <div className="space-y-4 flex-1 flex flex-col">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-xl sm:text-2xl font-headline font-black text-foreground uppercase tracking-tight leading-tight">{item.title}</h3>
+                        <span className="text-[9px] font-black px-2 py-1 rounded-lg bg-foreground/5 text-foreground/40 uppercase tracking-widest shrink-0">{item.label}</span>
                       </div>
-                      <p className="text-[11px] sm:text-[12px] text-foreground/40 leading-relaxed font-medium">
+                      <p className="text-[13px] text-foreground/40 leading-relaxed font-medium">
                         {item.desc}
                       </p>
-                      <div className="flex items-center gap-2 sm:gap-3 pt-2 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary opacity-60 group-hover:opacity-100 transition-opacity">
-                        Open Studio <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-2 transition-transform duration-500" />
+                      <div className="mt-auto pt-6 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary opacity-60 group-hover:opacity-100 transition-opacity">
+                        Open Studio <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-500" />
                       </div>
                     </div>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="col-span-full py-20 glass-card rounded-[3rem] border-dashed border-border flex flex-col items-center justify-center gap-6">
+              <div className="col-span-full py-24 glass-card rounded-[4rem] border-dashed border-border flex flex-col items-center justify-center gap-6">
                 <Search className="w-16 h-16 text-foreground/10" />
                 <div className="space-y-2">
-                  <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
+                  <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
                   <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;video&quot; or &quot;dp&quot;</p>
                 </div>
                 <ShadButton 
                   onClick={() => setSearchQuery('')}
                   variant="outline"
-                  className="rounded-xl font-black uppercase text-[10px] tracking-widest border-primary/20 text-primary"
+                  className="h-12 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest border-primary/20 text-primary hover:bg-primary/5 transition-all"
                 >
-                  Clear Search
+                  Clear Search Matrix
                 </ShadButton>
               </div>
             )}
@@ -521,7 +516,7 @@ export default function Home() {
       <section className="w-full bg-secondary/20 py-20 sm:py-32 border-y border-border">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16 sm:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-5xl font-headline font-black uppercase tracking-tight mb-4 sm:mb-6">Built for <span className="text-primary italic">Reliability</span></h2>
+            <h2 className="text-3xl sm:text-5xl font-headline font-black uppercase tracking-tight mb-4 sm:mb-6 leading-tight">Built for <span className="text-primary italic">Professional</span> Efficiency</h2>
             <p className="text-sm sm:text-base text-foreground/40 font-medium leading-relaxed">High-performance technical assets with a focus on privacy and professional scannability.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 sm:gap-16 max-w-6xl mx-auto">
@@ -534,12 +529,12 @@ export default function Home() {
               { icon: Binary, title: 'Technical Tools', desc: 'Code converters, AOB pattern processors, and developer-centric utilities for modern workflows.' },
             ].map((item, i) => (
               <div key={i} className="flex gap-6 sm:gap-8 group">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-[1.2rem] sm:rounded-[1.8rem] bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-xl group-hover:border-primary/40 transition-all duration-500">
-                  <item.icon className="w-6 h-6 sm:w-7 sm:h-7" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[1.8rem] bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-xl group-hover:border-primary/40 transition-all duration-500">
+                  <item.icon className="w-7 h-7 sm:w-8 sm:h-8" />
                 </div>
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-3">
                   <h4 className="text-sm sm:text-base font-black uppercase tracking-widest text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
-                  <p className="text-[12px] sm:text-[13px] text-foreground/40 leading-relaxed font-medium">{item.desc}</p>
+                  <p className="text-[13px] text-foreground/40 leading-relaxed font-medium">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -549,30 +544,29 @@ export default function Home() {
 
       {/* CTA SECTION */}
       <section className="w-full px-4 sm:px-6 py-20 sm:py-32 text-center overflow-hidden">
-        <div className="glass-card p-10 sm:p-24 rounded-[3rem] sm:rounded-[4rem] max-w-5xl mx-auto border-border relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 h-64 bg-primary/10 rounded-full blur-[80px] -mr-24 -mt-24 sm:-mr-32 sm:-mt-32" />
-           <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-64 h-64 bg-primary/5 rounded-full blur-[80px] -ml-24 -mb-24 sm:-ml-32 -mb-32" />
+        <div className="glass-card p-12 sm:p-24 rounded-[4rem] max-w-5xl mx-auto border-border relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -mr-32 -mt-32" />
+           <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -ml-32 -mb-32" />
            
-           <h2 className="text-2xl sm:text-6xl font-headline font-black uppercase tracking-tight mb-6 sm:mb-8 relative z-10">Start Your <span className="text-primary italic">Production</span></h2>
-           <p className="text-sm sm:text-lg text-foreground/40 font-medium mb-10 sm:mb-12 max-w-2xl mx-auto relative z-10">
-             Join thousands of professionals using MY KIT TOOL for premium branded assets and technical utilities. No signup, just performance.
+           <h2 className="text-3xl sm:text-6xl font-headline font-black uppercase tracking-tight mb-6 sm:mb-8 relative z-10 leading-tight">Start Your <span className="text-primary italic">Production</span> Cycle</h2>
+           <p className="text-sm sm:text-lg text-foreground/40 font-medium mb-10 sm:mb-12 max-w-2xl mx-auto relative z-10 leading-relaxed">
+             Join thousands of professionals using MY KIT TOOL for premium branded assets and technical utilities. No registration, just hardware performance.
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 relative z-10">
-             <Link href="/single" className="w-full sm:w-auto px-10 py-5 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-center">
+             <Link href="/single" className="w-full sm:w-auto px-12 py-5 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-center">
                Open Studio
              </Link>
-             <Link href="/faq" className="w-full sm:w-auto px-10 py-5 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-secondary/80 transition-all text-center">
-               View Documentation
+             <Link href="/faq" className="w-full sm:w-auto px-12 py-5 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-secondary/80 transition-all text-center">
+               Documentation
              </Link>
            </div>
         </div>
         
-        {/* Attribution Section */}
-        <div className="mt-16 sm:mt-20 animate-reveal stagger-4">
-           <div className="inline-flex flex-col items-center gap-2 p-5 sm:p-6 rounded-3xl bg-secondary/30 border border-border">
-              <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-foreground/30">Crafted with Excellence</span>
-              <p className="text-xs sm:text-sm font-bold text-foreground">
-                Developed by <span className="text-primary">Umar Farooq</span> <Heart className="inline w-3 h-3 sm:w-4 sm:h-4 text-red-500 fill-red-500 ml-1" />
+        <div className="mt-20 animate-reveal stagger-4">
+           <div className="inline-flex flex-col items-center gap-3 p-6 rounded-[2.5rem] bg-secondary/30 border border-border">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Engineered with Precision</span>
+              <p className="text-sm font-bold text-foreground">
+                Developed by <span className="text-primary">Umar Farooq</span> <Heart className="inline w-4 h-4 text-red-500 fill-red-500 ml-1.5" />
               </p>
            </div>
         </div>
