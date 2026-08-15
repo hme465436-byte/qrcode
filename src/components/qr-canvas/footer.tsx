@@ -63,48 +63,7 @@ export function Footer() {
           </div>
 
           {/* Links Sections */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-8">
-            <div className="space-y-8">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2563eb]">Production</h4>
-              <nav className="flex flex-col gap-5">
-                {[
-                  { label: 'Single Studio', href: '/single' },
-                  { label: 'Bulk Mode', href: '/bulk' },
-                  { label: 'Logo Maker', href: '/logo-maker' },
-                  { label: 'YT Thumbnails', href: '/youtube-thumbnail-maker' },
-                  { label: 'Age Studio', href: '/age-calculator' },
-                  { label: 'Password Studio', href: '/password-generator' },
-                  { label: 'YouTube Studio', href: '/youtube-banner-maker' },
-                  { label: 'Collage Maker', href: '/collage-maker' },
-                  { label: 'Favicon Studio', href: '/favicon-generator' },
-                  { label: 'Privacy Purge', href: '/metadata-remover' },
-                  { label: 'Color Picker', href: '/color-picker' },
-                  { label: 'RGB Studio', href: '/rgb-picker' },
-                  { label: 'Markdown View', href: '/markdown-preview' },
-                  { label: 'Format Converter', href: '/image-converter' },
-                  { label: 'Resizer', href: '/image-resizer' },
-                  { label: 'Compressor', href: '/image-compressor' },
-                  { label: 'Image to PDF', href: '/image-to-pdf' },
-                  { label: 'Photo Editor', href: '/photo-editor' },
-                  { label: 'Vocal Remover', href: '/vocal-separator' },
-                  { label: 'Video to MP3', href: '/video-to-audio' },
-                  { label: 'Video to GIF', href: '/video-to-gif' },
-                  { label: 'Audio Joiner', href: '/audio-joiner' },
-                  { label: 'Volume Booster', href: '/audio-booster' },
-                  { label: 'Letter Art', href: '/letter-art' },
-                  { label: 'OCR Extract', href: '/ocr' },
-                  { label: 'Dot Art', href: '/dot-art' },
-                  { label: 'Text Repeater', href: '/repeater' },
-                  { label: 'Hex Converter', href: '/hex-converter' },
-                  { label: 'AOB Converter', href: '/code-converter' },
-                ].map((link) => (
-                  <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
-                    {link.label} <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
-                  </a>
-                ))}
-              </nav>
-            </div>
-            
+          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-12 sm:gap-8">
             <div className="space-y-8">
               <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2563eb]">Knowledge</h4>
               <nav className="flex flex-col gap-5">
