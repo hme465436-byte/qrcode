@@ -157,12 +157,6 @@ export default function Home() {
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden">
       {/* HERO SECTION */}
       <section className="w-full px-4 sm:px-6 pt-12 pb-20 md:pt-24 md:pb-40 text-center relative overflow-hidden">
-        {/* Animated Rotating Aura behind Search */}
-        <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] sm:w-[700px] sm:h-[700px] pointer-events-none">
-          <div className="w-full h-full bg-gradient-to-tr from-primary/30 via-transparent to-primary/20 rounded-full blur-[100px] animate-[spin_12s_linear_infinite]" />
-          <div className="absolute inset-0 bg-gradient-to-bl from-primary/10 via-transparent to-primary/30 rounded-full blur-[100px] animate-[spin_8s_linear_infinite_reverse]" />
-        </div>
-        
         <div className="max-w-4xl mx-auto animate-reveal relative z-10">
           <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-6 sm:mb-8 leading-[1.1] tracking-tighter text-foreground uppercase overflow-wrap-anywhere">
             Digital <span className="text-primary italic">Excellence</span> <br />
@@ -172,33 +166,42 @@ export default function Home() {
             The world&apos;s most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
           </p>
 
-          {/* Search Bar Implementation with Rotating Aura */}
+          {/* Search Bar with Moving Border Trace Effect */}
           <div className="max-w-xl mx-auto mb-16 px-4 group relative">
-            {/* Glowing Ring Background */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-primary via-blue-400 to-primary rounded-[2.2rem] blur opacity-20 group-focus-within:opacity-40 transition-opacity duration-1000 animate-[spin_6s_linear_infinite]" />
-            
-            <div className="relative">
-              <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
-              </div>
-              <Input 
-                type="text"
-                placeholder="Search tools... (e.g. compress, qr, hex)"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-16 pl-14 pr-14 bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-border hover:border-primary/40 focus:border-primary/60 rounded-3xl text-lg font-medium shadow-2xl transition-all"
+            <div className="relative h-16 w-full rounded-3xl p-[2px] overflow-hidden transition-all duration-500 shadow-2xl group-focus-within:ring-4 group-focus-within:ring-primary/10">
+              {/* Border Trace Animation - The segment that moves along the border */}
+              <div 
+                className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] opacity-60 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity blur-[2px]"
+                style={{
+                  background: 'conic-gradient(from 0deg, transparent 0, transparent 48%, #2563eb 50%, transparent 52%, transparent 100%)'
+                }}
               />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+              
+              {/* Inner Input Area */}
+              <div className="relative flex items-center w-full h-full bg-white/90 dark:bg-black/90 backdrop-blur-3xl rounded-[calc(1.5rem-2px)] overflow-hidden">
+                <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                  <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
+                </div>
+                <Input 
+                  type="text"
+                  placeholder="Search tools... (e.g. compress, qr, hex)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute inset-y-0 right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
             </div>
+
             {searchQuery && (
-              <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-primary/60">
+              <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-primary/60 animate-in fade-in slide-in-from-top-2">
                 Found {filteredTools.length} {filteredTools.length === 1 ? 'utility' : 'utilities'} matching your search
               </p>
             )}
