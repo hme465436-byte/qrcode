@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Video, 
   Music, 
@@ -12,7 +12,6 @@ import {
   Info,
   CheckCircle2,
   FileVideo,
-  AlertTriangle,
   Settings2,
   Terminal,
   Activity,
@@ -20,7 +19,8 @@ import {
   Scissors,
   Clock,
   Timer,
-  FastForward
+  FastForward,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -48,6 +49,32 @@ export default function VideoToAudioPage() {
   const [totalDuration, setTotalDuration] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
+
+  // Formatting helpers
+  const formatSecondsToMMSS = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const parseMMSSToSeconds = (value: string) => {
+    const parts = value.split(':');
+    if (parts.length === 2) {
+      const mins = parseInt(parts[0]) || 0;
+      const secs = parseInt(parts[1]) || 0;
+      return mins * 60 + secs;
+    }
+    return parseInt(value) || 0;
+  };
+
+  const selectedLength = useMemo(() => {
+    const len = Math.max(0, endTime - startTime);
+    return formatSecondsToMMSS(len);
+  }, [startTime, endTime]);
+
+  const isValidRange = useMemo(() => {
+    return startTime < endTime && startTime >= 0 && endTime <= totalDuration;
+  }, [startTime, endTime, totalDuration]);
 
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -96,24 +123,9 @@ export default function VideoToAudioPage() {
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      if (selectedFile.size > 100 * 1024 * 1024) {
-        toast({ 
-          variant: "destructive", 
-          title: "High Volume Asset", 
-          description: "Videos over 100MB may be slow to process." 
-        });
-      }
-      
-      // Get Duration
       const video = document.createElement('video');
       video.preload = 'metadata';
       video.onloadedmetadata = () => {
@@ -134,12 +146,7 @@ export default function VideoToAudioPage() {
   };
 
   const convertToMp3 = async () => {
-    if (!file) return;
-
-    if (startTime >= endTime) {
-      toast({ variant: "destructive", title: "Invalid Range", description: "Start time must be before end time." });
-      return;
-    }
+    if (!file || !isValidRange) return;
 
     setIsProcessing(true);
     setLogs([]);
@@ -160,13 +167,10 @@ export default function VideoToAudioPage() {
 
       setStatus(`Extracting Matrix (${bitrate})...`);
       
-      // FFmpeg seek and trim parameters
-      // -ss [start] -to [end] or -t [duration]
-      // Using -ss before -i for faster seeking, -to for precise end
       await ffmpeg.exec([
-        '-ss', startTime.toString(),
+        '-ss', startTime.toFixed(2),
         '-i', inputName,
-        '-to', (endTime - startTime).toString(),
+        '-to', (endTime - startTime).toFixed(2),
         '-vn',
         '-acodec', 'libmp3lame',
         '-b:a', bitrate,
@@ -276,69 +280,96 @@ export default function VideoToAudioPage() {
 
               {/* Trimming Controls */}
               {file && totalDuration > 0 && (
-                <div className="space-y-6 pt-6 border-t border-border animate-in fade-in zoom-in duration-500">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Scissors className="w-3 h-3 text-primary" /> Precision Trim Matrix
-                    </Label>
-                    <span className="text-[10px] font-mono text-primary font-black uppercase">Total: {formatDuration(totalDuration)}</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-[9px] font-black uppercase text-foreground/40">
-                        <Clock className="w-3 h-3" /> Start Mark
+                <div className="space-y-10 pt-6 border-t border-border animate-in fade-in zoom-in duration-500">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Scissors className="w-3 h-3 text-primary" /> Visual Timeline Matrix
+                      </Label>
+                      <div className="flex items-center gap-3">
+                         <span className="text-[9px] font-black uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-lg">Selected: {selectedLength}</span>
+                         <span className="text-[9px] font-mono text-foreground/30 uppercase">Total: {formatSecondsToMMSS(totalDuration)}</span>
                       </div>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        max={endTime - 0.1}
-                        step="0.1"
-                        value={startTime} 
-                        onChange={(e) => setStartTime(Math.max(0, parseFloat(e.target.value) || 0))}
-                        className="h-12 bg-secondary border-border rounded-xl text-sm font-mono font-bold"
-                      />
-                      <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-tighter text-right">Seconds: {startTime.toFixed(1)}</p>
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-[9px] font-black uppercase text-foreground/40">
-                        <Timer className="w-3 h-3" /> End Mark
-                      </div>
-                      <Input 
-                        type="number" 
-                        min={startTime + 0.1} 
-                        max={totalDuration}
-                        step="0.1"
-                        value={endTime} 
-                        onChange={(e) => setEndTime(Math.min(totalDuration, parseFloat(e.target.value) || totalDuration))}
-                        className="h-12 bg-secondary border-border rounded-xl text-sm font-mono font-bold"
-                      />
-                      <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-tighter text-right">Seconds: {endTime.toFixed(1)}</p>
-                    </div>
-                  </div>
 
-                  <div className="space-y-3">
-                     <p className="text-[9px] font-black text-foreground/30 uppercase tracking-widest">Trim Presets</p>
-                     <div className="grid grid-cols-3 gap-2">
-                        <button 
-                          onClick={() => { setStartTime(0); setEndTime(totalDuration); }}
-                          className="h-9 rounded-lg bg-secondary border border-border text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all"
-                        >
-                          Full
-                        </button>
-                        <button 
-                          onClick={() => { setStartTime(0); setEndTime(Math.min(30, totalDuration)); }}
-                          className="h-9 rounded-lg bg-secondary border border-border text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all"
-                        >
-                          First 30s
-                        </button>
-                        <button 
-                          onClick={() => { setStartTime(0); setEndTime(Math.min(60, totalDuration)); }}
-                          className="h-9 rounded-lg bg-secondary border border-border text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all"
-                        >
-                          First 60s
-                        </button>
-                     </div>
+                    <div className="px-2 pt-2">
+                      <Slider 
+                        value={[startTime, endTime]} 
+                        min={0} 
+                        max={totalDuration} 
+                        step={0.1} 
+                        minStepsBetweenThumbs={1}
+                        onValueChange={(val) => {
+                          setStartTime(val[0]);
+                          setEndTime(val[1]);
+                        }}
+                        className="py-4"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center text-[9px] font-black uppercase text-foreground/40">
+                          <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> Start Mark</span>
+                          <span className="font-mono opacity-50">{startTime.toFixed(1)}s</span>
+                        </div>
+                        <Input 
+                          placeholder="00:00"
+                          value={formatSecondsToMMSS(startTime)} 
+                          onChange={(e) => {
+                            const val = parseMMSSToSeconds(e.target.value);
+                            if (val >= 0 && val < endTime) setStartTime(val);
+                          }}
+                          className="h-14 bg-secondary border-border rounded-2xl text-lg font-mono font-bold text-center"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center text-[9px] font-black uppercase text-foreground/40">
+                          <span className="flex items-center gap-1.5"><Timer className="w-3 h-3" /> End Mark</span>
+                          <span className="font-mono opacity-50">{endTime.toFixed(1)}s</span>
+                        </div>
+                        <Input 
+                          placeholder="00:00"
+                          value={formatSecondsToMMSS(endTime)} 
+                          onChange={(e) => {
+                            const val = parseMMSSToSeconds(e.target.value);
+                            if (val > startTime && val <= totalDuration) setEndTime(val);
+                          }}
+                          className="h-14 bg-secondary border-border rounded-2xl text-lg font-mono font-bold text-center"
+                        />
+                      </div>
+                    </div>
+
+                    {!isValidRange && (
+                       <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/20 flex items-center gap-3 animate-pulse">
+                          <AlertCircle className="w-4 h-4 text-destructive" />
+                          <p className="text-[10px] font-black text-destructive uppercase tracking-widest">Invalid Production Range</p>
+                       </div>
+                    )}
+
+                    <div className="space-y-3">
+                       <p className="text-[9px] font-black text-foreground/30 uppercase tracking-widest">Rapid Presets</p>
+                       <div className="grid grid-cols-3 gap-2">
+                          <button 
+                            onClick={() => { setStartTime(0); setEndTime(totalDuration); }}
+                            className="h-10 rounded-xl bg-secondary border border-border text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all active:scale-95"
+                          >
+                            Full Track
+                          </button>
+                          <button 
+                            onClick={() => { setStartTime(0); setEndTime(Math.min(30, totalDuration)); }}
+                            className="h-10 rounded-xl bg-secondary border border-border text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all active:scale-95"
+                          >
+                            Clip 30s
+                          </button>
+                          <button 
+                            onClick={() => { setStartTime(0); setEndTime(Math.min(60, totalDuration)); }}
+                            className="h-10 rounded-xl bg-secondary border border-border text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all active:scale-95"
+                          >
+                            Clip 60s
+                          </button>
+                       </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -389,11 +420,11 @@ export default function VideoToAudioPage() {
               <div className="flex gap-4 pt-4">
                 <Button 
                   onClick={convertToMp3}
-                  disabled={!file || isProcessing}
+                  disabled={!file || isProcessing || !isValidRange}
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Generate trimmed MP3
+                  Generate Master
                 </Button>
                 <Button 
                   variant="outline"
@@ -479,7 +510,7 @@ export default function VideoToAudioPage() {
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Audio Master Encoded</h3>
-                      <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">Fidelity: {bitrate} | Range: {formatDuration(startTime)} - {formatDuration(endTime)}</p>
+                      <p className="text-[10px] text-foreground/40 font-medium uppercase tracking-widest">Fidelity: {bitrate} | Range: {formatSecondsToMMSS(startTime)} - {formatSecondsToMMSS(endTime)}</p>
                     </div>
                     <div className="p-4 bg-background/50 rounded-2xl border border-border w-full">
                       <audio controls src={mp3Url} className="w-full h-10" />
