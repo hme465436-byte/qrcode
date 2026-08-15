@@ -35,8 +35,7 @@ import {
   Grid2X2,
   MicOff,
   FileEdit,
-  AlignLeft,
-  Book
+  AlignLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -60,15 +59,6 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
-  },
-  { 
-    href: '/dictionary', 
-    icon: Book, 
-    title: 'Dictionary', 
-    desc: 'Global word definitions and linguistic analysis.', 
-    label: 'LEXICON', 
-    color: 'bg-primary/50',
-    keywords: ['dictionary', 'word meaning', 'english dictionary', 'define word', 'lexicon', 'thesaurus']
   },
   { 
     href: '/collage-maker', 

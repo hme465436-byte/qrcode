@@ -70,7 +70,6 @@ export function Footer() {
                 {[
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
-                  { label: 'Dictionary', href: '/dictionary' },
                   { label: 'Collage Maker', href: '/collage-maker' },
                   { label: 'Favicon Studio', href: '/favicon-generator' },
                   { label: 'Privacy Purge', href: '/metadata-remover' },
