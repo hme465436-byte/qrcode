@@ -168,17 +168,17 @@ export default function Home() {
 
           {/* Search Bar with Moving Border Trace Effect */}
           <div className="max-w-xl mx-auto mb-16 px-4 group relative">
-            <div className="relative h-16 w-full rounded-3xl p-[2px] overflow-hidden transition-all duration-500 shadow-2xl group-focus-within:ring-4 group-focus-within:ring-primary/10">
-              {/* Border Trace Animation - The segment that moves along the border */}
+            <div className="relative h-16 w-full rounded-3xl p-[3px] overflow-hidden transition-all duration-500 shadow-2xl group-focus-within:ring-4 group-focus-within:ring-primary/10">
+              {/* Border Trace Animation - Enhanced thickness and glow */}
               <div 
-                className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] opacity-60 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity blur-[2px]"
+                className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] opacity-80 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity blur-[4px]"
                 style={{
-                  background: 'conic-gradient(from 0deg, transparent 0, transparent 48%, #2563eb 50%, transparent 52%, transparent 100%)'
+                  background: 'conic-gradient(from 0deg, transparent 0, transparent 45%, #2563eb 50%, transparent 55%, transparent 100%)'
                 }}
               />
               
-              {/* Inner Input Area */}
-              <div className="relative flex items-center w-full h-full bg-white/90 dark:bg-black/90 backdrop-blur-3xl rounded-[calc(1.5rem-2px)] overflow-hidden">
+              {/* Inner Input Area - Adjusted border radius for sync */}
+              <div className="relative flex items-center w-full h-full bg-white/95 dark:bg-black/95 backdrop-blur-3xl rounded-[calc(1.5rem-3px)] overflow-hidden">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                   <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
                 </div>
