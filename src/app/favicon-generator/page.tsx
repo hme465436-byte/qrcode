@@ -44,8 +44,8 @@ interface FaviconSize {
 }
 
 const TARGET_SIZES: Omit<FaviconSize, 'dataUrl'>[] = [
-  { size: 16, label: '16x16', filename: 'favicon-16x16.png', desc: 'Standard Browser Tab', icon: MousePointer2 },
-  { size: 32, label: '32x32', filename: 'favicon-32x32.png', desc: 'High-Res Browser Tab', icon: Monitor },
+  { size: 16, label: '16x16', filename: 'favicon-16x16.png', desc: 'Legacy Browser Support', icon: MousePointer2 },
+  { size: 32, label: '32x32', filename: 'favicon-32x32.png', desc: 'Standard Favicon Layer', icon: Monitor },
   { size: 48, label: '48x48', filename: 'favicon-48x48.png', desc: 'Desktop Taskbar', icon: Box },
   { size: 96, label: '96x96', filename: 'favicon-96x96.png', desc: 'High-DPI Desktop', icon: Monitor },
   { size: 180, label: '180x180', filename: 'apple-touch-icon.png', desc: 'iOS Home Screen', icon: Smartphone },
@@ -141,14 +141,14 @@ export default function FaviconGeneratorPage() {
         const base64Data = f.dataUrl.split(',')[1];
         zip.file(f.filename, base64Data, { base64: true });
         
-        // Also map 32x32 to favicon.ico for standard naming
+        // Map 32x32 to favicon.ico as requested (standard polyfill naming)
         if (f.size === 32) {
            zip.file('favicon.ico', base64Data, { base64: true });
         }
       }
     });
 
-    // Create simple SVG wrapper
+    // Create functional SVG wrapper (Vector Favicon)
     if (favicons[6]?.dataUrl) {
        const svgContent = `<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <image href="${favicons[6].dataUrl}" width="512" height="512"/>
@@ -177,7 +177,14 @@ Generated via MY KIT TOOL
 ## Implementation
 1. Place all files in your web project's root directory (or /public).
 2. Copy the corresponding code snippet from the studio.
-3. Verify that paths match your folder structure.
+3. Ensure 'favicon.ico' and 'favicon.svg' are primary targets.
+
+## Content
+- favicon.ico (Legacy/Compatibility)
+- favicon.svg (Modern/Vector)
+- apple-touch-icon.png (iOS)
+- android-chrome-*.png (Web App)
+- site.webmanifest (PWA Settings)
 
 ## Metadata
 Created: ${new Date().toLocaleString()}
@@ -188,7 +195,7 @@ Engine: Hardware-Accelerated Canvas Synthesis
     const content = await zip.generateAsync({ type: "blob" });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(content);
-    link.download = `favicon-master-bundle-${Date.now()}.zip`;
+    link.download = `favicon-production-bundle-${Date.now()}.zip`;
     link.click();
     
     setIsProcessing(false);
@@ -204,23 +211,23 @@ Engine: Hardware-Accelerated Canvas Synthesis
   };
 
   const SNIPPETS = {
-    html: `<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    html: `<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">`,
     
-    react: `// Add to your main layout or index.html
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    react: `// Add to your main layout head
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="manifest" href="/site.webmanifest" />`,
 
     nextjs: `// In your app/layout.tsx
 export const metadata: Metadata = {
   icons: {
     icon: [
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
     ],
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
@@ -230,23 +237,27 @@ export const metadata: Metadata = {
 };`,
 
     rails: `<%= favicon_link_tag 'favicon.ico' %>
-<%= favicon_link_tag 'apple-touch-icon.png', rel: 'apple-touch-icon', type: 'image/png' %>`,
+<%= favicon_link_tag 'favicon.svg', type: 'image/svg+xml' %>
+<%= favicon_link_tag 'apple-touch-icon.png', rel: 'apple-touch-icon' %>`,
 
-    node: `// Express.js setup
+    node: `// Serve static files from public directory
 app.use(express.static('public'));
-// Favicon usually handled via serve-favicon middleware
-const favicon = require('serve-favicon');
-app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));`,
 
-    gulp: `gulp.task('icons', function() {
-  return gulp.src('src/icons/**/*')
+// Head HTML Template
+const head = \`
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+\`;`,
+
+    gulp: `gulp.task('favicons', function() {
+  return gulp.src('src/assets/favicons/**/*')
     .pipe(gulp.dest('dist/'));
 });`,
 
     grunt: `copy: {
-  main: {
+  favicons: {
     expand: true,
-    cwd: 'src/icons/',
+    cwd: 'src/assets/favicons/',
     src: '**',
     dest: 'dist/',
   },
@@ -262,8 +273,8 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));`,
         <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
           Favicon <span className="text-primary italic">Master Studio</span>
         </h1>
-        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl">
-          Professional-grade icon synthesis. Generate optimized bundles for iOS, Android, and all modern browsers with hard-coded implementation protocols.
+        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+          Professional multi-format icon synthesis. Generate optimized production bundles featuring .ico, .svg, and web manifest sets with hard-coded implementation protocols.
         </p>
       </div>
 
@@ -321,7 +332,7 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));`,
                     className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                   >
                     {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <FileArchive className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                    Download ZIP Bundle
+                    Download Production ZIP
                   </Button>
                   <Button variant="ghost" onClick={handleClear} className="w-full text-[9px] font-black uppercase tracking-widest text-foreground/30 hover:text-destructive transition-colors">
                      Reset Workspace
@@ -336,7 +347,7 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));`,
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Master Protocol</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                We utilize bi-linear interpolation for high-quality downsampling. All generated assets are sanitized of metadata for absolute performance and privacy.
+                Generating .ico for legacy support and high-fidelity .svg for modern displays. All web app manifest icons (192/512) are included in the master bundle.
               </p>
             </div>
           </div>
@@ -426,7 +437,7 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));`,
                             
                             <div className="flex items-center gap-3 text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
                                <Settings2 className="w-3.5 h-3.5" />
-                               <span>Protocol: {key === 'nextjs' ? 'Metadata API' : 'Static Distribution'}</span>
+                               <span>Protocol: {key === 'nextjs' ? 'Metadata API' : 'Direct Implementation'}</span>
                             </div>
                          </TabsContent>
                        ))}
@@ -441,7 +452,7 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));`,
                      </div>
                      <div className="space-y-1">
                         <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Cross-Platform Sync</p>
-                        <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">Verified support for Safari, Chrome, Edge, and PWA environments.</p>
+                        <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">Verified support for Safari, Chrome, Edge, and Android PWA environments.</p>
                      </div>
                   </div>
                   <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
@@ -449,8 +460,8 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));`,
                         <Maximize className="w-5 h-5" />
                      </div>
                      <div className="space-y-1">
-                        <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Precision Raster</p>
-                        <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">1:1 pixel mapping ensures crisp clarity even at the 16px scale.</p>
+                        <p className="text-[10px] font-black text-foreground uppercase tracking-widest">SVG Scalability</p>
+                        <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">Modern .svg favicon provides infinite resolution scaling for retina displays.</p>
                      </div>
                   </div>
                </div>
