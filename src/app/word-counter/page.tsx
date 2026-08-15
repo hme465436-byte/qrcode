@@ -47,6 +47,7 @@ export default function WordCounterPage() {
     const formatTime = (totalSec: number) => {
       const min = Math.floor(totalSec / 60);
       const sec = totalSec % 60;
+      if (min === 0 && sec === 0) return '0s';
       if (min === 0) return `${sec}s`;
       return `${min}m ${sec}s`;
     };
@@ -137,10 +138,19 @@ export default function WordCounterPage() {
                 <Button 
                   onClick={handleCopy}
                   disabled={!text}
-                  className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                  className="flex-[2] h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isCopied ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
                   {isCopied ? 'Matrix Copied' : 'Copy Content'}
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={handleClear}
+                  disabled={!text}
+                  className="flex-1 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
+                  title="Clear Workspace"
+                >
+                  <Trash2 className="w-6 h-6" />
                 </Button>
               </div>
             </CardContent>
