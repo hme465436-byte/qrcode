@@ -580,16 +580,6 @@ export default function LogoMakerPage() {
                 Premium typographic branding architecture. Design high-impact identities with advanced geometry, gradients, and production-grade export protocols.
               </p>
            </div>
-           <div className="flex gap-4">
-             <Button 
-              onClick={randomize}
-              variant="outline"
-              className="h-16 px-6 rounded-2xl bg-secondary border-border text-foreground font-black uppercase tracking-widest text-[10px] hover:bg-primary hover:text-white transition-all shadow-xl"
-             >
-                <Dices className="w-5 h-5 mr-3 text-primary group-hover:rotate-180 transition-transform" />
-                Randomize
-             </Button>
-           </div>
         </div>
       </div>
 
@@ -857,6 +847,15 @@ export default function LogoMakerPage() {
                     </div>
                   )}
                </div>
+
+               <Button 
+                onClick={randomize}
+                variant="outline"
+                className="w-full max-w-[500px] mt-8 h-14 rounded-2xl bg-secondary border-border text-foreground font-black uppercase tracking-widest text-[10px] hover:bg-primary hover:text-white transition-all shadow-lg group/random"
+               >
+                  <Dices className="w-5 h-5 mr-3 text-primary group-hover/random:rotate-180 transition-transform duration-500" />
+                  Generate Random Brand Matrix
+               </Button>
 
                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
                   <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
