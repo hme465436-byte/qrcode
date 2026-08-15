@@ -62,13 +62,21 @@ export default function SpeechToTextPage() {
     };
 
     recognition.onerror = (event: any) => {
-      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+      
       if (event.error === 'not-allowed') {
         setError("Microphone access denied. Please enable permissions in your browser settings.");
+      } else if (event.error === 'network') {
+        setError("Network protocol failure. Cloud-based voice processing requires an active internet connection.");
+      } else if (event.error === 'no-speech') {
+        toast({ 
+          variant: "default", 
+          title: "Silence Detected", 
+          description: "No linguistic data was identified in the last stream." 
+        });
       } else {
-        setError(`System error: ${event.error}. Please check your hardware.`);
+        setError(`System error: ${event.error}. Please check your hardware connectivity.`);
       }
-      setIsListening(false);
     };
 
     recognition.onend = () => {
@@ -96,7 +104,7 @@ export default function SpeechToTextPage() {
           setIsListening(true);
           toast({ title: "Recording Active", description: "Studio is listening for voice matrix." });
         } catch (e) {
-          console.error(e);
+          // Errors handled by onerror
         }
       }
     }
