@@ -1,7 +1,8 @@
+
 "use client"
 
 import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
+import Link from 'next/navigation';
 import { 
   QrCode, 
   Layers, 
@@ -43,7 +44,9 @@ import {
   Type,
   Command,
   FileArchive,
-  ArrowRightLeft
+  ArrowRightLeft,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -79,6 +82,16 @@ const TOOLS = [
     color: 'text-violet-600 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/pdf-merger', 
+    icon: FileStack, 
+    title: 'PDF Merger', 
+    desc: 'Combine multiple PDF documents into a single master file.', 
+    label: 'DOCUMENT', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['pdf merge', 'combine pdf', 'join pdf', 'multiple pdfs', 'document joiner']
   },
   { 
     href: '/image-to-file', 
@@ -396,7 +409,7 @@ export default function Home() {
             <span className="text-foreground/80">MY KIT TOOL</span>
           </h1>
           <p className="text-sm sm:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium mb-12 sm:mb-16 px-2">
-            The world&apos;s most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
+            The world's most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
           </p>
 
           {/* Search Bar with MAX GLOW */}
@@ -414,7 +427,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. age, compress, qr)"
+                  placeholder="Search tools... (e.g. pdf, age, compress, qr)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
