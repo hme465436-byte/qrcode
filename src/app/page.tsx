@@ -36,8 +36,7 @@ import {
   MicOff,
   FileEdit,
   AlignLeft,
-  Youtube,
-  DownloadCloud
+  Youtube
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -61,15 +60,6 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
-  },
-  { 
-    href: '/file-downloader', 
-    icon: DownloadCloud, 
-    title: 'Direct Downloader', 
-    desc: 'Download assets from direct URLs via browser fetch.', 
-    label: 'EXTRACT', 
-    color: 'bg-primary/50',
-    keywords: ['downloader', 'file download', 'direct link', 'mp3 download', 'mp4 download', 'save file', 'url to file']
   },
   { 
     href: '/youtube-banner-maker', 
@@ -333,7 +323,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. compress, qr, downloader)"
+                  placeholder="Search tools... (e.g. compress, qr, edit)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
