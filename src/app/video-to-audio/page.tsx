@@ -22,7 +22,8 @@ import {
   FastForward,
   AlertCircle,
   FileAudio,
-  Zap
+  Zap,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { toBlobURL } from '@ffmpeg/util';
 
 const AUDIO_FORMATS = [
   { id: 'mp3', label: 'MP3 (Standard)', codec: 'libmp3lame', ext: 'mp3', supportsBitrate: true },
@@ -70,7 +71,6 @@ export default function VideoToAudioPage() {
     AUDIO_FORMATS.find(f => f.id === targetFormat) || AUDIO_FORMATS[0], 
   [targetFormat]);
 
-  // Formatting helpers
   const formatSecondsToMMSS = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -105,13 +105,13 @@ export default function VideoToAudioPage() {
     };
   }, [audioUrl]);
 
-  const loadFFmpeg = async () => {
-    if (isLoaded && ffmpegRef.current) return true;
+  const loadFFmpeg = async (force = false) => {
+    if (!force && isLoaded && ffmpegRef.current) return true;
     
-    setStatus('Initializing FFmpeg Engine...');
+    setStatus('Initializing Engine...');
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
     
-    if (!ffmpegRef.current) {
+    if (!ffmpegRef.current || force) {
       ffmpegRef.current = new FFmpeg();
     }
     
@@ -137,7 +137,7 @@ export default function VideoToAudioPage() {
       toast({ 
         variant: "destructive", 
         title: "Engine Failure", 
-        description: "Failed to load FFmpeg. Please ensure your browser supports SharedArrayBuffer." 
+        description: "Failed to load FFmpeg. Browser-side processing requires SharedArrayBuffer support." 
       });
       return false;
     }
@@ -163,7 +163,7 @@ export default function VideoToAudioPage() {
       setProgress(0);
       setStatus('');
       setLogs([]);
-      toast({ title: "Asset Imported", description: `Studio analyzed ${isAudioOnly ? 'audio' : 'video'} container.` });
+      toast({ title: "Asset Imported", description: `Analyzed ${isAudioOnly ? 'audio' : 'video'} metadata.` });
     }
   };
 
@@ -173,6 +173,7 @@ export default function VideoToAudioPage() {
     setIsProcessing(true);
     setLogs([]);
     
+    // Ensure FFmpeg is ready
     const ready = await loadFFmpeg();
     if (!ready || !ffmpegRef.current) {
       setIsProcessing(false);
@@ -184,15 +185,17 @@ export default function VideoToAudioPage() {
     const outputName = `output_master.${selectedFormat.ext}`;
 
     try {
-      setStatus('Writing Payload to Memory...');
+      setStatus('Preparing Buffers...');
       
-      // Memory Protection: Purge previous entries to prevent 'out of bounds' errors
+      // Strict memory cleanup before run
       try { await ffmpeg.deleteFile(inputName); } catch(e) {}
       try { await ffmpeg.deleteFile(outputName); } catch(e) {}
 
-      await ffmpeg.writeFile(inputName, await fetchFile(file));
+      // Direct Uint8Array handling for optimized WASM memory injection
+      const fileData = new Uint8Array(await file.arrayBuffer());
+      await ffmpeg.writeFile(inputName, fileData);
 
-      setStatus(`Synthesizing Matrix (${selectedFormat.label})...`);
+      setStatus(`Encoding ${selectedFormat.label}...`);
       
       const args = [
         '-ss', startTime.toFixed(2),
@@ -210,26 +213,37 @@ export default function VideoToAudioPage() {
       
       await ffmpeg.exec(args);
 
-      setStatus('Finalizing Master...');
+      setStatus('Extracting Master...');
       const data = await ffmpeg.readFile(outputName);
       const url = URL.createObjectURL(new Blob([(data as any).buffer], { type: `audio/${selectedFormat.ext}` }));
       
       setAudioUrl(url);
       setProgress(100);
       setStatus(`Production Complete`);
-      toast({ title: "Master Exported", description: `Audio track successfully encoded as ${selectedFormat.id.toUpperCase()}.` });
+      toast({ title: "Master Exported", description: `Track successfully synthesized as ${selectedFormat.id.toUpperCase()}.` });
       
-      // Final Cleanup
+      // Cleanup
       try { await ffmpeg.deleteFile(inputName); } catch(e) {}
       try { await ffmpeg.deleteFile(outputName); } catch(e) {}
     } catch (err: any) {
       console.error('Conversion Error:', err);
-      toast({ 
-        variant: "destructive", 
-        title: "Production Failed", 
-        description: "An error occurred during extraction. The range or format may be invalid for this asset." 
-      });
-      setStatus('Extraction Failed');
+      
+      if (err.message?.includes('memory access out of bounds')) {
+        toast({ 
+          variant: "destructive", 
+          title: "Memory Limit Exceeded", 
+          description: "This asset is too large for the current WASM sandbox. Please try a shorter duration or smaller file." 
+        });
+        // Force a reload of FFmpeg on next attempt
+        setIsLoaded(false);
+      } else {
+        toast({ 
+          variant: "destructive", 
+          title: "Production Failed", 
+          description: "An unexpected error occurred during audio synthesis." 
+        });
+      }
+      setStatus('Process Aborted');
     } finally {
       setIsProcessing(false);
     }
@@ -246,7 +260,7 @@ export default function VideoToAudioPage() {
     setStartTime(0);
     setEndTime(0);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    toast({ title: "Studio Reset", description: "Fields cleared and memory purged." });
+    toast({ title: "Studio Reset", description: "All buffers cleared." });
   };
 
   return (
@@ -259,7 +273,7 @@ export default function VideoToAudioPage() {
           Universal <span className="text-primary italic">Audio Converter</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          Professional-grade audio synthesis. Convert video or audio assets into high-fidelity masters with precision trimming and multi-format encoding.
+          Professional-grade audio synthesis. Convert video or audio assets into high-fidelity masters with precision trimming and multi-format encoding protocols.
         </p>
       </div>
 
@@ -301,7 +315,7 @@ export default function VideoToAudioPage() {
                     <div className="text-center p-6 space-y-2">
                        {file.type.startsWith('audio/') ? <FileAudio className="w-10 h-10 text-primary mx-auto mb-2" /> : <FileVideo className="w-10 h-10 text-primary mx-auto mb-2" />}
                        <p className="text-xs font-black uppercase text-foreground truncate max-w-[240px]">{file.name}</p>
-                       <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest">Tap to change asset</p>
+                       <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest">Tap to swap source</p>
                     </div>
                   ) : (
                     <>
@@ -326,7 +340,7 @@ export default function VideoToAudioPage() {
                         <Scissors className="w-3 h-3 text-primary" /> Visual Timeline Matrix
                       </Label>
                       <div className="flex items-center gap-3">
-                         <span className="text-[9px] font-black uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-lg">Selected: {selectedLength}</span>
+                         <span className="text-[9px] font-black uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-lg">Length: {selectedLength}</span>
                       </div>
                     </div>
 
@@ -347,7 +361,7 @@ export default function VideoToAudioPage() {
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <div className="flex justify-between items-center text-[9px] font-black uppercase text-foreground/40">
-                          <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> Start Mark</span>
+                          <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> Start</span>
                         </div>
                         <Input 
                           placeholder="00:00"
@@ -361,7 +375,7 @@ export default function VideoToAudioPage() {
                       </div>
                       <div className="space-y-3">
                         <div className="flex justify-between items-center text-[9px] font-black uppercase text-foreground/40">
-                          <span className="flex items-center gap-1.5"><Timer className="w-3 h-3" /> End Mark</span>
+                          <span className="flex items-center gap-1.5"><Timer className="w-3 h-3" /> End</span>
                         </div>
                         <Input 
                           placeholder="00:00"
@@ -383,7 +397,7 @@ export default function VideoToAudioPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
                     <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Layers className="w-3 h-3 text-primary" /> Target Profile
+                      <Layers className="w-3 h-3 text-primary" /> Format Matrix
                     </Label>
                     <Select value={targetFormat} onValueChange={setTargetFormat}>
                       <SelectTrigger className="h-14 bg-secondary border-border rounded-2xl text-foreground font-bold">
@@ -400,7 +414,7 @@ export default function VideoToAudioPage() {
                   {selectedFormat.supportsBitrate && (
                     <div className="space-y-4 animate-in fade-in">
                       <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <FastForward className="w-3 h-3 text-primary" /> Bitrate Density
+                        <FastForward className="w-3 h-3 text-primary" /> Bitrate Quality
                       </Label>
                       <RadioGroup 
                         defaultValue="192k" 
@@ -441,11 +455,12 @@ export default function VideoToAudioPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Synthesize Master
+                  Generate Master
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={handleClear}
+                  disabled={isProcessing}
                   className="w-16 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
                 >
                   <Trash2 className="w-6 h-6" />
@@ -462,7 +477,7 @@ export default function VideoToAudioPage() {
             <CardHeader className="py-8 border-b border-border bg-secondary/30">
               <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                Production Status
+                Production Pipeline
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
@@ -526,9 +541,9 @@ export default function VideoToAudioPage() {
               <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
                 <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
                 <div className="space-y-2">
-                  <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Production Logic</h4>
+                  <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">WASM Architecture</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                    Conversions are performed entirely locally via WebAssembly. WMA and AC3 support may vary based on your browser's capability matrix. Lossless formats (WAV/FLAC) ignore bitrate density for peak fidelity.
+                    Conversions are strictly local. The 2GB WASM memory limit applies; if the process fails with a memory error, try trimming a smaller segment of the source media.
                   </p>
                 </div>
               </div>
@@ -537,7 +552,7 @@ export default function VideoToAudioPage() {
                 <Settings2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                 <div className="space-y-1">
                   <p className="text-[11px] font-black text-foreground uppercase tracking-widest">Master Protocol</p>
-                  <p className="text-[11px] text-foreground/60 leading-relaxed font-medium">Automatic spectral normalization applied to target matrix.</p>
+                  <p className="text-[11px] text-foreground/60 leading-relaxed font-medium">Automatic re-encoding with optimized bitstream alignment.</p>
                 </div>
               </div>
             </CardContent>
