@@ -45,7 +45,9 @@ import {
   FileArchive,
   ArrowRightLeft,
   User,
-  DownloadCloud
+  DownloadCloud,
+  Compass,
+  Fingerprint
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -71,6 +73,16 @@ const TOOLS = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/exif-viewer', 
+    icon: Compass, 
+    title: 'EXIF Explorer', 
+    desc: 'Deep clinical inspection of image metadata and GPS.', 
+    label: 'ANALYSIS', 
+    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
+    keywords: ['exif viewer', 'metadata reader', 'image info', 'gps coordinates', 'camera settings', 'photo data']
   },
   { 
     href: '/logo-maker', 
@@ -328,7 +340,7 @@ const TOOLS = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav']
   },
@@ -444,7 +456,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. video, pdf, logo)"
+                  placeholder="Search tools... (e.g. video, pdf, exif)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
