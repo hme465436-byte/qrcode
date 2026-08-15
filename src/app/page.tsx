@@ -22,7 +22,8 @@ import {
   Search,
   X,
   Maximize,
-  FileStack
+  FileStack,
+  CaseSensitive
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -82,6 +83,15 @@ const TOOLS = [
     label: 'MEDIA', 
     color: 'bg-primary/50',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
+  },
+  { 
+    href: '/letter-art', 
+    icon: CaseSensitive, 
+    title: 'Letter Art Studio', 
+    desc: 'Image to text conversion using custom alphabets.', 
+    label: 'ASCII', 
+    color: 'bg-primary/40',
+    keywords: ['image to text', 'ascii art', 'letters art', 'custom characters', 'image to alphabet', 'text art', 'alphabet art']
   },
   { 
     href: '/ocr', 
@@ -147,8 +157,11 @@ export default function Home() {
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden">
       {/* HERO SECTION */}
       <section className="w-full px-4 sm:px-6 pt-12 pb-20 md:pt-24 md:pb-40 text-center relative overflow-hidden">
-        {/* Ambient Glows */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] sm:w-[600px] sm:h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+        {/* Animated Rotating Aura behind Search */}
+        <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] sm:w-[700px] sm:h-[700px] pointer-events-none">
+          <div className="w-full h-full bg-gradient-to-tr from-primary/30 via-transparent to-primary/20 rounded-full blur-[100px] animate-[spin_12s_linear_infinite]" />
+          <div className="absolute inset-0 bg-gradient-to-bl from-primary/10 via-transparent to-primary/30 rounded-full blur-[100px] animate-[spin_8s_linear_infinite_reverse]" />
+        </div>
         
         <div className="max-w-4xl mx-auto animate-reveal relative z-10">
           <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-6 sm:mb-8 leading-[1.1] tracking-tighter text-foreground uppercase overflow-wrap-anywhere">
@@ -159,9 +172,10 @@ export default function Home() {
             The world&apos;s most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with AI-powered precision.
           </p>
 
-          {/* Search Bar Implementation with Glow */}
+          {/* Search Bar Implementation with Rotating Aura */}
           <div className="max-w-xl mx-auto mb-16 px-4 group relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 rounded-[3rem] blur-2xl opacity-50 group-focus-within:opacity-100 group-focus-within:blur-3xl transition-all duration-700 animate-pulse pointer-events-none" />
+            {/* Glowing Ring Background */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary via-blue-400 to-primary rounded-[2.2rem] blur opacity-20 group-focus-within:opacity-40 transition-opacity duration-1000 animate-[spin_6s_linear_infinite]" />
             
             <div className="relative">
               <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">

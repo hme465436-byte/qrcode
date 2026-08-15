@@ -23,7 +23,8 @@ import {
   ArrowRight,
   X,
   Maximize,
-  FileStack
+  FileStack,
+  CaseSensitive
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -63,6 +64,7 @@ const NAV_ITEMS = [
   { label: 'Image to PDF', href: '/image-to-pdf', icon: FileStack, keywords: ['pdf', 'convert', 'jpg to pdf', 'images', 'bundle'] },
   { label: 'Photo Editor', href: '/photo-editor', icon: ImageIcon, keywords: ['image', 'edit', 'crop', 'filter', 'manipulate'] },
   { label: 'Video to MP3', href: '/video-to-audio', icon: Music, keywords: ['audio', 'extract', 'mp4', 'sound', 'convert'] },
+  { label: 'Letter Art', href: '/letter-art', icon: CaseSensitive, keywords: ['ascii', 'text art', 'alphabet', 'letters', 'image to text'] },
   { label: 'OCR Text', href: '/ocr', icon: FileText, keywords: ['ocr', 'extract', 'recognize', 'scan', 'read'] },
   { label: 'Dot Art', href: '/dot-art', icon: Grid3X3, keywords: ['dots', 'braille', 'creative', 'art', 'matrix'] },
   { label: 'Repeater', href: '/repeater', icon: Repeat, keywords: ['repeat', 'text', 'emoji', 'spam', 'cloner'] },
@@ -130,7 +132,7 @@ export function Navbar() {
           </a>
           
           <nav className="hidden xl:flex items-center gap-6">
-            {NAV_ITEMS.slice(0, 6).map((item) => (
+            {NAV_ITEMS.slice(0, 8).map((item) => (
               <a 
                 key={item.label} 
                 href={item.href}

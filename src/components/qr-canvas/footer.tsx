@@ -74,6 +74,7 @@ export function Footer() {
                   { label: 'Image to PDF', href: '/image-to-pdf' },
                   { label: 'Photo Editor', href: '/photo-editor' },
                   { label: 'Video to MP3', href: '/video-to-audio' },
+                  { label: 'Letter Art', href: '/letter-art' },
                   { label: 'OCR Extract', href: '/ocr' },
                   { label: 'Dot Art', href: '/dot-art' },
                   { label: 'Text Repeater', href: '/repeater' },
