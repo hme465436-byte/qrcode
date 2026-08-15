@@ -31,7 +31,8 @@ import {
   EyeOff,
   ListMusic,
   Film,
-  Volume2
+  Volume2,
+  LayoutGrid
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -67,6 +68,7 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home, keywords: ['start', 'dashboard', 'main'] },
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
+  { label: 'Favicons', href: '/favicon-generator', icon: LayoutGrid, keywords: ['favicon', 'icon', 'apple touch', 'site icon', 'web'] },
   { label: 'Privacy Purge', href: '/metadata-remover', icon: EyeOff, keywords: ['exif', 'metadata', 'gps', 'privacy', 'strip'] },
   { label: 'Color Picker', href: '/color-picker', icon: Pipette, keywords: ['hex', 'rgb', 'hsl', 'design', 'palette', 'picker'] },
   { label: 'RGB Studio', href: '/rgb-picker', icon: Palette, keywords: ['rgb', 'hex', 'color', 'cmyk', 'converter'] },

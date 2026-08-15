@@ -30,7 +30,8 @@ import {
   EyeOff,
   ListMusic,
   Film,
-  Volume2
+  Volume2,
+  LayoutGrid
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -54,6 +55,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/favicon-generator', 
+    icon: LayoutGrid, 
+    title: 'Favicon Studio', 
+    desc: 'Generate web icon sets from any image instantly.', 
+    label: 'WEB', 
+    color: 'bg-primary/50',
+    keywords: ['favicon generator', 'favicon from image', 'site icon', 'ico maker', 'favicon png', 'apple touch icon']
   },
   { 
     href: '/metadata-remover', 
