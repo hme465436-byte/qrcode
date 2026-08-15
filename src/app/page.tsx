@@ -35,7 +35,8 @@ import {
   Grid2X2,
   MicOff,
   FileEdit,
-  AlignLeft
+  AlignLeft,
+  Youtube
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -59,6 +60,15 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'bg-primary/50',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/youtube-banner-maker', 
+    icon: Youtube, 
+    title: 'YouTube Banner', 
+    desc: 'Create 2560x1440 channel art with safe-zone guides.', 
+    label: 'YOUTUBE', 
+    color: 'bg-red-500/20',
+    keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area']
   },
   { 
     href: '/collage-maker', 

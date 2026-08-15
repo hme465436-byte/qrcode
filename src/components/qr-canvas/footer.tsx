@@ -70,6 +70,7 @@ export function Footer() {
                 {[
                   { label: 'Single Studio', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
+                  { label: 'YouTube Studio', href: '/youtube-banner-maker' },
                   { label: 'Collage Maker', href: '/collage-maker' },
                   { label: 'Favicon Studio', href: '/favicon-generator' },
                   { label: 'Privacy Purge', href: '/metadata-remover' },
@@ -81,6 +82,7 @@ export function Footer() {
                   { label: 'Compressor', href: '/image-compressor' },
                   { label: 'Image to PDF', href: '/image-to-pdf' },
                   { label: 'Photo Editor', href: '/photo-editor' },
+                  { label: 'Vocal Remover', href: '/vocal-separator' },
                   { label: 'Video to MP3', href: '/video-to-audio' },
                   { label: 'Video to GIF', href: '/video-to-gif' },
                   { label: 'Audio Joiner', href: '/audio-joiner' },
