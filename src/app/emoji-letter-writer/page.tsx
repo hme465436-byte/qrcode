@@ -96,8 +96,8 @@ export default function EmojiLetterWriterPage() {
           const char = line[i];
           const pattern = CHAR_MAP[char] || CHAR_MAP[' '];
           
-          for (let col = 0; pCol < 5; pCol++) {
-            if (pattern[row][pCol] === 1) {
+          for (let col = 0; col < 5; col++) {
+            if (pattern[row][col] === 1) {
               rowStr += emojiList[emojiCounter % emojiList.length];
               emojiCounter++;
             } else {
@@ -146,7 +146,7 @@ export default function EmojiLetterWriterPage() {
           Emoji <span className="text-primary italic">Letter Writer</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          High-resolution 7x5 block art synthesis. Transform text into massive emoji matrices stabilized for perfect mobile sharing.
+          High-resolution 7x5 block art synthesis. Transform text into massive emoji-pattern block art stabilized for perfect mobile sharing.
         </p>
       </div>
 
@@ -167,7 +167,7 @@ export default function EmojiLetterWriterPage() {
             
             <CardContent className="pt-10 space-y-10">
               <div className="space-y-4">
-                <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Linguistic Payload</豆
+                <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Linguistic Payload</Label>
                 <Input 
                   placeholder="Type A-Z or 0-9..."
                   value={text}
@@ -316,27 +316,4 @@ export default function EmojiLetterWriterPage() {
       </div>
     </div>
   );
-}
-
-// Fixed Row Logic
-function getRowString(rowIdx: number, line: string, emojiList: string[], emojiCounter: { current: number }, spacing: string) {
-  const emptyChar = '　';
-  const charGapWidth = spacing === 'sm' ? 1 : spacing === 'md' ? 2 : 3;
-  let rowStr = '';
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const pattern = CHAR_MAP[char] || CHAR_MAP[' '];
-    
-    for (let pCol = 0; pCol < 5; pCol++) {
-      if (pattern[rowIdx][pCol] === 1) {
-        rowStr += emojiList[emojiCounter.current % emojiList.length];
-        emojiCounter.current++;
-      } else {
-        rowStr += emptyChar;
-      }
-    }
-    rowStr += emptyChar.repeat(charGapWidth);
-  }
-  return rowStr;
 }
