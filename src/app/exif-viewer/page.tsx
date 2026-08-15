@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Camera, 
   Globe, 
@@ -23,7 +23,8 @@ import {
   Maximize,
   Fingerprint,
   Smartphone,
-  History
+  History,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,26 +47,19 @@ interface MetadataSection {
 export default function ExifViewerPage() {
   const { toast } = useToast();
   const [image, setImage] = useState<string | null>(null);
-  const [fileInfo, setFileInfo] = useState<{ name: string; size: number } | null>(null);
   const [sections, setSections] = useState<MetadataSection[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [hasScanned, setHasScanned] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setIsProcessing(true);
-      setFileInfo({ name: file.name, size: file.size });
+      setHasScanned(false);
+      setSections([]);
       
       const reader = new FileReader();
       reader.onload = async (event) => {
@@ -76,6 +70,11 @@ export default function ExifViewerPage() {
           // Deep Metadata Extraction
           const tags = await ExifReader.load(file);
           
+          // Remove binary data that shouldn't be displayed as text
+          delete tags['Thumbnail'];
+          delete tags['MakerNote'];
+          delete tags['UserComment'];
+
           const newSections: MetadataSection[] = [
             { title: 'Location (GPS)', icon: MapPin, tags: [] },
             { title: 'Camera & Optics', icon: Camera, tags: [] },
@@ -85,18 +84,21 @@ export default function ExifViewerPage() {
             { title: 'Advanced Matrix', icon: Layers, tags: [] },
           ];
 
-          // 1. GPS Extraction
+          // 1. GPS Extraction logic
           if (tags.GPSLatitude && tags.GPSLongitude) {
             const lat = tags.GPSLatitude.description;
             const lng = tags.GPSLongitude.description;
             newSections[0].tags.push({ label: 'Latitude', value: String(lat) });
             newSections[0].tags.push({ label: 'Longitude', value: String(lng) });
             
-            // Map link logic
-            const latVal = tags.GPSLatitude.value as any;
-            const lngVal = tags.GPSLongitude.value as any;
-            if (Array.isArray(latVal) && Array.isArray(lngVal)) {
-               // Basic map link heuristic
+            // Generate Google Maps link if we have numeric values
+            const latVal = tags.GPSLatitude.value;
+            const lngVal = tags.GPSLongitude.value;
+            if (latVal && lngVal) {
+               // ExifReader provides decimal in description or we can use value
+               // Using description for human readable, but link needs clean decimals
+               const latDec = Array.isArray(latVal) ? latVal[0] : latVal;
+               const lngDec = Array.isArray(lngVal) ? lngVal[0] : lngVal;
                newSections[0].tags.push({ 
                  label: 'Google Maps Protocol', 
                  value: `https://www.google.com/maps?q=${lat},${lng}` 
@@ -104,51 +106,81 @@ export default function ExifViewerPage() {
             }
           }
 
-          // 2. Camera Extraction
-          const camTags = [
+          // 2. Camera & Exposure Matrix
+          const camMappings = [
             { key: 'Make', label: 'Manufacturer' },
-            { key: 'Model', label: 'Model' },
-            { key: 'LensModel', label: 'Lens' },
-            { key: 'ISOSpeedRatings', label: 'ISO' },
-            { key: 'FNumber', label: 'F-Stop' },
+            { key: 'Model', label: 'Device Model' },
+            { key: 'LensModel', label: 'Lens Specification' },
+            { key: 'ISOSpeedRatings', label: 'ISO Sensitivity' },
+            { key: 'FNumber', label: 'Aperture (F-Stop)' },
             { key: 'ExposureTime', label: 'Shutter Speed' },
             { key: 'FocalLength', label: 'Focal Length' },
-            { key: 'Flash', label: 'Flash Status' },
+            { key: 'Flash', label: 'Flash Mode' },
+            { key: 'ExposureProgram', label: 'Exposure Program' },
+            { key: 'MeteringMode', label: 'Metering Mode' },
           ];
-          camTags.forEach(t => {
-            if (tags[t.key]) newSections[1].tags.push({ label: t.label, value: String(tags[t.key].description) });
+          camMappings.forEach(m => {
+            if (tags[m.key]) newSections[1].tags.push({ label: m.label, value: String(tags[m.key].description || tags[m.key].value) });
           });
 
-          // 3. Chronology
-          if (tags.DateTimeOriginal) newSections[2].tags.push({ label: 'Captured At', value: String(tags.DateTimeOriginal.description) });
-          if (tags.DateTimeDigitized) newSections[2].tags.push({ label: 'Digitized At', value: String(tags.DateTimeDigitized.description) });
-          if (tags.DateTime) newSections[2].tags.push({ label: 'Modified At', value: String(tags.DateTime.description) });
+          // 3. Chronology Matrix
+          const dateMappings = [
+            { key: 'DateTimeOriginal', label: 'Capture Date' },
+            { key: 'DateTimeDigitized', label: 'Digitization Date' },
+            { key: 'DateTime', label: 'Last Modification' },
+          ];
+          dateMappings.forEach(m => {
+            if (tags[m.key]) newSections[2].tags.push({ label: m.label, value: String(tags[m.key].description || tags[m.key].value) });
+          });
 
-          // 4. File Identity
-          if (tags['Image Width']) newSections[3].tags.push({ label: 'Width', value: `${tags['Image Width'].value} px` });
-          if (tags['Image Height']) newSections[3].tags.push({ label: 'Height', value: `${tags['Image Height'].value} px` });
-          if (tags.Orientation) newSections[3].tags.push({ label: 'Orientation', value: String(tags.Orientation.description) });
-          if (tags.FileType) newSections[3].tags.push({ label: 'Format', value: String(tags.FileType.value) });
+          // 4. File Identity Matrix
+          if (tags['Image Width']) newSections[3].tags.push({ label: 'Pixel Width', value: `${tags['Image Width'].value} px` });
+          if (tags['Image Height']) newSections[3].tags.push({ label: 'Pixel Height', value: `${tags['Image Height'].value} px` });
+          if (tags['ColorSpace']) newSections[3].tags.push({ label: 'Color Space', value: String(tags['ColorSpace'].description) });
+          if (tags['Orientation']) newSections[3].tags.push({ label: 'Display Orientation', value: String(tags['Orientation'].description) });
+          if (tags['FileType']) newSections[3].tags.push({ label: 'Binary Format', value: String(tags['FileType'].value) });
 
-          // 5. Software
-          if (tags.Software) newSections[4].tags.push({ label: 'Editor', value: String(tags.Software.description) });
-          if (tags.Artist) newSections[4].tags.push({ label: 'Author', value: String(tags.Artist.description) });
-          if (tags.Copyright) newSections[4].tags.push({ label: 'Copyright', value: String(tags.Copyright.description) });
+          // 5. Software & Attribution
+          const softMappings = [
+            { key: 'Software', label: 'Editing Software' },
+            { key: 'Artist', label: 'Creator/Artist' },
+            { key: 'Copyright', label: 'Copyright Notice' },
+            { key: 'HostComputer', label: 'Processing Host' },
+          ];
+          softMappings.forEach(m => {
+            if (tags[m.key]) newSections[4].tags.push({ label: m.label, value: String(tags[m.key].description || tags[m.key].value) });
+          });
 
-          // 6. All Other Tags
-          Object.entries(tags).forEach(([key, val]) => {
-            const isKnown = [...camTags.map(x=>x.key), 'GPSLatitude', 'GPSLongitude', 'DateTimeOriginal', 'DateTimeDigitized', 'DateTime', 'Image Width', 'Image Height', 'Orientation', 'FileType', 'Software', 'Artist', 'Copyright'].includes(key);
-            if (!isKnown && val && val.description) {
-              newSections[5].tags.push({ label: key, value: String(val.description) });
+          // 6. Advanced/Raw Matrix (Everything else remaining)
+          const knownKeys = new Set([
+            'GPSLatitude', 'GPSLongitude', 'GPSAltitude', 'GPSImgDirection',
+            ...camMappings.map(x => x.key), 
+            ...dateMappings.map(x => x.key),
+            ...softMappings.map(x => x.key),
+            'Image Width', 'Image Height', 'ColorSpace', 'Orientation', 'FileType'
+          ]);
+
+          Object.entries(tags).forEach(([key, tag]: [string, any]) => {
+            if (!knownKeys.has(key) && tag.description && typeof tag.description === 'string') {
+              newSections[5].tags.push({ label: key, value: tag.description });
             }
           });
 
-          setSections(newSections.filter(s => s.tags.length > 0));
+          const finalSections = newSections.filter(s => s.tags.length > 0);
+          setSections(finalSections);
+          setHasScanned(true);
           setIsProcessing(false);
-          toast({ title: "Matrix Decoded", description: "Headers extracted for clinical inspection." });
+          
+          if (finalSections.length > 0) {
+            toast({ title: "Matrix Decoded", description: "Identity headers extracted successfully." });
+          } else {
+            toast({ title: "Zero Data Detected", description: "File contains no recognizable metadata headers." });
+          }
         } catch (err) {
+          console.error("Decoding Error", err);
           setIsProcessing(false);
-          toast({ variant: "destructive", title: "Decoding Error", description: "Failed to read binary headers." });
+          setHasScanned(true);
+          toast({ variant: "destructive", title: "Decoding Error", description: "Failed to read binary headers from this asset." });
         }
       };
       reader.readAsDataURL(file);
@@ -160,29 +192,29 @@ export default function ExifViewerPage() {
     const text = sections.map(s => `[${s.title}]\n${s.tags.map(t => `${t.label}: ${t.value}`).join('\n')}`).join('\n\n');
     navigator.clipboard.writeText(text);
     setIsCopied(true);
-    toast({ title: "Identity Copied", description: "All metadata saved to clipboard." });
+    toast({ title: "Identity Copied", description: "Full metadata matrix saved to clipboard." });
     setTimeout(() => setIsCopied(false), 2000);
   };
 
   const handleClear = () => {
     setImage(null);
-    setFileInfo(null);
     setSections([]);
+    setHasScanned(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    toast({ title: "Studio Reset", description: "Memory purged." });
+    toast({ title: "Studio Reset", description: "Memory buffer purged." });
   };
 
   return (
     <div className="container mx-auto px-6 py-12 md:py-20">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Fingerprint className="w-3.5 h-3.5" /> Intelligence Suite
+          <Fingerprint className="w-3.5 h-3.5" /> Identity Suite
         </div>
         <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
           EXIF <span className="text-primary italic">Explorer Studio</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          Deep clinical inspection of image headers. Extract GPS, camera optics, and hidden software identifiers locally and privately within your browser.
+          Deep clinical inspection of image headers. Extract GPS, camera optics, and hidden forensic identifiers locally and privately within your browser.
         </p>
       </div>
 
@@ -200,7 +232,7 @@ export default function ExifViewerPage() {
                 Input Protocol
               </CardTitle>
               {image && (
-                <button onClick={handleClear} className="text-[10px] font-black uppercase text-foreground/30 hover:text-destructive transition-all">Clear</button>
+                <button onClick={handleClear} className="text-[10px] font-black uppercase text-foreground/30 hover:text-destructive transition-all">Reset</button>
               )}
             </CardHeader>
             
@@ -252,7 +284,7 @@ export default function ExifViewerPage() {
                     {isCopied ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
                     Copy Matrix Data
                   </Button>
-                  <p className="text-center text-[9px] font-black uppercase tracking-widest text-foreground/20">Identified {sections.reduce((acc, s) => acc + s.tags.length, 0)} Data points</p>
+                  <p className="text-center text-[9px] font-black uppercase tracking-widest text-foreground/20">Identified {sections.reduce((acc, s) => acc + s.tags.length, 0)} identifiers</p>
                 </div>
               )}
             </CardContent>
@@ -263,7 +295,7 @@ export default function ExifViewerPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Absolute</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Analysis occurs entirely on your device via binary bitstream inspection. Your photography never leaves your browser session, ensuring 100% data security.
+                Extraction occurs entirely on your device via binary bitstream inspection. Your imagery never leaves your browser session, ensuring 100% data security.
               </p>
             </div>
           </div>
@@ -271,14 +303,14 @@ export default function ExifViewerPage() {
 
         {/* Results Matrix */}
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-          {!sections.length && !isProcessing ? (
+          {!hasScanned && !isProcessing ? (
              <Card className="glass-card border-border shadow-2xl h-[600px] flex flex-col items-center justify-center text-center p-12 border-dashed">
                 <div className="w-20 h-20 rounded-[2.5rem] bg-secondary flex items-center justify-center text-foreground/10 mb-6">
                   <Compass className="w-10 h-10" />
                 </div>
                 <h3 className="text-xl font-headline font-black text-foreground/40 uppercase tracking-widest">Awaiting Identity Extraction</h3>
                 <p className="text-sm text-foreground/20 font-medium max-w-xs mt-4 uppercase tracking-tighter">
-                  Upload an image to see its hidden clinical data matrix.
+                  Upload a photo to see its hidden clinical data matrix.
                 </p>
              </Card>
           ) : isProcessing ? (
@@ -287,7 +319,15 @@ export default function ExifViewerPage() {
                   <div className="w-20 h-20 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                   <Fingerprint className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
                </div>
-               <p className="mt-8 text-[11px] font-black uppercase tracking-[0.3em] text-primary">Scanning Bitstream...</p>
+               <p className="mt-8 text-[11px] font-black uppercase tracking-[0.3em] text-primary">Scanning Bitstream Matrix...</p>
+            </Card>
+          ) : sections.length === 0 ? (
+            <Card className="glass-card border-border shadow-2xl h-[600px] flex flex-col items-center justify-center text-center p-12 bg-yellow-500/5">
+              <AlertCircle className="w-16 h-16 text-yellow-500 mb-6" />
+              <h3 className="text-xl font-headline font-black text-yellow-500 uppercase tracking-widest">No Metadata Identified</h3>
+              <p className="text-sm text-foreground/40 font-medium max-w-sm mt-4 leading-relaxed uppercase tracking-tighter">
+                The asset appears to be sanitized. No forensic headers (EXIF, IPTC, XMP) were discovered in the bitstream.
+              </p>
             </Card>
           ) : (
             <div className="grid grid-cols-1 gap-8 max-h-[1000px] overflow-auto pr-2 custom-scrollbar">
@@ -314,12 +354,12 @@ export default function ExifViewerPage() {
                                       rel="noopener noreferrer"
                                       className="flex items-center gap-2 text-xs font-bold text-primary hover:underline underline-offset-4"
                                     >
-                                      View on Map <ExternalLink className="w-3 h-3" />
+                                      View on Map Protocol <ExternalLink className="w-3 h-3" />
                                     </a>
                                   ) : (
                                     <span className="text-sm font-mono font-bold text-foreground truncate">{tag.value}</span>
                                   )}
-                                  <button onClick={() => { navigator.clipboard.writeText(tag.value); toast({ title: "Value Copied" }); }} className="text-foreground/10 hover:text-primary transition-colors">
+                                  <button onClick={() => { navigator.clipboard.writeText(tag.value); toast({ title: "Value Copied" }); }} className="text-foreground/10 hover:text-primary transition-colors shrink-0">
                                      <Copy className="w-3.5 h-3.5" />
                                   </button>
                                </div>
@@ -338,17 +378,17 @@ export default function ExifViewerPage() {
                    <Settings2 className="w-5 h-5" />
                 </div>
                 <div className="space-y-1">
-                   <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Protocol Support</p>
+                   <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Protocol Sync</p>
                    <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">Full synchronization with EXIF 2.32, XMP, and IPTC standard data blocks.</p>
                 </div>
              </div>
              <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
                 <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all">
-                   <ShieldCheck className="w-5 h-5" />
+                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div className="space-y-1">
-                   <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Sandbox Decoding</p>
-                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">Binary parsing occurs in a strictly isolated WASM context for maximum security.</p>
+                   <p className="text-[10px] font-black text-foreground uppercase tracking-widest">WASM Sandbox</p>
+                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">Binary parsing occurs in a strictly isolated browser context for maximum security.</p>
                 </div>
              </div>
           </div>
@@ -356,13 +396,6 @@ export default function ExifViewerPage() {
       </div>
       
       <style jsx global>{`
-        .bg-checkered {
-          background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
-                            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
-                            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
-          background-size: 20px 20px;
-        }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
@@ -370,7 +403,3 @@ export default function ExifViewerPage() {
     </div>
   );
 }
-
-const ShieldCheck = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
-);
