@@ -80,6 +80,16 @@ const TOOLS = [
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
   },
   { 
+    href: '/youtube-thumbnail-downloader', 
+    icon: MonitorPlay, 
+    title: 'YT Downloader', 
+    desc: 'Extract and save thumbnails in all available qualities.', 
+    label: 'MEDIA', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['youtube thumbnail downloader', 'save youtube image', 'yt thumbnail', 'extract thumbnail']
+  },
+  { 
     href: '/logo-maker', 
     icon: Type, 
     title: 'Logo Text Studio', 
