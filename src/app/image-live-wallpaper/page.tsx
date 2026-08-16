@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { 
   ImageIcon, 
   MonitorPlay, 
@@ -25,7 +25,8 @@ import {
   History,
   Scaling,
   MoveHorizontal,
-  LayoutGrid
+  LayoutGrid,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
