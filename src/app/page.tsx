@@ -59,7 +59,8 @@ import {
   List,
   Table,
   FileJson,
-  Braces
+  Braces,
+  Eraser
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -88,6 +89,16 @@ const TOOLS = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/bg-remove-pro', 
+    icon: Eraser, 
+    title: 'BG Remove Pro', 
+    desc: 'Professional background removal with precision manual brush controls.', 
+    label: 'PRO', 
+    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
+    glowClass: 'bg-rose-500/10',
+    keywords: ['background remover', 'remove bg', 'transparent png', 'erase background', 'photo editor', 'masking']
   },
   { 
     href: '/csv-to-json', 
@@ -515,7 +526,7 @@ const TOOLS = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav']
   },
@@ -575,7 +586,7 @@ const TOOLS = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
   }
