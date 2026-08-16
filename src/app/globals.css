@@ -62,8 +62,6 @@
   
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-foreground;
-    background-image: radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.03) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, hsla(217, 91%, 60%, 0.02) 0px, transparent 50%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -156,6 +154,48 @@
     opacity: 1;
     padding: 5px; 
     filter: drop-shadow(0 0 20px hsla(var(--primary), 1)) drop-shadow(0 0 45px hsla(var(--primary), 0.7)) drop-shadow(0 0 80px hsla(var(--primary), 0.3));
+  }
+
+  /* Shooting Star Protocol */
+  @keyframes shooting-star-path {
+    0% {
+      transform: translateX(0) translateY(0) rotate(-45deg) scale(0);
+      opacity: 0;
+    }
+    1% {
+      opacity: 1;
+      scale: 1;
+    }
+    10% {
+      transform: translateX(-80vw) translateY(80vh) rotate(-45deg) scale(1);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(-80vw) translateY(80vh) rotate(-45deg);
+      opacity: 0;
+    }
+  }
+
+  .shooting-star-protocol {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 15px 2px rgba(255,255,255,0.4);
+    animation: shooting-star-path 25s linear infinite;
+    opacity: 0;
+  }
+
+  .shooting-star-protocol::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
   }
 }
 
