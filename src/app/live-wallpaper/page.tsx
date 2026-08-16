@@ -156,6 +156,24 @@ export default function AdvancedLiveWallpaperPage() {
     }
   };
 
+  const handleClear = () => {
+    setFile(null);
+    if (mp4Url) URL.revokeObjectURL(mp4Url);
+    if (webmUrl) URL.revokeObjectURL(webmUrl);
+    if (gifUrl) URL.revokeObjectURL(gifUrl);
+    setMp4Url(null);
+    setWebmUrl(null);
+    setGifUrl(null);
+    setProgress(0);
+    setStatus('');
+    setLogs([]);
+    setTotalDuration(0);
+    setStartTime(0);
+    setEndTime(0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    toast({ title: "Studio Reset", description: "All buffers cleared." });
+  };
+
   const processWallpaper = async () => {
     if (!file) return;
     setIsProcessing(true);
