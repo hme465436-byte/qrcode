@@ -390,82 +390,71 @@ export function StudioBot() {
                 <stop offset="0%" stopColor="#fdf6e3" />
                 <stop offset="100%" stopColor="#fefce8" />
              </radialGradient>
-             <linearGradient id="visorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+             <linearGradient id="eyeGlow" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#1e293b" />
                 <stop offset="100%" stopColor="#0f172a" />
              </linearGradient>
-             <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#60a5fa" />
-                <stop offset="100%" stopColor="#2563eb" />
-             </radialGradient>
              <filter id="innerShine" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
                 <feOffset dx="1" dy="1" />
                 <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowDiff" />
-                <feFlood floodColor="white" floodOpacity="0.4" />
+                <feFlood floodColor="white" floodOpacity="0.5" />
                 <feComposite in2="shadowDiff" operator="in" />
                 <feComposite in2="SourceGraphic" operator="over" />
              </filter>
           </defs>
           <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")} filter="url(#innerShine)">
-            {/* Body */}
-            <rect x="22" y="65" width="56" height="42" rx="14" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.5" />
-            <rect x="28" y="72" width="44" height="18" rx="8" fill="#bfdbfe" opacity="0.4" />
+            {/* Tiny Body */}
+            <rect x="35" y="78" width="30" height="22" rx="10" fill="#bfdbfe" stroke="#1e293b" strokeWidth="1.5" />
             
-            {/* Head */}
-            <circle cx="50" cy="45" r="32" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.5" />
+            {/* Big Round Head */}
+            <circle cx="50" cy="45" r="38" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.5" />
             
-            {/* Visor */}
-            <rect x="28" y="36" width="44" height="20" rx="10" fill="url(#visorGrad)" />
-            
-            {/* Eyes */}
+            {/* Huge Glossy Eyes */}
             <g className="animate-kit-blink">
-               <circle cx="38" cy="46" r="5" fill="url(#eyeGlow)" className={cn("transition-all duration-300", isHappy && "scale-125")} />
-               <circle cx="37" cy="44" r="1.5" fill="white" opacity="0.9" />
+               {/* Left Eye */}
+               <circle cx="35" cy="45" r="8" fill="#0f172a" />
+               <circle cx="33" cy="42" r="2.5" fill="white" opacity="0.9" />
+               <circle cx="37" cy="48" r="1" fill="white" opacity="0.5" />
                
-               <circle cx="62" cy="46" r="5" fill="url(#eyeGlow)" className={cn("transition-all duration-300", isHappy && "scale-125")} />
-               <circle cx="61" cy="44" r="1.5" fill="white" opacity="0.9" />
+               {/* Right Eye */}
+               <circle cx="65" cy="45" r="8" fill="#0f172a" />
+               <circle cx="63" cy="42" r="2.5" fill="white" opacity="0.9" />
+               <circle cx="67" cy="48" r="1" fill="white" opacity="0.5" />
             </g>
 
-            {/* Blush */}
-            <circle cx="30" cy="52" r="3" fill="#fda4af" opacity="0.4" />
-            <circle cx="70" cy="52" r="3" fill="#fda4af" opacity="0.4" />
+            {/* Pink Blush */}
+            <circle cx="28" cy="56" r="4" fill="#fda4af" opacity="0.6" className={cn("transition-all", isHappy && "scale-125 opacity-100")} />
+            <circle cx="72" cy="56" r="4" fill="#fda4af" opacity="0.6" className={cn("transition-all", isHappy && "scale-125 opacity-100")} />
 
-            {/* Mouth */}
-            <path d="M 47 52 Q 50 54 53 52" stroke="#1e293b" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+            {/* Tiny Smile */}
+            <path d="M 47 56 Q 50 58 53 56" stroke="#1e293b" strokeWidth="1.5" fill="none" strokeLinecap="round" />
             
-            {/* Antenna */}
-            <path d="M 50 15 L 50 22" stroke="#1e293b" strokeWidth="1.2" strokeLinecap="round" />
-            <circle cx="50" cy="12" r="4" fill="#60a5fa" className="animate-pulse shadow-lg" />
+            {/* Tiny Antenna with Heart */}
+            <path d="M 50 7 L 50 15" stroke="#1e293b" strokeWidth="1" strokeLinecap="round" />
+            <path d="M 50 5 C 48 2, 45 4, 50 8 C 55 4, 52 2, 50 5" fill="#f43f5e" stroke="#1e293b" strokeWidth="0.5" className="animate-pulse" />
             
-            {/* Arms & Hands Matrix */}
+            {/* Arms & Small Round Hands */}
             {isPoseB ? (
               <g className="animate-kit-grip">
-                {/* Longer, reachy arms for Peek Mode (Grip point X=71) */}
-                <path d="M 58 75 L 71 75" stroke="#fdf6e3" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M 58 88 L 71 88" stroke="#fdf6e3" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+                {/* Grip Arms */}
+                <path d="M 55 85 L 72 85" stroke="#bfdbfe" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M 55 95 L 72 95" stroke="#bfdbfe" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
                 
-                {/* Gripping Claws wrapping the edge */}
-                <g transform="translate(71, 75)">
-                   <circle r="9" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
-                   <path d="M -3 -11 Q 5 -6 5 0 Q 5 6 -3 11" stroke="#1e293b" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                   <path d="M -2 -11 Q 6 -6 6 0 Q 6 6 -2 11" stroke="white" strokeWidth="1" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
-                </g>
-                <g transform="translate(71, 88)">
-                   <circle r="9" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
-                   <path d="M -3 -11 Q 5 -6 5 0 Q 5 6 -3 11" stroke="#1e293b" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                   <path d="M -2 -11 Q 6 -6 6 0 Q 6 6 -2 11" stroke="white" strokeWidth="1" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
-                </g>
+                {/* Grip Hands (X=72 is the edge) */}
+                <circle cx="72" cy="85" r="7" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.2" />
+                <circle cx="72" cy="95" r="7" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.2" />
               </g>
             ) : (
               <g>
-                <path d="M 22 80 L 10 95" stroke="#fdf6e3" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="10" cy="95" r="7.5" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
+                {/* Left Arm/Hand (Static) */}
+                <path d="M 35 85 L 22 92" stroke="#bfdbfe" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="22" cy="92" r="6" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.2" />
                 
-                {/* Hello Wave Arm */}
-                <g className="origin-[78px_80px] animate-kit-wave">
-                   <path d="M 78 80 L 88 55" stroke="#fdf6e3" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-                   <circle cx="88" cy="55" r="7.5" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
+                {/* Right Arm/Hand (Wave Animation) */}
+                <g className="origin-[65px_85px] animate-kit-wave">
+                   <path d="M 65 85 L 80 65" stroke="#bfdbfe" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                   <circle cx="80" cy="65" r="6" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.2" />
                 </g>
               </g>
             )}
