@@ -56,7 +56,9 @@ import {
   Command,
   Unlock,
   Activity,
-  Mic
+  Mic,
+  Table,
+  FileJson
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -91,9 +93,8 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home, keywords: ['start', 'dashboard', 'main'] },
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
-  { label: 'Image URL', href: '/image-url-downloader', icon: DownloadCloud, keywords: ['image downloader', 'save image', 'url image', 'extract images', 'yt'] },
-  { label: 'Speaker Test', href: '/speaker-tester', icon: Activity, keywords: ['speaker tester', 'audio test', 'left right', 'sound test'] },
-  { label: 'Mic Tester', href: '/mic-tester', icon: Mic, keywords: ['mic tester', 'microphone test', 'audio input', 'record test'] },
+  { label: 'CSV to JSON', href: '/csv-to-json', icon: Table, keywords: ['convert', 'data', 'excel', 'json'] },
+  { label: 'JSON to CSV', href: '/json-to-csv', icon: FileJson, keywords: ['convert', 'data', 'flatten', 'csv'] },
   { label: 'YT Downloader', href: '/youtube-thumbnail-downloader', icon: MonitorPlay, keywords: ['youtube', 'thumbnail', 'downloader', 'yt'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
 ];

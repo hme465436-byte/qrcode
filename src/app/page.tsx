@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -58,7 +57,9 @@ import {
   Play,
   RotateCcw,
   List,
-  Table
+  Table,
+  FileJson,
+  Braces
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -97,6 +98,16 @@ const TOOLS = [
     color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['csv to json', 'convert csv', 'excel to json', 'data converter', 'json maker', 'parse csv']
+  },
+  { 
+    href: '/json-to-csv', 
+    icon: FileJson, 
+    title: 'JSON to CSV', 
+    desc: 'Deep object flattening and matrix translation.', 
+    label: 'DATA', 
+    color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    glowClass: 'bg-blue-400/10',
+    keywords: ['json to csv', 'convert json', 'flatten json', 'data converter', 'csv maker', 'parse json']
   },
   { 
     href: '/image-url-downloader', 
