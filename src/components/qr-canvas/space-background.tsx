@@ -56,12 +56,14 @@ export function SpaceBackground() {
         />
       ))}
 
-      {/* Occasional Shooting Star Protocol */}
+      {/* Occasional Shooting Star Protocol - High Visibility Matrix */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="shooting-star-protocol" style={{ top: '5%', right: '0%', animationDelay: '0s' }} />
-        <div className="shooting-star-protocol" style={{ top: '15%', right: '10%', animationDelay: '7s' }} />
-        <div className="shooting-star-protocol" style={{ top: '40%', right: '5%', animationDelay: '14s' }} />
-        <div className="shooting-star-protocol" style={{ top: '70%', right: '20%', animationDelay: '21s' }} />
+        <div className="shooting-star-protocol" style={{ top: '2%', right: '-5%', animationDelay: '0s' }} />
+        <div className="shooting-star-protocol" style={{ top: '15%', right: '15%', animationDelay: '4s' }} />
+        <div className="shooting-star-protocol" style={{ top: '35%', right: '-10%', animationDelay: '8s' }} />
+        <div className="shooting-star-protocol" style={{ top: '55%', right: '5%', animationDelay: '12s' }} />
+        <div className="shooting-star-protocol" style={{ top: '10%', right: '25%', animationDelay: '16s' }} />
+        <div className="shooting-star-protocol" style={{ top: '45%', right: '35%', animationDelay: '2s' }} />
       </div>
     </div>
   );

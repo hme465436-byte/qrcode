@@ -156,7 +156,7 @@
     filter: drop-shadow(0 0 20px hsla(var(--primary), 1)) drop-shadow(0 0 45px hsla(var(--primary), 0.7)) drop-shadow(0 0 80px hsla(var(--primary), 0.3));
   }
 
-  /* Shooting Star Protocol V2 */
+  /* Shooting Star Protocol V2 - Luxury Refinement */
   @keyframes shooting-star-path {
     0% {
       transform: translateX(0) translateY(0) rotate(-45deg) scale(0);
@@ -166,29 +166,33 @@
       opacity: 1;
       scale: 1;
     }
-    5% {
+    3% {
       opacity: 1;
     }
-    15% {
-      transform: translateX(-100vw) translateY(100vh) rotate(-45deg) scale(1);
+    20% {
+      transform: translateX(-140vw) translateY(140vh) rotate(-45deg) scale(1.5);
       opacity: 0;
     }
     100% {
-      transform: translateX(-100vw) translateY(100vh) rotate(-45deg) scale(1);
+      transform: translateX(-140vw) translateY(140vh) rotate(-45deg) scale(1.5);
       opacity: 0;
     }
   }
 
   .shooting-star-protocol {
     position: absolute;
-    width: 3px;
-    height: 3px;
+    width: 5px;
+    height: 5px;
     background: #fff;
     border-radius: 50%;
-    box-shadow: 0 0 20px 4px rgba(255,255,255,0.8), 0 0 40px 8px hsla(var(--primary), 0.4);
-    animation: shooting-star-path 15s linear infinite;
+    box-shadow: 
+      0 0 30px 6px rgba(255,255,255,1), 
+      0 0 60px 12px hsla(var(--primary), 0.6),
+      0 0 100px 20px hsla(var(--primary), 0.2);
+    animation: shooting-star-path 20s linear infinite;
     opacity: 0;
     z-index: 0;
+    pointer-events: none;
   }
 
   .shooting-star-protocol::after {
@@ -197,10 +201,11 @@
     top: 50%;
     left: 0;
     transform: translateY(-50%);
-    width: 250px;
-    height: 2px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.8), hsla(var(--primary), 0.4), transparent);
+    width: 500px;
+    height: 3px;
+    background: linear-gradient(90deg, #fff, hsla(var(--primary), 0.6), hsla(var(--primary), 0.2), transparent);
     border-radius: 100%;
+    filter: blur(0.5px);
   }
 
   /* Twinkle Animation */
