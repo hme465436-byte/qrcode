@@ -219,7 +219,7 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Global Search Dialog with Moving Border Protocol */}
+      {/* Global Search Dialog with Hyper-Glow Moving Border Protocol */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-visible outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
           <DialogHeader className="p-6 border-b border-white/5 bg-white/2 relative overflow-visible">
@@ -227,9 +227,9 @@ export function Navbar() {
             
             <div className="relative group/search z-20">
                {/* Inner Atmosphere Glow */}
-               <div className="absolute inset-0 bg-primary/5 blur-[25px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-700 pointer-events-none" />
+               <div className="absolute -inset-10 bg-primary/10 blur-[40px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000 pointer-events-none" />
               
-               {/* Moving Glow Line Protocol */}
+               {/* Hyper-Visible Moving Glow Line Protocol */}
                <div className="moving-border-matrix" />
 
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d z-20" />
@@ -242,7 +242,7 @@ export function Navbar() {
               />
               
               {/* Focused Glow Base Bar */}
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent scale-x-0 group-focus-within/search:scale-x-100 transition-transform duration-700" />
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/80 to-transparent scale-x-0 group-focus-within/search:scale-x-100 transition-transform duration-700" />
             </div>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">

@@ -591,16 +591,16 @@ export default function Home() {
           {/* SaaS Style Search Bar with Atmospheric Glow */}
           <div className="max-w-2xl mx-auto mb-20 px-4 group relative">
             {/* Outer Atmospheric Glow Layer */}
-            <div className="absolute -inset-8 bg-primary/5 blur-[50px] rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+            <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none" />
             
             {/* Pulse Glow Border Layer */}
-            <div className="absolute -inset-[2px] rounded-[1.4rem] bg-primary/20 opacity-0 group-hover:opacity-40 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[1px] pointer-events-none" />
+            <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
 
-            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/20 group-focus-within:from-primary/50 group-focus-within:to-primary/20 overflow-visible">
-              {/* Moving Glow Line Protocol */}
+            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/30 group-focus-within:from-primary/60 group-focus-within:to-primary/30 overflow-visible">
+              {/* Hyper-Visible Moving Glow Line Protocol */}
               <div className="moving-border-matrix" />
               
-              <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/5 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_50px_-10px_rgba(59,130,246,0.5)] transition-all duration-300 z-10">
+              <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                   <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors icon-3d" />
                 </div>
