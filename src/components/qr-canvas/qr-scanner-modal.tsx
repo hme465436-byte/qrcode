@@ -78,7 +78,10 @@ export function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
     if (isOpen && cameras.length === 0) {
       Html5Qrcode.getCameras().then(devices => {
         if (devices && devices.length > 0) {
-          const formattedCameras = devices.map(d => ({ id: d.id, label: d.label || `Camera ${devices.indexOf(d) + 1}` }));
+          const formattedCameras = devices.map((d, i) => ({ 
+            id: d.id || `camera-fallback-${i}`, 
+            label: d.label || `Camera Matrix ${i + 1}` 
+          }));
           setCameras(formattedCameras);
           const backCamera = formattedCameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('rear'));
           setSelectedCameraId(backCamera ? backCamera.id : formattedCameras[0].id);
@@ -110,8 +113,12 @@ export function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
         });
         html5QrCodeRef.current = scanner;
 
+        // Relaxed constraints for synthetic IDs
+        const isSynthetic = selectedCameraId.startsWith('camera-fallback-');
+        const startTarget = isSynthetic ? { facingMode: "environment" } : selectedCameraId;
+
         await scanner.start(
-          selectedCameraId,
+          startTarget,
           {
             fps: 20, 
             qrbox: (viewWidth, viewHeight) => {
@@ -382,11 +389,11 @@ export function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
                       Share
                     </Button>
                     <Button 
-                      onClick={handleCopy}
-                      className={cn(
-                        "h-14 bg-white/50 dark:bg-black/50 border border-white/20 hover:bg-white dark:hover:bg-black text-foreground rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all",
-                        !isUrl(scanResult) && "col-span-2 h-16"
-                      )}
+                    onClick={handleCopy}
+                    className={cn(
+                      "h-14 bg-white/50 dark:bg-black/50 border border-white/20 hover:bg-white dark:hover:bg-black text-foreground rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all",
+                      !isUrl(scanResult) && "col-span-2 h-16"
+                    )}
                     >
                       {isCopied ? <CheckCircle2 className="w-4 h-4 mr-3 text-primary" /> : <Copy className="w-4 h-4 mr-3 text-primary" />}
                       {isCopied ? 'Copied' : 'Copy'}

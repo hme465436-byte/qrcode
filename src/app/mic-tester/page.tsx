@@ -36,7 +36,7 @@ export default function MicTesterPage() {
   const [isActive, setIsActive] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [devices, setDevices] = useState<{id: string, label: string}[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
   const [audioLevel, setAudioLevel] = useState(0);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
@@ -58,10 +58,16 @@ export default function MicTesterPage() {
       try {
         const devs = await navigator.mediaDevices.enumerateDevices();
         const audioInputs = devs.filter(d => d.kind === 'audioinput');
-        setDevices(audioInputs);
-        if (audioInputs.length > 0 && !selectedDeviceId) {
-          // If deviceId is empty (pre-permission), use 'default' as a stable internal value
-          setSelectedDeviceId(audioInputs[0].deviceId || 'default');
+        
+        // Ensure no empty values for Select.Item components
+        const formatted = audioInputs.map((d, i) => ({
+          id: d.deviceId || `input-device-${i}`,
+          label: d.label || `Linguistic Port ${i + 1}`
+        }));
+
+        setDevices(formatted);
+        if (formatted.length > 0 && !selectedDeviceId) {
+          setSelectedDeviceId(formatted[0].id);
         }
       } catch (err) {
         console.error("Device discovery failed", err);
@@ -84,9 +90,12 @@ export default function MicTesterPage() {
     setStatus('standby');
     
     try {
+      // Use 'ideal' instead of 'exact' to prevent OverconstrainedError
+      // Also filter out our synthetic fallback IDs before negotiation
+      const isSynthetic = selectedDeviceId.startsWith('input-device-');
       const constraints = {
-        audio: (selectedDeviceId && selectedDeviceId !== 'default') 
-          ? { deviceId: { exact: selectedDeviceId } } 
+        audio: (selectedDeviceId && selectedDeviceId !== 'default' && !isSynthetic) 
+          ? { deviceId: { ideal: selectedDeviceId } } 
           : true
       };
 
@@ -136,9 +145,11 @@ export default function MicTesterPage() {
       
       updateLevel();
     } catch (err: any) {
-      console.error(err);
+      console.error('Mic Access Error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setError("Linguistic Access Denied: Please enable microphone permissions in your browser matrix.");
+      } else if (err.name === 'OverconstrainedError') {
+        setError("Hardware Constraint Error: The selected device is currently unavailable or busy.");
       } else {
         setError("Hardware Fault: Could not initialize audio input buffer.");
       }
@@ -248,14 +259,11 @@ export default function MicTesterPage() {
                   </SelectTrigger>
                   <SelectContent className="glass-card">
                     {devices.length > 0 ? (
-                      devices.map((d, i) => {
-                        const val = d.deviceId || `default-${i}`;
-                        return (
-                          <SelectItem key={val} value={val} className="text-xs font-bold uppercase">
-                            {d.label || `Matrix Port ${i + 1}`}
-                          </SelectItem>
-                        );
-                      })
+                      devices.map((d) => (
+                        <SelectItem key={d.id} value={d.id} className="text-xs font-bold uppercase">
+                          {d.label}
+                        </SelectItem>
+                      ))
                     ) : (
                       <SelectItem value="none" disabled className="text-xs italic uppercase">Searching Hardware...</SelectItem>
                     )}
