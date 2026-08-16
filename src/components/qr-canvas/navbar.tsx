@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Menu, 
   Scan, 
@@ -137,13 +138,13 @@ export function Navbar() {
     <>
       <header className="fixed top-0 left-0 right-0 z-[100] w-full border-b border-white/5 bg-background/80 backdrop-blur-xl h-16 transition-all duration-300">
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 group transition-transform active:scale-95">
+          <Link href="/" className="flex items-center gap-2 group transition-transform active:scale-95">
             <Logo />
-          </a>
+          </Link>
           
           <nav className="hidden xl:flex items-center gap-8">
             {NAV_ITEMS.map((item) => (
-              <a 
+              <Link 
                 key={item.label} 
                 href={item.href}
                 className={cn(
@@ -152,7 +153,7 @@ export function Navbar() {
                 )}
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -197,7 +198,7 @@ export function Navbar() {
                     </SheetHeader>
                     <nav className="flex-1 p-4 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
                       {NAV_ITEMS.map((item) => (
-                        <a 
+                        <Link 
                           key={item.label} 
                           href={item.href}
                           onClick={() => setIsMobileMenuOpen(false)}
@@ -208,7 +209,7 @@ export function Navbar() {
                         >
                           <item.icon className="w-4 h-4 icon-3d" />
                           {item.label}
-                        </a>
+                        </Link>
                       ))}
                     </nav>
                   </div>
@@ -221,9 +222,13 @@ export function Navbar() {
       {/* Global Search Dialog with Premium Glow */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
-          <DialogHeader className="p-6 border-b border-white/5 bg-white/2">
+          <DialogHeader className="p-6 border-b border-white/5 bg-white/2 relative overflow-hidden">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>
-            <div className="relative group/search">
+            
+            {/* Moving Glow Line Protocol */}
+            <div className="moving-border-matrix" />
+            
+            <div className="relative group/search z-20">
                {/* Inner Atmosphere Glow */}
                <div className="absolute inset-0 bg-primary/5 blur-[25px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-700 pointer-events-none" />
               
@@ -233,7 +238,7 @@ export function Navbar() {
                 placeholder="Query professional studio tools..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-16 pl-14 bg-transparent border-none focus-visible:ring-0 rounded-none text-lg font-medium tracking-tight placeholder:text-foreground/10"
+                className="h-16 pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-lg font-medium tracking-tight placeholder:text-foreground/10"
               />
               
               {/* Focused Glow Base Bar */}
@@ -244,7 +249,7 @@ export function Navbar() {
             {filteredNavItems.length > 0 ? (
               <div className="grid grid-cols-1 gap-1">
                 {filteredNavItems.map((item) => (
-                  <a 
+                  <Link 
                     key={item.label}
                     href={item.href}
                     onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
@@ -260,7 +265,7 @@ export function Navbar() {
                        <span className="text-[9px] font-black uppercase tracking-widest text-primary">Execute</span>
                        <ArrowRight className="w-4 h-4 text-primary icon-3d" />
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
             ) : (

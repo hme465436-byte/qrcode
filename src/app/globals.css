@@ -103,8 +103,49 @@
     }
   }
 
+  @keyframes border-orbital-flow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
   .animate-search-glow {
     animation: premium-glow-pulse 4s ease-in-out infinite;
+  }
+
+  .moving-border-matrix {
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 10;
+    overflow: hidden;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0.4;
+    transition: opacity 0.5s ease;
+  }
+
+  .group-focus-within .moving-border-matrix,
+  .group:hover .moving-border-matrix {
+    opacity: 1;
+  }
+
+  .moving-border-matrix::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(
+      transparent,
+      transparent,
+      transparent,
+      transparent,
+      hsl(var(--primary))
+    );
+    animation: border-orbital-flow 6s linear infinite;
   }
 }
 

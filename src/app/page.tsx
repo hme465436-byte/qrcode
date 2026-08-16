@@ -548,7 +548,7 @@ const TOOLS = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
   }
@@ -596,8 +596,11 @@ export default function Home() {
             {/* Pulse Glow Border Layer */}
             <div className="absolute -inset-[2px] rounded-[1.4rem] bg-primary/20 opacity-0 group-hover:opacity-40 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[1px] pointer-events-none" />
 
-            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/20 group-focus-within:from-primary/50 group-focus-within:to-primary/20">
-              <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/5 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_50px_-10px_rgba(59,130,246,0.5)] transition-all duration-300">
+            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/20 group-focus-within:from-primary/50 group-focus-within:to-primary/20 overflow-hidden">
+              {/* Moving Glow Line Protocol */}
+              <div className="moving-border-matrix" />
+              
+              <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/5 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_50px_-10px_rgba(59,130,246,0.5)] transition-all duration-300 z-10">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                   <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors icon-3d" />
                 </div>
@@ -680,7 +683,6 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
                 Privacy Sovereign
               </div>
-              <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight leading-[0.95]">Definitive <span className="text-primary italic">Security</span> Mandate</h2>
               <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight leading-[0.95]">Definitive <span className="text-primary italic">Security</span> Mandate</h2>
               <p className="text-lg text-foreground/40 font-medium leading-relaxed">
                 Our studio operates entirely within your browser's memory sandbox. We have eliminated server-side storage to ensure your branding and technical data remain strictly private and permanent.
