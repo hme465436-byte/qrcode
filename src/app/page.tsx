@@ -663,7 +663,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -900,7 +900,7 @@ export default function Home() {
              </div>
 
              {/* Category Pills - Sticky Row */}
-             <div className="sticky top-20 z-20 flex flex-wrap items-center justify-center gap-2 p-2 rounded-[2rem] bg-secondary/50 border border-white/5 backdrop-blur-xl shadow-2xl">
+             <div className="sticky top-20 z-20 flex flex-wrap items-center justify-center gap-2 p-2 rounded-[2rem] bg-secondary/50 border border-white/5 backdrop-blur-xl shadow-2xl w-fit mx-auto">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
