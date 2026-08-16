@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   DownloadCloud, 
   Download,
@@ -10,22 +10,18 @@ import {
   Loader2, 
   Info,
   CheckCircle2,
-  FileDown,
   AlertCircle,
   Globe,
-  ShieldAlert,
   Zap,
-  ExternalLink,
   ImageIcon,
   Search,
   FileArchive,
-  Monitor,
-  Smartphone,
   Youtube,
-  Layers,
   Maximize2,
   Maximize,
-  ShieldCheck
+  ShieldCheck,
+  MousePointer2,
+  ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,13 +30,14 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import JSZip from 'jszip';
+import { extractWebImages, proxyDownloadImage } from '@/ai/flows/web-image-extractor-flow';
 
 interface ImageAsset {
   id: string;
   url: string;
   label: string;
   res?: string;
-  type: 'image' | 'youtube';
+  type: 'image' | 'youtube' | 'web';
 }
 
 export default function ImageUrlDownloaderPage() {
@@ -96,15 +93,40 @@ export default function ImageUrlDownloaderPage() {
         type: 'image'
       }]);
       toast({ title: "Asset Identified", description: "Direct visual link mapped." });
-    } else {
-      setError("Discovery Limited: Browser security (CORS) prevents scraping generic pages. Please provide a direct link to an image file or a YouTube URL.");
+      setIsProcessing(false);
+      return;
     }
-    setIsProcessing(false);
+
+    // Web Discovery Protocol (Server-Side Proxy)
+    try {
+      toast({ title: "Scanning Webpage", description: "Identifying visual matrices via proxy..." });
+      const result = await extractWebImages(url);
+      
+      if (result.images && result.images.length > 0) {
+        const assets: ImageAsset[] = result.images.map((img, i) => ({
+          id: `web-${i}`,
+          url: img.url,
+          label: img.label || 'Web Asset',
+          type: 'web'
+        }));
+        setFoundImages(assets);
+        toast({ title: "Discovery Complete", description: `Isolated ${assets.length} assets from the page.` });
+      } else {
+        setError("Zero-Asset Matrix: No legible images were identified on this page. Try right-clicking the specific image and copying its direct address.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError("Discovery Blocked: The remote host rejected our discovery protocol. TIP: Right-click the image on the site and choose 'Copy image address' for direct extraction.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const downloadSingle = async (asset: ImageAsset) => {
     try {
       const response = await fetch(asset.url);
+      if (!response.ok) throw new Error("CORS Blocked");
+      
       const blob = await response.blob();
       const bUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -113,9 +135,22 @@ export default function ImageUrlDownloaderPage() {
       a.download = `mykit-image-${asset.id}.${ext}`;
       a.click();
       URL.revokeObjectURL(bUrl);
+      toast({ title: "Master Ready", description: "Asset pushed to local storage." });
     } catch (e) {
-      window.open(asset.url, '_blank');
-      toast({ title: "CORS protocol alert", description: "Direct download blocked. Image opened in a new tab." });
+      // Fallback: Proxy Download through server
+      try {
+        toast({ title: "CORS Bypass Active", description: "Negotiating secure proxy extraction..." });
+        const dataUri = await proxyDownloadImage(asset.url);
+        const a = document.createElement('a');
+        a.href = dataUri;
+        const ext = asset.url.split('.').pop()?.split('?')[0] || 'jpg';
+        a.download = `mykit-proxy-${asset.id}.${ext}`;
+        a.click();
+        toast({ title: "Proxy Extraction Successful", description: "Security protocols bypassed." });
+      } catch (proxyErr) {
+        window.open(asset.url, '_blank');
+        toast({ title: "Extraction Limited", description: "Direct download blocked. Opening image in a new tab." });
+      }
     }
   };
 
@@ -128,9 +163,23 @@ export default function ImageUrlDownloaderPage() {
       for (let i = 0; i < foundImages.length; i++) {
         const asset = foundImages[i];
         try {
-          const response = await fetch(asset.url);
-          if (response.ok) {
-            const blob = await response.blob();
+          // Attempt direct first
+          let blob;
+          try {
+            const resp = await fetch(asset.url);
+            if (resp.ok) blob = await resp.blob();
+          } catch (e) {
+            // Proxy fallback for ZIP
+            const dataUri = await proxyDownloadImage(asset.url);
+            const base64 = dataUri.split(',')[1];
+            const type = dataUri.split(',')[0].split(':')[1].split(';')[0];
+            const byteChars = atob(base64);
+            const byteNumbers = new Array(byteChars.length);
+            for (let j = 0; j < byteChars.length; j++) byteNumbers[j] = byteChars.charCodeAt(j);
+            blob = new Blob([new Uint8Array(byteNumbers)], { type });
+          }
+
+          if (blob) {
             const ext = asset.url.split('.').pop()?.split('?')[0] || 'jpg';
             zip.file(`${asset.id}_${i}.${ext}`, blob);
           }
@@ -159,7 +208,7 @@ export default function ImageUrlDownloaderPage() {
           Image URL <span className="text-primary italic">Downloader</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          High-performance visual extraction. Retrieve high-res images and YouTube thumbnails directly from URLs with localized processing and ZIP bundling.
+          High-performance visual extraction. Retrieve high-res images and YouTube thumbnails directly from URLs with server-side discovery and proxy-bypass protocols.
         </p>
       </div>
 
@@ -181,7 +230,7 @@ export default function ImageUrlDownloaderPage() {
                 <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Discovery URL</Label>
                 <div className="relative group/input">
                   <Input 
-                    placeholder="Paste image or YouTube URL..."
+                    placeholder="Paste image, webpage, or YouTube URL..."
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     className="h-16 bg-secondary border-border rounded-2xl text-lg font-mono font-medium placeholder:text-foreground/20 px-6 pr-14 transition-all focus:ring-primary/40"
@@ -199,7 +248,7 @@ export default function ImageUrlDownloaderPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Identify Matrix
+                  Run Discovery
                 </Button>
                 <Button 
                   variant="outline"
@@ -213,7 +262,12 @@ export default function ImageUrlDownloaderPage() {
               {error && (
                 <div className="p-6 rounded-[2rem] bg-destructive/5 border border-destructive/10 flex items-start gap-4 animate-in shake duration-500">
                   <AlertCircle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
-                  <p className="text-[11px] font-bold text-destructive/80 uppercase tracking-widest leading-relaxed">{error}</p>
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold text-destructive/80 uppercase tracking-widest leading-relaxed">{error}</p>
+                    <p className="text-[9px] text-foreground/30 uppercase font-black tracking-widest pt-2 flex items-center gap-2">
+                       <MousePointer2 className="w-3 h-3" /> Tip: Try 'Copy Image Address' for best results.
+                    </p>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -222,9 +276,9 @@ export default function ImageUrlDownloaderPage() {
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">CORS Protocol</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Discovery Protocol</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                Direct scraping of web pages is limited by browser security. For best results, use direct image links or supported platform URLs (YouTube).
+                Direct image extraction is instant. For standard webpages, we use a server-side proxy to isolate visual matrices while maintaining your hardware security.
               </p>
             </div>
           </div>
@@ -257,7 +311,7 @@ export default function ImageUrlDownloaderPage() {
                     <p className="text-sm font-black uppercase tracking-[0.3em]">Studio Standby</p>
                  </div>
                ) : (
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 animate-in zoom-in duration-500">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 animate-in zoom-in duration-500 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
                     {foundImages.map((asset) => (
                       <div key={asset.id} className="group relative bg-black rounded-[2.5rem] overflow-hidden border border-border shadow-2xl transition-all hover:border-primary/40">
                          <div className="aspect-video relative flex items-center justify-center overflow-hidden">
@@ -298,7 +352,7 @@ export default function ImageUrlDownloaderPage() {
                 <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
                 <div className="space-y-1">
                    <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
-                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">All discovery logic executes strictly in your browser session. Hardware identifiers are never transmitted.</p>
+                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">Discovery logic executes via secure server flows. Hardware identifiers are never transmitted to target hosts.</p>
                 </div>
              </div>
           </div>
