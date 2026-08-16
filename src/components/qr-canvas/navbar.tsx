@@ -92,6 +92,7 @@ const NAV_ITEMS = [
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
   { label: 'Speaker Test', href: '/speaker-tester', icon: Activity, keywords: ['speaker tester', 'audio test', 'left right', 'sound test'] },
+  { label: 'Mic Tester', href: '/mic-tester', icon: Mic, keywords: ['mic tester', 'microphone test', 'audio input', 'record test'] },
   { label: 'YT Downloader', href: '/youtube-thumbnail-downloader', icon: MonitorPlay, keywords: ['youtube', 'thumbnail', 'downloader', 'yt'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
   { label: 'PDF Unlock', href: '/pdf-unlock', icon: Unlock, keywords: ['unlock pdf', 'remove password', 'decrypt pdf', 'open'] },

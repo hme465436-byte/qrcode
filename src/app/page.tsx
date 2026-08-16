@@ -92,6 +92,16 @@ const TOOLS = [
     keywords: ['speaker tester', 'audio test', 'left right', 'frequency sweep', 'sound test', 'headphones']
   },
   { 
+    href: '/mic-tester', 
+    icon: Mic, 
+    title: 'Mic Tester Studio', 
+    desc: 'Test hardware input levels and loopback echo.', 
+    label: 'HARDWARE', 
+    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
+    keywords: ['mic tester', 'microphone test', 'audio input', 'record test', 'voice test', 'hardware check']
+  },
+  { 
     href: '/youtube-thumbnail-downloader', 
     icon: MonitorPlay, 
     title: 'YT Downloader', 
@@ -713,3 +723,4 @@ export default function Home() {
     </div>
   );
 }
+
