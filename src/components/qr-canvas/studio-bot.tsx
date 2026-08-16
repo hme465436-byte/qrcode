@@ -204,7 +204,6 @@ export function StudioBot() {
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Arrival Protocol: Stay fully visible for 5s
     const initialShowTimer = setTimeout(() => {
       setIsInitialShow(false);
     }, 5000);
@@ -383,21 +382,22 @@ export function StudioBot() {
             {/* Mouth */}
             <path d="M 44 76 Q 47 80 50 76 Q 53 80 56 76" fill="none" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" />
             
-            {/* Paws - Dynamic per state */}
+            {/* Paws / Hands */}
             {isPoseB ? (
               // POSE B: Both hands grabbing the border (at x=45 mark)
               <g>
-                <circle cx="45" cy="55" r="8" fill="#fefce8" className="animate-kit-grip" />
-                <circle cx="45" cy="85" r="8" fill="#fefce8" className="animate-kit-grip" />
+                <circle cx="45" cy="55" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" className="animate-kit-grip" />
+                <circle cx="45" cy="85" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" className="animate-kit-grip" />
               </g>
             ) : (
               // POSE A: Normal standing + Waving
               <g>
                 {/* Left Paw */}
-                <circle cx="20" cy="95" r="8" fill="#fefce8" />
+                <circle cx="20" cy="95" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
                 {/* Right Paw - Waving */}
                 <g className="origin-[80px_95px] animate-kit-wave">
-                   <circle cx="80" cy="95" r="8" fill="#fefce8" />
+                   <path d="M 80 95 L 85 70" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
+                   <circle cx="85" cy="70" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
                 </g>
               </g>
             )}
