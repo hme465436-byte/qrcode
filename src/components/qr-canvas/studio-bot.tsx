@@ -18,11 +18,10 @@ import {
   Minimize2, 
   Maximize2,
   Trash2,
-  ThumbsUp,
-  ThumbsDown,
   CheckCircle2,
   AlertTriangle,
-  Loader2
+  Loader2,
+  List
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -33,104 +32,98 @@ interface Tool {
   title: string;
   desc: string;
   keywords: string[];
-}
-
-/**
- * FULL STUDIO REGISTRY
- * Comprehensive keyword mapping for Roman Urdu / Slang / Task-based search.
- */
-const TOOLS: Tool[] = [
-  { href: '/single', title: 'Single Studio', desc: 'Branded QR codes with logos and AI backgrounds.', keywords: ['qr', 'generator', 'logo', 'brand', 'scan', 'create qr', 'barcode', 'website qr'] },
-  { href: '/bulk', title: 'Bulk Production', desc: 'Generate hundreds of QR assets in seconds.', keywords: ['bulk', 'batch', 'mass', 'many', 'zip', 'production', 'multiple qr'] },
-  { href: '/photo-enhance-fix', title: 'Photo Enhance / Pixel Fix', desc: 'Upscale resolution and sharpen photo clarity.', keywords: ['enhance', 'fix', 'pixel', 'upscale', 'quality', 'restore', 'blur', 'saaf', 'clear', 'blurry', 'hq'] },
-  { href: '/passport-photo-maker', title: 'Passport Photo', desc: 'Create official ID photos and printable sheets.', keywords: ['passport', 'id', 'visa', 'print', '35x45', 'photo', 'identity', '2x2', 'form photo'] },
-  { href: '/csv-to-json', title: 'CSV to JSON', desc: 'Convert CSV lists into optimized JSON matrices.', keywords: ['csv', 'json', 'convert', 'data', 'table', 'parse', 'excel'] },
-  { href: '/json-to-csv', title: 'JSON to CSV', desc: 'Convert JSON objects into flat CSV files.', keywords: ['json', 'csv', 'convert', 'data', 'flatten', 'parse'] },
-  { href: '/image-url-downloader', title: 'URL Image Downloader', desc: 'Extract high-res images from any page URL.', keywords: ['image', 'downloader', 'save', 'url', 'extract', 'scrape', 'yt', 'pinterest'] },
-  { href: '/speaker-tester', title: 'Speaker Tester', desc: 'Test stereo channels and frequency response.', keywords: ['speaker', 'audio', 'sound', 'stereo', 'left', 'right', 'test', 'headphone'] },
-  { href: '/mic-tester', title: 'Mic Tester Studio', desc: 'Test hardware input levels and loopback echo.', keywords: ['mic', 'microphone', 'test', 'voice', 'audio', 'hardware', 'record'] },
-  { href: '/youtube-thumbnail-downloader', title: 'YT Downloader', desc: 'Extract and save thumbnails in all available qualities.', keywords: ['youtube', 'thumbnail', 'downloader', 'yt', 'save youtube', 'img'] },
-  { href: '/logo-maker', title: 'Logo Text Studio', desc: 'Generate premium text-based brand identities.', keywords: ['logo', 'text', 'brand', 'avatar', 'identity', 'design', 'name'] },
-  { href: '/pdf-unlock', title: 'PDF Unlock', desc: 'Remove security passwords from protected PDFs.', keywords: ['unlock', 'password', 'decrypt', 'remove pass', 'open pdf', 'protected'] },
-  { href: '/pdf-password-protect', title: 'PDF Password', desc: 'Encrypt PDF documents with passwords.', keywords: ['password', 'encrypt', 'lock', 'protect', 'secure', 'pdf pass'] },
-  { href: '/text-to-pdf', title: 'Text to PDF', desc: 'Convert raw text or .txt files into PDF masters.', keywords: ['text', 'pdf', 'txt', 'convert', 'make pdf', 'write pdf'] },
-  { href: '/pdf-rotator', title: 'PDF Rotator', desc: 'Correct orientation of PDF pages.', keywords: ['rotate', 'fix', 'sideways', 'upside down', 'orientation', 'tilt'] },
-  { href: '/pdf-to-word', title: 'PDF to Word', desc: 'Convert PDF files into editable Word documents.', keywords: ['pdf to word', 'convert', 'docx', 'edit pdf', 'extract text'] },
-  { href: '/word-to-pdf', title: 'Word to PDF', desc: 'Convert Word documents into sanitized PDF masters.', keywords: ['word to pdf', 'convert', 'docx', 'save', 'print'] },
-  { href: '/pdf-to-image', title: 'PDF to Image', desc: 'Convert PDF pages into high-res PNG/JPG assets.', keywords: ['pdf to png', 'pdf to jpg', 'extract image', 'convert'] },
-  { href: '/pdf-splitter', title: 'PDF Splitter', desc: 'Separate PDF pages into individual files.', keywords: ['split', 'cut', 'separate', 'pages', 'extract', 'alag', 'hisse'] },
-  { href: '/pdf-compressor', title: 'PDF Compressor', desc: 'Shrink PDF file size locally in your browser.', keywords: ['compress', 'smaller', 'shrink', 'size', 'optimize', 'kb', 'chhota', 'kam'] },
-  { href: '/duplicate-finder', title: 'Duplicate Purge', desc: 'Remove redundant files from project bundles.', keywords: ['duplicate', 'finder', 'purge', 'clean', 'redundant', 'same', 'faltu'] },
-  { href: '/duplicate-line-remover', title: 'Line Purge', desc: 'Remove duplicate lines from text or lists.', keywords: ['duplicate lines', 'line remover', 'unique', 'text', 'clean list'] },
-  { href: '/whatsapp-dp-maker', title: 'WhatsApp DP', desc: 'Make full-size WhatsApp profile pics without crop.', keywords: ['whatsapp', 'dp', 'profile', 'uncut', 'square', 'picture'] },
-  { href: '/pdf-merger', title: 'PDF Merger', desc: 'Combine multiple PDF files into one.', keywords: ['merge', 'join', 'combine', 'stack', 'ek sath', 'joren'] },
-  { href: '/image-to-file', title: 'Image to File', desc: 'Convert imagery to PNG, JPG, WebP, or PDF.', keywords: ['convert', 'image', 'photo se pdf', 'format', 'change'] },
-  { href: '/file-compressor', title: 'File Compressor', desc: 'Size reduction for visual and digital assets.', keywords: ['compress', 'smaller', 'shrink', 'size', 'kb', 'mb', 'kam', 'chhota'] },
-  { href: '/youtube-thumbnail-maker', title: 'YT Thumbnail', desc: 'Resize and frame images for thumbnails.', keywords: ['youtube', 'thumbnail', 'size', '1280x720', 'resizer'] },
-  { href: '/age-calculator', title: 'Age Calculator', desc: 'Calculate exact age and birthday countdowns.', keywords: ['age', 'birth', 'how old', 'birthday', 'date', 'umr'] },
-  { href: '/password-generator', title: 'Password Studio', desc: 'Generate secure random passwords.', keywords: ['password', 'secure', 'random', 'key', 'safe', 'pass'] },
-  { href: '/youtube-banner-maker', title: 'YouTube Banner', desc: 'Create 2560x1440 channel art.', keywords: ['banner', 'channel', 'art', 'yt cover', 'size', '2560x1440'] },
-  { href: '/collage-maker', title: 'Collage Studio', desc: 'Combine images into grid layouts.', keywords: ['collage', 'grid', 'merge photos', 'photo grid', 'combine'] },
-  { href: '/favicon-generator', title: 'Favicon Studio', desc: 'Generate web icon sets from any image.', keywords: ['favicon', 'site icon', 'ico', 'web icon', 'manifest'] },
-  { href: '/metadata-remover', title: 'Privacy Purge', desc: 'Strip GPS and EXIF metadata from photos.', keywords: ['exif', 'metadata', 'gps', 'privacy', 'remove location', 'secure'] },
-  { href: '/word-counter', title: 'Word Counter', desc: 'Live text analysis and reading time.', keywords: ['word count', 'chars', 'reading time', 'text count'] },
-  { href: '/color-picker', title: 'Color Picker', desc: 'Extract HEX/RGB from any image.', keywords: ['color', 'hex', 'rgb', 'pick', 'eye dropper', 'photo color'] },
-  { href: '/rgb-picker', title: 'RGB Studio', desc: 'Precision color picking and conversion.', keywords: ['rgb', 'color', 'conversion', 'hex', 'cmyk', 'hsl'] },
-  { href: '/markdown-preview', title: 'Markdown Preview', desc: 'Live Markdown to HTML writing environment.', keywords: ['markdown', 'md', 'html', 'preview', 'editor'] },
-  { href: '/image-resizer', title: 'Image Resizer', desc: 'Scale photo pixel dimensions.', keywords: ['resize', 'scale', 'dimension', 'width', 'height', 'px'] },
-  { href: '/image-compressor', title: 'Image Compressor', desc: 'Reduce photo file size locally.', keywords: ['compress', 'shrink', 'smaller', 'kb', 'image', 'photo size'] },
-  { href: '/image-to-pdf', title: 'Image to PDF', desc: 'Convert multiple images into a PDF.', keywords: ['image to pdf', 'photo to pdf', 'jpg to pdf', 'bundle'] },
-  { href: '/photo-editor', title: 'Photo Studio', desc: 'Professional filters and image editing.', keywords: ['photo', 'edit', 'crop', 'filter', 'editor', 'picture'] },
-  { href: '/vocal-separator', title: 'Vocal Remover', desc: 'Isolate or remove vocals from music.', keywords: ['vocal', 'remove', 'karaoke', 'music', 'separate', 'instrumental'] },
-  { href: '/video-to-audio', title: 'Video to MP3', desc: 'Extract audio tracks from videos.', keywords: ['mp4 to mp3', 'video to audio', 'extract', 'music', 'sound'] },
-  { href: '/video-to-gif', title: 'Video to GIF', desc: 'Synthesize animated GIFs from clips.', keywords: ['video to gif', 'mp4 to gif', 'make gif', 'animated'] },
-  { href: '/audio-joiner', title: 'Audio Joiner', desc: 'Merge multiple audio files.', keywords: ['audio join', 'merge mp3', 'combine audio', 'joiner'] },
-  { href: '/audio-booster', title: 'Volume Booster', desc: 'Amplify audio levels safely.', keywords: ['volume', 'booster', 'louder', 'boost', 'amp', 'loud'] },
-  { href: '/letter-art', title: 'Letter Art Studio', desc: 'Image to text conversion.', keywords: ['ascii', 'text art', 'letters art', 'image to text'] },
-  { href: '/ocr', title: 'OCR Extraction', desc: 'Identify and extract text from images.', keywords: ['ocr', 'text', 'extract', 'read', 'scan', 'image', 'saaf text'] },
-  { href: '/dot-art', title: 'Dot Art Studio', desc: 'Convert images to Braille character art.', keywords: ['dots', 'braille', 'art', 'image to text'] },
-  { href: '/repeater', title: 'Text Repeater', desc: 'Emoji and text multiplication.', keywords: ['repeat', 'multiply', 'repeater', 'spam'] },
-  { href: '/hex-converter', title: 'Hex Converter', desc: 'Convert binary files to hex matrix.', keywords: ['hex', 'binary', 'file', 'matrix', 'dump'] },
-  { href: '/code-converter', title: 'AOB Converter', desc: 'Professional AOB pattern conversion.', keywords: ['aob', 'code', 'binary', 'convert', 'pattern'] },
-];
-
-interface HelpProtocol {
   steps: string[];
+  tip: string;
   mistake: string;
 }
 
-const HELP_PROTOCOLS: Record<string, HelpProtocol> = {
-  '/ocr': {
-    steps: ['Upload a clear document image.', 'Adjust Contrast/Upscale for readability.', 'Click "Extract Matrix" to decode.'],
-    mistake: 'Using low-contrast or blurred images reduces accuracy.'
+/**
+ * COMPREHENSIVE TOOL & PROTOCOL REGISTRY
+ * Maps identity, search keywords, and educational steps for all tools.
+ */
+const TOOLS: Tool[] = [
+  { 
+    href: '/single', 
+    title: 'Single Studio', 
+    desc: 'Branded QR codes with logos and AI backgrounds.', 
+    keywords: ['qr', 'generator', 'logo', 'brand', 'scan', 'create qr', 'barcode', 'website qr'],
+    steps: ['Enter your target URL or Text content.', 'Select a technical style for dots and corners.', 'Upload your brand logo for the center.', 'Generate an AI background using a prompt.', 'Export as high-res PNG or SVG.'],
+    tip: 'Keep the background opacity below 30% for best scan reliability.',
+    mistake: 'Using a dark QR color on a dark background makes it unreadable.'
   },
-  '/single': {
-    steps: ['Enter your target URL or text.', 'Choose a dot and corner style.', 'Add a logo and AI background.'],
-    mistake: 'Setting background opacity too high can break scannability.'
+  { 
+    href: '/bulk', 
+    title: 'Bulk Production', 
+    desc: 'Generate hundreds of QR assets in seconds.', 
+    keywords: ['bulk', 'batch', 'mass', 'many', 'zip', 'production', 'multiple qr'],
+    steps: ['Paste your list of URLs (one per line).', 'Select your unified brand style.', 'Choose your export format (PNG/PDF).', 'Click "Export ZIP Bundle".'],
+    tip: 'Great for inventory labels or mass marketing campaigns.',
+    mistake: 'Empty lines in your list will generate blank placeholder QR codes.'
   },
-  '/bulk': {
-    steps: ['Paste your list (one line per URL).', 'Apply your brand colors and styles.', 'Click "Export ZIP" to bundle all.'],
-    mistake: 'Empty lines in the list will produce blank QR codes.'
+  { 
+    href: '/photo-enhance-fix', 
+    title: 'Photo Enhance / Pixel Fix', 
+    desc: 'Upscale resolution and sharpen photo clarity.', 
+    keywords: ['enhance', 'fix', 'pixel', 'upscale', 'quality', 'restore', 'blur', 'saaf', 'clear', 'blurry', 'hq'],
+    steps: ['Import your low-res or blurry photo.', 'Select an Upscale level (2x or 4x).', 'Adjust Contrast and Sharpness sliders.', 'Use the Before/After slider to verify results.', 'Download the restored master.'],
+    tip: 'Use "Denoise" first to smooth grains before sharpening edges.',
+    mistake: 'Over-sharpening can introduce digital "halo" artifacts around objects.'
   },
-  '/passport-photo-maker': {
-    steps: ['Upload a front-facing portrait.', 'Align head/eyes within the oval guide.', 'Select size and download A4 sheet.'],
-    mistake: 'Not aligning eyes with the guide line may reject the photo.'
+  { 
+    href: '/passport-photo-maker', 
+    title: 'Passport Photo', 
+    desc: 'Create official ID photos and printable sheets.', 
+    keywords: ['passport', 'id', 'visa', 'print', '35x45', 'photo', 'identity', '2x2', 'form photo'],
+    steps: ['Upload a front-facing portrait.', 'Align your eyes with the horizontal guide line.', 'Ensure the head fits inside the oval matrix.', 'Select your target country size (e.g. PK/UK/US).', 'Download as a single PNG or A4 Print Sheet.'],
+    tip: 'A white or light blue background is required for most official visas.',
+    mistake: 'Tilting your head or looking away from the camera will cause rejection.'
   },
-  '/vocal-separator': {
-    steps: ['Import a high-quality stereo track.', 'Choose "Vocal Reduce" for karaoke.', 'Adjust strength and save as WAV.'],
-    mistake: 'Mono tracks cannot be processed via phase-cancellation.'
+  { 
+    href: '/ocr', 
+    title: 'OCR Extraction', 
+    desc: 'Identify and extract text from images.', 
+    keywords: ['ocr', 'text', 'extract', 'read', 'scan', 'image', 'saaf text'],
+    steps: ['Upload an image of a document or sign.', 'Select the primary language.', 'Boost contrast if the text is faint.', 'Click "Extract Matrix".', 'Copy the decoded text from the output box.'],
+    tip: 'Clean, printed text has nearly 100% accuracy; handwriting is limited.',
+    mistake: 'Low light or blurry captures significantly reduce character recognition.'
   },
-  '/logo-maker': {
-    steps: ['Enter your brand name/tagline.', 'Select a typographic profile.', 'Randomize or pick a custom palette.'],
-    mistake: 'Using similar colors for text and background kills contrast.'
+  { 
+    href: '/pdf-merger', 
+    title: 'PDF Merger', 
+    desc: 'Combine multiple PDF files into one.', 
+    keywords: ['merge', 'join', 'combine', 'stack', 'ek sath', 'joren'],
+    steps: ['Upload all the PDF files you want to join.', 'Drag and drop rows to set the page sequence.', 'Click "Merge Documents".', 'Download the unified PDF master.'],
+    tip: 'You can merge up to 20 documents in a single production cycle.',
+    mistake: 'Trying to merge password-protected PDFs without unlocking them first.'
   },
-  '/pdf-merger': {
-    steps: ['Upload all PDF documents.', 'Drag rows to arrange the sequence.', 'Click "Merge" to unify the master.'],
-    mistake: 'Merging encrypted PDFs requires unlocking them first.'
+  { 
+    href: '/pdf-compressor', 
+    title: 'PDF Compressor', 
+    desc: 'Shrink PDF file size locally in your browser.', 
+    keywords: ['compress', 'smaller', 'shrink', 'size', 'optimize', 'kb', 'chhota', 'kam', 'pdf size'],
+    steps: ['Import your heavy PDF document.', 'Select a compression level (Eco/Standard/Intensive).', 'Wait for the WASM engine to re-matrix the file.', 'Check the reduction percentage.', 'Download the optimized version.'],
+    tip: 'The "Standard" mode offers the best balance of size and legibility.',
+    mistake: 'Intensive compression may slightly blur small technical diagrams.'
+  },
+  { 
+    href: '/image-compressor', 
+    title: 'Image Compressor', 
+    desc: 'Reduce photo file size locally.', 
+    keywords: ['compress', 'shrink', 'smaller', 'kb', 'image', 'photo size', 'kb kam'],
+    steps: ['Import your high-res JPG or PNG.', 'Adjust the Quality slider (70-80% is recommended).', 'Set a Max Width if you need to downscale.', 'Compare original vs. optimized size.', 'Download the compressed asset.'],
+    tip: 'Converting PNG to JPG during compression yields the most significant size reduction.',
+    mistake: 'Dropping quality below 40% will cause visible pixel artifacts.'
+  },
+  { 
+    href: '/logo-maker', 
+    title: 'Logo Text Studio', 
+    desc: 'Generate premium text-based brand identities.', 
+    keywords: ['logo', 'text', 'brand', 'avatar', 'identity', 'design', 'name'],
+    steps: ['Enter your brand name and tagline.', 'Browse and select a typographic profile.', 'Adjust letter spacing and font size.', 'Add a geometric symbol or badge container.', 'Export as a high-res 1024px PNG.'],
+    tip: 'Use the "Randomize" button to discover unique design combinations.',
+    mistake: 'Choosing similar colors for text and background kills brand visibility.'
   }
-};
-
-const QUICK_CHIPS = ['PDF', 'Image', 'Compress', 'QR', 'Convert', 'Passport'];
+];
 
 export function StudioBot() {
   const pathname = usePathname();
@@ -139,20 +132,23 @@ export function StudioBot() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [hasPulsed, setHasPulsed] = useState(false);
   const [query, setQuery] = useState('');
-  const [messages, setMessages] = useState<{ type: 'user' | 'bot', content: string, links?: Tool[], protocol?: HelpProtocol, id: string }[]>([]);
+  const [lastMatchedTool, setLastMatchedTool] = useState<Tool | null>(null);
+  const [messages, setMessages] = useState<{ type: 'user' | 'bot', content: string, links?: Tool[], toolInfo?: Tool, id: string }[]>([]);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Auto-pulse on first load
   useEffect(() => {
     const timer = setTimeout(() => setHasPulsed(true), 3000);
     setMessages([{ 
       type: 'bot', 
-      content: 'Hello. I am your PRO Studio Assistant. Tell me what job you need to finish.',
+      content: 'Hello. I am your PRO Studio Assistant. Tell me what job you need to finish or ask "how to use" a tool.',
       id: 'init' 
     }]);
     return () => clearTimeout(timer);
   }, []);
 
+  // Keyboard support: Esc to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) setIsOpen(false);
@@ -161,6 +157,7 @@ export function StudioBot() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
+  // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -172,27 +169,38 @@ export function StudioBot() {
 
     const userMsg = input.trim();
     const nextMsg = { type: 'user' as const, content: userMsg, id: Date.now().toString() };
-    
     setMessages(prev => [...prev, nextMsg].slice(-10));
     setQuery('');
 
     const lowQuery = userMsg.toLowerCase();
     
-    // 1. Context Help Logic
-    if (lowQuery.match(/(how|help|guide|step|kese|tarika)/)) {
-      const help = HELP_PROTOCOLS[pathname];
-      if (help) {
+    // 1. "How to" / Help Logic
+    const isHelpQuery = lowQuery.match(/(how|help|guide|step|kese|tarika|detail)/);
+    
+    if (isHelpQuery) {
+      // Check if we are on a tool page
+      const currentTool = TOOLS.find(t => t.href === pathname);
+      const targetTool = currentTool || lastMatchedTool;
+
+      if (targetTool) {
         setMessages(prev => [...prev, { 
           type: 'bot', 
-          content: `Here is the Master Protocol for this studio:`,
-          protocol: help,
+          content: `Here is the Master Protocol for the **${targetTool.title}**:`,
+          toolInfo: targetTool,
           id: `help-${Date.now()}`
+        }].slice(-10));
+        return;
+      } else if (lowQuery.length < 10) {
+         setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: 'Which tool do you need help with? You can say "how to use QR" or "steps for PDF".',
+          id: `ask-${Date.now()}`
         }].slice(-10));
         return;
       }
     }
 
-    // 2. Advanced Keyword Matching Matrix
+    // 2. Semantic Search Matrix
     const queryWords = lowQuery.split(/\s+/).filter(k => k.length > 1);
     
     const results = TOOLS.map(tool => {
@@ -201,11 +209,10 @@ export function StudioBot() {
       
       queryWords.forEach(word => {
         if (toolText.includes(word)) score++;
-        // Boost exact matches in title
         if (tool.title.toLowerCase().includes(word)) score += 2;
-        // Boost for specific phrases like "size kam"
-        if (word === 'kam' && tool.keywords.includes('kam')) score += 1;
-        if (word === 'chhota' && tool.keywords.includes('chhota')) score += 1;
+        // Urdu specific boost
+        if ((word === 'chhota' || word === 'kam') && tool.keywords.includes('kam')) score += 1;
+        if ((word === 'saaf') && tool.keywords.includes('saaf')) score += 1;
       });
       
       return { tool, score };
@@ -216,9 +223,10 @@ export function StudioBot() {
     .map(r => r.tool);
 
     if (results.length > 0) {
+      setLastMatchedTool(results[0]);
       setMessages(prev => [...prev, { 
         type: 'bot', 
-        content: `I identified ${results.length} relevant production unit(s) for your job:`,
+        content: `I identified these tools for your job. Select one to see the **How-to Protocol**:`,
         links: results,
         id: `match-${Date.now()}`
       }].slice(-10));
@@ -232,9 +240,11 @@ export function StudioBot() {
   };
 
   const clearHistory = () => {
-    setMessages([{ type: 'bot', content: 'History purged. How can I help you now?', id: 'reset' }]);
+    setMessages([{ type: 'bot', content: 'Session purged. How can I assist you now?', id: 'reset' }]);
     toast({ title: "Memory Purged", description: "Studio session buffer cleared." });
   };
+
+  const QUICK_CHIPS = ['PDF', 'Image', 'QR', 'Passport', 'Logo', 'OCR'];
 
   if (!isOpen) {
     return (
@@ -249,19 +259,17 @@ export function StudioBot() {
           <Bot className="w-7 h-7 icon-3d" />
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-primary rounded-full animate-pulse" />
         </div>
-        <div className="absolute right-full mr-4 px-4 py-2 rounded-xl bg-[#0a0a0c] border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap shadow-2xl">
-          Studio Assistant
-        </div>
       </button>
     );
   }
 
   return (
     <div className={cn(
-      "fixed bottom-0 right-0 lg:bottom-6 lg:right-6 w-full lg:w-[400px] bg-[#0a0a0c] border-t lg:border border-white/10 lg:rounded-[2.5rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.8)] z-[100] flex flex-col overflow-hidden transition-all duration-500",
-      isMinimized ? "h-[72px]" : "h-[600px] max-h-[90vh]"
+      "fixed bottom-0 right-0 lg:bottom-6 lg:right-6 w-full lg:w-[420px] bg-[#0a0a0c] border-t lg:border border-white/10 lg:rounded-[2.5rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.8)] z-[100] flex flex-col overflow-hidden transition-all duration-500",
+      isMinimized ? "h-[72px]" : "h-[650px] max-h-[90vh]"
     )}>
-      <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+      {/* Bot Header */}
+      <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
             <Bot className="w-5 h-5 icon-3d" />
@@ -275,7 +283,7 @@ export function StudioBot() {
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={clearHistory} className="w-8 h-8 rounded-lg hover:bg-white/5 text-foreground/20 hover:text-destructive transition-all flex items-center justify-center" title="Clear History">
+          <button onClick={clearHistory} className="w-8 h-8 rounded-lg hover:bg-white/5 text-foreground/20 hover:text-destructive transition-all flex items-center justify-center" title="Purge Session">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
           <button onClick={() => setIsMinimized(!isMinimized)} className="w-8 h-8 rounded-lg hover:bg-white/5 text-foreground/20 hover:text-primary transition-all flex items-center justify-center">
@@ -289,12 +297,14 @@ export function StudioBot() {
 
       {!isMinimized && (
         <>
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-checkered">
+          {/* Chat Window */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-checkered">
             {messages.map((msg) => (
               <div key={msg.id} className={cn(
-                "flex flex-col gap-2 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300",
+                "flex flex-col gap-3 max-w-[90%] animate-in fade-in slide-in-from-bottom-2 duration-300",
                 msg.type === 'user' ? "ml-auto items-end" : "mr-auto items-start"
               )}>
+                {/* Content Bubble */}
                 <div className={cn(
                   "p-4 rounded-2xl text-[13px] font-medium leading-relaxed shadow-lg",
                   msg.type === 'user' 
@@ -304,45 +314,67 @@ export function StudioBot() {
                   {msg.content}
                 </div>
                 
-                {msg.protocol && (
-                  <div className="w-full space-y-3 mt-1 animate-in zoom-in duration-500">
-                    <div className="bg-primary/5 border border-primary/10 rounded-2xl p-5 space-y-4">
-                       <div className="flex items-center gap-2 text-[10px] font-black text-primary uppercase">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Production Steps
+                {/* Protocol Guide Card */}
+                {msg.toolInfo && (
+                  <div className="w-full space-y-4 mt-2 animate-in zoom-in duration-500">
+                    <div className="bg-primary/5 border border-primary/10 rounded-[2rem] p-6 space-y-6">
+                       <div className="flex items-center justify-between border-b border-primary/10 pb-4">
+                          <div className="flex items-center gap-3">
+                             <CheckCircle2 className="w-4 h-4 text-primary" />
+                             <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">{msg.toolInfo.title} Protocol</h4>
+                          </div>
+                          {pathname !== msg.toolInfo.href && (
+                            <Link href={msg.toolInfo.href} className="text-[9px] font-black text-primary uppercase hover:underline">Open Studio</Link>
+                          )}
                        </div>
-                       <div className="space-y-3">
-                          {msg.protocol.steps.map((step, i) => (
-                            <div key={i} className="flex gap-3 text-[11px] text-foreground/60 leading-tight">
-                               <span className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-black text-primary shrink-0">{i+1}</span>
+                       
+                       <div className="space-y-4">
+                          {msg.toolInfo.steps.map((step, i) => (
+                            <div key={i} className="flex gap-4 text-[11px] text-foreground/70 leading-snug">
+                               <span className="w-5 h-5 rounded-lg bg-primary/10 flex items-center justify-center text-[9px] font-black text-primary shrink-0 border border-primary/20">{i+1}</span>
                                {step}
                             </div>
                           ))}
                        </div>
-                       <div className="pt-3 border-t border-primary/10 flex items-start gap-3">
-                          <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 shrink-0 mt-0.5" />
-                          <p className="text-[10px] text-yellow-600/80 font-bold uppercase italic">{msg.protocol.mistake}</p>
+
+                       <div className="pt-4 border-t border-primary/10 grid grid-cols-1 gap-4">
+                          <div className="flex items-start gap-3">
+                             <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                             <p className="text-[10px] text-foreground/50 font-bold uppercase italic"><span className="text-primary not-italic">PRO TIP:</span> {msg.toolInfo.tip}</p>
+                          </div>
+                          <div className="flex items-start gap-3">
+                             <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+                             <p className="text-[10px] text-yellow-600/70 font-bold uppercase italic"><span className="text-yellow-600 not-italic">AVOID:</span> {msg.toolInfo.mistake}</p>
+                          </div>
                        </div>
                     </div>
                   </div>
                 )}
 
+                {/* Tool Search Results */}
                 {msg.links && (
                   <div className="grid grid-cols-1 gap-2 w-full mt-2">
                     {msg.links.map((link) => (
-                      <Link 
-                        key={link.href} 
-                        href={link.href}
-                        onClick={() => { setIsOpen(false); setIsMinimized(false); }}
-                        className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/40 hover:bg-primary/5 group transition-all"
+                      <button 
+                        key={link.href}
+                        onClick={() => {
+                          setMessages(prev => [...prev, { 
+                            type: 'bot', 
+                            content: `Loading ${link.title} guide:`, 
+                            toolInfo: link, 
+                            id: `guide-${Date.now()}` 
+                          }]);
+                        }}
+                        className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/40 hover:bg-primary/5 group transition-all text-left"
                       >
                          <div className="min-w-0">
                            <p className="text-[11px] font-black uppercase text-foreground truncate">{link.title}</p>
                            <p className="text-[10px] text-foreground/40 truncate">{link.desc}</p>
                          </div>
                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-all">
-                            <ArrowRight className="w-4 h-4 icon-3d" />
+                            <List className="w-4 h-4" />
                          </div>
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -350,13 +382,14 @@ export function StudioBot() {
             ))}
           </div>
 
-          <div className="p-4 border-t border-white/5 bg-white/[0.02] space-y-4">
+          {/* Input Area */}
+          <div className="p-5 border-t border-white/5 bg-white/[0.02] space-y-4 shrink-0">
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                {QUICK_CHIPS.map(chip => (
                  <button 
                   key={chip}
-                  onClick={() => { setQuery(chip); handleSearch(chip); }}
-                  className="px-4 py-1.5 rounded-full bg-secondary border border-white/5 text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary hover:border-primary/20 transition-all whitespace-nowrap"
+                  onClick={() => handleSearch(chip)}
+                  className="px-4 py-2 rounded-xl bg-secondary border border-white/5 text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary hover:border-primary/20 transition-all whitespace-nowrap"
                  >
                    {chip}
                  </button>
@@ -369,20 +402,21 @@ export function StudioBot() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask for a job (e.g. 'kb kam' or 'pdf merge')"
-                className="w-full h-12 pl-4 pr-12 rounded-xl bg-background border border-white/10 text-[11px] font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 relative z-10"
+                placeholder="Ask for a job or 'how to'..."
+                className="w-full h-14 pl-5 pr-14 rounded-2xl bg-background border border-white/10 text-xs font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 relative z-10"
                />
                <button 
                 type="submit"
                 disabled={!query.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-lg active:scale-90 transition-all disabled:opacity-20 z-20"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg active:scale-90 transition-all disabled:opacity-20 z-20"
                >
-                 <Send className="w-3.5 h-3.5" />
+                 <Send className="w-4 h-4" />
                </button>
             </form>
-            <div className="mt-4 flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-foreground/10 px-1">
-               <span>Studio Registry v7.2</span>
-               <span className="flex items-center gap-2"><ShieldCheck className="w-2.5 h-2.5" /> Local Intelligence Only</span>
+            
+            <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-foreground/10 px-1">
+               <span className="flex items-center gap-2"><ShieldCheck className="w-2.5 h-2.5" /> Local Intelligence Mode</span>
+               <span>ESC TO EXIT</span>
             </div>
           </div>
         </>
