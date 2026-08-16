@@ -110,6 +110,16 @@ const TOOLS = [
     keywords: ['pdf password', 'encrypt pdf', 'lock pdf', 'protect document', 'secure pdf']
   },
   { 
+    href: '/text-to-pdf', 
+    icon: FileText, 
+    title: 'Text to PDF', 
+    desc: 'Convert raw text or .txt files into professional PDF masters.', 
+    label: 'DOCUMENT', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['text to pdf', 'convert text', 'txt to pdf', 'make pdf from text', 'type to pdf']
+  },
+  { 
     href: '/pdf-rotator', 
     icon: RotateCw, 
     title: 'PDF Rotator', 

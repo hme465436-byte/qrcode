@@ -92,6 +92,7 @@ const NAV_ITEMS = [
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
   { label: 'PDF Unlock', href: '/pdf-unlock', icon: Unlock, keywords: ['unlock pdf', 'remove password', 'decrypt pdf', 'open'] },
   { label: 'PDF Lock', href: '/pdf-password-protect', icon: ShieldAlert, keywords: ['pdf password', 'encrypt pdf', 'lock pdf', 'secure'] },
+  { label: 'Text to PDF', href: '/text-to-pdf', icon: FileText, keywords: ['text to pdf', 'txt to pdf', 'convert text', 'pdf master'] },
   { label: 'PDF Rotator', href: '/pdf-rotator', icon: RotateCw, keywords: ['rotate pdf', 'fix orientation', 'sideways pdf', 'upside down', 'pdf fixer'] },
   { label: 'PDF to Word', href: '/pdf-to-word', icon: FileEdit, keywords: ['pdf to word', 'docx', 'convert', 'editable'] },
   { label: 'Word to PDF', href: '/word-to-pdf', icon: FileText, keywords: ['word to pdf', 'docx to pdf', 'convert word', 'word converter', 'doc to pdf'] },
