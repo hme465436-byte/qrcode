@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Eraser, 
   Brush, 
@@ -9,11 +9,9 @@ import {
   Trash2, 
   Info,
   CheckCircle2,
-  Layers,
   Palette,
   Eye,
   Crosshair,
-  Zap,
   ZoomIn,
   ZoomOut,
   ImagePlus,
@@ -21,9 +19,7 @@ import {
   MousePointer2,
   Settings2,
   ShieldCheck,
-  Search,
   X,
-  Maximize,
   RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,8 +28,6 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-
-const CANVAS_SIZE_LIMIT = 2048; // Limit for internal processing stability
 
 export default function BGRemoveProPage() {
   const { toast } = useToast();
@@ -57,6 +51,7 @@ export default function BGRemoveProPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceImageRef = useRef<HTMLImageElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
 
   // Interaction refs
   const isDragging = useRef(false);
@@ -72,7 +67,7 @@ export default function BGRemoveProPage() {
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
     
-    // Calculate the scale between the displayed CSS size and the internal resolution
+    // Scaling ratio between the CSS displayed size and the actual pixel size
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
@@ -96,13 +91,11 @@ export default function BGRemoveProPage() {
     ctx.save();
     
     if (toolMode === 'erase') {
-      // DEFINITIVE ERASE: Remove alpha channel
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
       ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      // PIXEL RESTORE: Sample from source imagery
       ctx.globalCompositeOperation = 'source-over';
       ctx.beginPath();
       ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
@@ -130,7 +123,6 @@ export default function BGRemoveProPage() {
         
         const canvas = canvasRef.current;
         if (canvas) {
-          // Internal resolution setup
           canvas.width = img.width;
           canvas.height = img.height;
           const ctx = canvas.getContext('2d', { alpha: true });
@@ -138,7 +130,19 @@ export default function BGRemoveProPage() {
             ctx.drawImage(img, 0, 0);
           }
           
-          setZoom(1);
+          // Fit to view calculation
+          if (workspaceRef.current) {
+            const container = workspaceRef.current.getBoundingClientRect();
+            const fitScale = Math.min(
+              (container.width - 60) / img.width,
+              (container.height - 60) / img.height,
+              1
+            );
+            setZoom(fitScale);
+          } else {
+            setZoom(1);
+          }
+          
           setPan({ x: 0, y: 0 });
           setIsProcessing(false);
           toast({ title: "Asset Imported", description: "Studio ready for manual masking." });
@@ -154,7 +158,6 @@ export default function BGRemoveProPage() {
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
-    // Use ALT or Middle Mouse for panning
     if ((e as React.MouseEvent).altKey || (e as any).button === 1) {
       isDragging.current = true;
       lastMousePos.current = { x: clientX, y: clientY };
@@ -242,7 +245,6 @@ export default function BGRemoveProPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
-              {/* Brushing Mode */}
               <div className="space-y-4">
                 <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Active Tool</Label>
                 <div className="grid grid-cols-2 gap-3 p-1.5 rounded-2xl bg-background border border-border">
@@ -269,7 +271,6 @@ export default function BGRemoveProPage() {
                 </div>
               </div>
 
-              {/* Sliders Matrix */}
               <div className="space-y-8">
                  <div className="space-y-4">
                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-foreground/40">
@@ -284,11 +285,10 @@ export default function BGRemoveProPage() {
                        <Label>Spectral Zoom</Label>
                        <span className="text-primary font-mono">{(zoom * 100).toFixed(0)}%</span>
                     </div>
-                    <Slider value={[zoom * 100]} min={50} max={800} step={10} onValueChange={v => setZoom(v[0] / 100)} />
+                    <Slider value={[zoom * 100]} min={5} max={800} step={5} onValueChange={v => setZoom(v[0] / 100)} />
                  </div>
               </div>
 
-              {/* Background Protocol */}
               <div className="space-y-4 pt-6 border-t border-border">
                 <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Canvas Matrix (Fill)</Label>
                 <div className="grid grid-cols-5 gap-2">
@@ -323,7 +323,6 @@ export default function BGRemoveProPage() {
                 </div>
               </div>
 
-              {/* Global Actions */}
               <div className="flex gap-4 pt-4 border-t border-border">
                  <Button variant="outline" onClick={resetMask} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-destructive/10 hover:text-destructive">
                     <RotateCcw className="w-3.5 h-3.5 mr-2" /> Restore All
@@ -348,7 +347,7 @@ export default function BGRemoveProPage() {
 
         {/* Studio Workspace */}
         <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[700px]">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col h-[750px]">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
               <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
@@ -365,7 +364,7 @@ export default function BGRemoveProPage() {
                 </div>
               )}
             </CardHeader>
-            <CardContent className="flex-1 p-0 flex items-center justify-center bg-[#060608] relative overflow-hidden">
+            <CardContent ref={workspaceRef} className="flex-1 p-0 flex items-center justify-center bg-[#060608] relative overflow-hidden">
                {!image ? (
                  <div className="h-full w-full flex flex-col items-center justify-center p-20 text-center">
                     <div 
@@ -392,11 +391,9 @@ export default function BGRemoveProPage() {
                     
                     {/* Transformation Matrix Layer */}
                     <div 
-                      className="absolute top-1/2 left-1/2 flex items-center justify-center transition-transform duration-100 ease-out"
+                      className="absolute inset-0 flex items-center justify-center transition-transform duration-100 ease-out"
                       style={{ 
-                        transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                        width: sourceImageRef.current?.width || 0,
-                        height: sourceImageRef.current?.height || 0
+                        transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                       }}
                     >
                        <canvas 
@@ -408,16 +405,16 @@ export default function BGRemoveProPage() {
                         onTouchStart={handleMouseDown}
                         onTouchMove={handleMouseMove}
                         onTouchEnd={handleMouseUp}
-                        className="shadow-2xl ring-1 ring-white/10 block"
+                        className="shadow-2xl ring-1 ring-white/10 block max-w-none"
                        />
                     </div>
 
                     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-4">
                       <div className="px-5 py-2.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 flex items-center gap-6 shadow-2xl">
                           <div className="flex items-center gap-4">
-                            <button onClick={() => setZoom(z => Math.max(0.1, z - 0.2))} className="text-white/40 hover:text-white"><ZoomOut className="w-4 h-4" /></button>
+                            <button onClick={() => setZoom(z => Math.max(0.05, z - 0.1))} className="text-white/40 hover:text-white"><ZoomOut className="w-4 h-4" /></button>
                             <span className="text-[10px] font-mono font-black text-primary w-12 text-center">{(zoom * 100).toFixed(0)}%</span>
-                            <button onClick={() => setZoom(z => Math.min(8, v => z + 0.2))} className="text-white/40 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
+                            <button onClick={() => setZoom(z => Math.min(10, z + 0.1))} className="text-white/40 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
                           </div>
                           <div className="w-[1px] h-4 bg-white/10" />
                           <div className="flex items-center gap-3">
