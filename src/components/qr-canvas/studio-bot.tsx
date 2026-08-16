@@ -196,6 +196,7 @@ export function StudioBot() {
   const [isPetting, setIsPetting] = useState(false);
   const [isNodding, setIsNodding] = useState(false);
   const [isHappy, setIsHappy] = useState(false);
+  const [isInitialShow, setIsInitialShow] = useState(true);
   
   const [messages, setMessages] = useState<{ 
     type: 'user' | 'bot', 
@@ -209,6 +210,11 @@ export function StudioBot() {
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Initial visibility window: Show fully for 5 seconds before sliding to peek
+    const initialShowTimer = setTimeout(() => {
+      setIsInitialShow(false);
+    }, 5000);
+
     const triggerBubble = () => {
       if (isOpen || isMinimized) return;
       setBubbleText(BUBBLE_MESSAGES[Math.floor(Math.random() * BUBBLE_MESSAGES.length)]);
@@ -218,7 +224,11 @@ export function StudioBot() {
       bubbleTimeoutRef.current = setTimeout(triggerBubble, nextDelay);
     };
     bubbleTimeoutRef.current = setTimeout(triggerBubble, 15000);
-    return () => { if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current); };
+
+    return () => { 
+      if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current); 
+      clearTimeout(initialShowTimer);
+    };
   }, [isOpen, isMinimized]);
 
   useEffect(() => {
@@ -350,11 +360,12 @@ export function StudioBot() {
   };
 
   if (!isOpen) {
+    const isShowingFully = isHovered || isInitialShow;
     return (
       <div 
         className={cn(
           "fixed bottom-8 z-[100] flex items-end justify-end transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
-          isHovered ? "right-8" : "right-[-35px] sm:right-[-45px]"
+          isShowingFully ? "right-8" : "right-[-35px] sm:right-[-45px]"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
