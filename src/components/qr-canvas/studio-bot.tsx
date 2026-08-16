@@ -194,6 +194,8 @@ export function StudioBot() {
   const [showBubble, setShowBubble] = useState(false);
   const [bubbleText, setBubbleText] = useState('');
   const [isPetting, setIsPetting] = useState(false);
+  const [isNodding, setIsNodding] = useState(false);
+  const [isHappy, setIsHappy] = useState(false);
   
   const [messages, setMessages] = useState<{ 
     type: 'user' | 'bot', 
@@ -206,29 +208,25 @@ export function StudioBot() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Random Bubble Logic
   useEffect(() => {
     const triggerBubble = () => {
       if (isOpen || isMinimized) return;
-      
       setBubbleText(BUBBLE_MESSAGES[Math.floor(Math.random() * BUBBLE_MESSAGES.length)]);
       setShowBubble(true);
-      
       setTimeout(() => setShowBubble(false), 3000);
-      
       const nextDelay = 12000 + Math.random() * 13000;
       bubbleTimeoutRef.current = setTimeout(triggerBubble, nextDelay);
     };
-
     bubbleTimeoutRef.current = setTimeout(triggerBubble, 15000);
     return () => { if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current); };
   }, [isOpen, isMinimized]);
 
-  // Auto-detect current tool on mount or page change
   useEffect(() => {
     if (isOpen && messages.length <= 1) {
       const currentTool = TOOLS.find(t => t.href === pathname);
       if (currentTool) {
+        setIsHappy(true);
+        setTimeout(() => setIsHappy(false), 500);
         setMessages([{ 
           type: 'bot', 
           content: `Welcome to **${currentTool.title}**. Review the protocol below:`,
@@ -270,14 +268,18 @@ export function StudioBot() {
     const userMsg = input.trim();
     setMessages(prev => [...prev, { type: 'user', content: userMsg, id: Date.now().toString() }].slice(-8));
     setQuery('');
+    setIsNodding(true);
+    setTimeout(() => setIsNodding(false), 400);
     setIsTyping(true);
 
     await new Promise(r => setTimeout(r, 400));
 
     const lowQuery = userMsg.toLowerCase();
-    
     const isDetailReq = lowQuery.match(/(how|step|detail|tarika|more|guide|instruction|steps)/);
+    
     if (isDetailReq && lastTool) {
+      setIsHappy(true);
+      setTimeout(() => setIsHappy(false), 500);
       setMessages(prev => [...prev, { 
         type: 'bot', 
         content: `Loading full **Master Protocol** for ${lastTool.title}:`,
@@ -304,6 +306,8 @@ export function StudioBot() {
     .map(r => r.tool);
 
     if (results.length > 0) {
+      setIsHappy(true);
+      setTimeout(() => setIsHappy(false), 500);
       setLastTool(results[0]);
       setMessages(prev => [...prev, { 
         type: 'bot', 
@@ -349,47 +353,45 @@ export function StudioBot() {
     return (
       <div 
         className={cn(
-          "fixed bottom-8 z-[100] flex items-end justify-end transition-all duration-500 ease-in-out",
+          "fixed bottom-8 z-[100] flex items-end justify-end transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
           isHovered ? "right-8" : "right-[-35px] sm:right-[-45px]"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         <div className="relative flex flex-col items-center">
-          {/* Bubble Message */}
           <div className={cn(
             "absolute bottom-full mb-4 px-3 py-1.5 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl transition-all duration-300 transform origin-bottom",
-            showBubble ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-50 translate-y-2 pointer-events-none"
+            showBubble ? "animate-bubble-pop" : "opacity-0 scale-50 translate-y-2 pointer-events-none"
           )}>
             {bubbleText}
             <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-primary" />
           </div>
 
-          {/* Cute Robot Button */}
           <button 
             onClick={handleRobotClick}
             className={cn(
-              "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary flex items-center justify-center shadow-[0_15px_40px_-10px_rgba(59,130,246,0.6)] border-4 border-white/20 transition-all duration-300 relative group overflow-hidden",
-              isPetting ? "scale-125 animate-bounce" : "hover:scale-105 active:scale-95"
+              "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary flex items-center justify-center shadow-[0_15px_40px_-10px_rgba(59,130,246,0.6)] border-4 border-white/20 transition-all duration-300 relative group overflow-hidden motion-safe:animate-bot-bob",
+              isPetting && "animate-bot-squash"
             )}
           >
-            {/* Expressive Face */}
-            <div className="relative w-full h-full flex flex-col items-center justify-center pt-1">
-              <div className="flex gap-2.5 mb-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse shadow-[0_0_8px_white]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse shadow-[0_0_8px_white]" />
+            <div className={cn(
+              "relative w-full h-full flex flex-col items-center justify-center pt-1 transition-transform duration-300",
+              isNodding && "animate-bot-nod"
+            )}>
+              <div className="flex gap-2.5 mb-1.5 animate-bot-look">
+                <div className={cn("w-2.5 h-2.5 rounded-full bg-white animate-bot-blink shadow-[0_0_8px_white] transition-transform", isHappy && "animate-bot-happy-eyes")} />
+                <div className={cn("w-2.5 h-2.5 rounded-full bg-white animate-bot-blink shadow-[0_0_8px_white] transition-transform", isHappy && "animate-bot-happy-eyes")} />
               </div>
               <div className="w-4 h-1.5 rounded-full border-b-2 border-white opacity-60" />
               
-              {/* Petting Heart */}
               {isPetting && (
-                <div className="absolute inset-0 flex items-center justify-center animate-out fade-out zoom-out duration-500 fill-mode-forwards">
-                  <Heart className="w-8 h-8 text-white fill-current" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Heart className="w-8 h-8 text-white fill-current animate-heart-float" />
                 </div>
               )}
             </div>
             
-            {/* Status Pulse */}
             <div className="absolute top-3 right-3 w-2 h-2 bg-green-400 rounded-full animate-ping opacity-60" />
             <div className="absolute top-3 right-3 w-2 h-2 bg-green-400 rounded-full" />
           </button>
@@ -400,17 +402,17 @@ export function StudioBot() {
 
   return (
     <div className={cn(
-      "fixed bottom-0 right-0 lg:bottom-6 lg:right-6 w-full lg:w-[420px] bg-[#0a0a0c] border-t lg:border border-white/10 lg:rounded-[2.5rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.8)] z-[100] flex flex-col overflow-hidden transition-all duration-500",
-      isMinimized ? "h-[80px]" : "h-[720px] max-h-[90vh]"
+      "fixed bottom-0 right-0 lg:bottom-6 lg:right-6 w-full lg:w-[420px] bg-[#0a0a0c] border-t lg:border border-white/10 lg:rounded-[2.5rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.8)] z-[100] flex flex-col overflow-hidden transition-all duration-500 transform origin-bottom-right",
+      isMinimized ? "h-[80px]" : "h-[720px] max-h-[90vh] scale-100 opacity-100",
+      !isOpen && "scale-95 opacity-0 pointer-events-none"
     )}>
-      {/* Bot Header */}
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg border-2 border-white/20">
-            <div className="flex flex-col items-center justify-center pt-0.5">
+          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg border-2 border-white/20 relative overflow-hidden">
+            <div className={cn("flex flex-col items-center justify-center pt-0.5", isNodding && "animate-bot-nod")}>
               <div className="flex gap-1.5 mb-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                <div className={cn("w-1.5 h-1.5 rounded-full bg-white animate-bot-blink", isHappy && "scale-150")} />
+                <div className={cn("w-1.5 h-1.5 rounded-full bg-white animate-bot-blink", isHappy && "scale-150")} />
               </div>
               <div className="w-2.5 h-1 rounded-full border-b border-white opacity-60" />
             </div>
@@ -444,7 +446,6 @@ export function StudioBot() {
                 "flex flex-col gap-3 max-w-[95%] animate-in fade-in slide-in-from-bottom-2 duration-300",
                 msg.type === 'user' ? "ml-auto items-end" : "mr-auto items-start"
               )}>
-                {/* Content Bubble */}
                 <div className={cn(
                   "p-4 rounded-2xl text-[13px] font-medium leading-relaxed shadow-lg",
                   msg.type === 'user' 
@@ -454,7 +455,6 @@ export function StudioBot() {
                   {msg.content}
                 </div>
                 
-                {/* Protocol Guide Card */}
                 {msg.toolInfo && (
                   <div className="w-full space-y-4 mt-2 animate-in zoom-in duration-500">
                     <div className="bg-primary/5 border border-primary/10 rounded-[2rem] p-6 space-y-6 shadow-xl">
@@ -518,7 +518,6 @@ export function StudioBot() {
                   </div>
                 )}
 
-                {/* Multiple Options List */}
                 {msg.links && !msg.toolInfo && (
                   <div className="grid grid-cols-1 gap-2 w-full mt-2">
                     {msg.links.map((link) => (
@@ -556,7 +555,6 @@ export function StudioBot() {
             )}
           </div>
 
-          {/* Input Area */}
           <div className="p-5 border-t border-white/5 bg-white/[0.02] space-y-4 shrink-0">
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                {["How to compress PDF?", "Make passport photo", "Convert photo to text", "Shrink image size", "Join PDF files"].map(q => (
@@ -606,12 +604,6 @@ export function StudioBot() {
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes scanner-line {
-          0%, 100% { top: 0%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { top: 100%; opacity: 0; }
-        }
       `}</style>
     </div>
   );
