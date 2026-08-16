@@ -8,7 +8,6 @@ import {
   Trash2, 
   Sparkles, 
   Loader2, 
-  Info,
   CheckCircle2,
   FileVideo,
   Settings2,
@@ -17,26 +16,18 @@ import {
   Smartphone,
   Monitor,
   VolumeX,
-  Volume2,
   Scissors,
   Clock,
   Timer,
   Zap,
-  RotateCcw,
-  Layout,
   Film,
   ShieldCheck,
   Layers,
   Maximize,
-  FastForward,
-  Repeat,
   Tv,
   Tablet,
   Square as SquareIcon,
   Maximize2,
-  AlertCircle,
-  History,
-  ArrowRight,
   Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,17 +51,17 @@ type DevicePreset = {
 };
 
 const DEVICE_PRESETS: DevicePreset[] = [
-  { id: 'windows-hd', label: 'Windows (16:9)', width: 1920, height: 1080, icon: Monitor },
-  { id: 'ultrawide', label: 'Ultrawide (21:9)', width: 2560, height: 1080, icon: Tv },
-  { id: 'iphone', label: 'iPhone (19.5:9)', width: 1179, height: 2556, icon: Smartphone },
-  { id: 'phone-std', label: 'Phone (9:16)', width: 1080, height: 1920, icon: Smartphone },
-  { id: 'tablet', label: 'Tablet (4:3)', width: 2048, height: 1536, icon: Tablet },
-  { id: 'square', label: 'Square (1:1)', width: 1080, height: 1080, icon: SquareIcon },
+  { id: 'windows-hd', label: 'Windows (16:9)', width: 1280, height: 720, icon: Monitor },
+  { id: 'ultrawide', label: 'Ultrawide (21:9)', width: 1280, height: 540, icon: Tv },
+  { id: 'iphone', label: 'iPhone (19.5:9)', width: 720, height: 1560, icon: Smartphone },
+  { id: 'phone-std', label: 'Phone (9:16)', width: 720, height: 1280, icon: Smartphone },
+  { id: 'tablet', label: 'Tablet (4:3)', width: 1024, height: 768, icon: Tablet },
+  { id: 'square', label: 'Square (1:1)', width: 720, height: 720, icon: SquareIcon },
 ];
 
 type FitMode = 'cover' | 'contain' | 'blur-fill';
 type LoopMode = 'normal' | 'boomerang';
-type ExportQuality = 'high' | 'medium' | 'small';
+type TargetFormat = 'mp4' | 'gif';
 
 export default function AdvancedLiveWallpaperPage() {
   const { toast } = useToast();
@@ -82,17 +73,15 @@ export default function AdvancedLiveWallpaperPage() {
   const [logs, setLogs] = useState<string[]>([]);
   
   // Results
-  const [mp4Url, setMp4Url] = useState<string | null>(null);
-  const [webmUrl, setWebmUrl] = useState<string | null>(null);
-  const [gifUrl, setGifUrl] = useState<string | null>(null);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
 
   // Settings
+  const [targetFormat, setTargetFormat] = useState<TargetFormat>('mp4');
   const [presetId, setPresetId] = useState('windows-hd');
   const [fitMode, setFitMode] = useState<FitMode>('cover');
   const [loopMode, setLoopMode] = useState<LoopMode>('normal');
   const [speed, setSpeed] = useState(1);
   const [isMuted, setIsMuted] = useState(true);
-  const [quality, setQuality] = useState<ExportQuality>('medium');
   
   // Timeline
   const [totalDuration, setTotalDuration] = useState(0);
@@ -106,9 +95,9 @@ export default function AdvancedLiveWallpaperPage() {
 
   useEffect(() => {
     return () => {
-      [mp4Url, webmUrl, gifUrl].forEach(url => url && URL.revokeObjectURL(url));
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
     };
-  }, [mp4Url, webmUrl, gifUrl]);
+  }, [resultUrl]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -117,19 +106,18 @@ export default function AdvancedLiveWallpaperPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms}`;
   };
 
-  const loadFFmpeg = async (force = false) => {
-    if (!force && isLoaded && ffmpegRef.current) return true;
+  const loadFFmpeg = async () => {
+    if (isLoaded && ffmpegRef.current) return true;
     
     setStatus('Initializing Engine...');
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
     
-    if (!ffmpegRef.current || force) {
+    if (!ffmpegRef.current) {
       ffmpegRef.current = new FFmpeg();
     }
     
     const ffmpeg = ffmpegRef.current;
     
-    // Clear old listeners if force reloading
     ffmpeg.on('log', ({ message }) => {
       setLogs(prev => [...prev.slice(-4), message]);
     });
@@ -150,7 +138,7 @@ export default function AdvancedLiveWallpaperPage() {
       toast({ 
         variant: "destructive", 
         title: "Engine Failure", 
-        description: "Failed to load FFmpeg. Ensure your browser supports SharedArrayBuffer." 
+        description: "Failed to load FFmpeg. SharedArrayBuffer may be restricted." 
       });
       return false;
     }
@@ -169,19 +157,15 @@ export default function AdvancedLiveWallpaperPage() {
       };
       video.src = URL.createObjectURL(selectedFile);
       setFile(selectedFile);
-      setMp4Url(null); setWebmUrl(null); setGifUrl(null);
+      setResultUrl(null);
       toast({ title: "Asset Imported", description: "Studio analyzed media container." });
     }
   };
 
   const handleClear = () => {
     setFile(null);
-    if (mp4Url) URL.revokeObjectURL(mp4Url);
-    if (webmUrl) URL.revokeObjectURL(webmUrl);
-    if (gifUrl) URL.revokeObjectURL(gifUrl);
-    setMp4Url(null);
-    setWebmUrl(null);
-    setGifUrl(null);
+    if (resultUrl) URL.revokeObjectURL(resultUrl);
+    setResultUrl(null);
     setProgress(0);
     setStatus('');
     setLogs([]);
@@ -194,10 +178,17 @@ export default function AdvancedLiveWallpaperPage() {
 
   const processWallpaper = async () => {
     if (!file) return;
+
+    // Strict validation
+    if (endTime - startTime > 15) {
+      toast({ variant: "destructive", title: "Duration Overload", description: "Maximum 15 seconds allowed for stability." });
+      return;
+    }
+
     setIsProcessing(true);
+    setResultUrl(null);
     setLogs([]);
     
-    // If we've had memory errors before, loadFFmpeg will reload a fresh instance
     const ready = await loadFFmpeg();
     if (!ready || !ffmpegRef.current) {
       setIsProcessing(false);
@@ -206,17 +197,17 @@ export default function AdvancedLiveWallpaperPage() {
 
     const ffmpeg = ffmpegRef.current;
     const inputName = 'input_payload';
+    const outputName = `output_master.${targetFormat === 'mp4' ? 'mp4' : 'gif'}`;
     const w = activePreset.width;
     const h = activePreset.height;
 
     try {
       setStatus('Writing Payload...');
-      // Aggressive cleanup before writing
-      try { await ffmpeg.deleteFile(inputName); } catch(e) {}
-      
       const fileData = new Uint8Array(await file.arrayBuffer());
       await ffmpeg.writeFile(inputName, fileData);
 
+      let duration = endTime - startTime;
+      
       // Build Filter Chain
       let filter = '';
       if (fitMode === 'cover') {
@@ -233,65 +224,51 @@ export default function AdvancedLiveWallpaperPage() {
         filter = `[0:v]${filter},split[v1][v2];[v2]reverse[v3];[v1][v3]concat=n=2:v=1:a=0`;
       }
 
-      const crf = quality === 'high' ? '18' : quality === 'medium' ? '23' : '30';
-      const duration = endTime - startTime;
+      if (targetFormat === 'mp4') {
+        setStatus('Synthesizing MP4 Master...');
+        const args = [
+          '-ss', startTime.toFixed(2), '-t', duration.toFixed(2),
+          '-i', inputName,
+          '-vf', filter,
+          '-r', '24',
+          '-c:v', 'libx264', '-crf', '28', '-preset', 'ultrafast',
+          '-pix_fmt', 'yuv420p',
+          outputName
+        ];
+        if (isMuted) args.splice(6, 0, '-an');
+        await ffmpeg.exec(args);
+      } else {
+        // GIF Specific Caps
+        const gifDur = Math.min(duration, 5);
+        const gifFilter = `${filter},fps=8,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`;
+        setStatus('Synthesizing GIF Matrix...');
+        await ffmpeg.exec([
+          '-ss', startTime.toFixed(2), '-t', gifDur.toFixed(2),
+          '-i', inputName,
+          '-vf', gifFilter,
+          outputName
+        ]);
+      }
 
-      // 1. Export MP4
-      setStatus('Synthesizing MP4 Master...');
-      const mp4Args = [
-        '-ss', startTime.toFixed(2), '-t', duration.toFixed(2),
-        '-i', inputName,
-        '-vf', filter,
-        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', crf,
-        '-pix_fmt', 'yuv420p',
-        'output.mp4'
-      ];
-      if (isMuted) mp4Args.splice(6, 0, '-an');
-      await ffmpeg.exec(mp4Args);
-      const mp4Data = await ffmpeg.readFile('output.mp4');
-      setMp4Url(URL.createObjectURL(new Blob([(mp4Data as any).buffer], { type: 'video/mp4' })));
-      await ffmpeg.deleteFile('output.mp4');
-
-      // 2. Export WebM
-      setStatus('Synthesizing WebM Master...');
-      await ffmpeg.exec([
-        '-ss', startTime.toFixed(2), '-t', duration.toFixed(2),
-        '-i', inputName, '-vf', filter, '-an',
-        '-c:v', 'libvpx-vp9', '-crf', '35', '-b:v', '0',
-        'output.webm'
-      ]);
-      const webmData = await ffmpeg.readFile('output.webm');
-      setWebmUrl(URL.createObjectURL(new Blob([(webmData as any).buffer], { type: 'video/webm' })));
-      await ffmpeg.deleteFile('output.webm');
-
-      // 3. Export GIF
-      const gifDur = Math.min(duration, 5);
-      setStatus('Synthesizing GIF Preview...');
-      const gifFilter = `${filter},fps=10,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`;
-      await ffmpeg.exec([
-        '-ss', startTime.toFixed(2), '-t', gifDur.toFixed(2),
-        '-i', inputName, '-vf', gifFilter,
-        'output.gif'
-      ]);
-      const gifData = await ffmpeg.readFile('output.gif');
-      setGifUrl(URL.createObjectURL(new Blob([(gifData as any).buffer], { type: 'image/gif' })));
-      await ffmpeg.deleteFile('output.gif');
-
-      // Final Cleanup
+      setStatus('Extracting Master...');
+      const data = await ffmpeg.readFile(outputName);
+      setResultUrl(URL.createObjectURL(new Blob([(data as any).buffer], { type: targetFormat === 'mp4' ? 'video/mp4' : 'image/gif' })));
+      
+      // Aggressive Cleanup
       await ffmpeg.deleteFile(inputName);
+      await ffmpeg.deleteFile(outputName);
 
       setStatus('Production Complete');
-      toast({ title: "Masters Ready", description: "All formats successfully synthesized." });
+      toast({ title: "Master Ready", description: `${targetFormat.toUpperCase()} successfully synthesized.` });
     } catch (err: any) {
       console.error(err);
       if (err.message?.includes('memory access out of bounds')) {
         toast({ 
           variant: "destructive", 
-          title: "Memory Limit Reached", 
-          description: "This asset is too complex for the current sandbox. Try a shorter duration." 
+          title: "Memory Overload", 
+          description: "Video too large. Use a shorter clip (under 15s) or lower complexity." 
         });
-        // Set flag to force reload on next attempt to clear the leaked memory
-        setIsLoaded(false);
+        setIsLoaded(false); // Force reload next time
       } else {
         toast({ variant: "destructive", title: "Production Failed", description: "Internal error during re-encoding." });
       }
@@ -311,7 +288,7 @@ export default function AdvancedLiveWallpaperPage() {
           Live <span className="text-primary italic">Wallpaper Studio</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-3xl leading-relaxed">
-          The ultimate hardware-specific wallpaper synthesis engine. Create perfectly calibrated, looping, high-fidelity background matrices for Windows, macOS, iPhone, and Android.
+          Create perfectly calibrated, looping, high-fidelity background matrices. enforce a 15-second cap for 100% stable local production.
         </p>
       </div>
 
@@ -356,18 +333,34 @@ export default function AdvancedLiveWallpaperPage() {
 
               {file && (
                 <div className="space-y-10 animate-in zoom-in duration-500">
-                  {/* Timeline Matrix */}
+                  <div className="space-y-6">
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Export Mode</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                       <button
+                        onClick={() => setTargetFormat('mp4')}
+                        className={cn("h-12 rounded-xl border flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all", targetFormat === 'mp4' ? "bg-primary text-white" : "bg-background border-border text-foreground/40")}
+                       >
+                         <Film className="w-3.5 h-3.5" /> MP4 Master
+                       </button>
+                       <button
+                        onClick={() => setTargetFormat('gif')}
+                        className={cn("h-12 rounded-xl border flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all", targetFormat === 'gif' ? "bg-primary text-white" : "bg-background border-border text-foreground/40")}
+                       >
+                         <ImageIcon className="w-3.5 h-3.5" /> GIF Clip
+                       </button>
+                    </div>
+                  </div>
+
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <Scissors className="w-3.5 h-3.5" /> Timeline Trim
+                        <Scissors className="w-3.5 h-3.5" /> Timeline Trim (Max 15s)
                       </Label>
                       <span className="text-[10px] font-mono font-bold text-primary">{formatTime(startTime)} - {formatTime(endTime)}</span>
                     </div>
-                    <Slider value={[startTime, endTime]} min={0} max={totalDuration} step={0.1} minStepsBetweenThumbs={1} onValueChange={(val) => { setStartTime(val[0]); setEndTime(val[1]); }} />
+                    <Slider value={[startTime, endTime]} min={0} max={totalDuration} step={0.1} onValueChange={(val) => { setStartTime(val[0]); setEndTime(val[1]); }} />
                   </div>
 
-                  {/* Device Protocol */}
                   <div className="space-y-6">
                     <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Device Protocol</Label>
                     <div className="grid grid-cols-2 gap-3">
@@ -377,7 +370,7 @@ export default function AdvancedLiveWallpaperPage() {
                           onClick={() => setPresetId(dev.id)}
                           className={cn(
                             "flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all",
-                            presetId === dev.id ? "bg-primary text-white border-primary shadow-xl scale-105" : "bg-background border-border text-foreground/40 hover:border-primary/20"
+                            presetId === dev.id ? "bg-primary text-white border-primary shadow-xl" : "bg-background border-border text-foreground/40 hover:border-primary/20"
                           )}
                         >
                            <dev.icon className="w-4 h-4" />
@@ -387,7 +380,6 @@ export default function AdvancedLiveWallpaperPage() {
                     </div>
                   </div>
 
-                  {/* Production Settings */}
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Fit Mode</Label>
@@ -398,7 +390,7 @@ export default function AdvancedLiveWallpaperPage() {
                         <SelectContent className="glass-card">
                           <SelectItem value="cover" className="text-[10px] font-black uppercase">Cover (Fill)</SelectItem>
                           <SelectItem value="contain" className="text-[10px] font-black uppercase">Contain (Fit)</SelectItem>
-                          <SelectItem value="blur-fill" className="text-[10px] font-black uppercase">Blur-Fill Edges</SelectItem>
+                          <SelectItem value="blur-fill" className="text-[10px] font-black uppercase">Blur-Fill</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -410,7 +402,7 @@ export default function AdvancedLiveWallpaperPage() {
                         </SelectTrigger>
                         <SelectContent className="glass-card">
                           <SelectItem value="normal" className="text-[10px] font-black uppercase">Normal Loop</SelectItem>
-                          <SelectItem value="boomerang" className="text-[10px] font-black uppercase">Boomerang (⇌)</SelectItem>
+                          <SelectItem value="boomerang" className="text-[10px] font-black uppercase">Boomerang</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -418,22 +410,22 @@ export default function AdvancedLiveWallpaperPage() {
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Motion Speed</Label>
+                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Speed</Label>
                       <Select value={speed.toString()} onValueChange={(v) => setSpeed(parseFloat(v))}>
                         <SelectTrigger className="h-12 bg-secondary border-border rounded-xl text-[10px] font-black uppercase">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="glass-card">
-                          <SelectItem value="0.5" className="text-[10px] font-black uppercase">0.5X (Slow)</SelectItem>
-                          <SelectItem value="1" className="text-[10px] font-black uppercase">1.0X (Normal)</SelectItem>
-                          <SelectItem value="1.25" className="text-[10px] font-black uppercase">1.25X (Fast)</SelectItem>
+                          <SelectItem value="0.5" className="text-[10px] font-black uppercase">0.5X</SelectItem>
+                          <SelectItem value="1" className="text-[10px] font-black uppercase">1.0X</SelectItem>
+                          <SelectItem value="1.25" className="text-[10px] font-black uppercase">1.25X</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Audio Master</Label>
+                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Audio</Label>
                       <div className="h-12 flex items-center justify-between px-4 bg-secondary rounded-xl border border-border">
-                        <span className="text-[10px] font-black uppercase text-foreground/40">Mute Stream</span>
+                        <VolumeX className="w-4 h-4 text-foreground/40" />
                         <Switch checked={isMuted} onCheckedChange={setIsMuted} />
                       </div>
                     </div>
@@ -465,11 +457,9 @@ export default function AdvancedLiveWallpaperPage() {
             <CardHeader className="py-8 border-b border-border bg-secondary/30">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Multi-Format Pipeline
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Stability Pipeline
                 </CardTitle>
-                <div className="flex gap-2">
-                   <div className="px-3 py-1 rounded-lg bg-background/50 border border-border text-[9px] font-black text-foreground/40 uppercase tracking-widest">Active Render: {activePreset.width}x{activePreset.height}</div>
-                </div>
+                <div className="px-3 py-1 rounded-lg bg-background/50 border border-border text-[9px] font-black text-foreground/40 uppercase tracking-widest">Target: {targetFormat.toUpperCase()} ({activePreset.width}x{activePreset.height})</div>
               </div>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col p-6 sm:p-12 bg-[#060608]">
@@ -486,70 +476,48 @@ export default function AdvancedLiveWallpaperPage() {
                     </div>
                     <div className="space-y-4 w-full max-w-sm">
                        <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-primary">
-                          <span>Synthesizing Device Matrix</span>
+                          <span>Synthesizing Matrix...</span>
                           <span>{progress}%</span>
                        </div>
                        <Progress value={progress} className="h-1.5 rounded-full" />
                     </div>
                     <div className="w-full max-w-sm p-4 rounded-xl bg-black/90 border border-white/5 text-left font-mono text-[9px] text-green-500/60 overflow-hidden shadow-inner">
-                      <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-2"><Terminal className="w-3 h-3" /><span className="uppercase tracking-widest">FFmpeg Pipeline</span></div>
-                      {logs.map((log, i) => (<div key={i} className="truncate whitespace-nowrap opacity-60 hover:opacity-100 transition-opacity">&gt; {log}</div>))}
+                      <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-2"><Terminal className="w-3 h-3" /><span className="uppercase tracking-widest">WASM Logs</span></div>
+                      {logs.map((log, i) => (<div key={i} className="truncate whitespace-nowrap opacity-60">&gt; {log}</div>))}
+                    </div>
+                 </div>
+               ) : resultUrl ? (
+                 <div className="space-y-12 animate-in zoom-in duration-700">
+                    <div className="flex flex-col items-center">
+                       <div className="relative w-full max-w-lg aspect-video bg-zinc-900 rounded-3xl p-4 shadow-2xl border-4 border-zinc-800 ring-1 ring-zinc-700 overflow-hidden">
+                          <div className="w-full h-full rounded-2xl bg-black overflow-hidden relative">
+                             {targetFormat === 'mp4' ? (
+                               <video src={resultUrl} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                             ) : (
+                               <img src={resultUrl} alt="GIF Result" className="w-full h-full object-cover" />
+                             )}
+                          </div>
+                       </div>
+                       
+                       <div className="mt-12 w-full max-w-lg space-y-6">
+                          <Button asChild className="w-full h-16 bg-primary text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                             <a href={resultUrl} download={`wallpaper-${activePreset.id}.${targetFormat}`}>
+                                <Download className="w-6 h-6 mr-3" /> Download {targetFormat.toUpperCase()} Master
+                             </a>
+                          </Button>
+                          <div className="p-6 rounded-[2rem] bg-secondary border border-border flex items-start gap-4">
+                             <Info className="w-5 h-5 text-primary mt-1 shrink-0" />
+                             <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
+                               To use: Import this file into Windows (Lively / Wallpaper Engine) or use as a Live Wallpaper on mobile devices.
+                             </p>
+                          </div>
+                       </div>
                     </div>
                  </div>
                ) : (
-                 <div className="space-y-12 animate-in zoom-in duration-700">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                       {/* Desktop Preview Frame */}
-                       <div className="space-y-6 flex flex-col items-center">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-foreground/40">PC Monitor Matrix</Label>
-                          <div className="relative w-full aspect-video bg-zinc-900 rounded-lg p-2 shadow-2xl border-4 border-zinc-800 ring-1 ring-zinc-700">
-                             <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-16 h-6 bg-zinc-800 rounded-b-xl" />
-                             <div className="w-full h-full rounded bg-black overflow-hidden">
-                                {mp4Url && <video src={mp4Url} className="w-full h-full object-cover" autoPlay loop muted playsInline />}
-                             </div>
-                          </div>
-                       </div>
-                       {/* Phone Preview Frame */}
-                       <div className="space-y-6 flex flex-col items-center">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Mobile Lock-Screen Matrix</Label>
-                          <div className="relative w-40 aspect-[9/19.5] bg-zinc-900 rounded-[2.5rem] p-2 shadow-2xl border-4 border-zinc-800 ring-1 ring-zinc-700 overflow-hidden">
-                             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-5 bg-black rounded-full z-10" />
-                             <div className="w-full h-full rounded-[1.8rem] bg-black overflow-hidden relative">
-                                {mp4Url && <video src={mp4Url} className="w-full h-full object-cover" autoPlay loop muted playsInline />}
-                                <div className="absolute top-12 left-0 w-full text-center text-white/80 space-y-1">
-                                   <p className="text-3xl font-headline font-black">09:41</p>
-                                   <p className="text-[8px] font-bold uppercase tracking-widest">Monday, March 10</p>
-                                </div>
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-
-                    {/* Export Matrix */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                       {[
-                         { label: 'MP4 Master', url: mp4Url, icon: Film, ext: 'mp4' },
-                         { label: 'WebM Optimized', url: webmUrl, icon: MonitorPlay, ext: 'webm' },
-                         { label: 'GIF Preview', url: gifUrl, icon: ImageIcon, ext: 'gif' }
-                       ].map((fmt) => (
-                         <div key={fmt.ext} className="p-6 rounded-3xl bg-secondary border border-border space-y-6 group hover:border-primary/20 transition-all">
-                            <div className="flex items-center gap-4">
-                               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                  <fmt.icon className="w-5 h-5" />
-                               </div>
-                               <div className="space-y-0.5">
-                                  <p className="text-[10px] font-black uppercase text-foreground">{fmt.label}</p>
-                                  <p className="text-[8px] font-bold text-foreground/30 uppercase">{fmt.ext.toUpperCase()} Buffer</p>
-                               </div>
-                            </div>
-                            <Button asChild disabled={!fmt.url} className="w-full h-11 bg-primary text-white rounded-xl shadow-lg shadow-primary/10">
-                               <a href={fmt.url || '#'} download={`live-wallpaper-${activePreset.id}.${fmt.ext}`}>
-                                  <Download className="w-4 h-4 mr-2" /> Download
-                               </a>
-                            </Button>
-                         </div>
-                       ))}
-                    </div>
+                  <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6">
+                    <Maximize className="w-24 h-24 text-primary" />
+                    <p className="text-sm font-black uppercase tracking-[0.3em]">Configure Sequence</p>
                  </div>
                )}
             </CardContent>
@@ -561,9 +529,9 @@ export default function AdvancedLiveWallpaperPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Sovereign Processing</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Memory Guard</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All re-encoding and scaling protocols execute strictly in local memory. Your visuals are never transmitted to our infrastructure.
+                    Our studio implements clinical memory release cycles. Bitstreams are definitively purged from the WASM heap immediately after extraction.
                   </p>
                 </div>
              </div>
@@ -604,3 +572,4 @@ export default function AdvancedLiveWallpaperPage() {
     </div>
   );
 }
+
