@@ -217,13 +217,19 @@ const PandaMascot = ({ mode, isPetting, isHappy }: { mode: "A" | "B", isPetting:
           <ellipse cx="35" cy="48" rx="11" ry="14" fill="#1e293b" transform="rotate(-10, 35, 48)" />
           <ellipse cx="65" cy="48" rx="11" ry="14" fill="#1e293b" transform="rotate(10, 65, 48)" />
 
-          {/* Shiny Eyes */}
+          {/* Sparkle Eyes Matrix - High Gloss Kawaii */}
           <g className="animate-kit-blink">
-             <circle cx="35" cy="48" r="4.5" fill="#ffffff" />
-             <circle cx="33.5" cy="46" r="1.5" fill="#1e293b" />
+             {/* Left Eye */}
+             <circle cx="35" cy="48" r="6" fill="#ffffff" />
+             <circle cx="35" cy="48" r="3.5" fill="#1e293b" />
+             <circle cx="33.5" cy="46.5" r="1.5" fill="#ffffff" />
+             <circle cx="36.5" cy="49.5" r="0.8" fill="#ffffff" />
              
-             <circle cx="65" cy="48" r="4.5" fill="#ffffff" />
-             <circle cx="63.5" cy="46" r="1.5" fill="#1e293b" />
+             {/* Right Eye */}
+             <circle cx="65" cy="48" r="6" fill="#ffffff" />
+             <circle cx="65" cy="48" r="3.5" fill="#1e293b" />
+             <circle cx="63.5" cy="46.5" r="1.5" fill="#ffffff" />
+             <circle cx="66.5" cy="49.5" r="0.8" fill="#ffffff" />
           </g>
 
           {/* Nose & Smile */}
@@ -732,4 +738,3 @@ export function StudioBot() {
     </>
   );
 }
-
