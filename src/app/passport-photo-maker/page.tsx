@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -34,7 +33,8 @@ import {
   Calendar,
   AlertCircle,
   RotateCw,
-  EyeOff
+  EyeOff,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -285,6 +285,18 @@ export default function PassportPhotoPage() {
 
     setIsProcessing(false);
     toast({ title: "Sheet Production Complete", description: `A4 master exported at ${dpi} DPI.` });
+  };
+
+  const handleClear = () => {
+    setImage(null);
+    setLoadedImage(null);
+    setPos({ x: 0, y: 0 });
+    setZoom(1);
+    setRotation(0);
+    setBrightness(100);
+    setContrast(100);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    toast({ title: "Studio Reset", description: "Buffers cleared." });
   };
 
   return (
@@ -685,4 +697,3 @@ export default function PassportPhotoPage() {
     </div>
   );
 }
-
