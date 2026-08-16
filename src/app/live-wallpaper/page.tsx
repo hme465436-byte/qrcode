@@ -117,16 +117,27 @@ export default function AdvancedLiveWallpaperPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms}`;
   };
 
-  const loadFFmpeg = async () => {
-    if (isLoaded && ffmpegRef.current) return true;
+  const loadFFmpeg = async (force = false) => {
+    if (!force && isLoaded && ffmpegRef.current) return true;
+    
     setStatus('Initializing Engine...');
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-    if (!ffmpegRef.current) ffmpegRef.current = new FFmpeg();
+    
+    if (!ffmpegRef.current || force) {
+      ffmpegRef.current = new FFmpeg();
+    }
+    
     const ffmpeg = ffmpegRef.current;
     
-    ffmpeg.on('log', ({ message }) => setLogs(prev => [...prev.slice(-4), message]));
-    ffmpeg.on('progress', ({ progress: p }) => setProgress(Math.round(p * 100)));
-    
+    // Clear old listeners if force reloading
+    ffmpeg.on('log', ({ message }) => {
+      setLogs(prev => [...prev.slice(-4), message]);
+    });
+
+    ffmpeg.on('progress', ({ progress: p }) => {
+      setProgress(Math.round(p * 100));
+    });
+
     try {
       await ffmpeg.load({
         coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
@@ -135,7 +146,12 @@ export default function AdvancedLiveWallpaperPage() {
       setIsLoaded(true);
       return true;
     } catch (err) {
-      toast({ variant: "destructive", title: "Engine Failure", description: "FFmpeg load failed." });
+      console.error('FFmpeg Load Error:', err);
+      toast({ 
+        variant: "destructive", 
+        title: "Engine Failure", 
+        description: "Failed to load FFmpeg. Ensure your browser supports SharedArrayBuffer." 
+      });
       return false;
     }
   };
@@ -180,24 +196,26 @@ export default function AdvancedLiveWallpaperPage() {
     if (!file) return;
     setIsProcessing(true);
     setLogs([]);
+    
+    // If we've had memory errors before, loadFFmpeg will reload a fresh instance
     const ready = await loadFFmpeg();
-    if (!ready || !ffmpegRef.current) { setIsProcessing(false); return; }
+    if (!ready || !ffmpegRef.current) {
+      setIsProcessing(false);
+      return;
+    }
 
     const ffmpeg = ffmpegRef.current;
-    const inputName = 'input_media_payload';
+    const inputName = 'input_payload';
     const w = activePreset.width;
     const h = activePreset.height;
 
     try {
-      setStatus('Preparing Sandbox...');
-      // Clean start
-      try { await ffmpeg.deleteFile(inputName); } catch (e) {}
-      try { await ffmpeg.deleteFile('output.mp4'); } catch (e) {}
-      try { await ffmpeg.deleteFile('output.webm'); } catch (e) {}
-      try { await ffmpeg.deleteFile('output.gif'); } catch (e) {}
-
       setStatus('Writing Payload...');
-      await ffmpeg.writeFile(inputName, await fetchFile(file));
+      // Aggressive cleanup before writing
+      try { await ffmpeg.deleteFile(inputName); } catch(e) {}
+      
+      const fileData = new Uint8Array(await file.arrayBuffer());
+      await ffmpeg.writeFile(inputName, fileData);
 
       // Build Filter Chain
       let filter = '';
@@ -209,15 +227,12 @@ export default function AdvancedLiveWallpaperPage() {
         filter = `split[main][back];[back]scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h},boxblur=40:10[bg];[main]scale=${w}:${h}:force_original_aspect_ratio=decrease[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2`;
       }
 
-      // Speed Logic
       filter += `,setpts=1/${speed}*PTS`;
 
-      // Boomerang Logic
       if (loopMode === 'boomerang') {
         filter = `[0:v]${filter},split[v1][v2];[v2]reverse[v3];[v1][v3]concat=n=2:v=1:a=0`;
       }
 
-      // Quality Logic
       const crf = quality === 'high' ? '18' : quality === 'medium' ? '23' : '30';
       const duration = endTime - startTime;
 
@@ -249,7 +264,7 @@ export default function AdvancedLiveWallpaperPage() {
       setWebmUrl(URL.createObjectURL(new Blob([(webmData as any).buffer], { type: 'video/webm' })));
       await ffmpeg.deleteFile('output.webm');
 
-      // 3. Export GIF (Shortened for memory safety)
+      // 3. Export GIF
       const gifDur = Math.min(duration, 5);
       setStatus('Synthesizing GIF Preview...');
       const gifFilter = `${filter},fps=10,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`;
@@ -262,7 +277,7 @@ export default function AdvancedLiveWallpaperPage() {
       setGifUrl(URL.createObjectURL(new Blob([(gifData as any).buffer], { type: 'image/gif' })));
       await ffmpeg.deleteFile('output.gif');
 
-      // Clean input payload from memory
+      // Final Cleanup
       await ffmpeg.deleteFile(inputName);
 
       setStatus('Production Complete');
@@ -273,8 +288,10 @@ export default function AdvancedLiveWallpaperPage() {
         toast({ 
           variant: "destructive", 
           title: "Memory Limit Reached", 
-          description: "This asset is too large for the WASM sandbox. Please try a shorter duration." 
+          description: "This asset is too complex for the current sandbox. Try a shorter duration." 
         });
+        // Set flag to force reload on next attempt to clear the leaked memory
+        setIsLoaded(false);
       } else {
         toast({ variant: "destructive", title: "Production Failed", description: "Internal error during re-encoding." });
       }
@@ -433,7 +450,7 @@ export default function AdvancedLiveWallpaperPage() {
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
                   Synthesize Master
                 </Button>
-                <Button variant="outline" onClick={handleClear} className="flex-1 h-16 rounded-2xl border-border bg-secondary hover:text-destructive transition-all active:scale-95">
+                <Button variant="outline" onClick={handleClear} disabled={isProcessing} className="flex-1 h-16 rounded-2xl border-border bg-secondary hover:text-destructive transition-all active:scale-95">
                   <Trash2 className="w-6 h-6" />
                 </Button>
               </div>
@@ -476,7 +493,7 @@ export default function AdvancedLiveWallpaperPage() {
                     </div>
                     <div className="w-full max-w-sm p-4 rounded-xl bg-black/90 border border-white/5 text-left font-mono text-[9px] text-green-500/60 overflow-hidden shadow-inner">
                       <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-2"><Terminal className="w-3 h-3" /><span className="uppercase tracking-widest">FFmpeg Pipeline</span></div>
-                      {logs.map((log, i) => (<div key={i} className="truncate whitespace-nowrap opacity-60">&gt; {log}</div>))}
+                      {logs.map((log, i) => (<div key={i} className="truncate whitespace-nowrap opacity-60 hover:opacity-100 transition-opacity">&gt; {log}</div>))}
                     </div>
                  </div>
                ) : (
