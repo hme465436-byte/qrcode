@@ -218,20 +218,26 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Global Search Dialog */}
+      {/* Global Search Dialog with Premium Glow */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
           <DialogHeader className="p-6 border-b border-white/5 bg-white/2">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20 icon-3d" />
+            <div className="relative group/search">
+               {/* Inner Atmosphere Glow */}
+               <div className="absolute inset-0 bg-primary/5 blur-[25px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-700 pointer-events-none" />
+              
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d" />
               <Input 
                 autoFocus
-                placeholder="Query professional tools..."
+                placeholder="Query professional studio tools..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-14 pl-14 bg-transparent border-none focus-visible:ring-0 rounded-none text-lg font-medium tracking-tight placeholder:text-foreground/10"
+                className="h-16 pl-14 bg-transparent border-none focus-visible:ring-0 rounded-none text-lg font-medium tracking-tight placeholder:text-foreground/10"
               />
+              
+              {/* Focused Glow Base Bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent scale-x-0 group-focus-within/search:scale-x-100 transition-transform duration-700" />
             </div>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
@@ -242,15 +248,18 @@ export function Navbar() {
                     key={item.label}
                     href={item.href}
                     onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
-                    className="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 group transition-all duration-200"
+                    className="flex items-center justify-between p-5 rounded-2xl hover:bg-primary/5 group transition-all duration-300"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-transparent group-hover:border-primary/10 icon-container-3d">
+                      <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-transparent group-hover:border-primary/20 icon-container-3d">
                         <item.icon className="w-5 h-5 icon-3d" />
                       </div>
-                      <p className="text-sm font-bold uppercase tracking-tight text-foreground/60 group-hover:text-foreground">{item.label}</p>
+                      <p className="text-sm font-black uppercase tracking-widest text-foreground/60 group-hover:text-foreground">{item.label}</p>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-foreground/10 group-hover:text-primary group-hover:translate-x-1 transition-all icon-3d" />
+                    <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">
+                       <span className="text-[9px] font-black uppercase tracking-widest text-primary">Execute</span>
+                       <ArrowRight className="w-4 h-4 text-primary icon-3d" />
+                    </div>
                   </a>
                 ))}
               </div>

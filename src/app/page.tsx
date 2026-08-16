@@ -54,7 +54,8 @@ import {
   Mic,
   Command,
   Heart,
-  Play
+  Play,
+  RotateCcw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -467,7 +468,7 @@ const TOOLS = [
     title: 'Video to GIF', 
     desc: 'Synthesize high-quality animated GIFs from clips.', 
     label: 'ANIMATION', 
-    color: 'text-orange-600 bg-orange-500/10 border-orange-600/20',
+    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
     glowClass: 'bg-orange-500/10',
     keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip']
   },
@@ -573,7 +574,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto animate-reveal relative z-10">
           <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
-              <Command className="w-3 h-3 icon-3d" /> Digital Studio v7.0
+              <Command className="w-3 h-3 icon-3d" /> Digital Studio v7.2
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
               Verified {TOOLS.length} Production Units
@@ -587,16 +588,22 @@ export default function Home() {
             Professional high-fidelity asset generation and technical data translation. 100% private, client-side, and engineered for high-performance workflows.
           </p>
 
-          {/* SaaS Style Search Bar */}
+          {/* SaaS Style Search Bar with Atmospheric Glow */}
           <div className="max-w-2xl mx-auto mb-20 px-4 group relative">
-            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-transparent shadow-2xl">
-              <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/5 group-focus-within:border-primary/50 transition-all duration-300">
+            {/* Outer Atmospheric Glow Layer */}
+            <div className="absolute -inset-8 bg-primary/5 blur-[50px] rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+            
+            {/* Pulse Glow Border Layer */}
+            <div className="absolute -inset-[2px] rounded-[1.4rem] bg-primary/20 opacity-0 group-hover:opacity-40 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[1px] pointer-events-none" />
+
+            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/20 group-focus-within:from-primary/50 group-focus-within:to-primary/20">
+              <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/5 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_50px_-10px_rgba(59,130,246,0.5)] transition-all duration-300">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                   <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors icon-3d" />
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Find a professional tool..."
+                  placeholder="Query professional studio tools..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-base font-medium placeholder:text-foreground/20"
@@ -674,6 +681,7 @@ export default function Home() {
                 Privacy Sovereign
               </div>
               <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight leading-[0.95]">Definitive <span className="text-primary italic">Security</span> Mandate</h2>
+              <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight leading-[0.95]">Definitive <span className="text-primary italic">Security</span> Mandate</h2>
               <p className="text-lg text-foreground/40 font-medium leading-relaxed">
                 Our studio operates entirely within your browser's memory sandbox. We have eliminated server-side storage to ensure your branding and technical data remain strictly private and permanent.
               </p>
@@ -729,11 +737,6 @@ export default function Home() {
            </div>
         </div>
       </section>
-      
-      <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
 }
