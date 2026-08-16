@@ -89,6 +89,16 @@ const TOOLS = [
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
   },
   { 
+    href: '/pdf-password-protect', 
+    icon: ShieldAlert, 
+    title: 'PDF Password', 
+    desc: 'Encrypt PDF documents with passwords and permissions.', 
+    label: 'SECURITY', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['pdf password', 'encrypt pdf', 'lock pdf', 'protect document', 'secure pdf']
+  },
+  { 
     href: '/pdf-rotator', 
     icon: RotateCw, 
     title: 'PDF Rotator', 
@@ -530,7 +540,7 @@ export default function Home() {
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. video, pdf, exif)"
+                  placeholder="Search tools... (e.g. video, pdf, password)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
@@ -583,7 +593,7 @@ export default function Home() {
                 <Search className="w-16 h-16 text-foreground/10" />
                 <div className="space-y-2">
                   <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
-                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;video&quot; or &quot;audio&quot;</p>
+                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;video&quot; or &quot;pdf&quot;</p>
                 </div>
                 <ShadButton 
                   onClick={() => setSearchQuery('')}
