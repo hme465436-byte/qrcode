@@ -7,8 +7,6 @@ import {
   Upload, 
   Download, 
   Trash2, 
-  RotateCcw, 
-  Maximize2, 
   Info,
   CheckCircle2,
   Layers,
@@ -24,7 +22,9 @@ import {
   Settings2,
   ShieldCheck,
   Search,
-  X
+  X,
+  Maximize,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +32,8 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+
+const CANVAS_SIZE_LIMIT = 2048; // Limit for internal processing stability
 
 export default function BGRemoveProPage() {
   const { toast } = useToast();
@@ -41,7 +43,7 @@ export default function BGRemoveProPage() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Brush settings
-  const [brushSize, setBrushSize] = useState(30);
+  const [brushSize, setBrushSize] = useState(40);
   const [toolMode, setToolMode] = useState<'erase' | 'restore'>('erase');
   
   // Transform states
@@ -50,12 +52,10 @@ export default function BGRemoveProPage() {
   
   // Display settings
   const [bgColor, setBgColor] = useState('transparent');
-  const [displayMode, setDisplayMode] = useState<'result' | 'original' | 'mask'>('result');
 
   // Canvas refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const maskCanvasRef = useRef<HTMLCanvasElement>(null);
-  const mainImageRef = useRef<HTMLImageElement | null>(null);
+  const sourceImageRef = useRef<HTMLImageElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Interaction refs
@@ -64,53 +64,54 @@ export default function BGRemoveProPage() {
   const lastMousePos = useRef({ x: 0, y: 0 });
 
   /**
-   * Main Workspace Rendering Logic
-   * Composites the background, original image, and the transparency mask
+   * Coordinate Translation Matrix
+   * Maps screen coordinates to internal high-res canvas pixels
    */
-  const drawWorkspace = useCallback(() => {
+  const getCanvasCoords = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
-    const maskCanvas = maskCanvasRef.current;
-    if (!canvas || !maskCanvas || !mainImageRef.current) return;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    
+    // Calculate the scale between the displayed CSS size and the internal resolution
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  };
 
+  /**
+   * Core Brushing Engine
+   * Executes erase (transparency) or restore (sampling from source)
+   */
+  const draw = (x: number, y: number) => {
+    const canvas = canvasRef.current;
+    const source = sourceImageRef.current;
+    if (!canvas || !source) return;
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (displayMode === 'original') {
-      ctx.drawImage(mainImageRef.current, 0, 0);
-      return;
-    }
-
-    if (displayMode === 'mask') {
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(maskCanvas, 0, 0);
-      return;
-    }
-
-    // Default: 'result'
     ctx.save();
     
-    // Draw background color if selected
-    if (bgColor !== 'transparent') {
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (toolMode === 'erase') {
+      // DEFINITIVE ERASE: Remove alpha channel
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // PIXEL RESTORE: Sample from source imagery
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.beginPath();
+      ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(source, 0, 0);
     }
-
-    // Draw original image
-    ctx.drawImage(mainImageRef.current, 0, 0);
-    
-    // Apply Mask via destination-in (keeps only where mask is opaque)
-    ctx.globalCompositeOperation = 'destination-in';
-    ctx.drawImage(maskCanvas, 0, 0);
     
     ctx.restore();
-  }, [displayMode, bgColor]);
-
-  useEffect(() => {
-    drawWorkspace();
-  }, [drawWorkspace]);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -124,28 +125,21 @@ export default function BGRemoveProPage() {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
-        mainImageRef.current = img;
+        sourceImageRef.current = img;
         setImage(result);
         
-        // Setup canvas sizes based on source asset
         const canvas = canvasRef.current;
-        const maskCanvas = maskCanvasRef.current;
-        if (canvas && maskCanvas) {
+        if (canvas) {
+          // Internal resolution setup
           canvas.width = img.width;
           canvas.height = img.height;
-          maskCanvas.width = img.width;
-          maskCanvas.height = img.height;
-          
-          // Initial mask: fully opaque for manual editing
-          const mCtx = maskCanvas.getContext('2d');
-          if (mCtx) {
-            mCtx.fillStyle = 'white';
-            mCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+          const ctx = canvas.getContext('2d', { alpha: true });
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
           }
           
           setZoom(1);
           setPan({ x: 0, y: 0 });
-          drawWorkspace();
           setIsProcessing(false);
           toast({ title: "Asset Imported", description: "Studio ready for manual masking." });
         }
@@ -155,59 +149,19 @@ export default function BGRemoveProPage() {
     reader.readAsDataURL(file);
   };
 
-  const getCanvasCoords = (clientX: number, clientY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY
-    };
-  };
-
-  const drawOnMask = (x: number, y: number) => {
-    const maskCanvas = maskCanvasRef.current;
-    if (!maskCanvas) return;
-    const ctx = maskCanvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.save();
-    ctx.lineWidth = brushSize / zoom;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    if (toolMode === 'erase') {
-      ctx.globalCompositeOperation = 'destination-out';
-    } else {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = 'white';
-    }
-
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.restore();
-    
-    drawWorkspace();
-  };
-
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
     if (!image) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
+    // Use ALT or Middle Mouse for panning
     if ((e as React.MouseEvent).altKey || (e as any).button === 1) {
       isDragging.current = true;
       lastMousePos.current = { x: clientX, y: clientY };
     } else {
       isDrawing.current = true;
       const coords = getCanvasCoords(clientX, clientY);
-      const ctx = maskCanvasRef.current?.getContext('2d');
-      if (ctx) ctx.beginPath();
-      drawOnMask(coords.x, coords.y);
+      draw(coords.x, coords.y);
     }
   };
 
@@ -223,7 +177,7 @@ export default function BGRemoveProPage() {
       lastMousePos.current = { x: clientX, y: clientY };
     } else if (isDrawing.current) {
       const coords = getCanvasCoords(clientX, clientY);
-      drawOnMask(coords.x, coords.y);
+      draw(coords.x, coords.y);
     }
   };
 
@@ -235,38 +189,27 @@ export default function BGRemoveProPage() {
   const handleDownload = () => {
     if (!canvasRef.current || !image) return;
     const link = document.createElement('a');
-    link.download = `mykit-pro-mask-${Date.now()}.png`;
-    
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = mainImageRef.current!.width;
-    finalCanvas.height = mainImageRef.current!.height;
-    const fCtx = finalCanvas.getContext('2d');
-    if (fCtx) {
-       fCtx.drawImage(mainImageRef.current!, 0, 0);
-       fCtx.globalCompositeOperation = 'destination-in';
-       fCtx.drawImage(maskCanvasRef.current!, 0, 0);
-    }
-
-    link.href = finalCanvas.toDataURL('image/png', 1.0);
+    link.download = `sanitized-mask-${Date.now()}.png`;
+    link.href = canvasRef.current.toDataURL('image/png', 1.0);
     link.click();
     toast({ title: "Asset Exported", description: "Transparent PNG master saved." });
   };
 
   const resetMask = () => {
-    const maskCanvas = maskCanvasRef.current;
-    if (!maskCanvas) return;
-    const ctx = maskCanvas.getContext('2d');
+    const canvas = canvasRef.current;
+    const source = sourceImageRef.current;
+    if (!canvas || !source) return;
+    const ctx = canvas.getContext('2d');
     if (ctx) {
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-      drawWorkspace();
-      toast({ title: "Mask Reset", description: "Identity buffer restored." });
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(source, 0, 0);
+      toast({ title: "Mask Purged", description: "Full pixel density restored." });
     }
   };
 
   const handleClear = () => {
     setImage(null);
-    mainImageRef.current = null;
+    sourceImageRef.current = null;
     if (fileInputRef.current) fileInputRef.current.value = '';
     toast({ title: "Studio Reset", description: "Buffers cleared." });
   };
@@ -301,7 +244,7 @@ export default function BGRemoveProPage() {
             <CardContent className="pt-10 space-y-10">
               {/* Brushing Mode */}
               <div className="space-y-4">
-                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Brush Mode</Label>
+                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Active Tool</Label>
                 <div className="grid grid-cols-2 gap-3 p-1.5 rounded-2xl bg-background border border-border">
                   <button
                     onClick={() => setToolMode('erase')}
@@ -311,7 +254,7 @@ export default function BGRemoveProPage() {
                     )}
                   >
                     <Eraser className="w-4 h-4" />
-                    <span className="text-[8px] font-black uppercase tracking-widest">Erase</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest">Neutralize (Erase)</span>
                   </button>
                   <button
                     onClick={() => setToolMode('restore')}
@@ -321,7 +264,7 @@ export default function BGRemoveProPage() {
                     )}
                   >
                     <Brush className="w-4 h-4" />
-                    <span className="text-[8px] font-black uppercase tracking-widest">Restore</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest">Restore (Paint)</span>
                   </button>
                 </div>
               </div>
@@ -330,7 +273,7 @@ export default function BGRemoveProPage() {
               <div className="space-y-8">
                  <div className="space-y-4">
                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-foreground/40">
-                       <Label>Brush Scale</Label>
+                       <Label>Brush Diameter</Label>
                        <span className="text-primary font-mono">{brushSize}px</span>
                     </div>
                     <Slider value={[brushSize]} min={1} max={200} step={1} onValueChange={v => setBrushSize(v[0])} />
@@ -345,32 +288,8 @@ export default function BGRemoveProPage() {
                  </div>
               </div>
 
-              {/* View Matrix */}
-              <div className="space-y-4 pt-6 border-t border-border">
-                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Visualization Mode</Label>
-                <div className="grid grid-cols-3 gap-2">
-                   {[
-                     { id: 'result', label: 'Master', icon: Eye },
-                     { id: 'original', label: 'Source', icon: Search },
-                     { id: 'mask', label: 'Mask', icon: Layers }
-                   ].map(mode => (
-                     <button
-                       key={mode.id}
-                       onClick={() => setDisplayMode(mode.id as any)}
-                       className={cn(
-                         "h-10 rounded-xl border text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-                         displayMode === mode.id ? "bg-primary text-white border-primary" : "bg-background border-border text-foreground/40 hover:text-primary"
-                       )}
-                     >
-                       <mode.icon className="w-3 h-3" />
-                       {mode.label}
-                     </button>
-                   ))}
-                </div>
-              </div>
-
               {/* Background Protocol */}
-              <div className="space-y-4">
+              <div className="space-y-4 pt-6 border-t border-border">
                 <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Canvas Matrix (Fill)</Label>
                 <div className="grid grid-cols-5 gap-2">
                    {[
@@ -407,7 +326,7 @@ export default function BGRemoveProPage() {
               {/* Global Actions */}
               <div className="flex gap-4 pt-4 border-t border-border">
                  <Button variant="outline" onClick={resetMask} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-destructive/10 hover:text-destructive">
-                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset Mask
+                    <RotateCcw className="w-3.5 h-3.5 mr-2" /> Restore All
                  </Button>
                  <Button variant="outline" onClick={() => { setPan({ x: 0, y: 0 }); setZoom(1); }} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl">
                     <Crosshair className="w-3.5 h-3.5 mr-2" /> Center
@@ -419,7 +338,7 @@ export default function BGRemoveProPage() {
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Sovereign</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Absolute</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
                 All image masking happens locally. Hardware memory isolation ensures zero-leakage.
               </p>
@@ -433,7 +352,7 @@ export default function BGRemoveProPage() {
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
               <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
-                <Eye className="w-3.5 h-3.5" /> Identity Workspace
+                <Eye className="w-3.5 h-3.5" /> Workspace Identity
               </CardTitle>
               {image && (
                 <div className="flex items-center gap-4">
@@ -468,14 +387,16 @@ export default function BGRemoveProPage() {
                     />
                  </div>
                ) : (
-                 <div className="absolute inset-0 cursor-crosshair overflow-hidden bg-checkered">
+                 <div className="absolute inset-0 cursor-crosshair overflow-hidden" style={{ backgroundColor: bgColor !== 'transparent' ? bgColor : 'transparent' }}>
+                    {bgColor === 'transparent' && <div className="absolute inset-0 bg-checkered opacity-60" />}
+                    
                     {/* Transformation Matrix Layer */}
                     <div 
                       className="absolute top-1/2 left-1/2 flex items-center justify-center transition-transform duration-100 ease-out"
                       style={{ 
                         transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                        width: mainImageRef.current?.width || 0,
-                        height: mainImageRef.current?.height || 0
+                        width: sourceImageRef.current?.width || 0,
+                        height: sourceImageRef.current?.height || 0
                       }}
                     >
                        <canvas 
@@ -487,9 +408,8 @@ export default function BGRemoveProPage() {
                         onTouchStart={handleMouseDown}
                         onTouchMove={handleMouseMove}
                         onTouchEnd={handleMouseUp}
-                        className="shadow-2xl ring-1 ring-white/10"
+                        className="shadow-2xl ring-1 ring-white/10 block"
                        />
-                       <canvas ref={maskCanvasRef} className="hidden" />
                     </div>
 
                     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-4">
@@ -497,7 +417,7 @@ export default function BGRemoveProPage() {
                           <div className="flex items-center gap-4">
                             <button onClick={() => setZoom(z => Math.max(0.1, z - 0.2))} className="text-white/40 hover:text-white"><ZoomOut className="w-4 h-4" /></button>
                             <span className="text-[10px] font-mono font-black text-primary w-12 text-center">{(zoom * 100).toFixed(0)}%</span>
-                            <button onClick={() => setZoom(z => Math.min(8, z + 0.2))} className="text-white/40 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
+                            <button onClick={() => setZoom(z => Math.min(8, v => z + 0.2))} className="text-white/40 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
                           </div>
                           <div className="w-[1px] h-4 bg-white/10" />
                           <div className="flex items-center gap-3">
