@@ -597,7 +597,7 @@ export default function BGRemoveProPage() {
                  <div className="flex flex-col sm:flex-row gap-4">
                     <Button 
                       onClick={handleDownload}
-                      className="flex-[2] h-16 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-2xl transition-all active:scale-95 group/btn"
+                      className="flex-[2] h-16 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                     >
                       <Save className="w-6 h-6" />
                       Download Translucent Master
