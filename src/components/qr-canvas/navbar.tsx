@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -84,6 +85,7 @@ const SEARCHABLE_TOOLS = [
   { href: '/photo-enhance-fix', title: 'Photo Enhance', icon: Wand2, label: 'IMAGE', keywords: ['upscale', 'sharpen', 'clarity', 'fix'] },
   { href: '/passport-photo-maker', title: 'Passport Photo', icon: SquareUser, label: 'IDENTITY', keywords: ['visa', 'id', 'print', 'sheet'] },
   { href: '/live-wallpaper', title: 'Live Wallpaper', icon: MonitorPlay, label: 'MEDIA', keywords: ['video', 'loop', 'pc', 'phone'] },
+  { href: '/image-live-wallpaper', title: 'Image Live Wallpaper', icon: ImageIcon, label: 'MEDIA', keywords: ['photo wallpaper', 'ken burns', 'pan', 'zoom'] },
   { href: '/rename-file', title: 'Rename File', icon: FileSignature, label: 'UTIL', keywords: ['change name', 'extension', 'relabel'] },
   { href: '/csv-to-json', title: 'CSV to JSON', icon: Table, label: 'DATA', keywords: ['convert', 'excel', 'parse'] },
   { href: '/json-to-csv', title: 'JSON to CSV', icon: FileJson, label: 'DATA', keywords: ['convert', 'flatten', 'excel'] },
