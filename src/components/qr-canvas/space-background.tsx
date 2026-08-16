@@ -6,8 +6,11 @@ import React, { useEffect, useState } from 'react';
  * A subtle, performance-friendly space background.
  * Features a starfield with gentle twinkling and occasional shooting stars.
  * Improved for high-visibility and glowing effects.
+ * 
+ * Note: Uses a mounted check to prevent hydration mismatches for randomized star positions.
  */
 export function SpaceBackground() {
+  const [mounted, setMounted] = useState(false);
   const [stars, setStars] = useState<{ id: number; top: string; left: string; size: number; delay: string; duration: string }[]>([]);
 
   useEffect(() => {
@@ -21,7 +24,13 @@ export function SpaceBackground() {
       duration: `${4 + Math.random() * 4}s`,
     }));
     setStars(generatedStars);
+    setMounted(true);
   }, []);
+
+  // Prevent server-side rendering of dynamic visual parts to ensure 100% hydration sync
+  if (!mounted) {
+    return <div className="fixed inset-0 z-[-1] bg-[#030305]" aria-hidden="true" />;
+  }
 
   return (
     <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-[#030305] select-none" aria-hidden="true">
