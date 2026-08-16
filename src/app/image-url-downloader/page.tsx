@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   DownloadCloud, 
   Download,
@@ -18,10 +18,10 @@ import {
   FileArchive,
   Youtube,
   Maximize2,
-  Maximize,
   ShieldCheck,
   MousePointer2,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +38,85 @@ interface ImageAsset {
   label: string;
   res?: string;
   type: 'image' | 'youtube' | 'web';
+}
+
+/**
+ * Individual Image Result Card
+ * Handles localized loading, proxy fallbacks for previews, and single downloads
+ */
+function ImageResultCard({ 
+  asset, 
+  onDownload, 
+  onFail 
+}: { 
+  asset: ImageAsset; 
+  onDownload: (asset: ImageAsset) => void;
+  onFail: (id: string) => void;
+}) {
+  const [src, setSrc] = useState(asset.url);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasFailed, setHasFailed] = useState(false);
+  const [isProxying, setIsProxying] = useState(false);
+
+  const handleImageError = async () => {
+    // If we haven't tried proxying yet, attempt to fetch through the server
+    if (!isProxying) {
+      setIsProxying(true);
+      try {
+        const dataUri = await proxyDownloadImage(asset.url);
+        setSrc(dataUri);
+        setIsLoading(false);
+      } catch (e) {
+        setHasFailed(true);
+        onFail(asset.id);
+      }
+    } else {
+      setHasFailed(true);
+      onFail(asset.id);
+    }
+  };
+
+  if (hasFailed) return null;
+
+  return (
+    <div className="group relative bg-black rounded-[2.5rem] overflow-hidden border border-border shadow-2xl transition-all hover:border-primary/40 animate-in zoom-in duration-300">
+      <div className="aspect-video relative flex items-center justify-center overflow-hidden bg-secondary/10">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/20">
+            <Loader2 className="w-6 h-6 text-primary/40 animate-spin" />
+          </div>
+        )}
+        <img 
+          src={src} 
+          alt={asset.label} 
+          className={cn(
+            "w-full h-full object-contain group-hover:scale-110 transition-transform duration-700",
+            isLoading ? "opacity-0" : "opacity-100"
+          )}
+          onLoad={() => setIsLoading(false)}
+          onError={handleImageError}
+        />
+        {!isLoading && (
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+            <Maximize2 className="w-8 h-8 text-white/40" />
+          </div>
+        )}
+      </div>
+      <div className="p-6 bg-secondary/40 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase text-foreground truncate">{asset.label}</p>
+          {asset.res && <p className="text-[9px] font-bold text-primary font-mono mt-1">{asset.res}</p>}
+        </div>
+        <Button 
+          onClick={() => onDownload(asset)}
+          size="icon"
+          className="w-10 h-10 rounded-xl bg-primary shadow-lg shrink-0"
+        >
+          <Download className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export default function ImageUrlDownloaderPage() {
@@ -71,11 +150,10 @@ export default function ImageUrlDownloaderPage() {
 
     const vId = extractVideoId(url);
     if (vId) {
-      // YouTube Protocol
       const ytAssets: ImageAsset[] = [
-        { id: 'max', url: `https://img.youtube.com/vi/${vId}/maxresdefault.jpg`, label: 'YouTube Max Res', res: '1280x720', type: 'youtube' },
-        { id: 'sd', url: `https://img.youtube.com/vi/${vId}/sddefault.jpg`, label: 'YouTube SD', res: '640x480', type: 'youtube' },
-        { id: 'hq', url: `https://img.youtube.com/vi/${vId}/hqdefault.jpg`, label: 'YouTube HQ', res: '480x360', type: 'youtube' },
+        { id: `yt-${vId}-max`, url: `https://img.youtube.com/vi/${vId}/maxresdefault.jpg`, label: 'YouTube Max Res', res: '1280x720', type: 'youtube' },
+        { id: `yt-${vId}-sd`, url: `https://img.youtube.com/vi/${vId}/sddefault.jpg`, label: 'YouTube SD', res: '640x480', type: 'youtube' },
+        { id: `yt-${vId}-hq`, url: `https://img.youtube.com/vi/${vId}/hqdefault.jpg`, label: 'YouTube HQ', res: '480x360', type: 'youtube' },
       ];
       setFoundImages(ytAssets);
       toast({ title: "YouTube Matrix Found", description: "Thumbnail layers isolated." });
@@ -83,7 +161,6 @@ export default function ImageUrlDownloaderPage() {
       return;
     }
 
-    // Direct Image Protocol
     const isDirectImage = /\.(jpg|jpeg|png|webp|gif|svg|avif)(\?.*)?$/i.test(url);
     if (isDirectImage) {
       setFoundImages([{
@@ -97,7 +174,6 @@ export default function ImageUrlDownloaderPage() {
       return;
     }
 
-    // Web Discovery Protocol (Server-Side Proxy)
     try {
       toast({ title: "Scanning Webpage", description: "Identifying visual matrices via proxy..." });
       const result = await extractWebImages(url);
@@ -110,13 +186,12 @@ export default function ImageUrlDownloaderPage() {
           type: 'web'
         }));
         setFoundImages(assets);
-        toast({ title: "Discovery Complete", description: `Isolated ${assets.length} assets from the page.` });
+        toast({ title: "Discovery Complete", description: `Isolated ${assets.length} potential assets.` });
       } else {
-        setError("Zero-Asset Matrix: No legible images were identified on this page. Try right-clicking the specific image and copying its direct address.");
+        setError("Zero-Asset Matrix: No legible images were identified on this page.");
       }
     } catch (err: any) {
-      console.error(err);
-      setError("Discovery Blocked: The remote host rejected our discovery protocol. TIP: Right-click the image on the site and choose 'Copy image address' for direct extraction.");
+      setError("Discovery Blocked: The remote host rejected our discovery protocol.");
     } finally {
       setIsProcessing(false);
     }
@@ -124,33 +199,19 @@ export default function ImageUrlDownloaderPage() {
 
   const downloadSingle = async (asset: ImageAsset) => {
     try {
-      const response = await fetch(asset.url);
-      if (!response.ok) throw new Error("CORS Blocked");
-      
-      const blob = await response.blob();
-      const bUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = bUrl;
+      toast({ title: "Negotiating Stream", description: "Synthesizing binary blob..." });
+      // Always try proxy for downloads to ensure filenames and blob access work reliably
+      const dataUri = await proxyDownloadImage(asset.url);
+      const link = document.createElement('a');
+      link.href = dataUri;
       const ext = asset.url.split('.').pop()?.split('?')[0] || 'jpg';
-      a.download = `mykit-image-${asset.id}.${ext}`;
-      a.click();
-      URL.revokeObjectURL(bUrl);
-      toast({ title: "Master Ready", description: "Asset pushed to local storage." });
+      link.download = `mykit-${asset.id}.${ext}`;
+      link.click();
+      toast({ title: "Production Success", description: "Asset pushed to local storage." });
     } catch (e) {
-      // Fallback: Proxy Download through server
-      try {
-        toast({ title: "CORS Bypass Active", description: "Negotiating secure proxy extraction..." });
-        const dataUri = await proxyDownloadImage(asset.url);
-        const a = document.createElement('a');
-        a.href = dataUri;
-        const ext = asset.url.split('.').pop()?.split('?')[0] || 'jpg';
-        a.download = `mykit-proxy-${asset.id}.${ext}`;
-        a.click();
-        toast({ title: "Proxy Extraction Successful", description: "Security protocols bypassed." });
-      } catch (proxyErr) {
-        window.open(asset.url, '_blank');
-        toast({ title: "Extraction Limited", description: "Direct download blocked. Opening image in a new tab." });
-      }
+      // Final desperation fallback
+      window.open(asset.url, '_blank');
+      toast({ title: "Manual Extraction", description: "Direct download blocked. Opening image in a new tab." });
     }
   };
 
@@ -160,42 +221,42 @@ export default function ImageUrlDownloaderPage() {
     const zip = new JSZip();
 
     try {
-      for (let i = 0; i < foundImages.length; i++) {
-        const asset = foundImages[i];
+      toast({ title: "Synthesizing Bundle", description: "Packaging binary matrix into ZIP..." });
+      
+      const downloadPromises = foundImages.map(async (asset, i) => {
         try {
-          // Attempt direct first
-          let blob;
-          try {
-            const resp = await fetch(asset.url);
-            if (resp.ok) blob = await resp.blob();
-          } catch (e) {
-            // Proxy fallback for ZIP
-            const dataUri = await proxyDownloadImage(asset.url);
-            const base64 = dataUri.split(',')[1];
-            const type = dataUri.split(',')[0].split(':')[1].split(';')[0];
-            const byteChars = atob(base64);
-            const byteNumbers = new Array(byteChars.length);
-            for (let j = 0; j < byteChars.length; j++) byteNumbers[j] = byteChars.charCodeAt(j);
-            blob = new Blob([new Uint8Array(byteNumbers)], { type });
-          }
+          const dataUri = await proxyDownloadImage(asset.url);
+          const base64 = dataUri.split(',')[1];
+          const type = dataUri.split(',')[0].split(':')[1].split(';')[0];
+          const byteChars = atob(base64);
+          const byteNumbers = new Array(byteChars.length);
+          for (let j = 0; j < byteChars.length; j++) byteNumbers[j] = byteChars.charCodeAt(j);
+          const blob = new Blob([new Uint8Array(byteNumbers)], { type });
+          
+          const ext = asset.url.split('.').pop()?.split('?')[0] || 'jpg';
+          zip.file(`${asset.id}_${i}.${ext}`, blob);
+        } catch (e) {
+          console.warn(`Skipped failed asset: ${asset.url}`);
+        }
+      });
 
-          if (blob) {
-            const ext = asset.url.split('.').pop()?.split('?')[0] || 'jpg';
-            zip.file(`${asset.id}_${i}.${ext}`, blob);
-          }
-        } catch { }
-      }
+      await Promise.all(downloadPromises);
+
       const content = await zip.generateAsync({ type: "blob" });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
       link.download = `image-bundle-${Date.now()}.zip`;
       link.click();
-      toast({ title: "Archive Exported", description: "ZIP bundle saved successfully." });
+      toast({ title: "Archive Exported", description: "Production bundle saved successfully." });
     } catch {
       toast({ variant: "destructive", title: "Archive Error", description: "Failed to bundle assets." });
     } finally {
       setIsZipping(false);
     }
+  };
+
+  const handleFailedImage = (id: string) => {
+    setFoundImages(prev => prev.filter(img => img.id !== id));
   };
 
   return (
@@ -214,7 +275,7 @@ export default function ImageUrlDownloaderPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* Discovery Input */}
-        <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
@@ -230,9 +291,10 @@ export default function ImageUrlDownloaderPage() {
                 <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Discovery URL</Label>
                 <div className="relative group/input">
                   <Input 
-                    placeholder="Paste image, webpage, or YouTube URL..."
+                    placeholder="Paste image, site, or YT URL..."
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleDiscovery()}
                     className="h-16 bg-secondary border-border rounded-2xl text-lg font-mono font-medium placeholder:text-foreground/20 px-6 pr-14 transition-all focus:ring-primary/40"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/input:opacity-100 transition-opacity">
@@ -248,7 +310,7 @@ export default function ImageUrlDownloaderPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Run Discovery
+                  Identify Matrix
                 </Button>
                 <Button 
                   variant="outline"
@@ -259,13 +321,13 @@ export default function ImageUrlDownloaderPage() {
                 </Button>
               </div>
 
-              {error && (
+              {error && foundImages.length === 0 && (
                 <div className="p-6 rounded-[2rem] bg-destructive/5 border border-destructive/10 flex items-start gap-4 animate-in shake duration-500">
                   <AlertCircle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <p className="text-[11px] font-bold text-destructive/80 uppercase tracking-widest leading-relaxed">{error}</p>
                     <p className="text-[9px] text-foreground/30 uppercase font-black tracking-widest pt-2 flex items-center gap-2">
-                       <MousePointer2 className="w-3 h-3" /> Tip: Try 'Copy Image Address' for best results.
+                       <MousePointer2 className="w-3 h-3" /> Tip: Try 'Copy Image Address' for direct extraction.
                     </p>
                   </div>
                 </div>
@@ -276,17 +338,17 @@ export default function ImageUrlDownloaderPage() {
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Discovery Protocol</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Resilient Extraction</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                Direct image extraction is instant. For standard webpages, we use a server-side proxy to isolate visual matrices while maintaining your hardware security.
+                If the browser blocks visual previews due to CORS security, the studio automatically switches to server-side proxying to preserve and display the asset matrix.
               </p>
             </div>
           </div>
         </div>
 
         {/* Results Matrix */}
-        <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px]">
+        <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px]">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
               <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
@@ -300,40 +362,33 @@ export default function ImageUrlDownloaderPage() {
                   className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg"
                 >
                   {isZipping ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <FileArchive className="w-3.5 h-3.5 mr-2" />}
-                  ZIP Bundle
+                  ZIP Bundle All
                 </Button>
               )}
             </CardHeader>
             <CardContent className="flex-1 p-8">
-               {foundImages.length === 0 ? (
+               {foundImages.length === 0 && !isProcessing ? (
                  <div className="h-full flex flex-col items-center justify-center text-center opacity-10 space-y-6 py-20">
                     <ImageIcon className="w-24 h-24 text-primary" />
                     <p className="text-sm font-black uppercase tracking-[0.3em]">Studio Standby</p>
                  </div>
+               ) : isProcessing && foundImages.length === 0 ? (
+                 <div className="h-full flex flex-col items-center justify-center py-32 space-y-8">
+                    <div className="relative">
+                       <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
+                       <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
+                    </div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.4em] text-primary">Establishing Uplink...</p>
+                 </div>
                ) : (
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 animate-in zoom-in duration-500 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar p-1">
                     {foundImages.map((asset) => (
-                      <div key={asset.id} className="group relative bg-black rounded-[2.5rem] overflow-hidden border border-border shadow-2xl transition-all hover:border-primary/40">
-                         <div className="aspect-video relative flex items-center justify-center overflow-hidden">
-                            <img src={asset.url} alt={asset.label} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                               <Maximize2 className="w-8 h-8 text-white/40" />
-                            </div>
-                         </div>
-                         <div className="p-6 bg-secondary/40 flex items-center justify-between gap-4">
-                            <div className="min-w-0">
-                               <p className="text-[10px] font-black uppercase text-foreground truncate">{asset.label}</p>
-                               {asset.res && <p className="text-[9px] font-bold text-primary font-mono mt-1">{asset.res}</p>}
-                            </div>
-                            <Button 
-                              onClick={() => downloadSingle(asset)}
-                              size="icon"
-                              className="w-10 h-10 rounded-xl bg-primary shadow-lg shrink-0"
-                            >
-                               <Download className="w-4 h-4" />
-                            </Button>
-                         </div>
-                      </div>
+                      <ImageResultCard 
+                        key={asset.id} 
+                        asset={asset} 
+                        onDownload={downloadSingle} 
+                        onFail={handleFailedImage}
+                      />
                     ))}
                  </div>
                )}
@@ -342,7 +397,7 @@ export default function ImageUrlDownloaderPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group">
-                <Maximize className="w-6 h-6 text-primary mt-1 shrink-0" />
+                <Maximize2 className="w-6 h-6 text-primary mt-1 shrink-0" />
                 <div className="space-y-1">
                    <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Master Density</h4>
                    <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">We isolate the highest quality layer available in the remote matrix for 1:1 pixel fidelity.</p>
