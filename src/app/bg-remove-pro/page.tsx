@@ -15,7 +15,6 @@ import {
   Layers,
   Palette,
   Eye,
-  EyeOff,
   Crosshair,
   Zap,
   ZoomIn,
@@ -23,9 +22,11 @@ import {
   ImagePlus,
   Save,
   MousePointer2,
-  Maximize,
   Settings2,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle,
+  Sparkles,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,49 +34,170 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import imglyRemoveBackground from "@imgly/background-removal";
 
 export default function BGRemoveProPage() {
   const { toast } = useToast();
+  
+  // Image states
   const [image, setImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  // Brush settings
   const [brushSize, setBrushSize] = useState(30);
   const [toolMode, setToolMode] = useState<'erase' | 'restore'>('erase');
+  
+  // Transform states
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  
+  // Display settings
   const [bgColor, setBgColor] = useState('transparent');
-  const [showOriginal, setShowOriginal] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'result' | 'original' | 'mask'>('result');
 
+  // Canvas refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
   const mainImageRef = useRef<HTMLImageElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Interaction refs
   const isDragging = useRef(false);
   const isDrawing = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
 
-  // Initialize Canvases
-  const initCanvases = (img: HTMLImageElement) => {
-    const canvas = canvasRef.current;
-    const maskCanvas = maskCanvasRef.current;
-    if (!canvas || !maskCanvas) return;
+  /**
+   * Auto Removal Logic via @imgly/background-removal
+   */
+  const executeAutoRemove = async (imageSource: string) => {
+    setIsProcessing(true);
+    setLoadingStatus('Initializing AI Engine...');
+    setError(null);
+    
+    try {
+      setLoadingStatus('Isolating Subject Matrix...');
+      const blob = await imglyRemoveBackground(imageSource, {
+        progress: (key, current, total) => {
+          setLoadingStatus(`Rendering: ${Math.round((current / total) * 100)}%`);
+        }
+      });
 
-    canvas.width = img.width;
-    canvas.height = img.height;
-    maskCanvas.width = img.width;
-    maskCanvas.height = img.height;
+      const processedUrl = URL.createObjectURL(blob);
+      const processedImg = new Image();
+      processedImg.crossOrigin = "anonymous";
+      
+      processedImg.onload = () => {
+        // We now have the auto-removed image. 
+        // We need to convert it into our manual mask buffer.
+        const maskCanvas = maskCanvasRef.current;
+        if (!maskCanvas) return;
+        const mCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+        if (!mCtx) return;
 
-    // Fill mask with white (opaque) initially
-    const mCtx = maskCanvas.getContext('2d');
-    if (mCtx) {
-      mCtx.fillStyle = 'white';
-      mCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+        // Clear mask
+        mCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+        
+        // Draw the auto result to the mask. 
+        // We basically just want to copy its alpha channel.
+        // We can do this by drawing it directly as a starting point.
+        mCtx.drawImage(processedImg, 0, 0);
+        
+        // Now convert non-transparent pixels to solid white (opaque mask)
+        const imgData = mCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          // If the library removed it, alpha is 0. If it kept it, alpha > 0.
+          if (data[i + 3] > 0) {
+            data[i] = 255;
+            data[i + 1] = 255;
+            data[i + 2] = 255;
+            data[i + 3] = 255;
+          }
+        }
+        mCtx.putImageData(imgData, 0, 0);
+
+        URL.revokeObjectURL(processedUrl);
+        setIsProcessing(false);
+        setLoadingStatus('');
+        drawWorkspace();
+        toast({ title: "Auto-Scrub Complete", description: "Subject isolated via neural matrix." });
+      };
+      processedImg.src = processedUrl;
+    } catch (err: any) {
+      console.error('Auto remove error:', err);
+      setError("The neural engine encountered an initialization error. Reverting to manual mode.");
+      setIsProcessing(false);
+      setLoadingStatus('');
+      
+      // Fallback: Initialize mask as fully opaque white
+      const maskCanvas = maskCanvasRef.current;
+      if (maskCanvas) {
+        const mCtx = maskCanvas.getContext('2d');
+        if (mCtx) {
+          mCtx.fillStyle = 'white';
+          mCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+          drawWorkspace();
+        }
+      }
     }
   };
+
+  /**
+   * Main Workspace Rendering Logic
+   */
+  const drawWorkspace = useCallback(() => {
+    const canvas = canvasRef.current;
+    const maskCanvas = maskCanvasRef.current;
+    if (!canvas || !maskCanvas || !mainImageRef.current) return;
+
+    const ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (displayMode === 'original') {
+      ctx.drawImage(mainImageRef.current, 0, 0);
+      return;
+    }
+
+    if (displayMode === 'mask') {
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(maskCanvas, 0, 0);
+      return;
+    }
+
+    // Default: 'result'
+    // Composite: (Background Color) -> (Original Image clipped by Mask)
+    
+    // Create a composite layer
+    ctx.save();
+    
+    // Draw background color if selected
+    if (bgColor !== 'transparent') {
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Draw original image
+    ctx.drawImage(mainImageRef.current, 0, 0);
+    
+    // Apply Mask via destination-in (keeps only where mask is white)
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(maskCanvas, 0, 0);
+    
+    ctx.restore();
+  }, [displayMode, bgColor]);
+
+  useEffect(() => {
+    drawWorkspace();
+  }, [drawWorkspace]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsProcessing(true);
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
@@ -84,11 +206,22 @@ export default function BGRemoveProPage() {
         img.onload = () => {
           mainImageRef.current = img;
           setImage(result);
-          initCanvases(img);
+          
+          // Setup canvas sizes
+          const canvas = canvasRef.current;
+          const maskCanvas = maskCanvasRef.current;
+          if (canvas && maskCanvas) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            maskCanvas.width = img.width;
+            maskCanvas.height = img.height;
+            
+            // Auto start the neural process
+            executeAutoRemove(result);
+          }
+          
           setZoom(1);
           setPan({ x: 0, y: 0 });
-          setIsProcessing(false);
-          toast({ title: "Matrix Loaded", description: "Inbound visual asset initialized." });
         };
         img.src = result;
       };
@@ -96,97 +229,24 @@ export default function BGRemoveProPage() {
     }
   };
 
-  const drawWorkspace = useCallback(() => {
-    const canvas = canvasRef.current;
-    const maskCanvas = maskCanvasRef.current;
-    if (!canvas || !maskCanvas || !mainImageRef.current) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (showOriginal) {
-      ctx.drawImage(mainImageRef.current, 0, 0);
-      return;
-    }
-
-    // Drawing Logic:
-    // 1. Draw image
-    // 2. Apply mask via globalCompositeOperation
-    ctx.save();
-    ctx.drawImage(mainImageRef.current, 0, 0);
-    ctx.globalCompositeOperation = 'destination-in';
-    ctx.drawImage(maskCanvas, 0, 0);
-    ctx.restore();
-
-    // 3. If a solid color background is selected, composite it behind
-    if (bgColor !== 'transparent') {
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = canvas.width;
-      tempCanvas.height = canvas.height;
-      const tCtx = tempCanvas.getContext('2d');
-      if (tCtx) {
-        tCtx.fillStyle = bgColor;
-        tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        tCtx.drawImage(canvas, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(tempCanvas, 0, 0);
-      }
-    }
-  }, [showOriginal, bgColor]);
-
-  useEffect(() => {
-    drawWorkspace();
-  }, [drawWorkspace]);
-
-  // Manual Brush Logic
+  /**
+   * Manual Brushing Logic
+   */
   const getCanvasCoords = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
+    
+    // Scale mapping for CSS display vs real pixels
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
+    
+    // Coordinates relative to the center of the zoom/pan transform
+    // But since we are getting rect.left/top, it's easier to map directly to the raw viewport
     return {
       x: (clientX - rect.left) * scaleX,
       y: (clientY - rect.top) * scaleY
     };
-  };
-
-  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!image) return;
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-
-    if ((e as React.MouseEvent).altKey || (e as any).button === 1) {
-      isDragging.current = true;
-      lastMousePos.current = { x: clientX, y: clientY };
-    } else {
-      isDrawing.current = true;
-      const coords = getCanvasCoords(clientX, clientY);
-      drawOnMask(coords.x, coords.y);
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!image) return;
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-
-    if (isDragging.current) {
-      const dx = clientX - lastMousePos.current.x;
-      const dy = clientY - lastMousePos.current.y;
-      setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-      lastMousePos.current = { x: clientX, y: clientY };
-    } else if (isDrawing.current) {
-      const coords = getCanvasCoords(clientX, clientY);
-      drawOnMask(coords.x, coords.y);
-    }
-  };
-
-  const handleMouseUp = () => {
-    isDragging.current = false;
-    isDrawing.current = false;
   };
 
   const drawOnMask = (x: number, y: number) => {
@@ -216,6 +276,56 @@ export default function BGRemoveProPage() {
     drawWorkspace();
   };
 
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!image || isProcessing) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+    if ((e as React.MouseEvent).altKey || (e as any).button === 1) {
+      isDragging.current = true;
+      lastMousePos.current = { x: clientX, y: clientY };
+    } else {
+      isDrawing.current = true;
+      const coords = getCanvasCoords(clientX, clientY);
+      const ctx = maskCanvasRef.current?.getContext('2d');
+      if (ctx) ctx.beginPath();
+      drawOnMask(coords.x, coords.y);
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!image || isProcessing) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+    if (isDragging.current) {
+      const dx = clientX - lastMousePos.current.x;
+      const dy = clientY - lastMousePos.current.y;
+      setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+      lastMousePos.current = { x: clientX, y: clientY };
+    } else if (isDrawing.current) {
+      const coords = getCanvasCoords(clientX, clientY);
+      drawOnMask(coords.x, coords.y);
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+    isDrawing.current = false;
+  };
+
+  /**
+   * Utilities
+   */
+  const handleDownload = () => {
+    if (!canvasRef.current || !image) return;
+    const link = document.createElement('a');
+    link.download = `mykit-bg-removed-${Date.now()}.png`;
+    link.href = canvasRef.current.toDataURL('image/png', 1.0);
+    link.click();
+    toast({ title: "Master Exported", description: "Alpha-channeled PNG ready." });
+  };
+
   const resetMask = () => {
     const maskCanvas = maskCanvasRef.current;
     if (!maskCanvas) return;
@@ -224,42 +334,16 @@ export default function BGRemoveProPage() {
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
       drawWorkspace();
-      toast({ title: "Mask Reset", description: "Transparency matrix restored to opaque." });
+      toast({ title: "Matrix Reset", description: "Transparency buffer restored." });
     }
-  };
-
-  const invertMask = () => {
-    const maskCanvas = maskCanvasRef.current;
-    if (!maskCanvas) return;
-    const ctx = maskCanvas.getContext('2d');
-    if (!ctx) return;
-
-    const imgData = ctx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
-    const data = imgData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = 255 - data[i];         // R
-      data[i + 1] = 255 - data[i + 1]; // G
-      data[i + 2] = 255 - data[i + 2]; // B
-      data[i + 3] = 255 - data[i + 3]; // A
-    }
-    ctx.putImageData(imgData, 0, 0);
-    drawWorkspace();
-    toast({ title: "Inversion Active", description: "Transparency matrix flipped." });
-  };
-
-  const handleDownload = () => {
-    if (!canvasRef.current || !image) return;
-    const link = document.createElement('a');
-    link.download = `mykit-bg-removed-${Date.now()}.png`;
-    link.href = canvasRef.current.toDataURL('image/png', 1.0);
-    link.click();
-    toast({ title: "Export Success", description: "Alpha-channeled master saved." });
   };
 
   const handleClear = () => {
     setImage(null);
+    mainImageRef.current = null;
+    setError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    toast({ title: "Workspace Reset", description: "Buffers cleared." });
+    toast({ title: "Workspace Purged", description: "Memory cleared." });
   };
 
   return (
@@ -274,7 +358,7 @@ export default function BGRemoveProPage() {
                 BG Remove <span className="text-primary italic">Pro</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional-grade background extraction. High-fidelity manual brushing with spectral zoom control. 100% private re-matricing occurring strictly in browser memory.
+                Professional-grade background extraction. High-fidelity neural scrubbing with manual spectral refinement. 100% private re-matricing occurring strictly in browser memory.
               </p>
            </div>
         </div>
@@ -286,32 +370,35 @@ export default function BGRemoveProPage() {
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                <Settings2 className="w-5 h-5 text-primary" /> Brushing Protocols
+                <Settings2 className="w-5 h-5 text-primary" /> Production Matrix
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
               {/* Mode Toggle */}
-              <div className="grid grid-cols-2 gap-3 p-1.5 rounded-2xl bg-background border border-border">
-                <button
-                  onClick={() => setToolMode('erase')}
-                  className={cn(
-                    "h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all",
-                    toolMode === 'erase' ? "bg-primary text-primary-foreground shadow-lg" : "text-foreground/40 hover:text-primary"
-                  )}
-                >
-                  <Eraser className="w-4 h-4" />
-                  <span className="text-[8px] font-black uppercase tracking-widest">Neutralize</span>
-                </button>
-                <button
-                  onClick={() => setToolMode('restore')}
-                  className={cn(
-                    "h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all",
-                    toolMode === 'restore' ? "bg-primary text-primary-foreground shadow-lg" : "text-foreground/40 hover:text-primary"
-                  )}
-                >
-                  <Brush className="w-4 h-4" />
-                  <span className="text-[8px] font-black uppercase tracking-widest">Restore</span>
-                </button>
+              <div className="space-y-4">
+                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Brushing Mode</Label>
+                <div className="grid grid-cols-2 gap-3 p-1.5 rounded-2xl bg-background border border-border">
+                  <button
+                    onClick={() => setToolMode('erase')}
+                    className={cn(
+                      "h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all",
+                      toolMode === 'erase' ? "bg-primary text-primary-foreground shadow-lg" : "text-foreground/40 hover:text-primary"
+                    )}
+                  >
+                    <Eraser className="w-4 h-4" />
+                    <span className="text-[8px] font-black uppercase tracking-widest">Neutralize</span>
+                  </button>
+                  <button
+                    onClick={() => setToolMode('restore')}
+                    className={cn(
+                      "h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all",
+                      toolMode === 'restore' ? "bg-primary text-primary-foreground shadow-lg" : "text-foreground/40 hover:text-primary"
+                    )}
+                  >
+                    <Brush className="w-4 h-4" />
+                    <span className="text-[8px] font-black uppercase tracking-widest">Restore</span>
+                  </button>
+                </div>
               </div>
 
               {/* Brush Settings */}
@@ -329,26 +416,40 @@ export default function BGRemoveProPage() {
                        <Label>Spectral Zoom</Label>
                        <span className="text-primary font-mono">{(zoom * 100).toFixed(0)}%</span>
                     </div>
-                    <Slider value={[zoom * 100]} min={100} max={800} step={10} onValueChange={v => setZoom(v[0] / 100)} />
+                    <Slider value={[zoom * 100]} min={50} max={800} step={10} onValueChange={v => setZoom(v[0] / 100)} />
                  </div>
               </div>
 
-              {/* Action Matrix */}
-              <div className="grid grid-cols-2 gap-4">
-                 <Button variant="outline" onClick={invertMask} className="h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/5">
-                    <RotateCcw className="w-3.5 h-3.5 mr-2" /> Invert Mask
-                 </Button>
-                 <Button variant="outline" onClick={resetMask} className="h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-destructive/10 hover:text-destructive">
-                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset Matrix
-                 </Button>
+              {/* Display Matrix */}
+              <div className="space-y-4 pt-6 border-t border-border">
+                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Display Protocol</Label>
+                <div className="grid grid-cols-3 gap-2">
+                   {[
+                     { id: 'result', label: 'Result', icon: Eye },
+                     { id: 'original', label: 'Original', icon: Search },
+                     { id: 'mask', label: 'Mask', icon: Layers }
+                   ].map(mode => (
+                     <button
+                       key={mode.id}
+                       onClick={() => setDisplayMode(mode.id as any)}
+                       className={cn(
+                         "h-10 rounded-xl border text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+                         displayMode === mode.id ? "bg-primary text-white border-primary" : "bg-background border-border text-foreground/40 hover:text-primary"
+                       )}
+                     >
+                       <mode.icon className="w-3 h-3" />
+                       {mode.label}
+                     </button>
+                   ))}
+                </div>
               </div>
 
-              {/* Background Color Replace */}
-              <div className="space-y-4 pt-6 border-t border-border">
-                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Composition Environment</Label>
+              {/* Composition environment */}
+              <div className="space-y-4">
+                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Composition Background</Label>
                 <div className="grid grid-cols-5 gap-2">
                    {[
-                     { val: 'transparent', label: 'Alpha', icon: Layers },
+                     { val: 'transparent', label: 'Alpha' },
                      { val: '#ffffff', label: 'White' },
                      { val: '#000000', label: 'Black' },
                      { val: '#3b82f6', label: 'Blue' },
@@ -377,10 +478,20 @@ export default function BGRemoveProPage() {
                    ))}
                 </div>
               </div>
+
+              {/* Global Actions */}
+              <div className="flex gap-4 pt-4 border-t border-border">
+                 <Button variant="outline" onClick={resetMask} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-destructive/10 hover:text-destructive">
+                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset Matrix
+                 </Button>
+                 <Button variant="outline" onClick={() => setPan({ x: 0, y: 0 })} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl">
+                    <Crosshair className="w-3.5 h-3.5 mr-2" /> Recenter
+                 </Button>
+              </div>
             </CardContent>
           </Card>
 
-          <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5 group hover:bg-primary/10 transition-colors">
+          <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Protocol Intelligence</h4>
@@ -399,20 +510,16 @@ export default function BGRemoveProPage() {
               <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
                 <Eye className="w-3.5 h-3.5" /> Workspace Matrix
               </CardTitle>
-              <div className="flex items-center gap-4">
-                 <div className="flex items-center gap-3 px-3 py-1 rounded-full bg-background/50 border border-border">
-                    <span className="text-[9px] font-black uppercase text-foreground/40">Visual Feed</span>
-                    <div className="flex gap-2">
-                       <button onClick={() => setShowOriginal(false)} className={cn("px-3 py-1 rounded-md text-[8px] font-black uppercase", !showOriginal ? "bg-primary text-white" : "text-foreground/30")}>Result</button>
-                       <button onClick={() => setShowOriginal(true)} className={cn("px-3 py-1 rounded-md text-[8px] font-black uppercase", showOriginal ? "bg-primary text-white" : "text-foreground/30")}>Original</button>
-                    </div>
-                 </div>
-                 {image && (
-                   <Button variant="ghost" size="icon" onClick={handleClear} className="h-10 w-10 rounded-xl text-foreground/20 hover:text-destructive">
-                     <Trash2 className="w-4 h-4" />
-                   </Button>
-                 )}
-              </div>
+              {image && (
+                <div className="flex items-center gap-4">
+                  <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
+                    {isProcessing ? 'AI Scrubber Active' : 'Verified Matrix'}
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={handleClear} className="h-10 w-10 rounded-xl text-foreground/20 hover:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </CardHeader>
             <CardContent className="flex-1 p-0 flex items-center justify-center bg-[#060608] relative overflow-hidden">
                {!image ? (
@@ -431,7 +538,7 @@ export default function BGRemoveProPage() {
                  </div>
                ) : (
                  <div className="absolute inset-0 cursor-crosshair overflow-hidden bg-checkered">
-                    {/* Centered Transformation Layer */}
+                    {/* Transformation Layer */}
                     <div 
                       className="absolute top-1/2 left-1/2 flex items-center justify-center transition-transform duration-100 ease-out"
                       style={{ 
@@ -454,32 +561,52 @@ export default function BGRemoveProPage() {
                        <canvas ref={maskCanvasRef} className="hidden" />
                     </div>
 
-                    {/* Navigation HUD */}
-                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-4">
-                       <div className="px-5 py-2.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 flex items-center gap-6 shadow-2xl">
-                          <div className="flex items-center gap-4">
-                             <button onClick={() => setZoom(z => Math.max(0.1, z - 0.2))} className="text-white/40 hover:text-white"><ZoomOut className="w-4 h-4" /></button>
-                             <span className="text-[10px] font-mono font-black text-primary w-12 text-center">{(zoom * 100).toFixed(0)}%</span>
-                             <button onClick={() => setZoom(z => Math.min(8, z + 0.2))} className="text-white/40 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
-                          </div>
-                          <div className="w-[1px] h-4 bg-white/10" />
-                          <button onClick={() => setPan({ x: 0, y: 0 })} className="text-white/40 hover:text-white" title="Recenter Matrix">
-                             <Crosshair className="w-4 h-4" />
-                          </button>
-                       </div>
-                    </div>
+                    {/* HUD Overlays */}
+                    {isProcessing && (
+                      <div className="absolute inset-0 bg-[#060608]/80 backdrop-blur-xl z-50 flex flex-col items-center justify-center gap-6 p-12 text-center">
+                         <div className="relative">
+                            <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
+                            <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
+                         </div>
+                         <div className="space-y-2">
+                            <p className="text-xl font-headline font-black text-white uppercase tracking-tight">{loadingStatus}</p>
+                            <p className="text-[10px] text-primary font-black uppercase tracking-[0.4em]">Neural Scrubber Protocol Engaged</p>
+                         </div>
+                      </div>
+                    )}
 
-                    <div className="absolute top-8 left-8 z-30 pointer-events-none">
-                       <div className="px-4 py-2 rounded-xl bg-black/60 border border-white/10 flex items-center gap-3">
-                          <MousePointer2 className="w-3.5 h-3.5 text-primary" />
-                          <p className="text-[10px] font-black uppercase text-white tracking-widest">{toolMode === 'erase' ? 'Neutralization Active' : 'Restoration Active'}</p>
-                       </div>
-                    </div>
+                    {error && (
+                      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4">
+                         <div className="px-6 py-3 rounded-2xl bg-destructive text-white flex items-center gap-4 shadow-2xl">
+                            <AlertCircle className="w-5 h-5" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
+                            <button onClick={() => setError(null)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
+                         </div>
+                      </div>
+                    )}
+
+                    {/* Navigation HUD */}
+                    {!isProcessing && (
+                      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-4">
+                        <div className="px-5 py-2.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 flex items-center gap-6 shadow-2xl">
+                            <div className="flex items-center gap-4">
+                              <button onClick={() => setZoom(z => Math.max(0.1, z - 0.2))} className="text-white/40 hover:text-white"><ZoomOut className="w-4 h-4" /></button>
+                              <span className="text-[10px] font-mono font-black text-primary w-12 text-center">{(zoom * 100).toFixed(0)}%</span>
+                              <button onClick={() => setZoom(z => Math.min(8, z + 0.2))} className="text-white/40 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
+                            </div>
+                            <div className="w-[1px] h-4 bg-white/10" />
+                            <div className="flex items-center gap-3">
+                               <MousePointer2 className="w-4 h-4 text-primary" />
+                               <span className="text-[9px] font-black uppercase text-white/40 tracking-widest">ALT + DRAG TO PAN</span>
+                            </div>
+                        </div>
+                      </div>
+                    )}
                  </div>
                )}
             </CardContent>
             
-            {image && (
+            {image && !isProcessing && (
               <div className="p-8 border-t border-border bg-[#0a0a0c]">
                  <div className="flex flex-col sm:flex-row gap-4">
                     <Button 
@@ -506,17 +633,17 @@ export default function BGRemoveProPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group">
-                <Maximize2 className="w-6 h-6 text-primary mt-1 shrink-0" />
-                <div className="space-y-1">
-                   <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Spectral Precision</h4>
-                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">Up to 800% zoom allows for clinical isolation of complex edge matrices.</p>
-                </div>
-             </div>
-             <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group">
                 <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
                 <div className="space-y-1">
                    <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Privacy Sovereign</h4>
                    <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">Removal logic executes strictly in browser memory. Hardware identifiers are never logged.</p>
+                </div>
+             </div>
+             <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group">
+                <Maximize2 className="w-6 h-6 text-primary mt-1 shrink-0" />
+                <div className="space-y-1">
+                   <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">WASM Acceleration</h4>
+                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">Hardware-accelerated neural pass for clinical subject isolation in milliseconds.</p>
                 </div>
              </div>
           </div>
