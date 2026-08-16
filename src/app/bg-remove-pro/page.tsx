@@ -23,7 +23,9 @@ import {
   ImagePlus,
   Save,
   MousePointer2,
-  Maximize
+  Maximize,
+  Settings2,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -254,6 +256,13 @@ export default function BGRemoveProPage() {
     link.href = canvasRef.current.toDataURL('image/png', 1.0);
     link.click();
     toast({ title: "Export Success", description: "Alpha-channeled master saved." });
+  };
+
+  const handleClear = () => {
+    setImage(null);
+    setLoadedImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    toast({ title: "Workspace Reset", description: "Buffers cleared." });
   };
 
   return (
