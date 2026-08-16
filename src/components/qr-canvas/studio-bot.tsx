@@ -378,57 +378,75 @@ export function StudioBot() {
         "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
         isPoseB ? "rotate-[-12deg]" : "rotate-0"
       )}>
-        <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow-xl overflow-visible">
+        <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow-2xl overflow-visible">
+          <defs>
+             <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
+                <stop offset="0%" stopColor="#fefce8" />
+                <stop offset="100%" stopColor="#fef3c7" />
+             </radialGradient>
+             <linearGradient id="visorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#1e293b" />
+                <stop offset="100%" stopColor="#0f172a" />
+             </linearGradient>
+             <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#60a5fa" />
+                <stop offset="100%" stopColor="#2563eb" />
+             </radialGradient>
+          </defs>
           <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")}>
-            {/* Body - Soft Cream Metal */}
-            <rect x="22" y="65" width="56" height="42" rx="14" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
-            <rect x="28" y="72" width="44" height="18" rx="8" fill="#bfdbfe" opacity="0.6" />
+            {/* Body */}
+            <rect x="22" y="65" width="56" height="42" rx="14" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.5" />
+            <rect x="28" y="72" width="44" height="18" rx="8" fill="#bfdbfe" opacity="0.4" />
             
-            {/* Head - Smooth Round */}
-            <circle cx="50" cy="45" r="32" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+            {/* Head - Premium Shading */}
+            <circle cx="50" cy="45" r="32" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.5" />
+            <circle cx="40" cy="30" r="10" fill="white" opacity="0.15" /> {/* Highlight */}
             
-            {/* Visor - Baby Blue Metal */}
-            <rect x="28" y="36" width="44" height="20" rx="10" fill="#1e293b" />
+            {/* Visor */}
+            <rect x="28" y="36" width="44" height="20" rx="10" fill="url(#visorGrad)" />
             
-            {/* Eyes - Glossy & Shiny */}
+            {/* Eyes - Glossy Specs */}
             <g className="animate-kit-blink">
-               <circle cx="38" cy="46" r="5" fill="#60a5fa" className={cn("transition-all duration-300", isHappy && "scale-150")} />
-               <circle cx="36" cy="44" r="1.5" fill="white" opacity="0.8" />
+               <circle cx="38" cy="46" r="5" fill="url(#eyeGlow)" className={cn("transition-all duration-300", isHappy && "scale-125")} />
+               <circle cx="37" cy="44" r="1.5" fill="white" opacity="0.9" />
+               <circle cx="39" cy="47" r="0.8" fill="white" opacity="0.3" />
                
-               <circle cx="62" cy="46" r="5" fill="#60a5fa" className={cn("transition-all duration-300", isHappy && "scale-150")} />
-               <circle cx="60" cy="44" r="1.5" fill="white" opacity="0.8" />
+               <circle cx="62" cy="46" r="5" fill="url(#eyeGlow)" className={cn("transition-all duration-300", isHappy && "scale-125")} />
+               <circle cx="61" cy="44" r="1.5" fill="white" opacity="0.9" />
+               <circle cx="63" cy="47" r="0.8" fill="white" opacity="0.3" />
             </g>
 
             {/* Blush */}
-            <circle cx="30" cy="52" r="3" fill="#fda4af" opacity="0.3" />
-            <circle cx="70" cy="52" r="3" fill="#fda4af" opacity="0.3" />
+            <circle cx="30" cy="52" r="3" fill="#fda4af" opacity="0.4" />
+            <circle cx="70" cy="52" r="3" fill="#fda4af" opacity="0.4" />
 
             {/* Mouth */}
-            <path d="M 47 52 Q 50 54 53 52" stroke="#1e293b" strokeWidth="1" fill="none" strokeLinecap="round" />
+            <path d="M 47 52 Q 50 54 53 52" stroke="#1e293b" strokeWidth="1.2" fill="none" strokeLinecap="round" />
             
-            {/* Antenna - Springy */}
-            <path d="M 50 15 L 50 22" stroke="#1e293b" strokeWidth="1.5" strokeLinecap="round" />
+            {/* Antenna */}
+            <path d="M 50 15 L 50 22" stroke="#1e293b" strokeWidth="1.2" strokeLinecap="round" />
             <circle cx="50" cy="12" r="4" fill="#60a5fa" className="animate-pulse shadow-lg" />
             
-            {/* Arms & Hands - Separate Paths */}
+            {/* Arms & Hands */}
             {isPoseB ? (
               <g className="animate-kit-grip">
-                {/* Gripping Hands at Edge */}
-                <path d="M 22 75 L 12 75" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" strokeDasharray="0" />
-                <path d="M 22 88 L 12 88" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" strokeDasharray="0" />
-                <circle cx="12" cy="75" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
-                <circle cx="12" cy="88" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+                {/* Peek Gripping Logic */}
+                <path d="M 22 75 L 12 75" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
+                <path d="M 22 88 L 12 88" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
+                <circle cx="12" cy="75" r="7.5" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+                <circle cx="12" cy="88" r="7.5" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+                <circle cx="10" cy="73" r="1.5" fill="white" opacity="0.5" />
               </g>
             ) : (
               <g>
-                {/* Left Arm/Hand */}
                 <path d="M 22 80 L 10 95" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
-                <circle cx="10" cy="95" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+                <circle cx="10" cy="95" r="7.5" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
                 
-                {/* Right Arm/Hand - Springy Wave */}
+                {/* Waving Arm Group */}
                 <g className="origin-[78px_80px] animate-kit-wave">
                    <path d="M 78 80 L 88 55" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
-                   <circle cx="88" cy="55" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+                   <circle cx="88" cy="55" r="7.5" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+                   <circle cx="85" cy="53" r="1.5" fill="white" opacity="0.5" />
                 </g>
               </g>
             )}
@@ -455,29 +473,29 @@ export function StudioBot() {
       >
         <div className="relative flex flex-col items-center">
           <div className={cn(
-            "absolute px-4 py-2 rounded-2xl bg-white dark:bg-zinc-800 text-foreground text-[10px] font-black uppercase tracking-widest shadow-2xl transition-all duration-300 transform origin-bottom whitespace-nowrap border border-primary/20 z-[160]",
-            showBubble && !isOpen ? "animate-bubble-pop" : "opacity-0 scale-50 translate-y-2 pointer-events-none",
-            isStateShow ? "bottom-full left-1/2 -translate-x-1/2 mb-4" : "right-full mr-6 bottom-1/2 translate-y-1/2"
+            "absolute px-5 py-3 rounded-[1.5rem] bg-white dark:bg-zinc-800 text-foreground text-[10px] font-black uppercase tracking-widest shadow-2xl transition-all duration-500 transform origin-bottom whitespace-nowrap border border-primary/20 z-[160]",
+            showBubble && !isOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 scale-50 translate-y-2 pointer-events-none",
+            isStateShow ? "bottom-full left-1/2 -translate-x-1/2 mb-6" : "right-full mr-8 bottom-1/2 translate-y-1/2"
           )}>
             {bubbleText}
             <div className={cn(
               "absolute w-0 h-0 border-transparent",
               isStateShow 
-                ? "top-full left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-t-white dark:border-t-zinc-800" 
-                : "left-full top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-l-[6px] border-l-white dark:border-l-zinc-800"
+                ? "top-full left-1/2 -translate-x-1/2 border-l-[8px] border-r-[8px] border-t-[8px] border-t-white dark:border-t-zinc-800" 
+                : "left-full top-1/2 -translate-y-1/2 border-t-[8px] border-b-[8px] border-l-[8px] border-l-white dark:border-l-zinc-800"
             )} />
           </div>
 
           <button 
             onClick={handleMascotClick}
             className={cn(
-              "w-24 h-24 rounded-full bg-primary/5 backdrop-blur-sm flex items-center justify-center transition-all duration-500 relative group overflow-visible",
+              "w-24 h-24 rounded-full bg-primary/5 backdrop-blur-sm flex items-center justify-center transition-all duration-500 relative group overflow-visible hover:scale-110",
               isPetting && "scale-90"
             )}
           >
             <RobotMascot mode={isStateShow ? "A" : "B"} />
             {!isOpen && (
-              <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_12px_rgba(74,222,128,0.8)]" />
+              <div className="absolute top-4 right-4 w-3.5 h-3.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_15px_rgba(74,222,128,0.8)]" />
             )}
           </button>
         </div>
@@ -496,7 +514,7 @@ export function StudioBot() {
               <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Astro • Assistant</h4>
               <div className="flex items-center gap-1.5">
                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                 <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Active Monitoring</span>
+                 <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Active Matrix</span>
               </div>
             </div>
           </div>
@@ -662,7 +680,7 @@ export function StudioBot() {
               </form>
               
               <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-foreground/10 px-1">
-                 <span className="flex items-center gap-2"><ShieldCheck className="w-2.5 h-2.5" /> Secure Local Assistant</span>
+                 <span className="flex items-center gap-2"><ShieldCheck className="w-2.5 h-2.5" /> Secure Local Studio Link</span>
                  <span>ESC TO EXIT</span>
               </div>
             </div>
@@ -683,15 +701,28 @@ export function StudioBot() {
 
         @keyframes kit-wave {
           0%, 100% { transform: rotate(0deg); }
-          50% { transform: rotate(-28deg); }
+          25% { transform: rotate(-25deg); }
+          75% { transform: rotate(25deg); }
         }
-        .animate-kit-wave { animation: kit-wave 0.8s ease-in-out infinite; }
+        .animate-kit-wave { animation: kit-wave 1.2s ease-in-out infinite; }
 
         @keyframes kit-grip-adjust {
           0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(4px); }
+          50% { transform: translateX(3px); }
         }
-        .animate-kit-grip { animation: kit-grip-adjust 1.5s ease-in-out infinite; }
+        .animate-kit-grip { animation: kit-grip-adjust 1.8s ease-in-out infinite; }
+        
+        @keyframes kit-sway {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-4px) rotate(1deg); }
+        }
+        .animate-kit-sway { animation: kit-sway 4s ease-in-out infinite; }
+        
+        @keyframes kit-blink {
+          0%, 48%, 52%, 100% { transform: scaleY(1); }
+          50% { transform: scaleY(0.05); }
+        }
+        .animate-kit-blink { animation: kit-blink 4s ease-in-out infinite; }
       `}</style>
     </>
   );
