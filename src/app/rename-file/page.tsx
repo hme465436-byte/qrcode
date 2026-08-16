@@ -20,7 +20,8 @@ import {
   ArrowRight,
   ShieldCheck,
   FileCode,
-  Layout
+  Layout,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -159,7 +160,7 @@ export default function RenameFilePage() {
                   onClick={() => !isProcessing && fileInputRef.current?.click()}
                   className={cn(
                     "relative group/upload h-48 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer",
-                    file && "border-solid border-primary/40"
+                    file && "border-solid border-primary/20"
                   )}
                 >
                   {file ? (
