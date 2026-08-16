@@ -152,8 +152,6 @@ export function Navbar() {
     const savedTheme = localStorage.getItem('mykit_theme') as 'light' | 'dark' | null;
     if (savedTheme) {
       setTheme(savedTheme);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-      // Respect user OS preference if no local storage found
     }
   }, []);
 
@@ -179,7 +177,6 @@ export function Navbar() {
     });
   }, [searchQuery]);
 
-  // Keyboard shortcut for search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -193,20 +190,20 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-[100] w-full border-b border-[#2563eb]/10 bg-white/80 dark:bg-black/80 backdrop-blur-3xl h-16">
+      <header className="fixed top-0 left-0 right-0 z-[100] w-full border-b border-[#2563eb]/10 bg-white/80 dark:bg-[#0a0a0c]/80 backdrop-blur-3xl h-16 transition-colors duration-700">
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
           <a href="/" className="flex items-center gap-2 group">
             <Logo />
           </a>
           
           <nav className="hidden xl:flex items-center gap-6">
-            {NAV_ITEMS.slice(0, 9).map((item) => (
+            {NAV_ITEMS.slice(0, 8).map((item) => (
               <a 
                 key={item.label} 
                 href={item.href}
                 className={cn(
-                  "text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 hover:text-[#2563eb] relative py-1",
-                  pathname === item.href ? "text-[#2563eb] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#2563eb] after:rounded-full" : "text-foreground/40"
+                  "text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 hover:text-[#2563eb] relative py-1",
+                  pathname === item.href ? "text-[#2563eb] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#2563eb] after:rounded-full" : "text-foreground/30"
                 )}
               >
                 {item.label}
@@ -217,24 +214,22 @@ export function Navbar() {
           <div className="flex items-center gap-2 md:gap-3">
              <button 
                 onClick={() => setIsSearchOpen(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:text-[#2563eb] transition-all group"
+                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 hover:text-[#2563eb] transition-all group"
                 aria-label="Search Tools"
              >
-               <Search className="w-4 h-4 transition-transform group-hover:scale-110" />
-               <span className="sr-only">Search</span>
+               <Search className="w-4.5 h-4.5 transition-transform group-hover:scale-110" />
              </button>
 
              <button 
                 onClick={toggleTheme}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 hover:text-[#2563eb] transition-all"
-                aria-label="Toggle Theme"
+                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 hover:text-[#2563eb] transition-all"
              >
-               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+               {theme === 'light' ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}
              </button>
 
              <button 
                 onClick={() => setIsScannerOpen(true)}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl bg-[#2563eb] text-white hover:bg-[#1d4ed8] transition-all shadow-xl shadow-blue-600/30"
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-6 py-3 rounded-2xl bg-[#2563eb] text-white hover:bg-[#1d4ed8] transition-all shadow-xl shadow-blue-600/30"
              >
               <Scan className="w-4 h-4" />
               <span className="hidden sm:inline">Scanner</span>
@@ -242,44 +237,36 @@ export function Navbar() {
 
              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <button className="xl:hidden w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500">
+                  <button className="xl:hidden w-10 h-10 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-500">
                     <Menu className="w-5 h-5" />
                   </button>
                 </SheetTrigger>
                 <SheetContent 
                   side="right" 
-                  className="w-[280px] glass-card p-0 overflow-hidden text-foreground border-l border-white/20 top-16 h-[calc(100vh-64px)] z-[40]"
+                  className="w-full max-w-[320px] glass-card p-0 overflow-hidden text-foreground border-l border-white/10 top-16 h-[calc(100vh-64px)] z-[100]"
                 >
                   <div className="h-full flex flex-col">
-                    <SheetHeader className="p-6 border-b border-white/10 text-left bg-primary/5">
+                    <SheetHeader className="p-8 border-b border-white/5 text-left bg-primary/5">
                       <div className="space-y-1">
-                        <SheetTitle className="text-[10px] font-black uppercase tracking-widest text-[#2563eb]">Studio Suite</SheetTitle>
-                        <Logo iconOnly={true} className="mt-2" />
+                        <SheetTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-[#2563eb]">Registry Matrix</SheetTitle>
+                        <Logo iconOnly={true} className="mt-4" />
                       </div>
                     </SheetHeader>
-                    <SheetDescription className="sr-only">Studio navigation menu</SheetDescription>
-                    <nav className="flex-1 p-4 flex flex-col gap-2 overflow-y-auto custom-scrollbar">
+                    <nav className="flex-1 p-4 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
                       {NAV_ITEMS.map((item) => (
                         <a 
                           key={item.label} 
                           href={item.href}
                           onClick={() => setIsMobileMenuOpen(false)}
                           className={cn(
-                            "flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all p-4 rounded-2xl",
-                            pathname === item.href ? "bg-[#2563eb]/10 text-[#2563eb] border border-[#2563eb]/20" : "text-foreground/40 hover:bg-secondary/50"
+                            "flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.15em] transition-all p-4 rounded-2xl",
+                            pathname === item.href ? "bg-[#2563eb]/10 text-[#2563eb] border border-[#2563eb]/20 shadow-lg" : "text-foreground/40 hover:bg-white/5"
                           )}
                         >
-                          <item.icon className="w-4 h-4" />
+                          <item.icon className="w-4.5 h-4.5" />
                           {item.label}
                         </a>
                       ))}
-                      <div className="my-4 border-t border-white/5" />
-                      <a href="/faq" className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.2em] p-4 text-foreground/30 hover:text-primary transition-all">
-                        <HelpCircle className="w-4 h-4" /> FAQ
-                      </a>
-                      <a href="/about" className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.2em] p-4 text-foreground/30 hover:text-primary transition-all">
-                        <Info className="w-4 h-4" /> About
-                      </a>
                     </nav>
                   </div>
                 </SheetContent>
@@ -290,54 +277,56 @@ export function Navbar() {
 
       {/* Global Search Dialog */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-        <DialogContent className="glass-card max-w-2xl border-white/20 p-0 overflow-hidden outline-none text-foreground top-[15%] translate-y-0">
-          <DialogHeader className="p-6 border-b border-white/10 bg-white/5">
+        <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none text-foreground top-[10%] translate-y-0">
+          <DialogHeader className="p-8 border-b border-white/5 bg-white/5">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20" />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-foreground/20" />
               <Input 
                 autoFocus
-                placeholder="Search studio tools... (CMD+K)"
+                placeholder="QUERY TECHNICAL MATRIX..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-14 pl-12 bg-secondary/50 border-white/10 rounded-2xl text-lg font-medium"
+                className="h-16 pl-16 bg-background/50 border-white/10 rounded-3xl text-xl font-bold uppercase tracking-tight placeholder:text-foreground/10"
               />
             </div>
-            <DialogDescription className="sr-only">Global studio search</DialogDescription>
           </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
+          <div className="max-h-[65vh] overflow-y-auto custom-scrollbar p-3">
             {filteredNavItems.length > 0 ? (
-              <div className="grid grid-cols-1 gap-1">
+              <div className="grid grid-cols-1 gap-1.5">
                 {filteredNavItems.map((item) => (
                   <a 
                     key={item.label}
                     href={item.href}
                     onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
-                    className="flex items-center justify-between p-4 rounded-2xl hover:bg-primary/10 group transition-all"
+                    className="flex items-center justify-between p-5 rounded-3xl hover:bg-primary/5 group transition-all duration-300"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 group-hover:text-primary group-hover:bg-primary/20 transition-all">
-                        <item.icon className="w-5 h-5" />
+                    <div className="flex items-center gap-5">
+                      <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-foreground/30 group-hover:text-primary group-hover:bg-primary/10 group-hover:rotate-6 transition-all duration-500 border border-transparent group-hover:border-primary/20">
+                        <item.icon className="w-6 h-6" />
                       </div>
                       <div className="space-y-0.5">
-                        <p className="text-[11px] font-black uppercase tracking-widest text-foreground group-hover:text-primary">{item.label}</p>
-                        <p className="text-[9px] text-foreground/40 font-medium uppercase tracking-tight">{item.keywords.join(', ')}</p>
+                        <p className="text-sm font-black uppercase tracking-widest text-foreground group-hover:text-primary">{item.label}</p>
+                        <p className="text-[10px] text-foreground/30 font-medium uppercase tracking-tight">{item.keywords.join(' · ')}</p>
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-foreground/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-5 h-5 text-foreground/10 group-hover:text-primary group-hover:translate-x-2 transition-all duration-500" />
                   </a>
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center space-y-4">
-                <Search className="w-12 h-12 text-foreground/10 mx-auto" />
-                <p className="text-xs font-black uppercase tracking-widest text-foreground/30">No matching studio tools found</p>
+              <div className="py-24 text-center space-y-6">
+                <Search className="w-16 h-16 text-foreground/5 mx-auto" />
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/20">Zero Identifiers Found</p>
               </div>
             )}
           </div>
-          <div className="p-4 bg-secondary/30 border-t border-white/10 flex items-center justify-between text-[8px] font-black uppercase tracking-[0.2em] text-foreground/20">
-            <span>MY KIT TOOL REGISTRY</span>
-            <span>ESC to close</span>
+          <div className="p-4 bg-secondary/50 border-t border-white/5 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20">
+            <span>MY KIT TOOL REGISTRY MATRIX</span>
+            <div className="flex gap-4">
+              <span>{filteredNavItems.length} UNITS</span>
+              <span>ESC TO EXIT</span>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

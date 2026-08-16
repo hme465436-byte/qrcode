@@ -18,7 +18,6 @@ import {
   ImageIcon,
   FileCode,
   Music,
-  Heart,
   Search,
   X,
   Maximize,
@@ -46,15 +45,15 @@ import {
   User,
   DownloadCloud,
   Files,
-  Copy,
   ListFilter,
   Split,
   FileImage,
   RotateCw,
-  Command,
   Unlock,
   Activity,
-  Mic
+  Mic,
+  Command,
+  Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -547,7 +546,7 @@ const TOOLS = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
   }
@@ -569,101 +568,101 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden">
       {/* HERO SECTION */}
-      <section className="w-full px-4 sm:px-6 pt-12 pb-20 md:pt-24 md:pb-40 text-center relative overflow-hidden">
-        <div className="max-w-4xl mx-auto animate-reveal relative z-10">
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
-              <Command className="w-3.5 h-3.5" /> Studio Protocol v6.0
+      <section className="w-full px-4 sm:px-6 pt-16 pb-24 md:pt-28 md:pb-48 text-center relative overflow-hidden">
+        <div className="max-w-5xl mx-auto animate-reveal relative z-10">
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
+              <Command className="w-3.5 h-3.5" /> Studio v6.5 Pro
             </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-foreground/5 border border-foreground/10 text-[9px] font-black text-foreground/40 uppercase tracking-widest">
-              Registry · {TOOLS.length} Tools
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-foreground/5 border border-foreground/10 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
+              Registry · {TOOLS.length} Units
             </div>
           </div>
           
-          <h1 className="text-4xl sm:text-7xl lg:text-8xl font-headline font-black mb-6 sm:mb-8 leading-[1.1] tracking-tighter text-foreground uppercase overflow-wrap-anywhere">
-            Digital <span className="text-primary italic">Excellence</span> <br />
-            <span className="text-foreground/80">MY KIT TOOL</span>
+          <h1 className="text-5xl sm:text-7xl lg:text-9xl font-headline font-black mb-8 leading-[0.95] tracking-tighter text-foreground uppercase">
+            Production <br /><span className="text-primary italic">Matrix</span>
           </h1>
-          <p className="text-sm sm:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium mb-12 sm:mb-16 px-2">
-            The world's most advanced professional utility studio. Generate high-resolution, branded assets and technical patterns for global workflows with precision engine processing.
+          <p className="text-base sm:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium mb-16 sm:mb-24 px-4">
+            The world's most advanced professional utility environment. Generate high-fidelity assets and technical patterns for global workflows with localized engine processing.
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-xl mx-auto mb-16 px-4 group relative">
-            <div className="relative h-16 w-full rounded-3xl p-[3.5px] overflow-hidden transition-all duration-500 shadow-[0_0_50px_-5px_rgba(37,99,235,0.25),0_10px_20px_-5px_rgba(37,99,235,0.2)] group-focus-within:shadow-[0_0_80px_-5px_rgba(37,99,235,0.5),0_20px_30px_-10px_rgba(37,99,235,0.4)] group-focus-within:ring-[12px] group-focus-within:ring-primary/5">
+          <div className="max-w-2xl mx-auto mb-20 px-4 group relative">
+            <div className="relative h-20 w-full rounded-[2.5rem] p-[4px] overflow-hidden transition-all duration-700 shadow-[0_0_80px_-10px_rgba(37,99,235,0.15)] group-focus-within:shadow-[0_0_100px_-5px_rgba(37,99,235,0.4)] group-focus-within:ring-[15px] group-focus-within:ring-primary/5">
               <div 
-                className="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] opacity-90 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity blur-[25px]"
+                className="absolute inset-[-1000%] animate-[spin_6s_linear_infinite] opacity-40 group-focus-within:opacity-100 group-hover:opacity-80 transition-opacity blur-[40px]"
                 style={{
-                  background: 'conic-gradient(from 0deg, transparent 0, transparent 45%, #2563eb 50%, transparent 55%, transparent 100%)'
+                  background: 'conic-gradient(from 0deg, transparent 0, transparent 40%, #2563eb 50%, transparent 60%, transparent 100%)'
                 }}
               />
-              <div className="relative flex items-center w-full h-full bg-white dark:bg-black backdrop-blur-3xl rounded-[calc(1.5rem-3.5px)] overflow-hidden">
-                <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                  <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
+              <div className="relative flex items-center w-full h-full bg-white dark:bg-[#0a0a0c] backdrop-blur-3xl rounded-[calc(2.5rem-4px)] overflow-hidden">
+                <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+                  <Search className="w-6 h-6 text-foreground/20 group-focus-within:text-primary transition-colors" />
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Search tools... (e.g. video, pdf, password)"
+                  placeholder="Query technical units... (e.g. video, ocr, pdf)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-full w-full pl-14 pr-14 bg-transparent border-none focus-visible:ring-0 rounded-3xl text-lg font-medium shadow-none placeholder:text-foreground/30"
+                  className="h-full w-full pl-16 pr-16 bg-transparent border-none focus-visible:ring-0 rounded-none text-xl font-bold placeholder:text-foreground/20 placeholder:uppercase placeholder:tracking-widest tracking-tight"
                 />
                 {searchQuery && (
                   <button 
                     onClick={() => setSearchQuery('')}
-                    className="absolute inset-y-0 right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
+                    className="absolute inset-y-0 right-6 flex items-center text-foreground/20 hover:text-primary transition-colors"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-6 h-6" />
                   </button>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10 w-full">
             {filteredTools.length > 0 ? (
               filteredTools.map((item, i) => (
-                <Link key={i} href={item.href} className="group h-full w-full animate-in fade-in zoom-in duration-500 relative flex flex-col">
+                <Link key={i} href={item.href} className="group h-full w-full animate-in fade-in zoom-in duration-700 relative flex flex-col">
                   <div className={cn(
-                    "absolute -inset-4 rounded-[3.5rem] blur-3xl opacity-20 group-hover:opacity-40 transition-all duration-700 pointer-events-none",
+                    "absolute -inset-6 rounded-[4rem] blur-[60px] opacity-0 group-hover:opacity-30 transition-all duration-1000 pointer-events-none",
                     item.glowClass
                   )} />
                   
-                  <div className="glass-card p-8 sm:p-10 rounded-[3rem] border-border hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden flex-1 flex flex-col shadow-2xl group-hover:shadow-xl z-10">
+                  <div className="glass-card p-10 sm:p-12 rounded-[3.5rem] border-border hover:border-primary/40 transition-all duration-700 hover:-translate-y-3 text-left relative overflow-hidden flex-1 flex flex-col shadow-2xl group-hover:shadow-primary/10 z-10">
                     <div className={cn(
-                      "w-14 h-14 sm:w-16 sm:h-16 rounded-[1.8rem] flex items-center justify-center mb-8 border shadow-inner group-hover:scale-110 transition-transform duration-500",
+                      "w-16 h-16 sm:w-20 sm:h-20 rounded-[2rem] flex items-center justify-center mb-10 border shadow-inner group-hover:scale-110 group-hover:rotate-3 transition-transform duration-700",
                       item.color
                     )}>
-                      <item.icon className="w-7 h-7 sm:w-8 sm:h-8" />
+                      <item.icon className="w-8 h-8 sm:w-10 sm:h-10" />
                     </div>
-                    <div className="space-y-4 flex-1 flex flex-col">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-xl sm:text-2xl font-headline font-black text-foreground uppercase tracking-tight leading-tight">{item.title}</h3>
-                        <span className="text-[9px] font-black px-2 py-1 rounded-lg bg-foreground/5 text-foreground/40 uppercase tracking-widest shrink-0">{item.label}</span>
+                    <div className="space-y-6 flex-1 flex flex-col">
+                      <div className="flex items-start justify-between gap-4">
+                        <h3 className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight leading-[1.1]">{item.title}</h3>
+                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-foreground/5 text-foreground/40 uppercase tracking-[0.2em] shrink-0 border border-foreground/10">{item.label}</span>
                       </div>
-                      <p className="text-[13px] text-foreground/40 leading-relaxed font-medium">
+                      <p className="text-sm text-foreground/40 leading-relaxed font-medium">
                         {item.desc}
                       </p>
-                      <div className="mt-auto pt-6 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary opacity-60 group-hover:opacity-100 transition-opacity">
-                        Open Studio <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-500" />
+                      <div className="mt-auto pt-10 flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.4em] text-primary opacity-40 group-hover:opacity-100 transition-all">
+                        Initialize <ArrowRight className="w-5 h-5 group-hover:translate-x-3 transition-transform duration-700" />
                       </div>
                     </div>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="col-span-full py-24 glass-card rounded-[4rem] border-dashed border-border flex flex-col items-center justify-center gap-6">
-                <Search className="w-16 h-16 text-foreground/10" />
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">No tools found</h3>
-                  <p className="text-sm text-foreground/40 font-medium">Try searching for broader terms like &quot;video&quot; or &quot;pdf&quot;</p>
+              <div className="col-span-full py-32 glass-card rounded-[4rem] border-dashed border-border flex flex-col items-center justify-center gap-10">
+                <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center text-foreground/10 animate-pulse">
+                  <Search className="w-12 h-12" />
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-3xl font-headline font-black text-foreground uppercase tracking-tight">Zero Matches</h3>
+                  <p className="text-base text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
                 </div>
                 <ShadButton 
                   onClick={() => setSearchQuery('')}
-                  variant="outline"
-                  className="h-12 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest border-primary/20 text-primary hover:bg-primary/5 transition-all"
+                  className="h-14 px-12 rounded-2xl font-black uppercase text-xs tracking-[0.3em] bg-primary text-white shadow-2xl shadow-primary/20"
                 >
-                  Clear Search Matrix
+                  Reset Studio Matrix
                 </ShadButton>
               </div>
             )}
@@ -671,29 +670,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURES GRID */}
-      <section className="w-full bg-secondary/20 py-20 sm:py-32 border-y border-border">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16 sm:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-5xl font-headline font-black uppercase tracking-tight mb-4 sm:mb-6 leading-tight">Built for <span className="text-primary italic">Professional</span> Efficiency</h2>
-            <p className="text-sm sm:base text-foreground/40 font-medium leading-relaxed">High-performance technical assets with a focus on privacy and hardware acceleration.</p>
+      {/* METRICS SECTION */}
+      <section className="w-full bg-secondary/30 py-24 sm:py-40 border-y border-border relative">
+        <div className="absolute inset-0 bg-grid-white/[0.02] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center mb-20 sm:mb-32 max-w-3xl mx-auto">
+            <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight mb-8 leading-[1.1]">Hardened <span className="text-primary italic">Clinical</span> Standards</h2>
+            <p className="text-lg text-foreground/40 font-medium leading-relaxed uppercase tracking-tighter">Maximum fidelity asset production with zero-storage security mandates.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 sm:gap-16 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 sm:gap-24 max-w-7xl mx-auto">
             {[
-              { icon: Palette, title: 'Artistic Branding', desc: 'Custom dot patterns, corner geometries, and integrated business logos for consistent brand identity.' },
-              { icon: Download, title: 'Vector Exports', desc: 'Download in PNG, JPG, or professional SVG formats suitable for large-format billboards and print.' },
-              { icon: Smartphone, title: 'PWA Native', desc: 'Install as a high-performance native app on your mobile device for offline studio access anytime.' },
-              { icon: Zap, title: 'Instant Engine', desc: 'Real-time studio preview with advanced error correction level adjustment and technical scores.' },
-              { icon: ShieldCheck, title: 'Privacy Absolute', desc: 'Zero data storage. All generation, OCR, and editing happens locally in your secure browser session.' },
-              { icon: Binary, title: 'Technical Tools', desc: 'Code converters, AOB pattern processors, and developer-centric utilities for modern workflows.' },
+              { icon: Palette, title: 'Branding Matrix', desc: 'Custom dot patterns, corner geometries, and integrated business logos for high-impact visual identification.' },
+              { icon: Download, title: 'Production Ready', desc: 'Download in PNG, JPG, or professional vector SVG formats calibrated for retina displays and large-format print.' },
+              { icon: Smartphone, title: 'PWA Architecture', desc: 'Install as a high-performance native application for low-latency offline studio access on any mobile hardware.' },
+              { icon: Zap, title: 'Instant Execution', desc: 'Hardware-accelerated rendering with real-time technical scores and 1:1 pixel mapping for peak scannability.' },
+              { icon: ShieldCheck, title: 'Privacy Absolute', desc: 'Zero data logs. All generation, OCR, and editing happens strictly within your secure local browser sandbox.' },
+              { icon: Binary, title: 'Technical Units', desc: 'Array of Bytes (AOB) converters, binary hex processors, and developer-centric utilities for modern engineering.' },
             ].map((item, i) => (
-              <div key={i} className="flex gap-6 sm:gap-8 group">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[1.8rem] bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-xl group-hover:border-primary/40 transition-all duration-500">
-                  <item.icon className="w-7 h-7 sm:w-8 sm:h-8" />
+              <div key={i} className="flex gap-8 group">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[2.2rem] bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-2xl group-hover:border-primary/40 transition-all duration-700 ring-1 ring-white/5">
+                  <item.icon className="w-8 h-8 sm:w-10 sm:h-10" />
                 </div>
-                <div className="space-y-3">
-                  <h4 className="text-sm sm:text-base font-black uppercase tracking-widest text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
-                  <p className="text-[13px] text-foreground/40 leading-relaxed font-medium">{item.desc}</p>
+                <div className="space-y-4">
+                  <h4 className="text-sm sm:text-base font-black uppercase tracking-[0.2em] text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
+                  <p className="text-sm text-foreground/40 leading-relaxed font-medium">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -701,35 +701,40 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA SECTION */}
-      <section className="w-full px-4 sm:px-6 py-20 sm:py-32 text-center overflow-hidden">
-        <div className="glass-card p-12 sm:p-24 rounded-[4rem] max-w-5xl mx-auto border-border relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -mr-32 -mt-32" />
-           <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -ml-32 -mb-32" />
+      {/* FOOTER CTA */}
+      <section className="w-full px-6 py-32 sm:py-48 text-center overflow-hidden">
+        <div className="glass-card p-16 sm:p-32 rounded-[5rem] max-w-6xl mx-auto border-border relative overflow-hidden group/cta">
+           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[120px] -mr-48 -mt-48 group-hover/cta:bg-primary/20 transition-all duration-1000" />
+           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] -ml-48 -mb-48 group-hover/cta:bg-primary/10 transition-all duration-1000" />
            
-           <h2 className="text-3xl sm:text-6xl font-headline font-black uppercase tracking-tight mb-6 sm:mb-8 relative z-10 leading-tight">Start Your <span className="text-primary italic">Production</span> Cycle</h2>
-           <p className="text-sm sm:text-lg text-foreground/40 font-medium mb-10 sm:mb-12 max-w-2xl mx-auto relative z-10 leading-relaxed">
-             Join thousands of professionals using MY KIT TOOL for premium branded assets and technical utilities. No registration, just hardware performance.
+           <h2 className="text-4xl sm:text-8xl font-headline font-black uppercase tracking-tight mb-10 relative z-10 leading-[0.95]">Ignite Your <br /><span className="text-primary italic">Workflow</span></h2>
+           <p className="text-base sm:text-xl text-foreground/40 font-medium mb-16 sm:mb-20 max-w-2xl mx-auto relative z-10 leading-relaxed uppercase tracking-tighter">
+             Join the global standard for professional digital production. No registration required. Hardware performance guaranteed.
            </p>
-           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 relative z-10">
-             <Link href="/single" className="w-full sm:w-auto px-12 py-5 bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-center">
-               Open Studio
+           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 relative z-10">
+             <Link href="/single" className="w-full sm:w-auto px-16 py-6 bg-primary text-primary-foreground font-black text-sm uppercase tracking-[0.3em] rounded-[2rem] shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-center">
+               Launch Studio
              </Link>
-             <Link href="/faq" className="w-full sm:w-auto px-12 py-5 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-secondary/80 transition-all text-center">
+             <Link href="/faq" className="w-full sm:w-auto px-16 py-6 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-[0.3em] rounded-[2rem] hover:bg-secondary/80 transition-all text-center">
                Documentation
              </Link>
            </div>
         </div>
         
-        <div className="mt-20 animate-reveal stagger-4">
-           <div className="inline-flex flex-col items-center gap-3 p-6 rounded-[2.5rem] bg-secondary/30 border border-border">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30">Engineered with Precision</span>
-              <p className="text-sm font-bold text-foreground">
-                Developed by <span className="text-primary">Umar Farooq</span> <Heart className="inline w-4 h-4 text-red-500 fill-red-500 ml-1.5" />
+        <div className="mt-32 animate-reveal stagger-4">
+           <div className="inline-flex flex-col items-center gap-4 p-8 rounded-[3.5rem] bg-secondary/30 border border-border">
+              <span className="text-[11px] font-black uppercase tracking-[0.5em] text-foreground/20">Precision Engineered By</span>
+              <p className="text-base font-bold text-foreground">
+                <span className="text-primary font-black uppercase tracking-widest">Umar Farooq</span> <Heart className="inline w-5 h-5 text-red-500 fill-red-500 ml-2 animate-pulse" />
               </p>
            </div>
         </div>
       </section>
+      
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
