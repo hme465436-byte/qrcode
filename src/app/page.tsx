@@ -59,8 +59,7 @@ import {
   List,
   Table,
   FileJson,
-  Braces,
-  Eraser
+  Braces
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -89,16 +88,6 @@ const TOOLS = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
-  },
-  { 
-    href: '/bg-remove-pro', 
-    icon: Eraser, 
-    title: 'BG Remove Pro', 
-    desc: 'Professional background removal with precision manual brush controls.', 
-    label: 'PRO', 
-    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
-    glowClass: 'bg-rose-500/10',
-    keywords: ['background remover', 'remove bg', 'transparent png', 'erase background', 'photo editor', 'masking']
   },
   { 
     href: '/csv-to-json', 
@@ -546,7 +535,7 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },
@@ -858,3 +847,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
     </div>
   );
 }
+
+const useMemo = (fn: () => any, deps: any[]) => {
+  return React.useMemo(fn, deps);
+};
