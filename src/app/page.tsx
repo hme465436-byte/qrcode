@@ -61,7 +61,8 @@ import {
   RotateCcw,
   Unlock,
   Book,
-  Shapes
+  Shapes,
+  FileSignature
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -128,6 +129,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-400/10',
     keywords: ['passport photo', 'id photo', 'visa photo', 'print photos', '35x45mm', '2x2 inch', 'photo maker'],
     category: 'image'
+  },
+  { 
+    href: '/rename-file', 
+    icon: FileSignature, 
+    title: 'Rename File', 
+    desc: 'Rename any file, image, or ZIP and download with the new name.', 
+    label: 'UTIL', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['rename', 'file name', 'change name', 'image rename', 'zip rename', 'utility'],
+    category: 'utilities'
   },
   { 
     href: '/csv-to-json', 
