@@ -60,7 +60,8 @@ export default function MicTesterPage() {
         const audioInputs = devs.filter(d => d.kind === 'audioinput');
         setDevices(audioInputs);
         if (audioInputs.length > 0 && !selectedDeviceId) {
-          setSelectedDeviceId(audioInputs[0].deviceId);
+          // If deviceId is empty (pre-permission), use 'default' as a stable internal value
+          setSelectedDeviceId(audioInputs[0].deviceId || 'default');
         }
       } catch (err) {
         console.error("Device discovery failed", err);
@@ -84,7 +85,9 @@ export default function MicTesterPage() {
     
     try {
       const constraints = {
-        audio: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : true
+        audio: (selectedDeviceId && selectedDeviceId !== 'default') 
+          ? { deviceId: { exact: selectedDeviceId } } 
+          : true
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -211,10 +214,6 @@ export default function MicTesterPage() {
     toast({ title: "Studio Reset", description: "Buffers and project memory purged." });
   };
 
-  const formatTime = (seconds: number) => {
-    return `00:0${seconds}`;
-  };
-
   return (
     <div className="container mx-auto px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
@@ -249,9 +248,14 @@ export default function MicTesterPage() {
                   </SelectTrigger>
                   <SelectContent className="glass-card">
                     {devices.length > 0 ? (
-                      devices.map((d) => (
-                        <SelectItem key={d.deviceId} value={d.deviceId} className="text-xs font-bold uppercase">{d.label || `Matrix Port ${devices.indexOf(d) + 1}`}</SelectItem>
-                      ))
+                      devices.map((d, i) => {
+                        const val = d.deviceId || `default-${i}`;
+                        return (
+                          <SelectItem key={val} value={val} className="text-xs font-bold uppercase">
+                            {d.label || `Matrix Port ${i + 1}`}
+                          </SelectItem>
+                        );
+                      })
                     ) : (
                       <SelectItem value="none" disabled className="text-xs italic uppercase">Searching Hardware...</SelectItem>
                     )}
@@ -523,4 +527,3 @@ export default function MicTesterPage() {
     </div>
   );
 }
-
