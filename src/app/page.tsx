@@ -89,6 +89,16 @@ const TOOLS = [
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
   },
   { 
+    href: '/word-to-pdf', 
+    icon: FileText, 
+    title: 'Word to PDF', 
+    desc: 'Convert Word .docx documents into PDF masters locally.', 
+    label: 'DOCUMENT', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['word to pdf', 'docx to pdf', 'convert word', 'word converter', 'doc to pdf']
+  },
+  { 
     href: '/pdf-to-image', 
     icon: FileImage, 
     title: 'PDF to Image', 

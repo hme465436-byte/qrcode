@@ -86,6 +86,7 @@ const NAV_ITEMS = [
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
+  { label: 'Word to PDF', href: '/word-to-pdf', icon: FileText, keywords: ['word to pdf', 'docx to pdf', 'convert word', 'word converter', 'doc to pdf'] },
   { label: 'PDF to Image', href: '/pdf-to-image', icon: FileImage, keywords: ['pdf to image', 'pdf to png', 'pdf to jpg', 'convert pdf', 'extract images from pdf'] },
   { label: 'PDF Splitter', href: '/pdf-splitter', icon: Split, keywords: ['pdf split', 'extract pages', 'separate pdf', 'pdf chunks', 'split document'] },
   { label: 'PDF Compress', href: '/pdf-compressor', icon: FileArchive, keywords: ['pdf compress', 'shrink pdf', 'smaller pdf', 'optimize document'] },
