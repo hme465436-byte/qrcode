@@ -48,7 +48,8 @@ import {
   DownloadCloud,
   Fingerprint,
   Files,
-  Copy
+  Copy,
+  ListFilter
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -94,6 +95,16 @@ const TOOLS = [
     color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['duplicate finder', 'clean files', 'remove duplicate', 'zip cleaner', 'project optimization', 'duplicates']
+  },
+  { 
+    href: '/duplicate-line-remover', 
+    icon: ListFilter, 
+    title: 'Line Purge', 
+    desc: 'Remove duplicate lines from text or lists instantly.', 
+    label: 'TEXT', 
+    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
+    keywords: ['duplicate lines', 'line remover', 'unique lines', 'remove repeated', 'list cleaner', 'text purge']
   },
   { 
     href: '/whatsapp-dp-maker', 
