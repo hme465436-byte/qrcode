@@ -66,7 +66,7 @@ import { Input } from '@/components/ui/input';
 const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, iconOnly?: boolean }) => (
   <div className={cn("flex items-center gap-3", className)}>
     <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
-      <div className="absolute inset-0 bg-[#2563eb] rounded-lg shadow-lg shadow-blue-600/20 flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 bg-[#2563eb] rounded-lg shadow-lg shadow-blue-600/20 flex items-center justify-center overflow-hidden icon-container-3d">
         <div className="w-4 h-4 grid grid-cols-2 gap-0.5 relative z-10">
           <div className="border-[1.5px] border-white rounded-[1px]" />
           <div className="bg-white/40 rounded-[1px]" />
@@ -159,31 +159,31 @@ export function Navbar() {
           <div className="flex items-center gap-3 md:gap-4">
              <button 
                 onClick={() => setIsSearchOpen(true)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all group"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all group icon-container-3d"
                 aria-label="Search Tools"
              >
-               <Search className="w-4 h-4 transition-transform group-hover:scale-110" />
+               <Search className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </button>
 
              <button 
                 onClick={toggleTheme}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all icon-container-3d"
              >
-               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+               {theme === 'light' ? <Moon className="w-4 h-4 icon-3d" /> : <Sun className="w-4 h-4 icon-3d" />}
              </button>
 
              <button 
                 onClick={() => setIsScannerOpen(true)}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
              >
-              <Scan className="w-4 h-4" />
+              <Scan className="w-4 h-4 icon-3d" />
               <span className="hidden sm:inline">Scanner</span>
              </button>
 
              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <button className="xl:hidden w-10 h-10 rounded-xl bg-secondary/50 border border-white/5 flex items-center justify-center text-foreground/40">
-                    <Menu className="w-5 h-5" />
+                  <button className="xl:hidden w-10 h-10 rounded-xl bg-secondary/50 border border-white/5 flex items-center justify-center text-foreground/40 icon-container-3d">
+                    <Menu className="w-5 h-5 icon-3d" />
                   </button>
                 </SheetTrigger>
                 <SheetContent 
@@ -206,7 +206,7 @@ export function Navbar() {
                             pathname === item.href ? "bg-primary/10 text-primary" : "text-foreground/40 hover:bg-white/5"
                           )}
                         >
-                          <item.icon className="w-4 h-4" />
+                          <item.icon className="w-4 h-4 icon-3d" />
                           {item.label}
                         </a>
                       ))}
@@ -224,7 +224,7 @@ export function Navbar() {
           <DialogHeader className="p-6 border-b border-white/5 bg-white/2">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20 icon-3d" />
               <Input 
                 autoFocus
                 placeholder="Query professional tools..."
@@ -245,18 +245,18 @@ export function Navbar() {
                     className="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 group transition-all duration-200"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-transparent group-hover:border-primary/10">
-                        <item.icon className="w-5 h-5" />
+                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-transparent group-hover:border-primary/10 icon-container-3d">
+                        <item.icon className="w-5 h-5 icon-3d" />
                       </div>
                       <p className="text-sm font-bold uppercase tracking-tight text-foreground/60 group-hover:text-foreground">{item.label}</p>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-foreground/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-4 h-4 text-foreground/10 group-hover:text-primary group-hover:translate-x-1 transition-all icon-3d" />
                   </a>
                 ))}
               </div>
             ) : (
               <div className="py-20 text-center space-y-4">
-                <Search className="w-12 h-12 text-foreground/5 mx-auto" />
+                <Search className="w-12 h-12 text-foreground/5 mx-auto icon-3d" />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/20">Zero Identifiers Found</p>
               </div>
             )}

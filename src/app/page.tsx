@@ -507,7 +507,7 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },
@@ -527,7 +527,7 @@ const TOOLS = [
     title: 'Text Repeater', 
     desc: 'Professional emoji and text multiplication.', 
     label: 'UTIL', 
-    color: 'text-pink-600 bg-pink-500/10 border-pink-500/20',
+    color: 'text-pink-600 bg-pink-500/10 border-pink-600/20',
     glowClass: 'bg-pink-500/10',
     keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner']
   },
@@ -573,7 +573,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto animate-reveal relative z-10">
           <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
-              <Command className="w-3 h-3" /> Digital Studio v7.0
+              <Command className="w-3 h-3 icon-3d" /> Digital Studio v7.0
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
               Verified {TOOLS.length} Production Units
@@ -592,7 +592,7 @@ export default function Home() {
             <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-transparent shadow-2xl">
               <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/5 group-focus-within:border-primary/50 transition-all duration-300">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                  <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
+                  <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors icon-3d" />
                 </div>
                 <Input 
                   type="text"
@@ -606,7 +606,7 @@ export default function Home() {
                     onClick={() => setSearchQuery('')}
                     className="absolute inset-y-0 right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-5 h-5 icon-3d" />
                   </button>
                 )}
               </div>
@@ -619,10 +619,10 @@ export default function Home() {
                 <Link key={i} href={item.href} className="group relative flex flex-col h-full">
                   <div className="glass-card p-10 rounded-[2rem] border-white/5 hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden flex-1 flex flex-col shadow-xl group-hover:shadow-primary/5">
                     <div className={cn(
-                      "w-12 h-12 rounded-xl flex items-center justify-center mb-10 border transition-all duration-500",
+                      "w-12 h-12 rounded-xl flex items-center justify-center mb-10 border transition-all duration-500 icon-container-3d",
                       item.color
                     )}>
-                      <item.icon className="w-6 h-6" />
+                      <item.icon className="w-6 h-6 icon-3d" />
                     </div>
                     <div className="space-y-4 flex-1 flex flex-col">
                       <div className="space-y-1">
@@ -633,7 +633,7 @@ export default function Home() {
                         {item.desc}
                       </p>
                       <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary opacity-0 group-hover:opacity-100 transition-all duration-500">
-                        Launch <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-500" />
+                        Launch <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-500 icon-3d" />
                       </div>
                     </div>
                     {/* Subtle Hover Glow */}
@@ -646,7 +646,7 @@ export default function Home() {
               ))
             ) : (
               <div className="col-span-full py-24 glass-card rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-8">
-                <Search className="w-12 h-12 text-foreground/5 animate-pulse" />
+                <Search className="w-12 h-12 text-foreground/5 animate-pulse icon-3d" />
                 <div className="space-y-2">
                   <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">Zero Identifiers</h3>
                   <p className="text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
@@ -656,7 +656,7 @@ export default function Home() {
                   variant="outline"
                   className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10"
                 >
-                  <RotateCcw className="w-4 h-4 mr-2" />
+                  <RotateCcw className="w-4 h-4 mr-2 icon-3d" />
                   Reset Studio Registry
                 </ShadButton>
               </div>
@@ -679,13 +679,13 @@ export default function Home() {
               </p>
               <div className="grid grid-cols-1 gap-6 pt-4">
                 {[
-                  { title: 'WASM Processing', desc: 'Hardware-accelerated performance via WebAssembly.' },
-                  { title: 'Zero Data Leakage', desc: 'No logs, no cookies, no third-party tracking.' },
-                  { title: 'Fidelity Control', desc: '1:1 pixel mapping for precision production.' }
+                  { title: 'WASM Processing', desc: 'Hardware-accelerated performance via WebAssembly.', icon: Zap },
+                  { title: 'Zero Data Leakage', desc: 'No logs, no cookies, no third-party tracking.', icon: ShieldCheck },
+                  { title: 'Fidelity Control', desc: '1:1 pixel mapping for precision production.', icon: Maximize }
                 ].map((f, i) => (
-                  <div key={i} className="flex gap-4 items-start">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 mt-1">
-                      <Zap className="w-3.5 h-3.5" />
+                  <div key={i} className="flex gap-4 items-start group/feat">
+                    <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center text-primary shrink-0 mt-1 icon-container-3d group-hover/feat:scale-110 transition-transform">
+                      <f.icon className="w-4 h-4 icon-3d" />
                     </div>
                     <div className="space-y-1">
                       <h4 className="text-sm font-black uppercase tracking-widest text-foreground">{f.title}</h4>
@@ -701,7 +701,7 @@ export default function Home() {
                   <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/40 border border-white/5 flex items-center justify-center group">
                      <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/mykit-ui/1200/800')] bg-cover bg-center opacity-30 grayscale transition-all duration-1000 group-hover:scale-110" />
                      <div className="relative z-10 w-20 h-20 rounded-full bg-white text-black flex items-center justify-center shadow-2xl cursor-pointer hover:scale-110 transition-transform">
-                        <Play className="w-8 h-8 fill-current ml-1" />
+                        <Play className="w-8 h-8 fill-current ml-1 icon-3d" />
                      </div>
                   </div>
                </div>
