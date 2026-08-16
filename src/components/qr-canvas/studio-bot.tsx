@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface Tool {
   href: string;
@@ -98,6 +99,7 @@ const QUICK_CHIPS = ['PDF', 'Image', 'Compress', 'QR', 'Convert', 'Passport'];
 
 export function StudioBot() {
   const pathname = usePathname();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [hasPulsed, setHasPulsed] = useState(false);
