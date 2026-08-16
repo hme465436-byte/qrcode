@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   MousePointer2,
   ArrowRight,
-  X
+  X,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -126,6 +127,7 @@ export default function ImageUrlDownloaderPage() {
   const [isZipping, setIsZipping] = useState(false);
   const [foundImages, setFoundImages] = useState<ImageAsset[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [showBlockedTip, setShowBlockedTip] = useState(false);
 
   const extractVideoId = (input: string) => {
     const trimmed = input.trim();
@@ -147,7 +149,9 @@ export default function ImageUrlDownloaderPage() {
     setIsProcessing(true);
     setError(null);
     setFoundImages([]);
+    setShowBlockedTip(false);
 
+    // 1. YouTube Identification
     const vId = extractVideoId(url);
     if (vId) {
       const ytAssets: ImageAsset[] = [
@@ -161,12 +165,13 @@ export default function ImageUrlDownloaderPage() {
       return;
     }
 
-    const isDirectImage = /\.(jpg|jpeg|png|webp|gif|svg|avif)(\?.*)?$/i.test(url);
+    // 2. Direct Image Link Identification (Better support for Pinterest CDN/Directs)
+    const isDirectImage = /\.(jpg|jpeg|png|webp|gif|svg|avif)(\?.*)?$/i.test(url) || url.includes('pinimg.com');
     if (isDirectImage) {
       setFoundImages([{
         id: 'direct',
         url: url,
-        label: 'Direct Image Matrix',
+        label: 'Direct Visual Matrix',
         type: 'image'
       }]);
       toast({ title: "Asset Identified", description: "Direct visual link mapped." });
@@ -174,6 +179,7 @@ export default function ImageUrlDownloaderPage() {
       return;
     }
 
+    // 3. Webpage Scrape Protocol
     try {
       toast({ title: "Scanning Webpage", description: "Identifying visual matrices via proxy..." });
       const result = await extractWebImages(url);
@@ -188,10 +194,13 @@ export default function ImageUrlDownloaderPage() {
         setFoundImages(assets);
         toast({ title: "Discovery Complete", description: `Isolated ${assets.length} potential assets.` });
       } else {
-        setError("Zero-Asset Matrix: No legible images were identified on this page.");
+        // If scrape returned zero images, likely blocked by platform (Pinterest/IG)
+        setShowBlockedTip(true);
+        setError("No images could be extracted from this page link.");
       }
     } catch (err: any) {
-      setError("Discovery Blocked: The remote host rejected our discovery protocol.");
+      setShowBlockedTip(true);
+      setError("The remote host restricted our automated discovery protocol.");
     } finally {
       setIsProcessing(false);
     }
@@ -200,7 +209,6 @@ export default function ImageUrlDownloaderPage() {
   const downloadSingle = async (asset: ImageAsset) => {
     try {
       toast({ title: "Negotiating Stream", description: "Synthesizing binary blob..." });
-      // Always try proxy for downloads to ensure filenames and blob access work reliably
       const dataUri = await proxyDownloadImage(asset.url);
       const link = document.createElement('a');
       link.href = dataUri;
@@ -209,7 +217,6 @@ export default function ImageUrlDownloaderPage() {
       link.click();
       toast({ title: "Production Success", description: "Asset pushed to local storage." });
     } catch (e) {
-      // Final desperation fallback
       window.open(asset.url, '_blank');
       toast({ title: "Manual Extraction", description: "Direct download blocked. Opening image in a new tab." });
     }
@@ -291,7 +298,7 @@ export default function ImageUrlDownloaderPage() {
                 <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Discovery URL</Label>
                 <div className="relative group/input">
                   <Input 
-                    placeholder="Paste image, site, or YT URL..."
+                    placeholder="Paste image address or page URL..."
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleDiscovery()}
@@ -310,11 +317,11 @@ export default function ImageUrlDownloaderPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Identify Matrix
+                  Extract Matrix
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => { setUrl(''); setFoundImages([]); setError(null); }}
+                  onClick={() => { setUrl(''); setFoundImages([]); setError(null); setShowBlockedTip(false); }}
                   className="w-16 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
                 >
                   <Trash2 className="w-6 h-6" />
@@ -322,14 +329,24 @@ export default function ImageUrlDownloaderPage() {
               </div>
 
               {error && foundImages.length === 0 && (
-                <div className="p-6 rounded-[2rem] bg-destructive/5 border border-destructive/10 flex items-start gap-4 animate-in shake duration-500">
-                  <AlertCircle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
-                  <div className="space-y-1">
+                <div className="p-6 rounded-[2rem] bg-destructive/5 border border-destructive/10 space-y-4 animate-in shake duration-500">
+                  <div className="flex items-start gap-4">
+                    <AlertCircle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
                     <p className="text-[11px] font-bold text-destructive/80 uppercase tracking-widest leading-relaxed">{error}</p>
-                    <p className="text-[9px] text-foreground/30 uppercase font-black tracking-widest pt-2 flex items-center gap-2">
-                       <MousePointer2 className="w-3 h-3" /> Tip: Try 'Copy Image Address' for direct extraction.
-                    </p>
                   </div>
+                  
+                  {showBlockedTip && (
+                    <div className="pt-4 border-t border-destructive/10 space-y-3">
+                       <div className="flex items-center gap-2 text-primary">
+                          <HelpCircle className="w-4 h-4" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Recommended Action</span>
+                       </div>
+                       <p className="text-[10px] text-foreground/50 leading-relaxed font-medium">
+                        This site blocks automated page scraping. To extract successfully: 
+                        <br/><span className="text-foreground font-bold">Right-click the image → Copy image address → paste here.</span>
+                       </p>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -338,9 +355,9 @@ export default function ImageUrlDownloaderPage() {
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Resilient Extraction</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Protocol Logic</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                If the browser blocks visual previews due to CORS security, the studio automatically switches to server-side proxying to preserve and display the asset matrix.
+                Direct image links work instantly. For sites like Pinterest or Instagram, use the &quot;Copy Image Address&quot; method to bypass page-level scraping restrictions.
               </p>
             </div>
           </div>
