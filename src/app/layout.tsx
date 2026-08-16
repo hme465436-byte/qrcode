@@ -3,7 +3,6 @@ import './globals.css';
 import { Navbar } from '@/components/qr-canvas/navbar';
 import { Footer } from '@/components/qr-canvas/footer';
 import { Toaster } from '@/components/ui/toaster';
-import { SpaceBackground } from '@/components/qr-canvas/space-background';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -54,7 +53,6 @@ export default function RootLayout({
         className="font-body bg-background text-foreground antialiased selection:bg-primary/20 selection:text-foreground overflow-x-hidden w-full max-w-full"
         suppressHydrationWarning
       >
-        <SpaceBackground />
         <Navbar />
         <main className="min-h-screen pt-16 w-full max-w-full">
           {children}

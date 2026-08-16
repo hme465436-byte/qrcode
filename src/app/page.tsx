@@ -60,6 +60,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button as ShadButton } from '@/components/ui/button';
+import { SpaceBackground } from '@/components/qr-canvas/space-background';
 
 const TOOLS = [
   { 
@@ -571,6 +572,9 @@ export default function Home() {
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
       {/* HERO SECTION */}
       <section className="w-full px-4 sm:px-6 pt-24 pb-20 md:pt-32 md:pb-32 text-center relative overflow-hidden">
+        {/* Animated Space Background - Limited to Hero Section */}
+        <SpaceBackground />
+        
         <div className="max-w-5xl mx-auto animate-reveal relative z-10">
           <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">

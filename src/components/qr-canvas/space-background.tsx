@@ -5,9 +5,7 @@ import React, { useEffect, useState } from 'react';
 /**
  * A subtle, performance-friendly space background.
  * Features a starfield with gentle twinkling and occasional shooting stars.
- * Improved for high-visibility and glowing effects.
- * 
- * Note: Uses a mounted check to prevent hydration mismatches for randomized star positions.
+ * Updated to use absolute positioning for containment within specific sections.
  */
 export function SpaceBackground() {
   const [mounted, setMounted] = useState(false);
@@ -27,13 +25,13 @@ export function SpaceBackground() {
     setMounted(true);
   }, []);
 
-  // Prevent server-side rendering of dynamic visual parts to ensure 100% hydration sync
+  // Use absolute positioning so it fills the nearest relative parent
   if (!mounted) {
-    return <div className="fixed inset-0 z-[-1] bg-[#030305]" aria-hidden="true" />;
+    return <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true" />;
   }
 
   return (
-    <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-[#030305] select-none" aria-hidden="true">
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
       {/* Deep Space Depth Layer */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.05)_0%,transparent_80%)]" />
       
