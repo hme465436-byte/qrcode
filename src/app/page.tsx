@@ -52,7 +52,9 @@ import {
   FileImage,
   RotateCw,
   Command,
-  Unlock
+  Unlock,
+  Activity,
+  Mic
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -78,6 +80,16 @@ const TOOLS = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/speaker-tester', 
+    icon: Activity, 
+    title: 'Speaker Tester', 
+    desc: 'Test Left/Right channels and frequency response.', 
+    label: 'HARDWARE', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['speaker tester', 'audio test', 'left right', 'frequency sweep', 'sound test', 'headphones']
   },
   { 
     href: '/youtube-thumbnail-downloader', 
@@ -435,7 +447,7 @@ const TOOLS = [
     title: 'Video to GIF', 
     desc: 'Synthesize high-quality animated GIFs from clips.', 
     label: 'ANIMATION', 
-    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
+    color: 'text-orange-600 bg-orange-500/10 border-orange-600/20',
     glowClass: 'bg-orange-500/10',
     keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip']
   },
