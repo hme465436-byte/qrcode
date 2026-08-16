@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   DownloadCloud, 
+  Download,
   Link as LinkIcon, 
   Trash2, 
   Sparkles, 
@@ -61,7 +62,7 @@ export default function ImageUrlDownloaderPage() {
         if (parsed.pathname.startsWith('/embed/') || parsed.pathname.startsWith('/shorts/')) return parsed.pathname.split('/')[2];
       }
       if (host === 'youtu.be') return parsed.pathname.substring(1);
-    } catch {}
+    } catch { }
     return null;
   };
 
@@ -133,7 +134,7 @@ export default function ImageUrlDownloaderPage() {
             const ext = asset.url.split('.').pop()?.split('?')[0] || 'jpg';
             zip.file(`${asset.id}_${i}.${ext}`, blob);
           }
-        } catch {}
+        } catch { }
       }
       const content = await zip.generateAsync({ type: "blob" });
       const link = document.createElement('a');
