@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -178,6 +178,8 @@ const BUBBLE_MESSAGES = [
   "Coffee then tools?", "Oops wrong pocket", "Boss called? I’m here", "Pixel mess?", "Make it print?", "Secret helper"
 ];
 
+const GREETING_MESSAGES = ["Hello Hi!", "How are you?", "Hi friend!"];
+
 export function StudioBot() {
   const pathname = usePathname();
   const { toast } = useToast();
@@ -203,13 +205,34 @@ export function StudioBot() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Initial Greeting Rotation Protocol
+  useEffect(() => {
+    if (isInitialShow && !isOpen) {
+      let count = 0;
+      setBubbleText(GREETING_MESSAGES[0]);
+      setShowBubble(true);
+      
+      const interval = setInterval(() => {
+        count++;
+        if (count < GREETING_MESSAGES.length) {
+          setBubbleText(GREETING_MESSAGES[count]);
+        } else {
+          clearInterval(interval);
+          setShowBubble(false);
+        }
+      }, 1500); // Rotate every 1.5s
+      
+      return () => clearInterval(interval);
+    }
+  }, [isInitialShow, isOpen]);
+
   useEffect(() => {
     const initialShowTimer = setTimeout(() => {
       setIsInitialShow(false);
     }, 5000);
 
     const triggerBubble = () => {
-      if (isOpen || isMinimized) return;
+      if (isOpen || isMinimized || isInitialShow) return;
       const nextMsg = BUBBLE_MESSAGES[Math.floor(Math.random() * BUBBLE_MESSAGES.length)];
       setBubbleText(nextMsg);
       setShowBubble(true);
@@ -217,13 +240,18 @@ export function StudioBot() {
       const nextDelay = 12000 + Math.random() * 13000;
       bubbleTimeoutRef.current = setTimeout(triggerBubble, nextDelay);
     };
-    bubbleTimeoutRef.current = setTimeout(triggerBubble, 8000);
+    
+    // Only schedule random bubbles after the initial show period
+    const startDelayTimer = setTimeout(() => {
+      triggerBubble();
+    }, 8000);
 
     return () => { 
       if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current); 
       clearTimeout(initialShowTimer);
+      clearTimeout(startDelayTimer);
     };
-  }, [isOpen, isMinimized]);
+  }, [isOpen, isMinimized, isInitialShow]);
 
   useEffect(() => {
     if (isOpen && messages.length <= 1) {
@@ -384,13 +412,11 @@ export function StudioBot() {
             
             {/* Paws / Hands */}
             {isPoseB ? (
-              // POSE B: Both hands grabbing the border (at x=45 mark)
               <g>
                 <circle cx="45" cy="55" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" className="animate-kit-grip" />
                 <circle cx="45" cy="85" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" className="animate-kit-grip" />
               </g>
             ) : (
-              // POSE A: Normal standing + Waving
               <g>
                 {/* Left Paw */}
                 <circle cx="20" cy="95" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
