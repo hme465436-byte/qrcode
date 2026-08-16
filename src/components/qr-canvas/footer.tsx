@@ -7,108 +7,106 @@ import { cn } from '@/lib/utils';
 
 const Logo = ({ className = "h-8" }: { className?: string }) => (
   <div className={cn("flex items-center gap-3", className)}>
-    <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
-      <div className="absolute inset-0 bg-[#2563eb]/20 rounded-xl rotate-3" />
-      <div className="absolute inset-0 bg-[#2563eb] rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center overflow-hidden">
-        <div className="w-5 h-5 grid grid-cols-2 gap-1 relative z-10">
-          <div className="border-[1.5px] border-white/70 rounded-[1px]" />
+    <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
+      <div className="absolute inset-0 bg-primary rounded-lg shadow-lg shadow-primary/20 flex items-center justify-center overflow-hidden">
+        <div className="w-4 h-4 grid grid-cols-2 gap-0.5 relative z-10">
+          <div className="border-[1.5px] border-white rounded-[1px]" />
           <div className="bg-white/40 rounded-[1px]" />
           <div className="bg-white/40 rounded-[1px]" />
           <div className="bg-white rounded-[1px]" />
         </div>
-        <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10" />
       </div>
     </div>
     
-    <div className="font-headline font-black text-2xl tracking-tighter leading-none flex items-center">
+    <div className="font-headline font-black text-xl tracking-tighter leading-none flex items-center">
       <span className="text-[#0f172a] dark:text-white uppercase">MY KIT</span>
-      <span className="text-[#2563eb] ml-2 italic">TOOL</span>
+      <span className="text-primary ml-1.5 italic">TOOL</span>
     </div>
   </div>
 );
 
 export function Footer() {
   return (
-    <footer className="border-t border-[#2563eb]/10 bg-slate-50/50 dark:bg-slate-900/10 py-20 md:py-32 relative overflow-hidden">
-      {/* Decorative gradient elements */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#2563eb]/5 rounded-full blur-[120px] -translate-y-1/2 pointer-events-none" />
-      
+    <footer className="border-t border-white/5 bg-[#060608] py-24 md:py-32 relative overflow-hidden">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-12 mb-24">
-          {/* Brand Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-24">
           <div className="lg:col-span-5 space-y-8">
             <Logo />
-            <p className="text-[15px] text-foreground/50 font-medium leading-relaxed max-w-sm">
-              The world's premier artistic digital utility studio. Create high-resolution, branded technical assets instantly. 100% private, client-side, and free forever.
+            <p className="text-[15px] text-foreground/40 font-medium leading-relaxed max-w-sm">
+              The professional digital studio for high-fidelity asset production. Powered by client-side intelligence for maximum privacy and performance.
             </p>
             
-            <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 inline-flex flex-col gap-2">
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60">Creative Engineer</span>
-               <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                  Developed by <span className="text-primary">Umar Farooq</span> <Heart className="w-3 h-3 text-red-500 fill-red-500" />
-               </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-8 pt-2">
-              <div className="flex items-center gap-2.5 text-[11px] font-black uppercase tracking-widest text-foreground/30">
-                <Shield className="w-4 h-4 text-[#2563eb]" /> Secure
+            <div className="flex flex-wrap items-center gap-8 pt-4">
+              <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
+                <Shield className="w-3.5 h-3.5 text-primary/40" /> Secure
               </div>
-              <div className="flex items-center gap-2.5 text-[11px] font-black uppercase tracking-widest text-foreground/30">
-                <Lock className="w-4 h-4 text-[#2563eb]" /> Private
+              <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
+                <Lock className="w-3.5 h-3.5 text-primary/40" /> Private
               </div>
-              <div className="flex items-center gap-2.5 text-[11px] font-black uppercase tracking-widest text-foreground/30">
-                <Zap className="w-4 h-4 text-[#2563eb]" /> Instant
+              <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
+                <Zap className="w-3.5 h-3.5 text-primary/40" /> Instant
               </div>
             </div>
           </div>
 
-          {/* Links Sections */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-12 sm:gap-8">
-            <div className="space-y-8">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2563eb]">Knowledge</h4>
-              <nav className="flex flex-col gap-5">
+          <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-12">
+            <div className="space-y-6">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Studio</h4>
+              <nav className="flex flex-col gap-4">
                 {[
-                  { label: 'Help Center', href: '/faq' },
-                  { label: 'About Studio', href: '/about' },
-                  { label: 'Studio Mission', href: '/about' },
+                  { label: 'Single QR', href: '/single' },
+                  { label: 'Bulk Mode', href: '/bulk' },
+                  { label: 'Logo Maker', href: '/logo-maker' },
+                  { label: 'OCR Extraction', href: '/ocr' },
                 ].map((link) => (
-                  <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
-                    {link.label} <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
+                  <a key={link.label} href={link.href} className="text-xs font-bold text-foreground/40 hover:text-foreground transition-all uppercase tracking-widest">
+                    {link.label}
                   </a>
                 ))}
               </nav>
             </div>
 
-            <div className="space-y-8">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#2563eb]">Legal</h4>
-              <nav className="flex flex-col gap-5">
+            <div className="space-y-6">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Knowledge</h4>
+              <nav className="flex flex-col gap-4">
                 {[
-                  { label: 'Privacy Policy', href: '/privacy' },
-                  { label: 'Terms of Use', href: '/terms' },
-                  { label: 'Cookie Policy', href: '/cookies' },
+                  { label: 'Help Center', href: '/faq' },
+                  { label: 'About', href: '/about' },
+                  { label: 'Privacy', href: '/privacy' },
+                  { label: 'Terms', href: '/terms' },
                 ].map((link) => (
-                  <a key={link.label} href={link.href} className="group flex items-center gap-2 text-[12px] font-bold text-foreground/50 hover:text-[#2563eb] transition-all uppercase tracking-widest">
-                    {link.label} <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-y-1" />
+                  <a key={link.label} href={link.href} className="text-xs font-bold text-foreground/40 hover:text-foreground transition-all uppercase tracking-widest">
+                    {link.label}
                   </a>
                 ))}
               </nav>
+            </div>
+
+            <div className="space-y-6 col-span-2 md:col-span-1">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Developer</h4>
+              <div className="p-5 rounded-2xl bg-white/2 border border-white/5 space-y-4">
+                <p className="text-[10px] text-foreground/40 font-bold uppercase leading-relaxed tracking-wider">
+                  Engineered with ❤️ by <span className="text-foreground">Umar Farooq</span>. Built for precision.
+                </p>
+                <div className="flex items-center gap-3 pt-2">
+                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <Heart className="w-4 h-4 fill-current" />
+                   </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="pt-16 border-t border-[#2563eb]/10 flex flex-col md:flex-row items-center justify-between gap-12">
-          <div className="flex flex-wrap justify-center gap-10">
-            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-foreground/20">SSL SECURE</span>
-            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-foreground/20">GDPR READY</span>
-            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-foreground/20">PWA NATIVE</span>
+        <div className="pt-16 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex gap-10">
+            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-foreground/10">V7.2 PRODUCTION</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-foreground/10">NATIVE PWA</span>
           </div>
           
-          <div className="text-center md:text-right space-y-3">
-            <p className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground/40">
-              &copy; <CopyrightYear /> MY KIT TOOL. PROFESSIONAL ASSET PRODUCTION.
-            </p>
-            <p className="text-[10px] font-medium text-foreground/20 uppercase tracking-[0.4em]">
-              DIGITAL EXCELLENCE. PRIVACY FIRST.
+          <div className="text-center md:text-right">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/20">
+              &copy; <CopyrightYear /> MY KIT TOOL. ALL RIGHTS RESERVED.
             </p>
           </div>
         </div>

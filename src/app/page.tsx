@@ -53,7 +53,8 @@ import {
   Activity,
   Mic,
   Command,
-  Heart
+  Heart,
+  Play
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -107,7 +108,7 @@ const TOOLS = [
     desc: 'Test hardware input levels and loopback echo.', 
     label: 'HARDWARE', 
     color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
-    glowClass: 'bg-orange-500/10',
+    glowClass: 'bg-emerald-500/10',
     keywords: ['mic tester', 'microphone test', 'audio input', 'record test', 'voice test', 'hardware check']
   },
   { 
@@ -506,7 +507,7 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },
@@ -566,103 +567,97 @@ export default function Home() {
   }, [searchQuery]);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden">
+    <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
       {/* HERO SECTION */}
-      <section className="w-full px-4 sm:px-6 pt-16 pb-24 md:pt-28 md:pb-48 text-center relative overflow-hidden">
+      <section className="w-full px-4 sm:px-6 pt-24 pb-20 md:pt-32 md:pb-32 text-center relative overflow-hidden">
         <div className="max-w-5xl mx-auto animate-reveal relative z-10">
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
-              <Command className="w-3.5 h-3.5" /> Studio v6.5 Pro
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
+              <Command className="w-3 h-3" /> Digital Studio v7.0
             </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-foreground/5 border border-foreground/10 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
-              Registry · {TOOLS.length} Units
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
+              Verified {TOOLS.length} Production Units
             </div>
           </div>
           
-          <h1 className="text-5xl sm:text-7xl lg:text-9xl font-headline font-black mb-8 leading-[0.95] tracking-tighter text-foreground uppercase">
-            Production <br /><span className="text-primary italic">Matrix</span>
+          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-headline font-black mb-8 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto">
+            The World's Most <span className="text-primary italic">Advanced</span> Studio
           </h1>
-          <p className="text-base sm:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium mb-16 sm:mb-24 px-4">
-            The world's most advanced professional utility environment. Generate high-fidelity assets and technical patterns for global workflows with localized engine processing.
+          <p className="text-base sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-16 px-4">
+            Professional high-fidelity asset generation and technical data translation. 100% private, client-side, and engineered for high-performance workflows.
           </p>
 
-          {/* Search Bar */}
+          {/* SaaS Style Search Bar */}
           <div className="max-w-2xl mx-auto mb-20 px-4 group relative">
-            <div className="relative h-20 w-full rounded-[2.5rem] p-[4px] overflow-hidden transition-all duration-700 shadow-[0_0_80px_-10px_rgba(37,99,235,0.15)] group-focus-within:shadow-[0_0_100px_-5px_rgba(37,99,235,0.4)] group-focus-within:ring-[15px] group-focus-within:ring-primary/5">
-              <div 
-                className="absolute inset-[-1000%] animate-[spin_6s_linear_infinite] opacity-40 group-focus-within:opacity-100 group-hover:opacity-80 transition-opacity blur-[40px]"
-                style={{
-                  background: 'conic-gradient(from 0deg, transparent 0, transparent 40%, #2563eb 50%, transparent 60%, transparent 100%)'
-                }}
-              />
-              <div className="relative flex items-center w-full h-full bg-white dark:bg-[#0a0a0c] backdrop-blur-3xl rounded-[calc(2.5rem-4px)] overflow-hidden">
-                <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-                  <Search className="w-6 h-6 text-foreground/20 group-focus-within:text-primary transition-colors" />
+            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-transparent shadow-2xl">
+              <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/5 group-focus-within:border-primary/50 transition-all duration-300">
+                <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                  <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors" />
                 </div>
                 <Input 
                   type="text"
-                  placeholder="Query technical units... (e.g. video, ocr, pdf)"
+                  placeholder="Find a professional tool..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-full w-full pl-16 pr-16 bg-transparent border-none focus-visible:ring-0 rounded-none text-xl font-bold placeholder:text-foreground/20 placeholder:uppercase placeholder:tracking-widest tracking-tight"
+                  className="h-full w-full pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-base font-medium placeholder:text-foreground/20"
                 />
                 {searchQuery && (
                   <button 
                     onClick={() => setSearchQuery('')}
-                    className="absolute inset-y-0 right-6 flex items-center text-foreground/20 hover:text-primary transition-colors"
+                    className="absolute inset-y-0 right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                   </button>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {filteredTools.length > 0 ? (
               filteredTools.map((item, i) => (
-                <Link key={i} href={item.href} className="group h-full w-full animate-in fade-in zoom-in duration-700 relative flex flex-col">
-                  <div className={cn(
-                    "absolute -inset-6 rounded-[4rem] blur-[60px] opacity-0 group-hover:opacity-30 transition-all duration-1000 pointer-events-none",
-                    item.glowClass
-                  )} />
-                  
-                  <div className="glass-card p-10 sm:p-12 rounded-[3.5rem] border-border hover:border-primary/40 transition-all duration-700 hover:-translate-y-3 text-left relative overflow-hidden flex-1 flex flex-col shadow-2xl group-hover:shadow-primary/10 z-10">
+                <Link key={i} href={item.href} className="group relative flex flex-col h-full">
+                  <div className="glass-card p-10 rounded-[2rem] border-white/5 hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden flex-1 flex flex-col shadow-xl group-hover:shadow-primary/5">
                     <div className={cn(
-                      "w-16 h-16 sm:w-20 sm:h-20 rounded-[2rem] flex items-center justify-center mb-10 border shadow-inner group-hover:scale-110 group-hover:rotate-3 transition-transform duration-700",
+                      "w-12 h-12 rounded-xl flex items-center justify-center mb-10 border transition-all duration-500",
                       item.color
                     )}>
-                      <item.icon className="w-8 h-8 sm:w-10 sm:h-10" />
+                      <item.icon className="w-6 h-6" />
                     </div>
-                    <div className="space-y-6 flex-1 flex flex-col">
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight leading-[1.1]">{item.title}</h3>
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-foreground/5 text-foreground/40 uppercase tracking-[0.2em] shrink-0 border border-foreground/10">{item.label}</span>
+                    <div className="space-y-4 flex-1 flex flex-col">
+                      <div className="space-y-1">
+                        <span className="text-[9px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
+                        <h3 className="text-xl font-headline font-bold text-foreground uppercase tracking-tight">{item.title}</h3>
                       </div>
                       <p className="text-sm text-foreground/40 leading-relaxed font-medium">
                         {item.desc}
                       </p>
-                      <div className="mt-auto pt-10 flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.4em] text-primary opacity-40 group-hover:opacity-100 transition-all">
-                        Initialize <ArrowRight className="w-5 h-5 group-hover:translate-x-3 transition-transform duration-700" />
+                      <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary opacity-0 group-hover:opacity-100 transition-all duration-500">
+                        Launch <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-500" />
                       </div>
                     </div>
+                    {/* Subtle Hover Glow */}
+                    <div className={cn(
+                      "absolute -right-20 -bottom-20 w-40 h-40 rounded-full blur-[80px] opacity-0 group-hover:opacity-20 transition-opacity duration-1000",
+                      item.glowClass
+                    )} />
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="col-span-full py-32 glass-card rounded-[4rem] border-dashed border-border flex flex-col items-center justify-center gap-10">
-                <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center text-foreground/10 animate-pulse">
-                  <Search className="w-12 h-12" />
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-3xl font-headline font-black text-foreground uppercase tracking-tight">Zero Matches</h3>
-                  <p className="text-base text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
+              <div className="col-span-full py-24 glass-card rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-8">
+                <Search className="w-12 h-12 text-foreground/5 animate-pulse" />
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">Zero Identifiers</h3>
+                  <p className="text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
                 </div>
                 <ShadButton 
                   onClick={() => setSearchQuery('')}
-                  className="h-14 px-12 rounded-2xl font-black uppercase text-xs tracking-[0.3em] bg-primary text-white shadow-2xl shadow-primary/20"
+                  variant="outline"
+                  className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10"
                 >
-                  Reset Studio Matrix
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Reset Studio Registry
                 </ShadButton>
               </div>
             )}
@@ -670,63 +665,67 @@ export default function Home() {
         </div>
       </section>
 
-      {/* METRICS SECTION */}
-      <section className="w-full bg-secondary/30 py-24 sm:py-40 border-y border-border relative">
-        <div className="absolute inset-0 bg-grid-white/[0.02] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center mb-20 sm:mb-32 max-w-3xl mx-auto">
-            <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight mb-8 leading-[1.1]">Hardened <span className="text-primary italic">Clinical</span> Standards</h2>
-            <p className="text-lg text-foreground/40 font-medium leading-relaxed uppercase tracking-tighter">Maximum fidelity asset production with zero-storage security mandates.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 sm:gap-24 max-w-7xl mx-auto">
-            {[
-              { icon: Palette, title: 'Branding Matrix', desc: 'Custom dot patterns, corner geometries, and integrated business logos for high-impact visual identification.' },
-              { icon: Download, title: 'Production Ready', desc: 'Download in PNG, JPG, or professional vector SVG formats calibrated for retina displays and large-format print.' },
-              { icon: Smartphone, title: 'PWA Architecture', desc: 'Install as a high-performance native application for low-latency offline studio access on any mobile hardware.' },
-              { icon: Zap, title: 'Instant Execution', desc: 'Hardware-accelerated rendering with real-time technical scores and 1:1 pixel mapping for peak scannability.' },
-              { icon: ShieldCheck, title: 'Privacy Absolute', desc: 'Zero data logs. All generation, OCR, and editing happens strictly within your secure local browser sandbox.' },
-              { icon: Binary, title: 'Technical Units', desc: 'Array of Bytes (AOB) converters, binary hex processors, and developer-centric utilities for modern engineering.' },
-            ].map((item, i) => (
-              <div key={i} className="flex gap-8 group">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[2.2rem] bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-2xl group-hover:border-primary/40 transition-all duration-700 ring-1 ring-white/5">
-                  <item.icon className="w-8 h-8 sm:w-10 sm:h-10" />
-                </div>
-                <div className="space-y-4">
-                  <h4 className="text-sm sm:text-base font-black uppercase tracking-[0.2em] text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
-                  <p className="text-sm text-foreground/40 leading-relaxed font-medium">{item.desc}</p>
-                </div>
+      {/* STRIPE STYLE FEATURE SECTION */}
+      <section className="w-full py-32 border-t border-white/5 relative bg-[#060608]/50">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 items-center">
+            <div className="lg:col-span-5 space-y-8 text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
+                Privacy Sovereign
               </div>
-            ))}
+              <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight leading-[0.95]">Definitive <span className="text-primary italic">Security</span> Mandate</h2>
+              <p className="text-lg text-foreground/40 font-medium leading-relaxed">
+                Our studio operates entirely within your browser's memory sandbox. We have eliminated server-side storage to ensure your branding and technical data remain strictly private and permanent.
+              </p>
+              <div className="grid grid-cols-1 gap-6 pt-4">
+                {[
+                  { title: 'WASM Processing', desc: 'Hardware-accelerated performance via WebAssembly.' },
+                  { title: 'Zero Data Leakage', desc: 'No logs, no cookies, no third-party tracking.' },
+                  { title: 'Fidelity Control', desc: '1:1 pixel mapping for precision production.' }
+                ].map((f, i) => (
+                  <div key={i} className="flex gap-4 items-start">
+                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 mt-1">
+                      <Zap className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-black uppercase tracking-widest text-foreground">{f.title}</h4>
+                      <p className="text-xs text-foreground/40 font-medium">{f.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="lg:col-span-7 relative">
+               <div className="glass-card p-4 rounded-[2.5rem] border-white/10 shadow-2xl relative z-10 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
+                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/40 border border-white/5 flex items-center justify-center group">
+                     <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/mykit-ui/1200/800')] bg-cover bg-center opacity-30 grayscale transition-all duration-1000 group-hover:scale-110" />
+                     <div className="relative z-10 w-20 h-20 rounded-full bg-white text-black flex items-center justify-center shadow-2xl cursor-pointer hover:scale-110 transition-transform">
+                        <Play className="w-8 h-8 fill-current ml-1" />
+                     </div>
+                  </div>
+               </div>
+               <div className="absolute -top-12 -left-12 w-64 h-64 bg-primary/5 rounded-full blur-[100px]" />
+               <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-primary/10 rounded-full blur-[100px]" />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FOOTER CTA */}
-      <section className="w-full px-6 py-32 sm:py-48 text-center overflow-hidden">
-        <div className="glass-card p-16 sm:p-32 rounded-[5rem] max-w-6xl mx-auto border-border relative overflow-hidden group/cta">
-           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[120px] -mr-48 -mt-48 group-hover/cta:bg-primary/20 transition-all duration-1000" />
-           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] -ml-48 -mb-48 group-hover/cta:bg-primary/10 transition-all duration-1000" />
-           
-           <h2 className="text-4xl sm:text-8xl font-headline font-black uppercase tracking-tight mb-10 relative z-10 leading-[0.95]">Ignite Your <br /><span className="text-primary italic">Workflow</span></h2>
-           <p className="text-base sm:text-xl text-foreground/40 font-medium mb-16 sm:mb-20 max-w-2xl mx-auto relative z-10 leading-relaxed uppercase tracking-tighter">
-             Join the global standard for professional digital production. No registration required. Hardware performance guaranteed.
+      {/* CTAs */}
+      <section className="w-full px-6 py-40 text-center">
+        <div className="max-w-4xl mx-auto space-y-12">
+           <h2 className="text-5xl sm:text-8xl font-headline font-black uppercase tracking-tight leading-none">Ready for <span className="text-primary italic">Production?</span></h2>
+           <p className="text-lg text-foreground/40 font-medium max-w-xl mx-auto uppercase tracking-tighter">
+             Join thousands of designers and engineers using the world's premier local utility matrix.
            </p>
-           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 relative z-10">
-             <Link href="/single" className="w-full sm:w-auto px-16 py-6 bg-primary text-primary-foreground font-black text-sm uppercase tracking-[0.3em] rounded-[2rem] shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-center">
-               Launch Studio
+           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+             <Link href="/single" className="w-full sm:w-auto px-12 py-5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+               Initialize Studio
              </Link>
-             <Link href="/faq" className="w-full sm:w-auto px-16 py-6 bg-secondary border border-border text-foreground font-black text-sm uppercase tracking-[0.3em] rounded-[2rem] hover:bg-secondary/80 transition-all text-center">
+             <Link href="/about" className="w-full sm:w-auto px-12 py-5 bg-white/5 border border-white/10 text-foreground/40 font-black text-xs uppercase tracking-[0.3em] rounded-xl hover:bg-white/10 transition-all">
                Documentation
              </Link>
-           </div>
-        </div>
-        
-        <div className="mt-32 animate-reveal stagger-4">
-           <div className="inline-flex flex-col items-center gap-4 p-8 rounded-[3.5rem] bg-secondary/30 border border-border">
-              <span className="text-[11px] font-black uppercase tracking-[0.5em] text-foreground/20">Precision Engineered By</span>
-              <p className="text-base font-bold text-foreground">
-                <span className="text-primary font-black uppercase tracking-widest">Umar Farooq</span> <Heart className="inline w-5 h-5 text-red-500 fill-red-500 ml-2 animate-pulse" />
-              </p>
            </div>
         </div>
       </section>

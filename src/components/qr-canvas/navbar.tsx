@@ -65,23 +65,21 @@ import { Input } from '@/components/ui/input';
 
 const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, iconOnly?: boolean }) => (
   <div className={cn("flex items-center gap-3", className)}>
-    <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
-      <div className="absolute inset-0 bg-[#2563eb]/20 rounded-xl rotate-3" />
-      <div className="absolute inset-0 bg-[#2563eb] rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center overflow-hidden">
-        <div className="w-5 h-5 grid grid-cols-2 gap-1 relative z-10">
-          <div className="border-[2.2px] border-white/80 rounded-[1.5px]" />
-          <div className="bg-white/40 rounded-[1.5px]" />
-          <div className="bg-white/40 rounded-[1.5px]" />
-          <div className="bg-white rounded-[1.5px]" />
+    <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
+      <div className="absolute inset-0 bg-[#2563eb] rounded-lg shadow-lg shadow-blue-600/20 flex items-center justify-center overflow-hidden">
+        <div className="w-4 h-4 grid grid-cols-2 gap-0.5 relative z-10">
+          <div className="border-[1.5px] border-white rounded-[1px]" />
+          <div className="bg-white/40 rounded-[1px]" />
+          <div className="bg-white/40 rounded-[1px]" />
+          <div className="bg-white rounded-[1px]" />
         </div>
-        <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10" />
       </div>
     </div>
     
     {!iconOnly && (
-      <div className="font-headline font-black text-2xl tracking-tighter leading-none flex items-center">
-        <span className="text-[#0f172a] dark:text-white">MY KIT</span>
-        <span className="text-[#2563eb] ml-2 italic">TOOL</span>
+      <div className="font-headline font-black text-xl tracking-tighter leading-none flex items-center">
+        <span className="text-[#0f172a] dark:text-white uppercase">MY KIT</span>
+        <span className="text-[#2563eb] ml-1.5 italic">TOOL</span>
       </div>
     )}
   </div>
@@ -96,48 +94,6 @@ const NAV_ITEMS = [
   { label: 'Mic Tester', href: '/mic-tester', icon: Mic, keywords: ['mic tester', 'microphone test', 'audio input', 'record test'] },
   { label: 'YT Downloader', href: '/youtube-thumbnail-downloader', icon: MonitorPlay, keywords: ['youtube', 'thumbnail', 'downloader', 'yt'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
-  { label: 'PDF Unlock', href: '/pdf-unlock', icon: Unlock, keywords: ['unlock pdf', 'remove password', 'decrypt pdf', 'open'] },
-  { label: 'PDF Lock', href: '/pdf-password-protect', icon: ShieldAlert, keywords: ['pdf password', 'encrypt pdf', 'lock pdf', 'secure'] },
-  { label: 'Text to PDF', href: '/text-to-pdf', icon: FileText, keywords: ['text to pdf', 'txt to pdf', 'convert text', 'pdf master'] },
-  { label: 'PDF Rotator', href: '/pdf-rotator', icon: RotateCw, keywords: ['rotate pdf', 'fix orientation', 'sideways pdf', 'upside down', 'pdf fixer'] },
-  { label: 'PDF to Word', href: '/pdf-to-word', icon: FileEdit, keywords: ['pdf to word', 'docx', 'convert', 'editable'] },
-  { label: 'Word to PDF', href: '/word-to-pdf', icon: FileText, keywords: ['word to pdf', 'docx to pdf', 'convert word', 'word converter', 'doc to pdf'] },
-  { label: 'PDF to Image', href: '/pdf-to-image', icon: FileImage, keywords: ['pdf to image', 'pdf to png', 'pdf to jpg', 'convert pdf', 'extract images from pdf'] },
-  { label: 'PDF Splitter', href: '/pdf-splitter', icon: Split, keywords: ['pdf split', 'extract pages', 'separate pdf', 'pdf chunks', 'split document'] },
-  { label: 'PDF Compress', href: '/pdf-compressor', icon: FileArchive, keywords: ['pdf compress', 'shrink pdf', 'smaller pdf', 'optimize document'] },
-  { label: 'Duplicates', href: '/duplicate-finder', icon: Files, keywords: ['duplicate', 'finder', 'cleaner', 'redundancy', 'files'] },
-  { label: 'Line Purge', href: '/duplicate-line-remover', icon: ListFilter, keywords: ['duplicate lines', 'line remover', 'unique lines', 'remove repeated', 'list cleaner', 'text purge'] },
-  { label: 'WhatsApp DP', href: '/whatsapp-dp-maker', icon: User, keywords: ['whatsapp dp maker', 'profile picture', 'uncut dp', 'whatsapp quality', 'whatsquality', 'hd dp', 'profile maker'] },
-  { label: 'PDF Merger', href: '/pdf-merger', icon: FileStack, keywords: ['pdf merge', 'combine pdf', 'join pdf', 'multiple pdfs', 'document joiner'] },
-  { label: 'Image to File', href: '/image-to-file', icon: ArrowRightLeft, keywords: ['image to file', 'image converter', 'jpg to pdf', 'webp converter', 'png to webp', 'photo to pdf'] },
-  { label: 'File Compressor', href: '/file-compressor', icon: FileArchive, keywords: ['compress', 'reduce size', 'optimize', 'shrink', 'smaller', 'pdf', 'image'] },
-  { label: 'Thumbnails', href: '/youtube-thumbnail-maker', icon: MonitorPlay, keywords: ['youtube', 'thumbnail', '1280x720', 'yt'] },
-  { label: 'Age Studio', href: '/age-calculator', icon: Clock, keywords: ['age', 'birthday', 'how old am i', 'dob'] },
-  { label: 'Passwords', href: '/password-generator', icon: Lock, keywords: ['password', 'generator', 'safe', 'secure', 'entropy'] },
-  { label: 'YouTube Banner', href: '/youtube-banner-maker', icon: Youtube, keywords: ['youtube', 'banner', 'channel art', 'yt cover'] },
-  { label: 'Collage', href: '/collage-maker', icon: Grid2X2, keywords: ['collage maker', 'photo grid', 'merge photos', '2x2 collage', 'photo collage'] },
-  { label: 'Favicons', href: '/favicon-generator', icon: LayoutGrid, keywords: ['favicon', 'icon', 'apple touch', 'site icon', 'web'] },
-  { label: 'Privacy Purge', href: '/metadata-remover', icon: EyeOff, keywords: ['exif', 'metadata', 'gps', 'privacy', 'strip'] },
-  { label: 'Word Counter', href: '/word-counter', icon: AlignLeft, keywords: ['word counter', 'character count', 'reading time', 'word count tool', 'text counter'] },
-  { label: 'Color Picker', href: '/color-picker', icon: Pipette, keywords: ['hex', 'rgb', 'hsl', 'design', 'palette', 'picker'] },
-  { label: 'RGB Studio', href: '/rgb-picker', icon: Palette, keywords: ['rgb', 'hex', 'color', 'cmyk', 'converter'] },
-  { label: 'Markdown', href: '/markdown-preview', icon: FileEdit, keywords: ['markdown', 'md', 'html', 'preview', 'markup', 'editor'] },
-  { label: 'Converter', href: '/image-converter', icon: RefreshCcw, keywords: ['png to jpg', 'jpg to png', 'format', 'convert'] },
-  { label: 'Resizer', href: '/image-resizer', icon: Maximize, keywords: ['resize', 'image', 'dimensions', 'scale', 'px'] },
-  { label: 'Compressor', href: '/image-compressor', icon: Maximize, keywords: ['compress', 'image', 'reduce', 'optimize', 'shrink'] },
-  { label: 'Image to PDF', href: '/image-to-pdf', icon: FileStack, keywords: ['pdf', 'convert', 'jpg to pdf', 'images', 'bundle'] },
-  { label: 'Photo Editor', href: '/photo-editor', icon: ImageIcon, keywords: ['image', 'edit', 'crop', 'filter', 'manipulate'] },
-  { label: 'Vocal Remover', href: '/vocal-separator', icon: MicOff, keywords: ['vocal remover', 'karaoke', 'remove vocals', 'instrumental', 'music separator'] },
-  { label: 'Video to MP3', href: '/video-to-audio', icon: Music, keywords: ['audio', 'extract', 'mp4', 'sound', 'convert'] },
-  { label: 'Video to GIF', href: '/video-to-gif', icon: Film, keywords: ['gif', 'video to gif', 'animation', 'clip'] },
-  { label: 'Audio Joiner', href: '/audio-joiner', icon: ListMusic, keywords: ['merge', 'combine', 'mp3', 'audio', 'join'] },
-  { label: 'Volume Booster', href: '/audio-booster', icon: Volume2, keywords: ['loud', 'gain', 'amplify', 'boost', 'audio', 'volume'] },
-  { label: 'Letter Art', href: '/letter-art', icon: CaseSensitive, keywords: ['ascii', 'text art', 'alphabet', 'letters', 'image to text'] },
-  { label: 'OCR Text', href: '/ocr', icon: FileText, keywords: ['ocr', 'extract', 'recognize', 'scan', 'read'] },
-  { label: 'Dot Art', href: '/dot-art', icon: Grid3X3, keywords: ['dots', 'braille', 'creative', 'art', 'matrix'] },
-  { label: 'Repeater', href: '/repeater', icon: Repeat, keywords: ['repeat', 'text', 'emoji', 'spam', 'cloner'] },
-  { label: 'Hex Converter', href: '/hex-converter', icon: FileCode, keywords: ['binary', 'hexadecimal', 'bytes', 'dump'] },
-  { label: 'AOB Converter', href: '/code-converter', icon: Binary, keywords: ['aob', 'pattern', 'trainer', 'hex', 'convert'] },
 ];
 
 export function Navbar() {
@@ -172,38 +128,27 @@ export function Navbar() {
     if (!searchQuery.trim()) return NAV_ITEMS;
     const words = searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0);
     return NAV_ITEMS.filter(item => {
-      const targetString = `${item.label} ${item.keywords.join(' ')}`.toLowerCase();
+      const targetString = `${item.label}`.toLowerCase();
       return words.every(word => targetString.includes(word));
     });
   }, [searchQuery]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsSearchOpen(true);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-[100] w-full border-b border-[#2563eb]/10 bg-white/80 dark:bg-[#0a0a0c]/80 backdrop-blur-3xl h-16 transition-colors duration-700">
+      <header className="fixed top-0 left-0 right-0 z-[100] w-full border-b border-white/5 bg-background/80 backdrop-blur-xl h-16 transition-all duration-300">
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 group">
+          <a href="/" className="flex items-center gap-2 group transition-transform active:scale-95">
             <Logo />
           </a>
           
-          <nav className="hidden xl:flex items-center gap-6">
-            {NAV_ITEMS.slice(0, 8).map((item) => (
+          <nav className="hidden xl:flex items-center gap-8">
+            {NAV_ITEMS.map((item) => (
               <a 
                 key={item.label} 
                 href={item.href}
                 className={cn(
-                  "text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 hover:text-[#2563eb] relative py-1",
-                  pathname === item.href ? "text-[#2563eb] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#2563eb] after:rounded-full" : "text-foreground/30"
+                  "text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 hover:text-primary relative py-1",
+                  pathname === item.href ? "text-primary" : "text-foreground/40"
                 )}
               >
                 {item.label}
@@ -211,25 +156,25 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-3 md:gap-4">
              <button 
                 onClick={() => setIsSearchOpen(true)}
-                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 hover:text-[#2563eb] transition-all group"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all group"
                 aria-label="Search Tools"
              >
-               <Search className="w-4.5 h-4.5 transition-transform group-hover:scale-110" />
+               <Search className="w-4 h-4 transition-transform group-hover:scale-110" />
              </button>
 
              <button 
                 onClick={toggleTheme}
-                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 hover:text-[#2563eb] transition-all"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all"
              >
-               {theme === 'light' ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}
+               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
              </button>
 
              <button 
                 onClick={() => setIsScannerOpen(true)}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-6 py-3 rounded-2xl bg-[#2563eb] text-white hover:bg-[#1d4ed8] transition-all shadow-xl shadow-blue-600/30"
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
              >
               <Scan className="w-4 h-4" />
               <span className="hidden sm:inline">Scanner</span>
@@ -237,20 +182,18 @@ export function Navbar() {
 
              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <button className="xl:hidden w-10 h-10 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-500">
+                  <button className="xl:hidden w-10 h-10 rounded-xl bg-secondary/50 border border-white/5 flex items-center justify-center text-foreground/40">
                     <Menu className="w-5 h-5" />
                   </button>
                 </SheetTrigger>
                 <SheetContent 
                   side="right" 
-                  className="w-full max-w-[320px] glass-card p-0 overflow-hidden text-foreground border-l border-white/10 top-16 h-[calc(100vh-64px)] z-[100]"
+                  className="w-full max-w-[320px] bg-card p-0 overflow-hidden text-foreground border-l border-white/5 top-0 h-full z-[100]"
                 >
                   <div className="h-full flex flex-col">
-                    <SheetHeader className="p-8 border-b border-white/5 text-left bg-primary/5">
-                      <div className="space-y-1">
-                        <SheetTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-[#2563eb]">Registry Matrix</SheetTitle>
-                        <Logo iconOnly={true} className="mt-4" />
-                      </div>
+                    <SheetHeader className="p-8 border-b border-white/5 text-left">
+                      <SheetTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Navigation Matrix</SheetTitle>
+                      <Logo iconOnly={false} className="mt-6" />
                     </SheetHeader>
                     <nav className="flex-1 p-4 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
                       {NAV_ITEMS.map((item) => (
@@ -259,11 +202,11 @@ export function Navbar() {
                           href={item.href}
                           onClick={() => setIsMobileMenuOpen(false)}
                           className={cn(
-                            "flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.15em] transition-all p-4 rounded-2xl",
-                            pathname === item.href ? "bg-[#2563eb]/10 text-[#2563eb] border border-[#2563eb]/20 shadow-lg" : "text-foreground/40 hover:bg-white/5"
+                            "flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.15em] transition-all p-4 rounded-xl",
+                            pathname === item.href ? "bg-primary/10 text-primary" : "text-foreground/40 hover:bg-white/5"
                           )}
                         >
-                          <item.icon className="w-4.5 h-4.5" />
+                          <item.icon className="w-4 h-4" />
                           {item.label}
                         </a>
                       ))}
@@ -277,56 +220,50 @@ export function Navbar() {
 
       {/* Global Search Dialog */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-        <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none text-foreground top-[10%] translate-y-0">
-          <DialogHeader className="p-8 border-b border-white/5 bg-white/5">
+        <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
+          <DialogHeader className="p-6 border-b border-white/5 bg-white/2">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>
             <div className="relative">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-foreground/20" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20" />
               <Input 
                 autoFocus
-                placeholder="QUERY TECHNICAL MATRIX..."
+                placeholder="Query professional tools..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-16 pl-16 bg-background/50 border-white/10 rounded-3xl text-xl font-bold uppercase tracking-tight placeholder:text-foreground/10"
+                className="h-14 pl-14 bg-transparent border-none focus-visible:ring-0 rounded-none text-lg font-medium tracking-tight placeholder:text-foreground/10"
               />
             </div>
           </DialogHeader>
-          <div className="max-h-[65vh] overflow-y-auto custom-scrollbar p-3">
+          <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
             {filteredNavItems.length > 0 ? (
-              <div className="grid grid-cols-1 gap-1.5">
+              <div className="grid grid-cols-1 gap-1">
                 {filteredNavItems.map((item) => (
                   <a 
                     key={item.label}
                     href={item.href}
                     onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
-                    className="flex items-center justify-between p-5 rounded-3xl hover:bg-primary/5 group transition-all duration-300"
+                    className="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 group transition-all duration-200"
                   >
-                    <div className="flex items-center gap-5">
-                      <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-foreground/30 group-hover:text-primary group-hover:bg-primary/10 group-hover:rotate-6 transition-all duration-500 border border-transparent group-hover:border-primary/20">
-                        <item.icon className="w-6 h-6" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-transparent group-hover:border-primary/10">
+                        <item.icon className="w-5 h-5" />
                       </div>
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-black uppercase tracking-widest text-foreground group-hover:text-primary">{item.label}</p>
-                        <p className="text-[10px] text-foreground/30 font-medium uppercase tracking-tight">{item.keywords.join(' · ')}</p>
-                      </div>
+                      <p className="text-sm font-bold uppercase tracking-tight text-foreground/60 group-hover:text-foreground">{item.label}</p>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-foreground/10 group-hover:text-primary group-hover:translate-x-2 transition-all duration-500" />
+                    <ArrowRight className="w-4 h-4 text-foreground/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </a>
                 ))}
               </div>
             ) : (
-              <div className="py-24 text-center space-y-6">
-                <Search className="w-16 h-16 text-foreground/5 mx-auto" />
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/20">Zero Identifiers Found</p>
+              <div className="py-20 text-center space-y-4">
+                <Search className="w-12 h-12 text-foreground/5 mx-auto" />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/20">Zero Identifiers Found</p>
               </div>
             )}
           </div>
-          <div className="p-4 bg-secondary/50 border-t border-white/5 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20">
+          <div className="p-4 bg-secondary/30 border-t border-white/5 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20">
             <span>MY KIT TOOL REGISTRY MATRIX</span>
-            <div className="flex gap-4">
-              <span>{filteredNavItems.length} UNITS</span>
-              <span>ESC TO EXIT</span>
-            </div>
+            <span>ESC TO EXIT</span>
           </div>
         </DialogContent>
       </Dialog>
