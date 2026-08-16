@@ -82,6 +82,16 @@ const TOOLS = [
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
   },
   { 
+    href: '/image-url-downloader', 
+    icon: DownloadCloud, 
+    title: 'URL Image Downloader', 
+    desc: 'Extract images and YouTube thumbnails from any URL.', 
+    label: 'MEDIA', 
+    color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
+    glowClass: 'bg-cyan-500/10',
+    keywords: ['image downloader', 'save image', 'url image', 'extract images', 'yt thumbnail', 'downloader']
+  },
+  { 
     href: '/speaker-tester', 
     icon: Activity, 
     title: 'Speaker Tester', 
@@ -447,7 +457,7 @@ const TOOLS = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
   },
@@ -723,4 +733,3 @@ export default function Home() {
     </div>
   );
 }
-

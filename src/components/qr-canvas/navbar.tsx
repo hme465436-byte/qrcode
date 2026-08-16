@@ -91,6 +91,7 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home, keywords: ['start', 'dashboard', 'main'] },
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
+  { label: 'Image URL', href: '/image-url-downloader', icon: DownloadCloud, keywords: ['image downloader', 'save image', 'url image', 'extract images', 'yt'] },
   { label: 'Speaker Test', href: '/speaker-tester', icon: Activity, keywords: ['speaker tester', 'audio test', 'left right', 'sound test'] },
   { label: 'Mic Tester', href: '/mic-tester', icon: Mic, keywords: ['mic tester', 'microphone test', 'audio input', 'record test'] },
   { label: 'YT Downloader', href: '/youtube-thumbnail-downloader', icon: MonitorPlay, keywords: ['youtube', 'thumbnail', 'downloader', 'yt'] },
