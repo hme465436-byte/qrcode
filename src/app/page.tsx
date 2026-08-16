@@ -59,7 +59,9 @@ import {
   List,
   Table,
   FileJson,
-  Braces
+  Braces,
+  SquareUser,
+  Camera
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -88,6 +90,16 @@ const TOOLS = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/passport-photo-maker', 
+    icon: SquareUser, 
+    title: 'Passport Photo', 
+    desc: 'Create official ID photos and printable A4 sheets.', 
+    label: 'IDENTITY', 
+    color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    glowClass: 'bg-blue-400/10',
+    keywords: ['passport photo', 'id photo', 'visa photo', 'print photos', '35x45mm', '2x2 inch', 'photo maker']
   },
   { 
     href: '/csv-to-json', 
@@ -515,7 +527,7 @@ const TOOLS = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav']
   },
