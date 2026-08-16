@@ -24,7 +24,10 @@ import {
   Zap,
   RotateCcw,
   Layout,
-  Film
+  Film,
+  ShieldCheck,
+  Layers,
+  Maximize
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -167,7 +170,7 @@ export default function LiveWallpaperPage() {
       if (fitMode === 'cover') {
         filter = `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h}`;
       } else {
-        filter = `scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2:black`;
+        filter = `scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(oh-ih)/2:(oh-ih)/2:black`;
       }
 
       const args = [
