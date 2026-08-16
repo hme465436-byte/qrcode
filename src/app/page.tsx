@@ -88,6 +88,16 @@ const TOOLS = [
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
   },
   { 
+    href: '/pdf-to-image', 
+    icon: FileImage, 
+    title: 'PDF to Image', 
+    desc: 'Convert PDF pages into high-resolution PNG or JPG assets.', 
+    label: 'CONVERT', 
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    glowClass: 'bg-indigo-400/10',
+    keywords: ['pdf to image', 'pdf to png', 'pdf to jpg', 'convert pdf', 'extract images from pdf']
+  },
+  { 
     href: '/pdf-splitter', 
     icon: Split, 
     title: 'PDF Splitter', 
@@ -393,7 +403,7 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },
@@ -423,8 +433,8 @@ const TOOLS = [
     title: 'Hex Converter', 
     desc: 'Convert binary files to hexadecimal matrix.', 
     label: 'BINARY', 
-    color: 'text-indigo-600 bg-indigo-500/10 border-indigo-600/20',
-    glowClass: 'bg-indigo-500/10',
+    color: 'text-indigo-600 bg-indigo-600/10 border-indigo-600/20',
+    glowClass: 'bg-indigo-600/10',
     keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
   },
   { 
