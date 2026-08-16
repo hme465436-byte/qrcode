@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -56,7 +57,8 @@ import {
   Heart,
   Play,
   RotateCcw,
-  List
+  List,
+  Table
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -85,6 +87,16 @@ const TOOLS = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/csv-to-json', 
+    icon: Table, 
+    title: 'CSV to JSON', 
+    desc: 'Professional data translation with header mapping.', 
+    label: 'DATA', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['csv to json', 'convert csv', 'excel to json', 'data converter', 'json maker', 'parse csv']
   },
   { 
     href: '/image-url-downloader', 
@@ -605,7 +617,7 @@ export default function Home() {
             Professional high-fidelity asset generation and technical data translation. 100% private, client-side, and engineered for high-performance workflows.
           </p>
 
-          {/* SaaS Style Search Bar with Atmospheric Glow */}
+          {/* Search Bar with Atmospheric Glow */}
           <div className="max-w-2xl mx-auto mb-10 px-4 group relative">
             <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none" />
             <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
@@ -635,7 +647,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* View Toggle Protocol */}
+          {/* View Toggle */}
           <div className="flex justify-center mb-16">
             <div className="inline-flex p-1.5 rounded-2xl bg-secondary/50 border border-white/5 backdrop-blur-xl relative group/toggle shadow-2xl">
                <div 
@@ -665,7 +677,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Tool Registry Matrix */}
+          {/* Tool Matrix */}
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
               {filteredTools.length > 0 ? (
@@ -737,7 +749,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* STRIPE STYLE FEATURE SECTION */}
+      {/* FEATURE SECTION */}
       <section className="w-full py-32 border-t border-white/5 relative bg-[#060608]/50">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 items-center">
