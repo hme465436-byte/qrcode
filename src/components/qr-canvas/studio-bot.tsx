@@ -186,7 +186,6 @@ export function StudioBot() {
   const [isTyping, setIsTyping] = useState(false);
   const [query, setQuery] = useState('');
   const [lastTool, setLastTool] = useState<Tool | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [bubbleText, setBubbleText] = useState('');
   const [isPetting, setIsPetting] = useState(false);
@@ -347,7 +346,7 @@ export function StudioBot() {
     setIsPetting(true);
     setTimeout(() => {
       setIsPetting(false);
-      setIsOpen(true);
+      setIsOpen(!isOpen);
     }, 400);
   };
 
@@ -360,48 +359,32 @@ export function StudioBot() {
       )}>
         <svg viewBox="0 0 100 120" className="w-full h-full p-1 drop-shadow-xl overflow-visible">
           <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")}>
-            {/* Tail */}
             <path d="M 80 90 Q 95 80 90 65" stroke="#fefce8" strokeWidth="6" fill="none" strokeLinecap="round" className="animate-kit-tail-flick" />
-            
-            {/* Ears */}
             <g className="animate-kit-ear-twitch">
                <path d="M 20 25 L 5 45 L 35 45 Z" fill="#fefce8" />
                <path d="M 22 30 L 12 42 L 32 42 Z" fill="#fecaca" opacity="0.6" />
                <path d="M 80 25 L 65 45 L 95 45 Z" fill="#fefce8" />
                <path d="M 78 30 L 68 42 L 88 42 Z" fill="#fecaca" opacity="0.6" />
             </g>
-
-            {/* Body */}
             <circle cx="50" cy="65" r="45" fill="#fefce8" />
-            
-            {/* Toolbelt */}
             <path d="M 20 85 Q 50 105 80 85" fill="none" stroke="#bfdbfe" strokeWidth="12" strokeLinecap="round" />
-            
-            {/* Face */}
             <g className="animate-kit-blink">
                <circle cx="32" cy="62" r="10" fill="#1e293b" />
                <circle cx="30" cy="59" r="3.5" fill="white" className="opacity-90" />
                <circle cx="68" cy="62" r="10" fill="#1e293b" />
                <circle cx="66" cy="59" r="3.5" fill="white" className="opacity-90" />
             </g>
-            
             <ellipse cx="28" cy="76" rx="6" ry="3" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "scale-150 opacity-100")} />
             <ellipse cx="72" cy="76" rx="6" ry="3" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "scale-150 opacity-100")} />
-            
             <path d="M 44 76 Q 47 80 50 76 Q 53 80 56 76" fill="none" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" />
-
-            {/* PAWS: STATE 2 - HIDE (Grip Edge) */}
             {isPeek ? (
               <g className="animate-kit-grip">
-                {/* Grip Paws moved to the very left edge of Kit's body relative to the container */}
                 <path d="M 12 55 Q 5 60 12 65" fill="#fefce8" stroke="#1e293b" strokeWidth="1" />
                 <path d="M 12 75 Q 5 80 12 85" fill="#fefce8" stroke="#1e293b" strokeWidth="1" />
               </g>
             ) : (
-              // PAWS: STATE 1 - SHOW (Waving)
               <g>
                 <circle cx="20" cy="95" r="8" fill="#fefce8" />
-                {/* Waving Paw Group */}
                 <g className="origin-[80px_95px] animate-kit-wave">
                    <circle cx="80" cy="95" r="8" fill="#fefce8" />
                 </g>
@@ -409,7 +392,6 @@ export function StudioBot() {
             )}
           </g>
         </svg>
-        
         {isPetting && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <Heart className="w-12 h-12 text-rose-400 fill-current animate-heart-float opacity-0" />
@@ -419,238 +401,238 @@ export function StudioBot() {
     );
   };
 
-  const isState1 = isOpen || isInitialShow;
+  const isStateShow = isOpen || isInitialShow;
 
   return (
-    <div className={cn(
-      "fixed bottom-0 right-0 lg:bottom-6 lg:right-6 w-full lg:w-[420px] bg-[#0a0a0c] border-t lg:border border-white/10 lg:rounded-[2.5rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.8)] z-[100] flex flex-col overflow-hidden transition-all duration-500 transform origin-bottom-right",
-      isMinimized ? "h-[80px]" : "h-[720px] max-h-[90vh] scale-100 opacity-100",
-      !isOpen && "hidden pointer-events-none"
-    )}>
-      {/* Chat Header */}
-      <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#fefce8] flex items-center justify-center shadow-lg border border-white/10 relative overflow-hidden">
-            <KitMascot mode="chat" />
+    <>
+      {/* Permanent Mascot Trigger - Fixed at high z-index */}
+      <div 
+        className={cn(
+          "fixed bottom-[90px] z-[150] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
+          isStateShow ? "right-6" : "right-[-60px]"
+        )}
+      >
+        <div className="relative flex flex-col items-center">
+          {/* Speech Bubble */}
+          <div className={cn(
+            "absolute px-4 py-2 rounded-2xl bg-white dark:bg-zinc-800 text-foreground text-[10px] font-black uppercase tracking-widest shadow-2xl transition-all duration-300 transform origin-bottom whitespace-nowrap border border-primary/20 z-[160]",
+            showBubble && !isOpen ? "animate-bubble-pop" : "opacity-0 scale-50 translate-y-2 pointer-events-none",
+            isStateShow ? "bottom-full left-1/2 -translate-x-1/2 mb-4" : "right-full mr-6 bottom-1/2 translate-y-1/2"
+          )}>
+            {bubbleText}
+            <div className={cn(
+              "absolute w-0 h-0 border-transparent",
+              isStateShow 
+                ? "top-full left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-t-white dark:border-t-zinc-800" 
+                : "left-full top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-l-[6px] border-l-white dark:border-l-zinc-800"
+            )} />
           </div>
-          <div className="space-y-0.5">
-            <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Kit • Studio Helper</h4>
-            <div className="flex items-center gap-1.5">
-               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-               <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Active Listening</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <button onClick={handleClearHistory} className="w-8 h-8 rounded-lg hover:bg-white/5 text-foreground/20 hover:text-destructive transition-all flex items-center justify-center">
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={() => setIsMinimized(!isMinimized)} className="w-8 h-8 rounded-lg hover:bg-white/5 text-foreground/20 hover:text-primary transition-all flex items-center justify-center">
-            {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
-          </button>
-          <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-lg hover:bg-white/5 text-foreground/20 hover:text-destructive transition-all flex items-center justify-center">
-            <X className="w-4 h-4" />
+
+          {/* Kit Button */}
+          <button 
+            onClick={handleKitClick}
+            className={cn(
+              "w-24 h-24 rounded-full bg-blue-500/5 backdrop-blur-sm flex items-center justify-center transition-all duration-500 relative group overflow-visible",
+              isPetting && "scale-90"
+            )}
+          >
+            <KitMascot mode={isStateShow ? "full" : "peek"} />
+            {!isOpen && (
+              <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_12px_rgba(74,222,128,0.8)]" />
+            )}
           </button>
         </div>
       </div>
 
-      {!isMinimized && (
-        <>
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-checkered">
-            {messages.map((msg) => (
-              <div key={msg.id} className={cn(
-                "flex flex-col gap-3 max-w-[95%] animate-in fade-in slide-in-from-bottom-2 duration-300",
-                msg.type === 'user' ? "ml-auto items-end" : "mr-auto items-start"
-              )}>
-                <div className={cn(
-                  "p-4 rounded-2xl text-[13px] font-medium leading-relaxed shadow-lg",
-                  msg.type === 'user' 
-                    ? "bg-primary text-white rounded-tr-none" 
-                    : "bg-secondary border border-white/5 text-foreground/70 rounded-tl-none"
-                )}>
-                  {msg.content}
-                </div>
-                
-                {msg.toolInfo && (
-                  <div className="w-full space-y-4 mt-2 animate-in zoom-in duration-500">
-                    <div className="bg-primary/5 border border-primary/10 rounded-[2rem] p-6 space-y-6 shadow-xl">
-                       <div className="flex items-center justify-between border-b border-primary/10 pb-4">
-                          <div className="flex items-center gap-3">
-                             <CheckCircle2 className="w-4 h-4 text-primary" />
-                             <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">{msg.toolInfo.title}</h4>
-                          </div>
-                          <button onClick={() => copySteps(msg.toolInfo!)} className="text-foreground/20 hover:text-primary transition-colors">
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                       </div>
-                       
-                       <div className="space-y-4">
-                          <p className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Studio Use Case</p>
-                          <p className="text-[11px] text-foreground/60 leading-relaxed font-medium italic">"{msg.toolInfo.useCase}"</p>
-                       </div>
-
-                       <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                             <p className="text-[8px] font-black uppercase text-foreground/30 flex items-center gap-1.5"><FileUp className="w-2.5 h-2.5" /> Input</p>
-                             <p className="text-[10px] font-bold text-foreground/60 leading-tight uppercase">{msg.toolInfo.filesAllowed}</p>
-                          </div>
-                          <div className="space-y-1">
-                             <p className="text-[8px] font-black uppercase text-foreground/30 flex items-center gap-1.5"><FileCheck className="w-2.5 h-2.5" /> Output</p>
-                             <p className="text-[10px] font-bold text-foreground/60 leading-tight uppercase">{msg.toolInfo.output}</p>
-                          </div>
-                       </div>
-
-                       <div className="space-y-4">
-                          <p className="text-[9px] font-black uppercase text-primary/40 tracking-widest">Master Workflow</p>
-                          {msg.toolInfo.steps.map((step, i) => (
-                            <div key={i} className="flex gap-4 text-[11px] text-foreground/70 leading-snug group/step">
-                               <span className="w-5 h-5 rounded-lg bg-primary/10 flex items-center justify-center text-[9px] font-black text-primary shrink-0 border border-primary/20 group-hover/step:scale-110 transition-transform">{i+1}</span>
-                               {step}
-                            </div>
-                          ))}
-                       </div>
-
-                       <div className="pt-4 border-t border-primary/10 space-y-4">
-                          <div className="flex items-start gap-3">
-                             <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                             <p className="text-[10px] text-foreground/50 font-bold leading-relaxed uppercase">
-                               <span className="text-primary font-black">TIP:</span> {msg.toolInfo.tip}
-                             </p>
-                          </div>
-                          <div className="flex items-start gap-3">
-                             <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
-                             <p className="text-[10px] text-yellow-600/70 font-bold leading-relaxed uppercase">
-                               <span className="text-yellow-600 font-black">AVOID:</span> {msg.toolInfo.mistake}
-                             </p>
-                          </div>
-                       </div>
-
-                       {pathname !== msg.toolInfo.href && (
-                          <Button asChild className="w-full h-12 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/30">
-                             <Link href={msg.toolInfo.href}>Initialize Studio <ArrowRight className="w-3.5 h-3.5 ml-2" /></Link>
-                          </Button>
-                       )}
-                    </div>
-                  </div>
-                )}
-
-                {msg.links && !msg.toolInfo && (
-                  <div className="grid grid-cols-1 gap-2 w-full mt-2">
-                    {msg.links.map((link) => (
-                      <button 
-                        key={link.href}
-                        onClick={() => {
-                          setMessages(prev => [...prev, { 
-                            type: 'bot', 
-                            content: `Opening ${link.title} Master Protocol:`, 
-                            toolInfo: link, 
-                            id: `guide-${Date.now()}` 
-                          }]);
-                          setLastTool(link);
-                        }}
-                        className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/40 hover:bg-primary/5 group transition-all text-left shadow-lg"
-                      >
-                         <div className="min-w-0">
-                           <p className="text-[11px] font-black uppercase text-foreground truncate">{link.title}</p>
-                           <p className="text-[10px] text-foreground/40 truncate">{link.desc}</p>
-                         </div>
-                         <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-primary transition-all group-hover:translate-x-1" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            
-            {isTyping && (
-              <div className="flex gap-2 p-4 bg-secondary rounded-2xl rounded-tl-none w-20 animate-in fade-in slide-in-from-left-2 duration-300">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
-              </div>
-            )}
-          </div>
-
-          {/* Chat Input */}
-          <div className="p-5 border-t border-white/5 bg-white/[0.02] space-y-4 shrink-0">
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-               {["How to compress PDF?", "Make passport photo", "Convert photo to text", "Shrink image size", "Join PDF files"].map(q => (
-                 <button 
-                  key={q}
-                  onClick={() => handleSearch(q)}
-                  className="px-4 py-2 rounded-xl bg-secondary border border-white/5 text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary hover:border-primary/20 transition-all whitespace-nowrap"
-                 >
-                   {q}
-                 </button>
-               ))}
+      {/* assistance Interface (Chat Window) */}
+      <div className={cn(
+        "fixed bottom-0 right-0 lg:bottom-6 lg:right-6 w-full lg:w-[420px] bg-[#0a0a0c] border-t lg:border border-white/10 lg:rounded-[2.5rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.8)] z-[140] flex flex-col overflow-hidden transition-all duration-500 transform origin-bottom-right",
+        isOpen ? (isMinimized ? "h-[80px]" : "h-[720px] max-h-[85vh] scale-100 opacity-100") : "h-0 scale-90 opacity-0 pointer-events-none"
+      )}>
+        {/* Chat Header */}
+        <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-[#fefce8] flex items-center justify-center shadow-lg border border-white/10 relative overflow-hidden">
+              <KitMascot mode="chat" />
             </div>
-
-            <form onSubmit={(e) => { e.preventDefault(); handleSearch(query); }} className="relative group">
-               <div className="absolute -inset-1 bg-primary/20 blur-lg rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
-               <input 
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Job description or 'how to'..."
-                className="w-full h-14 pl-5 pr-14 rounded-2xl bg-background border border-white/10 text-xs font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 relative z-10"
-               />
-               <button 
-                type="submit"
-                disabled={!query.trim() || isTyping}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg active:scale-90 transition-all disabled:opacity-20 z-20"
-               >
-                 <Send className="w-4 h-4" />
-               </button>
-            </form>
-            
-            <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-foreground/10 px-1">
-               <span className="flex items-center gap-2"><ShieldCheck className="w-2.5 h-2.5" /> Secure Local Assistant</span>
-               <span>ESC TO EXIT</span>
+            <div className="space-y-0.5">
+              <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Kit • Studio Helper</h4>
+              <div className="flex items-center gap-1.5">
+                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                 <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Active Listening</span>
+              </div>
             </div>
           </div>
-        </>
-      )}
-
-      {/* Floating State Logic (outside main chat container when closed) */}
-      {!isOpen && (
-        <div 
-          className={cn(
-            "fixed bottom-8 z-[100] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
-            isState1 ? "right-8" : "right-[-52px] sm:right-[-62px]"
-          )}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <div className="relative flex flex-col items-center">
-            {/* Bubble - Positioned to never be cut */}
-            <div className={cn(
-              "absolute px-4 py-2 rounded-2xl bg-white dark:bg-zinc-800 text-foreground text-[10px] font-black uppercase tracking-widest shadow-2xl transition-all duration-300 transform origin-bottom whitespace-nowrap border border-primary/20 z-[110]",
-              showBubble ? "animate-bubble-pop" : "opacity-0 scale-50 translate-y-2 pointer-events-none",
-              isState1 ? "bottom-full left-1/2 -translate-x-1/2 mb-4" : "right-full mr-6 bottom-1/2 translate-y-1/2"
-            )}>
-              {bubbleText}
-              <div className={cn(
-                "absolute w-0 h-0 border-transparent",
-                isState1 
-                  ? "top-full left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-t-white dark:border-t-zinc-800" 
-                  : "left-full top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-l-[6px] border-l-white dark:border-l-zinc-800"
-              )} />
-            </div>
-
-            {/* Kit Button */}
-            <button 
-              onClick={handleKitClick}
-              className={cn(
-                "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-blue-500/5 backdrop-blur-sm flex items-center justify-center transition-all duration-500 relative group overflow-visible",
-                isPetting && "scale-90"
-              )}
-            >
-              <KitMascot mode={isState1 ? "full" : "peek"} />
-              <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_12px_rgba(74,222,128,0.8)]" />
+          <div className="flex items-center gap-1">
+            <button onClick={handleClearHistory} className="w-8 h-8 rounded-lg hover:bg-white/5 text-foreground/20 hover:text-destructive transition-all flex items-center justify-center">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => setIsMinimized(!isMinimized)} className="w-8 h-8 rounded-lg hover:bg-white/5 text-foreground/20 hover:text-primary transition-all flex items-center justify-center">
+              {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+            </button>
+            <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-lg hover:bg-white/5 text-foreground/20 hover:text-destructive transition-all flex items-center justify-center">
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
-      )}
+
+        {!isMinimized && (
+          <>
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-checkered">
+              {messages.map((msg) => (
+                <div key={msg.id} className={cn(
+                  "flex flex-col gap-3 max-w-[95%] animate-in fade-in slide-in-from-bottom-2 duration-300",
+                  msg.type === 'user' ? "ml-auto items-end" : "mr-auto items-start"
+                )}>
+                  <div className={cn(
+                    "p-4 rounded-2xl text-[13px] font-medium leading-relaxed shadow-lg",
+                    msg.type === 'user' 
+                      ? "bg-primary text-white rounded-tr-none" 
+                      : "bg-secondary border border-white/5 text-foreground/70 rounded-tl-none"
+                  )}>
+                    {msg.content}
+                  </div>
+                  
+                  {msg.toolInfo && (
+                    <div className="w-full space-y-4 mt-2 animate-in zoom-in duration-500">
+                      <div className="bg-primary/5 border border-primary/10 rounded-[2rem] p-6 space-y-6 shadow-xl">
+                         <div className="flex items-center justify-between border-b border-primary/10 pb-4">
+                            <div className="flex items-center gap-3">
+                               <CheckCircle2 className="w-4 h-4 text-primary" />
+                               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">{msg.toolInfo.title}</h4>
+                            </div>
+                            <button onClick={() => copySteps(msg.toolInfo!)} className="text-foreground/20 hover:text-primary transition-colors">
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                         </div>
+                         
+                         <div className="space-y-4">
+                            <p className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Studio Use Case</p>
+                            <p className="text-[11px] text-foreground/60 leading-relaxed font-medium italic">"{msg.toolInfo.useCase}"</p>
+                         </div>
+
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                               <p className="text-[8px] font-black uppercase text-foreground/30 flex items-center gap-1.5"><FileUp className="w-2.5 h-2.5" /> Input</p>
+                               <p className="text-[10px] font-bold text-foreground/60 leading-tight uppercase">{msg.toolInfo.filesAllowed}</p>
+                            </div>
+                            <div className="space-y-1">
+                               <p className="text-[8px] font-black uppercase text-foreground/30 flex items-center gap-1.5"><FileCheck className="w-2.5 h-2.5" /> Output</p>
+                               <p className="text-[10px] font-bold text-foreground/60 leading-tight uppercase">{msg.toolInfo.output}</p>
+                            </div>
+                         </div>
+
+                         <div className="space-y-4">
+                            <p className="text-[9px] font-black uppercase text-primary/40 tracking-widest">Master Workflow</p>
+                            {msg.toolInfo.steps.map((step, i) => (
+                              <div key={i} className="flex gap-4 text-[11px] text-foreground/70 leading-snug group/step">
+                                 <span className="w-5 h-5 rounded-lg bg-primary/10 flex items-center justify-center text-[9px] font-black text-primary shrink-0 border border-primary/20 group-hover/step:scale-110 transition-transform">{i+1}</span>
+                                 {step}
+                              </div>
+                            ))}
+                         </div>
+
+                         <div className="pt-4 border-t border-primary/10 space-y-4">
+                            <div className="flex items-start gap-3">
+                               <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                               <p className="text-[10px] text-foreground/50 font-bold leading-relaxed uppercase">
+                                 <span className="text-primary font-black">TIP:</span> {msg.toolInfo.tip}
+                               </p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                               <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+                               <p className="text-[10px] text-yellow-600/70 font-bold leading-relaxed uppercase">
+                                 <span className="text-yellow-600 font-black">AVOID:</span> {msg.toolInfo.mistake}
+                               </p>
+                            </div>
+                         </div>
+
+                         {pathname !== msg.toolInfo.href && (
+                            <Button asChild className="w-full h-12 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/30">
+                               <Link href={msg.toolInfo.href}>Initialize Studio <ArrowRight className="w-3.5 h-3.5 ml-2" /></Link>
+                            </Button>
+                         )}
+                      </div>
+                    </div>
+                  )}
+
+                  {msg.links && !msg.toolInfo && (
+                    <div className="grid grid-cols-1 gap-2 w-full mt-2">
+                      {msg.links.map((link) => (
+                        <button 
+                          key={link.href}
+                          onClick={() => {
+                            setMessages(prev => [...prev, { 
+                              type: 'bot', 
+                              content: `Opening ${link.title} Master Protocol:`, 
+                              toolInfo: link, 
+                              id: `guide-${Date.now()}` 
+                            }]);
+                            setLastTool(link);
+                          }}
+                          className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/40 hover:bg-primary/5 group transition-all text-left shadow-lg"
+                        >
+                           <div className="min-w-0">
+                             <p className="text-[11px] font-black uppercase text-foreground truncate">{link.title}</p>
+                             <p className="text-[10px] text-foreground/40 truncate">{link.desc}</p>
+                           </div>
+                           <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-primary transition-all group-hover:translate-x-1" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {isTyping && (
+                <div className="flex gap-2 p-4 bg-secondary rounded-2xl rounded-tl-none w-20 animate-in fade-in slide-in-from-left-2 duration-300">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
+                </div>
+              )}
+            </div>
+
+            {/* Chat Input */}
+            <div className="p-5 border-t border-white/5 bg-white/[0.02] space-y-4 shrink-0">
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                 {["How to compress PDF?", "Make passport photo", "Convert photo to text", "Shrink image size", "Join PDF files"].map(q => (
+                   <button 
+                    key={q}
+                    onClick={() => handleSearch(q)}
+                    className="px-4 py-2 rounded-xl bg-secondary border border-white/5 text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary hover:border-primary/20 transition-all whitespace-nowrap"
+                   >
+                     {q}
+                   </button>
+                 ))}
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleSearch(query); }} className="relative group">
+                 <div className="absolute -inset-1 bg-primary/20 blur-lg rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                 <input 
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Job description or 'how to'..."
+                  className="w-full h-14 pl-5 pr-14 rounded-2xl bg-background border border-white/10 text-xs font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 relative z-10"
+                 />
+                 <button 
+                  type="submit"
+                  disabled={!query.trim() || isTyping}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg active:scale-90 transition-all disabled:opacity-20 z-20"
+                 >
+                   <Send className="w-4 h-4" />
+                 </button>
+              </form>
+              
+              <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-foreground/10 px-1">
+                 <span className="flex items-center gap-2"><ShieldCheck className="w-2.5 h-2.5" /> Secure Local Assistant</span>
+                 <span>ESC TO EXIT</span>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       <style jsx global>{`
         .bg-checkered {
@@ -670,6 +652,6 @@ export function StudioBot() {
         }
         .animate-kit-wave { animation: kit-wave 1s ease-in-out infinite; }
       `}</style>
-    </div>
+    </>
   );
 }
