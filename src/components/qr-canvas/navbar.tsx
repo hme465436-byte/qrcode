@@ -86,6 +86,7 @@ const NAV_ITEMS = [
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
   { label: 'PDF Splitter', href: '/pdf-splitter', icon: Split, keywords: ['pdf split', 'extract pages', 'separate pdf', 'pdf chunks', 'split document'] },
+  { label: 'PDF Compress', href: '/pdf-compressor', icon: FileArchive, keywords: ['pdf compress', 'shrink pdf', 'smaller pdf', 'optimize document'] },
   { label: 'Duplicates', href: '/duplicate-finder', icon: Files, keywords: ['duplicate', 'finder', 'cleaner', 'redundancy', 'files'] },
   { label: 'Line Purge', href: '/duplicate-line-remover', icon: ListFilter, keywords: ['duplicate lines', 'line remover', 'unique lines', 'remove repeated', 'list cleaner', 'text purge'] },
   { label: 'WhatsApp DP', href: '/whatsapp-dp-maker', icon: User, keywords: ['whatsapp dp maker', 'profile picture', 'uncut dp', 'whatsapp quality', 'whatsquality', 'hd dp', 'profile maker'] },

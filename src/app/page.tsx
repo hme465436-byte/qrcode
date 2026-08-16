@@ -98,6 +98,16 @@ const TOOLS = [
     keywords: ['pdf split', 'extract pages', 'separate pdf', 'pdf chunks', 'split document']
   },
   { 
+    href: '/pdf-compressor', 
+    icon: FileArchive, 
+    title: 'PDF Compressor', 
+    desc: 'Optimize and shrink PDF document size locally.', 
+    label: 'OPTIMIZE', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['pdf compress', 'shrink pdf', 'smaller pdf', 'optimize document']
+  },
+  { 
     href: '/duplicate-finder', 
     icon: Files, 
     title: 'Duplicate Purge', 
@@ -353,8 +363,8 @@ const TOOLS = [
     title: 'Audio Joiner', 
     desc: 'Merge multiple audio files into a single master track.', 
     label: 'PRODUCTION', 
-    color: 'text-blue-600 bg-blue-500/10 border-blue-600/20',
-    glowClass: 'bg-blue-500/10',
+    color: 'text-blue-600 bg-blue-600/10 border-blue-600/20',
+    glowClass: 'bg-blue-600/10',
     keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound']
   },
   { 
