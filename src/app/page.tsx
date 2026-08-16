@@ -843,8 +843,8 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
-      {/* HERO SECTION */}
-      <section className="w-full px-4 sm:px-6 pt-24 pb-20 md:pt-32 md:pb-32 text-center relative overflow-hidden">
+      {/* HERO SECTION - RECALIBRATED COSMIC PROTOCOL */}
+      <section className="w-full px-4 sm:px-6 pt-24 pb-20 md:pt-32 md:pb-32 min-h-[600px] text-center relative overflow-visible flex flex-col justify-center">
         <SpaceBackground />
         
         <div className="max-w-5xl mx-auto animate-reveal relative z-10">
