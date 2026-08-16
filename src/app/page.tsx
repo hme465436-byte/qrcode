@@ -564,7 +564,7 @@ const TOOLS: Tool[] = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg'],
     category: 'utilities'
@@ -597,7 +597,7 @@ const TOOLS: Tool[] = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
@@ -619,7 +619,7 @@ const TOOLS: Tool[] = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
     category: 'utilities'
@@ -758,6 +758,60 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
+  // Search Placeholder Typing Animation Matrix
+  const [placeholder, setPlaceholder] = useState('');
+  const [toolIndex, setToolIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState(70);
+  const [isFocused, setIsFocused] = useState(false);
+
+  const phrases = useMemo(() => {
+    const list = [
+      'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
+      'PDF to Word', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
+      'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
+      'Video to MP3', 'Image to PDF', 'AOB Converter', 'Unit Converter',
+      'Letter Art', 'Favicon Studio'
+    ];
+    return [...list].sort(() => Math.random() - 0.5);
+  }, []);
+
+  useEffect(() => {
+    if (isFocused || searchQuery) {
+      setPlaceholder('');
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const currentPhrase = phrases[toolIndex];
+      
+      if (!isDeleting) {
+        setPlaceholder(currentPhrase.substring(0, placeholder.length + 1));
+        if (placeholder.length === currentPhrase.length) {
+          setTypingSpeed(1400); 
+          setIsDeleting(true);
+        } else {
+          setTypingSpeed(70);
+        }
+      } else {
+        setPlaceholder(currentPhrase.substring(0, placeholder.length - 1));
+        setTypingSpeed(35);
+        if (placeholder.length === 0) {
+          setIsDeleting(false);
+          setToolIndex((prev) => (prev + 1) % phrases.length);
+          setTypingSpeed(500);
+        }
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, isFocused, searchQuery]);
+
+  const dynamicPlaceholder = useMemo(() => {
+    if (isFocused || searchQuery) return 'Search tools...';
+    return `${placeholder}|`;
+  }, [placeholder, isFocused, searchQuery]);
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_MODE_KEY) as 'grid' | 'list' | null;
@@ -772,12 +826,10 @@ export default function Home() {
   const filteredTools = useMemo(() => {
     let result = TOOLS;
     
-    // Filter by Category
     if (selectedCategory !== 'all') {
       result = result.filter(tool => tool.category === selectedCategory);
     }
     
-    // Filter by Search Query
     if (searchQuery.trim()) {
       const words = searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0);
       result = result.filter(tool => {
@@ -827,7 +879,10 @@ export default function Home() {
                     </div>
                     <Input 
                       type="text"
-                      placeholder="Query professional studio tools..."
+                      placeholder={dynamicPlaceholder}
+                      aria-label="Search tools"
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="h-full w-full pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-base font-medium placeholder:text-foreground/20"

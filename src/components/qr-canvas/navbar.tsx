@@ -107,6 +107,59 @@ export function Navbar() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Placeholder Animation State
+  const [placeholder, setPlaceholder] = useState('');
+  const [toolIndex, setToolIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState(70);
+  const [isFocused, setIsFocused] = useState(false);
+
+  const phrases = useMemo(() => {
+    const list = [
+      'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
+      'PDF to Word', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
+      'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
+      'Video to MP3', 'Image to PDF', 'AOB Converter'
+    ];
+    return [...list].sort(() => Math.random() - 0.5);
+  }, []);
+
+  useEffect(() => {
+    if (!isSearchOpen || isFocused || searchQuery) {
+      setPlaceholder('');
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const currentPhrase = phrases[toolIndex];
+      
+      if (!isDeleting) {
+        setPlaceholder(currentPhrase.substring(0, placeholder.length + 1));
+        if (placeholder.length === currentPhrase.length) {
+          setTypingSpeed(1400); 
+          setIsDeleting(true);
+        } else {
+          setTypingSpeed(70);
+        }
+      } else {
+        setPlaceholder(currentPhrase.substring(0, placeholder.length - 1));
+        setTypingSpeed(35);
+        if (placeholder.length === 0) {
+          setIsDeleting(false);
+          setToolIndex((prev) => (prev + 1) % phrases.length);
+          setTypingSpeed(500);
+        }
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, isFocused, searchQuery, isSearchOpen]);
+
+  const dynamicPlaceholder = useMemo(() => {
+    if (isFocused || searchQuery) return 'Search tools...';
+    return `${placeholder}|`;
+  }, [placeholder, isFocused, searchQuery]);
+
   useEffect(() => {
     const savedTheme = localStorage.getItem('mykit_theme') as 'light' | 'dark' | null;
     if (savedTheme) {
@@ -237,7 +290,10 @@ export function Navbar() {
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d z-20" />
               <Input 
                 autoFocus
-                placeholder="Query professional studio tools..."
+                placeholder={dynamicPlaceholder}
+                aria-label="Search tools"
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-16 pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-lg font-medium tracking-tight placeholder:text-foreground/10 relative z-10"
