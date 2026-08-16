@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils';
 
 /**
  * High-Fidelity Galactic Hero Background.
- * Features a deliberate, high-contrast cosmic field with slow-moving bodies
- * and hyper-visible shooting stars with blue trails.
+ * Features a deliberate, high-contrast cosmic field with extra-slow drift.
+ * Shooting stars transit at 8-10 seconds for professional atmosphere.
  */
 export function SpaceBackground() {
   const [mounted, setMounted] = useState(false);
@@ -20,27 +20,27 @@ export function SpaceBackground() {
       id: i,
       top: `${Math.random() * 100}%`,
       left: `${Math.random() * 100}%`,
-      size: Math.random() * 2 + 1.2, // Slightly larger stars
+      size: Math.random() * 2 + 1.2, 
       delay: `${Math.random() * 10}s`,
-      duration: `${5 + Math.random() * 5}s`,
+      duration: `${10 + Math.random() * 8}s`,
     }));
 
     const generatedPlanets = Array.from({ length: 4 }).map((_, i) => ({
       id: i,
       top: `${10 + Math.random() * 80}%`,
       left: `${5 + Math.random() * 90}%`,
-      size: 35 + Math.random() * 25, // Larger planets
+      size: 35 + Math.random() * 25, 
       delay: `${Math.random() * 5}s`,
-      type: Math.floor(Math.random() * 3), // 0: Ringed, 1: Spotted, 2: Smooth
+      type: Math.floor(Math.random() * 3), 
     }));
 
     const generatedShips = Array.from({ length: 2 }).map((_, i) => ({
       id: i,
       top: `${10 + Math.random() * 60}%`,
       left: `${Math.random() * 100}%`,
-      size: 25 + Math.random() * 10, // Larger ships
+      size: 25 + Math.random() * 10, 
       delay: `${Math.random() * 15}s`,
-      duration: `${50 + Math.random() * 20}s`, // Even slower drift
+      duration: `${90 + Math.random() * 40}s`, // Extra slow drift
     }));
 
     setStars(generatedStars);
@@ -62,7 +62,7 @@ export function SpaceBackground() {
       <div className="absolute top-[-30%] left-[-20%] w-[100%] h-[100%] bg-primary/10 blur-[200px] rounded-full opacity-40" />
       <div className="absolute bottom-[-30%] right-[-20%] w-[100%] h-[100%] bg-primary/10 blur-[200px] rounded-full opacity-30" />
 
-      {/* High-Contrast Twinkling Matrix */}
+      {/* High-Contrast Twinkling Matrix - 12s Pulse */}
       {stars.map((star) => (
         <div
           key={star.id}
@@ -73,13 +73,13 @@ export function SpaceBackground() {
             width: `${star.size}px`,
             height: `${star.size}px`,
             animationDelay: star.delay,
-            animationDuration: '6s', // Slower pulse
+            animationDuration: '12s', 
             boxShadow: star.size > 1.8 ? `0 0 ${star.size * 3}px rgba(59, 130, 246, 0.5)` : 'none'
           }}
         />
       ))}
 
-      {/* Drifting Celestial Units - Higher Contrast */}
+      {/* Drifting Celestial Units - 75s Float */}
       {planets.map((planet) => (
         <div
           key={planet.id}
@@ -111,7 +111,7 @@ export function SpaceBackground() {
         </div>
       ))}
 
-      {/* Deep Space Research Vessels - Clearer Silhouette */}
+      {/* Deep Space Research Vessels - 110s Drift */}
       {ships.map((ship) => (
         <div
           key={ship.id}
@@ -133,9 +133,9 @@ export function SpaceBackground() {
         </div>
       ))}
 
-      {/* Slow Hyper-Glow Shooting Stars Protocol V2 */}
+      {/* 28s Loop - 8s Hyper-Glow Shooting Stars Protocol V2 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[0, 9, 4, 13, 2].map((delay, i) => (
+        {[0, 14, 7, 21, 3].map((delay, i) => (
           <div 
             key={i}
             className="shooting-star-protocol-v2 motion-reduce:hidden" 
@@ -150,4 +150,3 @@ export function SpaceBackground() {
     </div>
   );
 }
-

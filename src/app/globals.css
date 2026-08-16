@@ -156,7 +156,7 @@
     filter: drop-shadow(0 0 20px hsla(var(--primary), 1)) drop-shadow(0 0 45px hsla(var(--primary), 0.7)) drop-shadow(0 0 80px hsla(var(--primary), 0.3));
   }
 
-  /* Shooting Star Protocol V3 - Hyper-Glow with Light Blue Trail - SLOWER 3-7s movement */
+  /* Shooting Star Protocol V3 - Hyper-Glow with Light Blue Trail - SLOWER 6-10s streak */
   @keyframes shooting-star-path-v3 {
     0% {
       transform: translateX(0) translateY(0) rotate(-40deg) scale(0);
@@ -166,7 +166,7 @@
       opacity: 1;
       scale: 1;
     }
-    30% { /* Slowed down from 15% to 30% of cycle */
+    30% { /* 30% of 28s loop = 8.4s streak */
       transform: translateX(-150vw) translateY(120vh) rotate(-40deg) scale(2);
       opacity: 0;
     }
@@ -186,7 +186,7 @@
       0 0 40px 10px rgba(255,255,255,1), 
       0 0 80px 25px hsla(217, 91%, 60%, 1), /* Site Primary Blue - Brighter */
       0 0 120px 45px hsla(217, 91%, 60%, 0.6);
-    animation: shooting-star-path-v3 18s linear infinite;
+    animation: shooting-star-path-v3 28s linear infinite;
     opacity: 0;
     z-index: 0;
     pointer-events: none;
@@ -198,14 +198,14 @@
     top: 50%;
     left: 0;
     transform: translateY(-50%);
-    width: 1000px; /* Even longer trail */
+    width: 1000px; /* Long trail */
     height: 6px; /* Thicker trail */
     background: linear-gradient(90deg, #fff, hsla(217, 91%, 60%, 0.8), hsla(217, 91%, 60%, 0.2), transparent);
     border-radius: 100%;
     filter: blur(2px);
   }
 
-  /* Floating Elements Animations - Even slower and more contrasting */
+  /* Floating Elements Animations - EXTRA SLOW DRIFT (40-50% slower) */
   @keyframes float-slow {
     0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
     33% { transform: translateY(-40px) translateX(25px) rotate(8deg); }
@@ -219,8 +219,8 @@
     100% { transform: translateX(-110vw) rotate(15deg); opacity: 0; }
   }
 
-  .animate-float { animation: float-slow 40s ease-in-out infinite; }
-  .animate-ship-drift { animation: ship-drift 60s linear infinite; }
+  .animate-float { animation: float-slow 75s ease-in-out infinite; }
+  .animate-ship-drift { animation: ship-drift 110s linear infinite; }
 
   /* Twinkle Animation - Slower pulse */
   @keyframes star-twinkle {
@@ -229,7 +229,7 @@
   }
 
   .animate-star-twinkle {
-    animation: star-twinkle 6s ease-in-out infinite;
+    animation: star-twinkle 12s ease-in-out infinite;
   }
 
   /* Kit Mascot Animations */
@@ -345,4 +345,3 @@ button {
 .markdown-preview td {
   @apply border-b border-t-0 border-x-0;
 }
-
