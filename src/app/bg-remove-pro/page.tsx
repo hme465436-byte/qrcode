@@ -95,7 +95,6 @@ export default function BGRemoveProPage() {
     }
 
     // Default: 'result'
-    // Composite: (Background Color) -> (Original Image clipped by Mask)
     ctx.save();
     
     // Draw background color if selected
@@ -119,14 +118,14 @@ export default function BGRemoveProPage() {
    */
   const executeAutoRemove = async (imageSource: string) => {
     setIsProcessing(true);
-    setLoadingStatus('Initializing AI Engine...');
+    setLoadingStatus('Initializing...');
     setError(null);
     
     try {
-      setLoadingStatus('Isolating Subject Matrix...');
+      setLoadingStatus('Removing background...');
       const blob = await removeBackground(imageSource, {
         progress: (key, current, total) => {
-          setLoadingStatus(`Rendering: ${Math.round((current / total) * 100)}%`);
+          setLoadingStatus(`Removing background: ${Math.round((current / total) * 100)}%`);
         }
       });
 
@@ -160,12 +159,12 @@ export default function BGRemoveProPage() {
         setIsProcessing(false);
         setLoadingStatus('');
         drawWorkspace();
-        toast({ title: "Auto-Scrub Complete", description: "Subject isolated via neural matrix." });
+        toast({ title: "Background Removed", description: "Subject isolated successfully." });
       };
       processedImg.src = processedUrl;
     } catch (err: any) {
       console.error('Auto remove error:', err);
-      setError("AI Engine was restricted. Reverting to manual mode.");
+      setError("Auto removal failed. You can still use the manual brush.");
       setIsProcessing(false);
       setLoadingStatus('');
     }
@@ -180,7 +179,7 @@ export default function BGRemoveProPage() {
     if (!file) return;
 
     setIsProcessing(true);
-    setLoadingStatus('Mapping Visual Matrix...');
+    setLoadingStatus('Please wait...');
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -300,10 +299,10 @@ export default function BGRemoveProPage() {
   const handleDownload = () => {
     if (!canvasRef.current || !image) return;
     const link = document.createElement('a');
-    link.download = `mykit-bg-removed-${Date.now()}.png`;
+    link.download = `bg-removed-${Date.now()}.png`;
     link.href = canvasRef.current.toDataURL('image/png', 1.0);
     link.click();
-    toast({ title: "Master Exported", description: "Alpha-channeled PNG ready." });
+    toast({ title: "Image Exported", description: "Transparent PNG ready." });
   };
 
   const resetMask = () => {
@@ -314,7 +313,7 @@ export default function BGRemoveProPage() {
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
       drawWorkspace();
-      toast({ title: "Matrix Reset", description: "Transparency buffer restored." });
+      toast({ title: "Reset Complete", description: "Transparency mask restored." });
     }
   };
 
@@ -323,7 +322,7 @@ export default function BGRemoveProPage() {
     mainImageRef.current = null;
     setError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    toast({ title: "Workspace Purged", description: "Memory cleared." });
+    toast({ title: "Workspace Cleared", description: "All buffers purged." });
   };
 
   return (
@@ -338,7 +337,7 @@ export default function BGRemoveProPage() {
                 BG Remove <span className="text-primary italic">Pro</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed uppercase tracking-tighter">
-                Professional-grade background extraction. 100% private re-matricing occurring strictly in browser memory.
+                Professional-grade background extraction. 100% private processing occurring strictly in your browser.
               </p>
            </div>
         </div>
@@ -350,13 +349,13 @@ export default function BGRemoveProPage() {
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                <Settings2 className="w-5 h-5 text-primary" /> Production Matrix
+                <Settings2 className="w-5 h-5 text-primary" /> Brushing Protocols
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
               {/* Brushing Mode */}
               <div className="space-y-4">
-                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Brushing Mode</Label>
+                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Brush Mode</Label>
                 <div className="grid grid-cols-2 gap-3 p-1.5 rounded-2xl bg-background border border-border">
                   <button
                     onClick={() => setToolMode('erase')}
@@ -366,7 +365,7 @@ export default function BGRemoveProPage() {
                     )}
                   >
                     <Eraser className="w-4 h-4" />
-                    <span className="text-[8px] font-black uppercase tracking-widest">Neutralize</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest">Erase</span>
                   </button>
                   <button
                     onClick={() => setToolMode('restore')}
@@ -385,7 +384,7 @@ export default function BGRemoveProPage() {
               <div className="space-y-8">
                  <div className="space-y-4">
                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-foreground/40">
-                       <Label>Brush Scale</Label>
+                       <Label>Brush Size</Label>
                        <span className="text-primary font-mono">{brushSize}px</span>
                     </div>
                     <Slider value={[brushSize]} min={1} max={200} step={1} onValueChange={v => setBrushSize(v[0])} />
@@ -393,7 +392,7 @@ export default function BGRemoveProPage() {
 
                  <div className="space-y-4">
                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-foreground/40">
-                       <Label>Spectral Zoom</Label>
+                       <Label>Zoom Level</Label>
                        <span className="text-primary font-mono">{(zoom * 100).toFixed(0)}%</span>
                     </div>
                     <Slider value={[zoom * 100]} min={50} max={800} step={10} onValueChange={v => setZoom(v[0] / 100)} />
@@ -402,7 +401,7 @@ export default function BGRemoveProPage() {
 
               {/* Display Matrix */}
               <div className="space-y-4 pt-6 border-t border-border">
-                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Display Protocol</Label>
+                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">View Mode</Label>
                 <div className="grid grid-cols-3 gap-2">
                    {[
                      { id: 'result', label: 'Result', icon: Eye },
@@ -426,7 +425,7 @@ export default function BGRemoveProPage() {
 
               {/* Composition Environment */}
               <div className="space-y-4">
-                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Composition Background</Label>
+                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Background Color</Label>
                 <div className="grid grid-cols-5 gap-2">
                    {[
                      { val: 'transparent', label: 'Alpha' },
@@ -461,7 +460,7 @@ export default function BGRemoveProPage() {
 
               {/* Global Actions */}
               <div className="flex gap-4 pt-4 border-t border-border">
-                 <Button variant="outline" onClick={resetMask} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-destructive/10 hover:text-destructive">
+                 <Button variant="outline" onClick={resetAll} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-destructive/10 hover:text-destructive">
                     <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
                  </Button>
                  <Button variant="outline" onClick={() => setPan({ x: 0, y: 0 })} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl">
@@ -472,11 +471,11 @@ export default function BGRemoveProPage() {
           </Card>
 
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
-            <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
+            <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Protocol Intel</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Protected</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                Brushing utilizes destination-out logic for clinical removal. Use ALT + Drag to pan across high-res matrices.
+                All processing happens locally. Your images never leave your device.
               </p>
             </div>
           </div>
@@ -488,12 +487,12 @@ export default function BGRemoveProPage() {
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
               <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
-                <Eye className="w-3.5 h-3.5" /> Workspace Matrix
+                <Eye className="w-3.5 h-3.5" /> Workspace
               </CardTitle>
               {image && (
                 <div className="flex items-center gap-4">
                   <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
-                    {isProcessing ? 'AI Scrubber Active' : 'Verified Matrix'}
+                    {isProcessing ? 'Processing...' : 'Ready'}
                   </div>
                   <Button variant="ghost" size="icon" onClick={handleClear} className="h-10 w-10 rounded-xl text-foreground/20 hover:text-destructive">
                     <Trash2 className="w-4 h-4" />
@@ -506,13 +505,13 @@ export default function BGRemoveProPage() {
                  <div className="h-full w-full flex flex-col items-center justify-center p-20">
                     <div 
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-24 h-24 rounded-[2.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 hover:text-primary hover:scale-110 hover:border-primary/40 transition-all duration-700 shadow-xl cursor-pointer"
+                      className="w-24 h-24 rounded-[2.5rem] bg-background border border-white/10 flex items-center justify-center text-foreground/10 hover:text-primary hover:scale-110 hover:border-primary/40 transition-all duration-700 shadow-xl cursor-pointer"
                     >
                       <ImagePlus className="w-10 h-10" />
                     </div>
                     <div className="mt-8 text-center space-y-2">
-                      <h3 className="text-sm font-black text-foreground/40 uppercase tracking-[0.3em]">Import Visual Matrix</h3>
-                      <p className="text-[10px] text-foreground/20 font-bold uppercase tracking-widest">JPG, PNG, WebP up to 10MB</p>
+                      <h3 className="text-sm font-black text-white/40 uppercase tracking-[0.3em]">Import Image</h3>
+                      <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">JPG, PNG, WebP up to 10MB</p>
                     </div>
                     <input 
                       type="file" 
@@ -552,11 +551,11 @@ export default function BGRemoveProPage() {
                       <div className="absolute inset-0 bg-[#060608]/80 backdrop-blur-xl z-50 flex flex-col items-center justify-center gap-6 p-12 text-center">
                          <div className="relative">
                             <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                            <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
+                            <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                          </div>
                          <div className="space-y-2">
                             <p className="text-xl font-headline font-black text-white uppercase tracking-tight">{loadingStatus}</p>
-                            <p className="text-[10px] text-primary font-black uppercase tracking-[0.4em]">Neural Scrubber Protocol Engaged</p>
+                            <p className="text-[10px] text-primary font-black uppercase tracking-[0.4em]">Please wait...</p>
                          </div>
                       </div>
                     )}
@@ -600,39 +599,12 @@ export default function BGRemoveProPage() {
                       className="flex-[2] h-16 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                     >
                       <Save className="w-6 h-6" />
-                      Download Translucent Master
+                      Download Result
                     </Button>
-                    <div className="flex-1 grid grid-cols-2 gap-3">
-                       <div className="p-4 rounded-2xl bg-secondary/50 border border-border flex flex-col justify-center">
-                          <p className="text-[8px] font-black text-foreground/30 uppercase tracking-widest">Protocol</p>
-                          <p className="text-[10px] font-bold text-foreground">ALPHA PNG</p>
-                       </div>
-                       <div className="p-4 rounded-2xl bg-secondary/50 border border-border flex flex-col justify-center">
-                          <p className="text-[8px] font-black text-foreground/30 uppercase tracking-widest">Synthesis</p>
-                          <p className="text-[10px] font-bold text-primary">100% LOCAL</p>
-                       </div>
-                    </div>
                  </div>
               </div>
             )}
           </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group">
-                <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
-                <div className="space-y-1">
-                   <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Privacy Sovereign</h4>
-                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">Removal logic executes strictly in browser memory. Hardware identifiers are never logged.</p>
-                </div>
-             </div>
-             <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group">
-                <Maximize2 className="w-6 h-6 text-primary mt-1 shrink-0" />
-                <div className="space-y-1">
-                   <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">WASM Acceleration</h4>
-                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">Hardware-accelerated neural pass for clinical subject isolation in milliseconds.</p>
-                </div>
-             </div>
-          </div>
         </div>
       </div>
       <style jsx global>{`
@@ -657,4 +629,10 @@ export default function BGRemoveProPage() {
       `}</style>
     </div>
   );
+
+  function resetAll() {
+    resetMask();
+    setPan({ x: 0, y: 0 });
+    setZoom(1);
+  }
 }
