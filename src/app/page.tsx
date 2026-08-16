@@ -844,11 +844,11 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
       {/* HERO SECTION - RECALIBRATED COSMIC PROTOCOL */}
-      <section className="w-full px-4 sm:px-6 pt-24 pb-20 md:pt-32 md:pb-32 min-h-[600px] text-center relative overflow-visible flex flex-col justify-center">
+      <section className="w-full px-4 sm:px-6 pt-20 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-visible flex flex-col justify-center">
         <SpaceBackground />
         
         <div className="max-w-5xl mx-auto animate-reveal relative z-10">
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
               <Command className="w-3 h-3 icon-3d" /> Digital Studio v7.2
             </div>
@@ -857,15 +857,15 @@ export default function Home() {
             </div>
           </div>
           
-          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-headline font-black mb-8 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto">
+          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto">
             The World's Most <span className="text-primary italic">Advanced</span> Studio
           </h1>
-          <p className="text-base sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-16 px-4">
+          <p className="text-base sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4">
             Professional high-fidelity asset generation and technical data translation. 100% private, client-side, and engineered for high-performance workflows.
           </p>
 
           {/* Search & Category Bar */}
-          <div className="max-w-4xl mx-auto space-y-10 px-4">
+          <div className="max-w-4xl mx-auto space-y-6 px-4">
              {/* Search Input */}
              <div className="max-w-2xl mx-auto group relative">
                 <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none" />
@@ -920,7 +920,7 @@ export default function Home() {
           </div>
 
           {/* View Toggle */}
-          <div className="flex justify-center mt-12 mb-16">
+          <div className="flex justify-center mt-6 mb-10">
             <div className="inline-flex p-1.5 rounded-2xl bg-secondary/50 border border-white/5 backdrop-blur-xl relative group/toggle shadow-2xl">
                <div 
                   className={cn(
