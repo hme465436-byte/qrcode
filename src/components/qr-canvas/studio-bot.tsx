@@ -214,7 +214,7 @@ export function StudioBot() {
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Initial visibility window: Show fully for 5 seconds before sliding to peek
+    // Initial visibility window
     const initialShowTimer = setTimeout(() => {
       setIsInitialShow(false);
     }, 5000);
@@ -371,60 +371,80 @@ export function StudioBot() {
     }, 400);
   };
 
+  const RobotFace = ({ className = "" }: { className?: string }) => (
+    <div className={cn("relative w-full h-full flex flex-col items-center justify-center transition-all duration-300", className)}>
+      <svg viewBox="0 0 100 100" className="w-full h-full p-1.5 drop-shadow-xl">
+        {/* Antenna with glow */}
+        <path d="M50 25 L50 12" stroke="#60a5fa" strokeWidth="4" strokeLinecap="round" className="animate-pulse" />
+        <circle cx="50" cy="10" r="4" fill="#60a5fa">
+          <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
+        </circle>
+        
+        {/* Body (Creamy White) */}
+        <circle cx="50" cy="58" r="38" fill="#fefce8" stroke="#e2e8f0" strokeWidth="1.5" />
+        
+        {/* Eyes (Large, Shiny) */}
+        <g className={cn("transition-transform duration-300", isNodding && "translate-y-1")}>
+          <circle cx="35" cy="54" r="7" fill="#1e293b" className="animate-bot-blink" />
+          <circle cx="33" cy="51" r="2.5" fill="white" className="opacity-80" />
+          
+          <circle cx="65" cy="54" r="7" fill="#1e293b" className="animate-bot-blink" />
+          <circle cx="63" cy="51" r="2.5" fill="white" className="opacity-80" />
+        </g>
+        
+        {/* Blush (Cute Pink) */}
+        <circle cx="28" cy="65" r="4.5" fill="#fecaca" opacity="0.5" className={cn("transition-all", isHappy && "opacity-80 scale-125")} />
+        <circle cx="72" cy="65" r="4.5" fill="#fecaca" opacity="0.5" className={cn("transition-all", isHappy && "opacity-80 scale-125")} />
+        
+        {/* Smile */}
+        <path d="M42 72 Q50 78 58 72" fill="none" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
+      </svg>
+      
+      {isPetting && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Heart className="w-10 h-10 text-rose-400 fill-current animate-heart-float opacity-0" />
+        </div>
+      )}
+    </div>
+  );
+
   if (!isOpen) {
     const isShowingFully = isHovered || isInitialShow;
     return (
       <div 
         className={cn(
-          "fixed bottom-8 z-[100] flex items-end justify-end transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
-          isShowingFully ? "right-8" : "right-[-35px] sm:right-[-45px]"
+          "fixed bottom-8 z-[100] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
+          isShowingFully ? "right-8" : "right-[-40px] sm:right-[-50px]"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         <div className="relative flex flex-col items-center">
-          {/* Adaptive Bubble: Shifts left when peeking to ensure visibility */}
+          {/* Pretty Speech Bubble */}
           <div className={cn(
-            "absolute px-3 py-1.5 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl transition-all duration-300 transform origin-bottom whitespace-nowrap",
+            "absolute px-4 py-2 rounded-2xl bg-white dark:bg-zinc-800 text-foreground text-[10px] font-black uppercase tracking-widest shadow-2xl transition-all duration-300 transform origin-bottom whitespace-nowrap border border-primary/20",
             showBubble ? "animate-bubble-pop" : "opacity-0 scale-50 translate-y-2 pointer-events-none",
-            isShowingFully ? "bottom-full left-1/2 -translate-x-1/2 mb-4" : "right-full mr-4 bottom-1/2 translate-y-1/2"
+            isShowingFully ? "bottom-full left-1/2 -translate-x-1/2 mb-4" : "right-full mr-5 bottom-1/2 translate-y-1/2"
           )}>
             {bubbleText}
-            {/* Bubble Tail repositioning */}
             <div className={cn(
               "absolute w-0 h-0 border-transparent",
               isShowingFully 
-                ? "top-full left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-t-primary" 
-                : "left-full top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-l-[6px] border-l-primary"
+                ? "top-full left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-t-white dark:border-t-zinc-800" 
+                : "left-full top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-l-[6px] border-l-white dark:border-l-zinc-800"
             )} />
           </div>
 
           <button 
             onClick={handleRobotClick}
             className={cn(
-              "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary flex items-center justify-center shadow-[0_15px_40px_-10px_rgba(59,130,246,0.6)] border-4 border-white/20 transition-all duration-300 relative group overflow-hidden motion-safe:animate-bot-bob",
-              isPetting && "animate-bot-squash"
+              "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-500/10 backdrop-blur-md flex items-center justify-center shadow-[0_20px_50px_-10px_rgba(59,130,246,0.5)] border-4 border-white/20 transition-all duration-500 relative group overflow-hidden motion-safe:animate-bot-bob",
+              isPetting && "scale-90"
             )}
           >
-            <div className={cn(
-              "relative w-full h-full flex flex-col items-center justify-center pt-1 transition-transform duration-300",
-              isNodding && "animate-bot-nod"
-            )}>
-              <div className="flex gap-2.5 mb-1.5 animate-bot-look">
-                <div className={cn("w-2.5 h-2.5 rounded-full bg-white animate-bot-blink shadow-[0_0_8px_white] transition-transform", isHappy && "animate-bot-happy-eyes")} />
-                <div className={cn("w-2.5 h-2.5 rounded-full bg-white animate-bot-blink shadow-[0_0_8px_white] transition-transform", isHappy && "animate-bot-happy-eyes")} />
-              </div>
-              <div className="w-4 h-1.5 rounded-full border-b-2 border-white opacity-60" />
-              
-              {isPetting && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Heart className="w-8 h-8 text-white fill-current animate-heart-float" />
-                </div>
-              )}
-            </div>
+            <RobotFace className={cn(isHovered ? "rotate-0" : "rotate-2")} />
             
-            <div className="absolute top-3 right-3 w-2 h-2 bg-green-400 rounded-full animate-ping opacity-60" />
-            <div className="absolute top-3 right-3 w-2 h-2 bg-green-400 rounded-full" />
+            <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]" />
           </button>
         </div>
       </div>
@@ -439,14 +459,8 @@ export function StudioBot() {
     )}>
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg border-2 border-white/20 relative overflow-hidden">
-            <div className={cn("flex flex-col items-center justify-center pt-0.5", isNodding && "animate-bot-nod")}>
-              <div className="flex gap-1.5 mb-1">
-                <div className={cn("w-1.5 h-1.5 rounded-full bg-white animate-bot-blink", isHappy && "scale-150")} />
-                <div className={cn("w-1.5 h-1.5 rounded-full bg-white animate-bot-blink", isHappy && "scale-150")} />
-              </div>
-              <div className="w-2.5 h-1 rounded-full border-b border-white opacity-60" />
-            </div>
+          <div className="w-12 h-12 rounded-full bg-[#fefce8] flex items-center justify-center shadow-lg border-2 border-white/20 relative overflow-hidden">
+            <RobotFace />
           </div>
           <div className="space-y-0.5">
             <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Studio Buddy PRO</h4>
