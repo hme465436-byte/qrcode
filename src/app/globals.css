@@ -156,7 +156,7 @@
     filter: drop-shadow(0 0 20px hsla(var(--primary), 1)) drop-shadow(0 0 45px hsla(var(--primary), 0.7)) drop-shadow(0 0 80px hsla(var(--primary), 0.3));
   }
 
-  /* Shooting Star Protocol V3 - Hyper-Glow with Light Blue Trail */
+  /* Shooting Star Protocol V3 - Hyper-Glow with Light Blue Trail - SLOWER 3-7s movement */
   @keyframes shooting-star-path-v3 {
     0% {
       transform: translateX(0) translateY(0) rotate(-40deg) scale(0);
@@ -166,7 +166,7 @@
       opacity: 1;
       scale: 1;
     }
-    15% {
+    30% { /* Slowed down from 15% to 30% of cycle */
       transform: translateX(-150vw) translateY(120vh) rotate(-40deg) scale(2);
       opacity: 0;
     }
@@ -178,14 +178,14 @@
 
   .shooting-star-protocol-v2 {
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 12px; /* Bigger core */
+    height: 12px;
     background: #fff;
     border-radius: 50%;
     box-shadow: 
-      0 0 30px 8px rgba(255,255,255,1), 
-      0 0 60px 15px hsla(217, 91%, 60%, 0.8), /* Site Primary Blue */
-      0 0 100px 30px hsla(217, 91%, 60%, 0.4);
+      0 0 40px 10px rgba(255,255,255,1), 
+      0 0 80px 25px hsla(217, 91%, 60%, 1), /* Site Primary Blue - Brighter */
+      0 0 120px 45px hsla(217, 91%, 60%, 0.6);
     animation: shooting-star-path-v3 18s linear infinite;
     opacity: 0;
     z-index: 0;
@@ -198,38 +198,38 @@
     top: 50%;
     left: 0;
     transform: translateY(-50%);
-    width: 800px; /* Longer tail */
-    height: 4px;
-    background: linear-gradient(90deg, #fff, hsla(217, 91%, 60%, 0.6), hsla(217, 91%, 60%, 0.1), transparent);
+    width: 1000px; /* Even longer trail */
+    height: 6px; /* Thicker trail */
+    background: linear-gradient(90deg, #fff, hsla(217, 91%, 60%, 0.8), hsla(217, 91%, 60%, 0.2), transparent);
     border-radius: 100%;
-    filter: blur(1.5px);
+    filter: blur(2px);
   }
 
-  /* Floating Elements Animations */
+  /* Floating Elements Animations - Even slower and more contrasting */
   @keyframes float-slow {
     0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
-    33% { transform: translateY(-30px) translateX(15px) rotate(5deg); }
-    66% { transform: translateY(15px) translateX(-20px) rotate(-5deg); }
+    33% { transform: translateY(-40px) translateX(25px) rotate(8deg); }
+    66% { transform: translateY(20px) translateX(-30px) rotate(-8deg); }
   }
 
   @keyframes ship-drift {
-    0% { transform: translateX(100vw) rotate(0deg); opacity: 0; }
-    10% { opacity: 0.15; }
-    90% { opacity: 0.15; }
-    100% { transform: translateX(-100vw) rotate(10deg); opacity: 0; }
+    0% { transform: translateX(110vw) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.3; }
+    90% { opacity: 0.3; }
+    100% { transform: translateX(-110vw) rotate(15deg); opacity: 0; }
   }
 
-  .animate-float { animation: float-slow 25s ease-in-out infinite; }
-  .animate-ship-drift { animation: ship-drift 40s linear infinite; }
+  .animate-float { animation: float-slow 40s ease-in-out infinite; }
+  .animate-ship-drift { animation: ship-drift 60s linear infinite; }
 
-  /* Twinkle Animation */
+  /* Twinkle Animation - Slower pulse */
   @keyframes star-twinkle {
-    0%, 100% { opacity: 0.3; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.3); }
+    0%, 100% { opacity: 0.2; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.4); }
   }
 
   .animate-star-twinkle {
-    animation: star-twinkle 4s ease-in-out infinite;
+    animation: star-twinkle 6s ease-in-out infinite;
   }
 
   /* Kit Mascot Animations */
@@ -345,3 +345,4 @@ button {
 .markdown-preview td {
   @apply border-b border-t-0 border-x-0;
 }
+
