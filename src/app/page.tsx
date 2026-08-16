@@ -46,7 +46,6 @@ import {
   ArrowRightLeft,
   User,
   DownloadCloud,
-  Fingerprint,
   Files,
   Copy,
   ListFilter,
@@ -87,6 +86,16 @@ const TOOLS = [
     color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/pdf-to-word', 
+    icon: FileEdit, 
+    title: 'PDF to Word', 
+    desc: 'Convert PDF documents into editable Word (.docx) masters.', 
+    label: 'DOCUMENT', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['pdf to word', 'convert pdf', 'editable word', 'pdf to docx', 'extract text']
   },
   { 
     href: '/word-to-pdf', 
@@ -414,7 +423,7 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },
