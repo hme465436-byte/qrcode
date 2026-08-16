@@ -46,7 +46,6 @@ import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -124,8 +123,10 @@ export default function AdvancedLiveWallpaperPage() {
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
     if (!ffmpegRef.current) ffmpegRef.current = new FFmpeg();
     const ffmpeg = ffmpegRef.current;
+    
     ffmpeg.on('log', ({ message }) => setLogs(prev => [...prev.slice(-4), message]));
     ffmpeg.on('progress', ({ progress: p }) => setProgress(Math.round(p * 100)));
+    
     try {
       await ffmpeg.load({
         coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
@@ -183,11 +184,18 @@ export default function AdvancedLiveWallpaperPage() {
     if (!ready || !ffmpegRef.current) { setIsProcessing(false); return; }
 
     const ffmpeg = ffmpegRef.current;
-    const inputName = 'input_video';
+    const inputName = 'input_media_payload';
     const w = activePreset.width;
     const h = activePreset.height;
 
     try {
+      setStatus('Preparing Sandbox...');
+      // Clean start
+      try { await ffmpeg.deleteFile(inputName); } catch (e) {}
+      try { await ffmpeg.deleteFile('output.mp4'); } catch (e) {}
+      try { await ffmpeg.deleteFile('output.webm'); } catch (e) {}
+      try { await ffmpeg.deleteFile('output.gif'); } catch (e) {}
+
       setStatus('Writing Payload...');
       await ffmpeg.writeFile(inputName, await fetchFile(file));
 
@@ -227,6 +235,7 @@ export default function AdvancedLiveWallpaperPage() {
       await ffmpeg.exec(mp4Args);
       const mp4Data = await ffmpeg.readFile('output.mp4');
       setMp4Url(URL.createObjectURL(new Blob([(mp4Data as any).buffer], { type: 'video/mp4' })));
+      await ffmpeg.deleteFile('output.mp4');
 
       // 2. Export WebM
       setStatus('Synthesizing WebM Master...');
@@ -238,6 +247,7 @@ export default function AdvancedLiveWallpaperPage() {
       ]);
       const webmData = await ffmpeg.readFile('output.webm');
       setWebmUrl(URL.createObjectURL(new Blob([(webmData as any).buffer], { type: 'video/webm' })));
+      await ffmpeg.deleteFile('output.webm');
 
       // 3. Export GIF (Shortened for memory safety)
       const gifDur = Math.min(duration, 5);
@@ -250,12 +260,24 @@ export default function AdvancedLiveWallpaperPage() {
       ]);
       const gifData = await ffmpeg.readFile('output.gif');
       setGifUrl(URL.createObjectURL(new Blob([(gifData as any).buffer], { type: 'image/gif' })));
+      await ffmpeg.deleteFile('output.gif');
+
+      // Clean input payload from memory
+      await ffmpeg.deleteFile(inputName);
 
       setStatus('Production Complete');
       toast({ title: "Masters Ready", description: "All formats successfully synthesized." });
     } catch (err: any) {
       console.error(err);
-      toast({ variant: "destructive", title: "Production Failed", description: "Internal error during re-encoding." });
+      if (err.message?.includes('memory access out of bounds')) {
+        toast({ 
+          variant: "destructive", 
+          title: "Memory Limit Reached", 
+          description: "This asset is too large for the WASM sandbox. Please try a shorter duration." 
+        });
+      } else {
+        toast({ variant: "destructive", title: "Production Failed", description: "Internal error during re-encoding." });
+      }
       setStatus('Process Aborted');
     } finally {
       setIsProcessing(false);
@@ -503,7 +525,7 @@ export default function AdvancedLiveWallpaperPage() {
                                   <p className="text-[8px] font-bold text-foreground/30 uppercase">{fmt.ext.toUpperCase()} Buffer</p>
                                </div>
                             </div>
-                            <Button asChild className="w-full h-11 bg-primary text-white rounded-xl shadow-lg shadow-primary/10">
+                            <Button asChild disabled={!fmt.url} className="w-full h-11 bg-primary text-white rounded-xl shadow-lg shadow-primary/10">
                                <a href={fmt.url || '#'} download={`live-wallpaper-${activePreset.id}.${fmt.ext}`}>
                                   <Download className="w-4 h-4 mr-2" /> Download
                                </a>
@@ -517,7 +539,7 @@ export default function AdvancedLiveWallpaperPage() {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500">
+             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <ShieldCheck className="w-7 h-7" />
                 </div>
@@ -528,7 +550,7 @@ export default function AdvancedLiveWallpaperPage() {
                   </p>
                 </div>
              </div>
-             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500">
+             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <Zap className="w-7 h-7" />
                 </div>
