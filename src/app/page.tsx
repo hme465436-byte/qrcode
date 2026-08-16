@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   QrCode, 
@@ -55,12 +55,15 @@ import {
   Command,
   Heart,
   Play,
-  RotateCcw
+  RotateCcw,
+  List
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button as ShadButton } from '@/components/ui/button';
 import { SpaceBackground } from '@/components/qr-canvas/space-background';
+
+const VIEW_MODE_KEY = 'mykit_view_mode';
 
 const TOOLS = [
   { 
@@ -459,7 +462,7 @@ const TOOLS = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
   },
@@ -557,6 +560,17 @@ const TOOLS = [
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  useEffect(() => {
+    const saved = localStorage.getItem(VIEW_MODE_KEY) as 'grid' | 'list' | null;
+    if (saved) setViewMode(saved);
+  }, []);
+
+  const toggleViewMode = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    localStorage.setItem(VIEW_MODE_KEY, mode);
+  };
 
   const filteredTools = useMemo(() => {
     if (!searchQuery.trim()) return TOOLS;
@@ -572,7 +586,6 @@ export default function Home() {
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
       {/* HERO SECTION */}
       <section className="w-full px-4 sm:px-6 pt-24 pb-20 md:pt-32 md:pb-32 text-center relative overflow-hidden">
-        {/* Animated Space Background - Limited to Hero Section */}
         <SpaceBackground />
         
         <div className="max-w-5xl mx-auto animate-reveal relative z-10">
@@ -593,17 +606,12 @@ export default function Home() {
           </p>
 
           {/* SaaS Style Search Bar with Atmospheric Glow */}
-          <div className="max-w-2xl mx-auto mb-20 px-4 group relative">
-            {/* Outer Atmospheric Glow Layer */}
+          <div className="max-w-2xl mx-auto mb-10 px-4 group relative">
             <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none" />
-            
-            {/* Pulse Glow Border Layer */}
             <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
 
-            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/30 group-focus-within:from-primary/60 group-focus-within:to-primary/30 overflow-visible">
-              {/* Hyper-Visible Moving Glow Line Protocol */}
+            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/30 group-focus-within:from-primary/60 group-focus-within:to-primary/30">
               <div className="moving-border-matrix" />
-              
               <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                   <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors icon-3d" />
@@ -627,68 +635,105 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
-            {filteredTools.length > 0 ? (
-              filteredTools.map((item, i) => (
-                <Link key={i} href={item.href} className="group relative flex flex-col h-full">
-                  <div className="relative flex-1 flex flex-col p-8 rounded-[2.5rem] bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 hover:-translate-y-2 text-left shadow-2xl group-hover:shadow-primary/5 overflow-hidden">
-                    {/* Animated Surface Light (Subtle) */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    
-                    {/* Icon Badge Cell */}
+          {/* View Toggle Protocol */}
+          <div className="flex justify-center mb-16">
+            <div className="inline-flex p-1.5 rounded-2xl bg-secondary/50 border border-white/5 backdrop-blur-xl relative group/toggle shadow-2xl">
+               <div 
+                  className={cn(
+                    "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-primary rounded-xl transition-all duration-500 shadow-lg shadow-primary/20",
+                    viewMode === 'grid' ? "left-1.5" : "left-[calc(50%+1.5px)]"
+                  )}
+               />
+               <button 
+                onClick={() => toggleViewMode('grid')}
+                className={cn(
+                  "relative z-10 flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[9px] font-black uppercase tracking-widest",
+                  viewMode === 'grid' ? "text-primary-foreground" : "text-foreground/40 hover:text-primary"
+                )}
+               >
+                 <LayoutGrid className="w-3.5 h-3.5 icon-3d" /> Grid
+               </button>
+               <button 
+                onClick={() => toggleViewMode('list')}
+                className={cn(
+                  "relative z-10 flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[9px] font-black uppercase tracking-widest",
+                  viewMode === 'list' ? "text-primary-foreground" : "text-foreground/40 hover:text-primary"
+                )}
+               >
+                 <List className="w-3.5 h-3.5 icon-3d" /> List
+               </button>
+            </div>
+          </div>
+
+          {/* Tool Registry Matrix */}
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
+              {filteredTools.length > 0 ? (
+                filteredTools.map((item, i) => (
+                  <Link key={i} href={item.href} className="group relative flex flex-col h-full">
+                    <div className="relative flex-1 flex flex-col p-8 rounded-[2.5rem] bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 hover:-translate-y-2 text-left shadow-2xl group-hover:shadow-primary/5 overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className={cn(
+                        "w-14 h-14 rounded-2xl flex items-center justify-center mb-10 border transition-all duration-500 icon-container-3d relative z-10",
+                        item.color
+                      )}>
+                        <item.icon className="w-7 h-7 icon-3d" />
+                        <div className={cn("absolute inset-0 blur-xl opacity-20 transition-opacity group-hover:opacity-40", item.glowClass)} />
+                      </div>
+                      <div className="relative z-10 space-y-4 flex-1 flex flex-col">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />
+                          </div>
+                          <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight leading-none group-hover:text-primary transition-colors">{item.title}</h3>
+                        </div>
+                        <p className="text-sm text-foreground/40 leading-relaxed font-medium line-clamp-2">{item.desc}</p>
+                        <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                          Initialize <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <EmptyState onReset={() => setSearchQuery('')} />
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
+               {filteredTools.length > 0 ? (
+                filteredTools.map((item, i) => (
+                  <Link 
+                    key={i} 
+                    href={item.href} 
+                    className="group relative flex items-center gap-6 p-6 rounded-[2rem] bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 hover:-translate-x-1 shadow-2xl overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className={cn(
-                      "w-14 h-14 rounded-2xl flex items-center justify-center mb-10 border transition-all duration-500 icon-container-3d relative z-10",
+                      "w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-500 icon-container-3d relative z-10 shrink-0",
                       item.color
                     )}>
-                      <item.icon className="w-7 h-7 icon-3d" />
-                      {/* Localized Icon Glow */}
-                      <div className={cn("absolute inset-0 blur-xl opacity-20 transition-opacity group-hover:opacity-40", item.glowClass)} />
+                      <item.icon className="w-6 h-6 icon-3d" />
                     </div>
-
-                    <div className="relative z-10 space-y-4 flex-1 flex flex-col">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />
-                        </div>
-                        <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight leading-none group-hover:text-primary transition-colors">{item.title}</h3>
+                    <div className="flex-1 min-w-0 text-left relative z-10">
+                      <div className="flex items-center gap-3 mb-0.5">
+                         <h3 className="text-lg font-headline font-black text-foreground uppercase tracking-tight group-hover:text-primary transition-colors truncate">{item.title}</h3>
+                         <span className="text-[8px] font-black text-primary/40 uppercase tracking-widest border border-primary/20 px-2 py-0.5 rounded-full hidden sm:inline-block">{item.label}</span>
                       </div>
-                      
-                      <p className="text-sm text-foreground/40 leading-relaxed font-medium line-clamp-2">
-                        {item.desc}
-                      </p>
-                      
-                      <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-                        Initialize <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
-                      </div>
+                      <p className="text-sm text-foreground/40 font-medium truncate">{item.desc}</p>
                     </div>
-
-                    {/* Atmospheric Corner Glow */}
-                    <div className={cn(
-                      "absolute -right-16 -bottom-16 w-32 h-32 rounded-full blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity duration-1000",
-                      item.glowClass
-                    )} />
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="col-span-full py-24 glass-card rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-8">
-                <Search className="w-12 h-12 text-foreground/5 animate-pulse icon-3d" />
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">Zero Identifiers</h3>
-                  <p className="text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
-                </div>
-                <ShadButton 
-                  onClick={() => setSearchQuery('')}
-                  variant="outline"
-                  className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2 icon-3d" />
-                  Reset Studio Registry
-                </ShadButton>
-              </div>
-            )}
-          </div>
+                    <div className="flex items-center gap-3 shrink-0 relative z-10">
+                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/0 group-hover:text-primary transition-all translate-x-2 group-hover:translate-x-0 hidden sm:inline-block">Open Studio</span>
+                       <ArrowRight className="w-5 h-5 text-primary/20 group-hover:text-primary transition-all group-hover:translate-x-1 icon-3d" />
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <EmptyState onReset={() => setSearchQuery('')} />
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -756,6 +801,26 @@ export default function Home() {
            </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function EmptyState({ onReset }: { onReset: () => void }) {
+  return (
+    <div className="col-span-full py-24 glass-card rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-8">
+      <Search className="w-12 h-12 text-foreground/5 animate-pulse icon-3d" />
+      <div className="space-y-2">
+        <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">Zero Identifiers</h3>
+        <p className="text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
+      </div>
+      <ShadButton 
+        onClick={onReset}
+        variant="outline"
+        className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10"
+      >
+        <RotateCcw className="w-4 h-4 mr-2 icon-3d" />
+        Reset Studio Registry
+      </ShadButton>
     </div>
   );
 }
