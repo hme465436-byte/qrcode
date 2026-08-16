@@ -1,35 +1,27 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  Bot, 
   X, 
   Send, 
-  MessageSquare, 
   ArrowRight, 
   Zap, 
   ShieldCheck, 
   Search, 
   Sparkles, 
-  Command, 
-  HelpCircle, 
   Minimize2, 
   Maximize2,
   Trash2,
   CheckCircle2,
   AlertCircle,
   Loader2,
-  List,
   Copy,
-  ExternalLink,
   ChevronRight,
   Info,
   FileUp,
   FileCheck,
-  LayoutGrid,
   Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -173,16 +165,15 @@ const TOOLS: Tool[] = [
 ];
 
 const BUBBLE_MESSAGES = [
-  "Ready to work?", "Need a tool?", "Pet me", "PDF?", "Make it smaller?", 
+  "Meow! Ready to work?", "Need a tool?", "Pet me", "PDF to chhota?", "Purrr...", 
   "Crop time?", "I’m hiding", "Psst...", "Got a file?", "Let’s convert", 
-  "Passport pic?", "I see you", "Tap me", "Help?", "I’m bored", 
-  "JPG or PDF?", "Compress?", "Merge PDFs?", "Blurry photo?", "I can find it", 
-  "Don’t be shy", "Need info?", "Quick job?", "I’m tiny but useful", 
-  "Try search", "Open a tool", "What today?", "Hello again", "Still here", 
+  "Passport pic?", "I see you", "Tap for help", "Mew?", "I’m hungry", 
+  "JPG or PDF?", "Compress?", "Merge PDFs?", "Blurry photo?", "I can fix it", 
+  "Don’t be shy", "Need info?", "Quick job?", "I’m Kit!", 
+  "Try search", "Open a tool", "What today?", "Mew mew!", "Still here", 
   "One click", "Zoom?", "Enhance?", "QR?", "I’m peeking", "Work mode on", 
-  "File ready?", "Let’s go", "Need steps?", "Ask me", "Hi friend", 
-  "Coffee then tools?", "Oops wrong pocket", "Boss called? I’m here", 
-  "Pixel mess?", "Make it print?", "Secret helper"
+  "File ready?", "Let’s go", "Need steps?", "Ask Kit", "Hi friend", 
+  "Milk then tools?", "Tool belt is on!", "Pixel mess?", "Make it print?", "Secret helper"
 ];
 
 export function StudioBot() {
@@ -197,7 +188,6 @@ export function StudioBot() {
   const [showBubble, setShowBubble] = useState(false);
   const [bubbleText, setBubbleText] = useState('');
   const [isPetting, setIsPetting] = useState(false);
-  const [isNodding, setIsNodding] = useState(false);
   const [isHappy, setIsHappy] = useState(false);
   const [isInitialShow, setIsInitialShow] = useState(true);
   const [lastBubbleMsg, setLastBubbleMsg] = useState('');
@@ -263,7 +253,7 @@ export function StudioBot() {
     if (messages.length === 0) {
       setMessages([{ 
         type: 'bot', 
-        content: 'I am your PRO Studio Assistant. Tell me what job you need to finish or ask "how to use" a tool.',
+        content: 'Hi! I am Kit, your Studio Assistant. Tell me what job you need to finish or ask "how to use" a tool.',
         id: 'init' 
       }]);
     }
@@ -289,8 +279,8 @@ export function StudioBot() {
     const userMsg = input.trim();
     setMessages(prev => [...prev, { type: 'user', content: userMsg, id: Date.now().toString() }].slice(-8));
     setQuery('');
-    setIsNodding(true);
-    setTimeout(() => setIsNodding(false), 400);
+    setIsHappy(true);
+    setTimeout(() => setIsHappy(false), 400);
     setIsTyping(true);
 
     await new Promise(r => setTimeout(r, 400));
@@ -299,8 +289,6 @@ export function StudioBot() {
     const isDetailReq = lowQuery.match(/(how|step|detail|tarika|more|guide|instruction|steps)/);
     
     if (isDetailReq && lastTool) {
-      setIsHappy(true);
-      setTimeout(() => setIsHappy(false), 500);
       setMessages(prev => [...prev, { 
         type: 'bot', 
         content: `Loading full **Master Protocol** for ${lastTool.title}:`,
@@ -327,8 +315,6 @@ export function StudioBot() {
     .map(r => r.tool);
 
     if (results.length > 0) {
-      setIsHappy(true);
-      setTimeout(() => setIsHappy(false), 500);
       setLastTool(results[0]);
       setMessages(prev => [...prev, { 
         type: 'bot', 
@@ -342,7 +328,7 @@ export function StudioBot() {
     } else {
       setMessages(prev => [...prev, { 
         type: 'bot', 
-        content: 'This specific tool is not on My Kit Tool yet. I only have access to the internal studio registry.',
+        content: 'Meow... This specific tool is not on My Kit Tool yet. I only have access to the internal studio registry.',
         id: `none-${Date.now()}` 
       }].slice(-8));
     }
@@ -357,12 +343,12 @@ export function StudioBot() {
   };
 
   const handleClearHistory = () => {
-    setMessages([{ type: 'bot', content: 'Studio buffer reset. How can I assist you?', id: 'reset' }]);
+    setMessages([{ type: 'bot', content: 'Studio buffer reset. How can Kit assist you?', id: 'reset' }]);
     setLastTool(null);
     toast({ title: "Memory Purged", description: "Studio session buffer cleared." });
   };
 
-  const handleRobotClick = () => {
+  const handleKitClick = () => {
     setIsPetting(true);
     setTimeout(() => {
       setIsPetting(false);
@@ -370,43 +356,52 @@ export function StudioBot() {
     }, 400);
   };
 
-  const RobotFace = ({ className = "" }: { className?: string }) => (
+  const KitMascot = ({ className = "" }: { className?: string }) => (
     <div className={cn("relative w-full h-full flex flex-col items-center justify-center transition-all duration-300", className)}>
-      <svg viewBox="0 0 100 120" className="w-full h-full p-1.5 drop-shadow-2xl">
-        <g className={cn("transition-transform duration-300", isPetting ? "animate-bot-wiggle" : "animate-bot-sway")}>
-          {/* Tiny Body */}
-          <circle cx="50" cy="95" r="18" fill="#fefce8" />
-          <circle cx="50" cy="95" r="10" fill="#bfdbfe" /> 
-
-          {/* Round Ears */}
-          <circle cx="15" cy="50" r="10" fill="#fefce8" />
-          <circle cx="85" cy="50" r="10" fill="#fefce8" />
-
-          {/* Big Head */}
-          <circle cx="50" cy="50" r="42" fill="#fefce8" stroke="#f1f5f9" strokeWidth="1.5" />
-
-          {/* Spring Antenna with Star */}
-          <path d="M50 10 Q 55 0 50 -8" stroke="#94a3b8" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-          <path d="M50 -12 L 52 -8 L 57 -8 L 53 -5 L 54 0 L 50 -3 L 46 0 L 47 -5 L 43 -8 L 48 -8 Z" fill="#fbbf24" stroke="#d97706" strokeWidth="0.5" className="animate-pulse" />
-
-          {/* Face Elements */}
-          <g className={cn("transition-transform duration-500", isNodding ? "translate-y-2" : "animate-bot-look")}>
-             {/* Huge Glossy Eyes */}
-             <g className="animate-bot-blink">
-               <circle cx="30" cy="52" r="11" fill="#1e293b" />
-               <circle cx="27" cy="48" r="3.5" fill="white" className="opacity-90" /> 
-               
-               <circle cx="70" cy="52" r="11" fill="#1e293b" />
-               <circle cx="67" cy="48" r="3.5" fill="white" className="opacity-90" />
-             </g>
+      <svg viewBox="0 0 100 120" className="w-full h-full p-1 drop-shadow-xl">
+        <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")}>
+          {/* Tail */}
+          <path d="M 80 90 Q 95 80 90 65" stroke="#fefce8" strokeWidth="6" fill="none" strokeLinecap="round" className="animate-kit-tail-flick" />
+          
+          {/* Ears */}
+          <g className="animate-kit-ear-twitch">
+             {/* Left Ear */}
+             <path d="M 20 25 L 5 45 L 35 45 Z" fill="#fefce8" />
+             <path d="M 22 30 L 12 42 L 32 42 Z" fill="#fecaca" opacity="0.6" />
              
-             {/* Blush */}
-             <ellipse cx="26" cy="68" rx="7" ry="3.5" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "opacity-100 scale-125")} />
-             <ellipse cx="74" cy="68" rx="7" ry="3.5" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "opacity-100 scale-125")} />
-             
-             {/* Tiny Closed-Smile */}
-             <path d="M46 72 Q 50 76 54 72" fill="none" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
+             {/* Right Ear */}
+             <path d="M 80 25 L 65 45 L 95 45 Z" fill="#fefce8" />
+             <path d="M 78 30 L 68 42 L 88 42 Z" fill="#fecaca" opacity="0.6" />
           </g>
+
+          {/* Round Body/Head (Kit is very round) */}
+          <circle cx="50" cy="65" r="45" fill="#fefce8" />
+          
+          {/* Baby Blue Belly / Toolbelt Area */}
+          <path d="M 20 85 Q 50 105 80 85" fill="none" stroke="#bfdbfe" strokeWidth="12" strokeLinecap="round" />
+          {/* Wrench Icon on Belt */}
+          <rect x="46" y="88" width="8" height="2" rx="1" fill="#94a3b8" />
+          <path d="M 46 88 L 44 86 M 54 88 L 56 86" stroke="#94a3b8" strokeWidth="1" />
+
+          {/* Facial Elements */}
+          <g className="animate-kit-blink">
+             {/* Large Glossy Eyes */}
+             <circle cx="32" cy="62" r="10" fill="#1e293b" />
+             <circle cx="30" cy="59" r="3.5" fill="white" className="opacity-90" />
+             <circle cx="34" cy="65" r="1.5" fill="white" className="opacity-40" />
+
+             <circle cx="68" cy="62" r="10" fill="#1e293b" />
+             <circle cx="66" cy="59" r="3.5" fill="white" className="opacity-90" />
+             <circle cx="70" cy="65" r="1.5" fill="white" className="opacity-40" />
+          </g>
+          
+          {/* Pink Blush */}
+          <ellipse cx="28" cy="76" rx="6" ry="3" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "scale-150 opacity-100")} />
+          <ellipse cx="72" cy="76" rx="6" ry="3" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "scale-150 opacity-100")} />
+          
+          {/* Cat Mouth (w) */}
+          <path d="M 44 76 Q 47 80 50 76 Q 53 80 56 76" fill="none" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="50" cy="74" r="1.5" fill="#fecaca" /> {/* Tiny Nose */}
         </g>
       </svg>
       
@@ -445,13 +440,13 @@ export function StudioBot() {
           </div>
 
           <button 
-            onClick={handleRobotClick}
+            onClick={handleKitClick}
             className={cn(
               "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-blue-500/5 backdrop-blur-sm flex items-center justify-center transition-all duration-500 relative group overflow-visible",
               isPetting && "scale-90"
             )}
           >
-            <RobotFace className={cn(isHovered ? "rotate-0" : "rotate-1")} />
+            <KitMascot className={cn(isHovered ? "rotate-0" : "rotate-1")} />
             <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_12px_rgba(74,222,128,0.8)]" />
           </button>
         </div>
@@ -468,13 +463,13 @@ export function StudioBot() {
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-[#fefce8] flex items-center justify-center shadow-lg border border-white/10 relative overflow-hidden">
-            <RobotFace />
+            <KitMascot />
           </div>
           <div className="space-y-0.5">
-            <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Studio Buddy PRO</h4>
+            <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Kit • Studio Helper</h4>
             <div className="flex items-center gap-1.5">
                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-               <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Protocol Monitoring</span>
+               <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Active Listening</span>
             </div>
           </div>
         </div>
@@ -640,7 +635,7 @@ export function StudioBot() {
             </form>
             
             <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-foreground/10 px-1">
-               <span className="flex items-center gap-2"><ShieldCheck className="w-2.5 h-2.5" /> Secure Local Buddy</span>
+               <span className="flex items-center gap-2"><ShieldCheck className="w-2.5 h-2.5" /> Secure Local Assistant</span>
                <span>ESC TO EXIT</span>
             </div>
           </div>

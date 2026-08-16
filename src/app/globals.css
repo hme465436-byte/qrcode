@@ -218,64 +218,53 @@
     animation: star-twinkle 4s ease-in-out infinite;
   }
 
-  /* Robot Helper Pro Animations */
-  @keyframes bot-bob {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+  /* Kit Mascot Animations */
+  @keyframes kit-sway {
+    0%, 100% { transform: rotate(-2deg) translateY(0); }
+    50% { transform: rotate(2deg) translateY(-4px); }
   }
 
-  @keyframes bot-blink {
-    0%, 45%, 55%, 100% { transform: scaleY(1); }
+  @keyframes kit-blink {
+    0%, 48%, 52%, 100% { transform: scaleY(1); }
     50% { transform: scaleY(0.05); }
   }
 
-  @keyframes bot-look {
-    0%, 35%, 65%, 100% { transform: translateX(0); }
-    40%, 60% { transform: translateX(3px); }
+  @keyframes kit-ear-twitch {
+    0%, 90%, 100% { transform: rotate(0deg); }
+    92%, 96% { transform: rotate(-8deg); }
+    94%, 98% { transform: rotate(8deg); }
   }
 
-  @keyframes bot-sway {
-    0%, 100% { transform: rotate(-1.5deg); }
-    50% { transform: rotate(1.5deg); }
+  @keyframes kit-tail-flick {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(15deg) translateX(2px); }
   }
 
-  @keyframes bot-wiggle {
-    0%, 100% { transform: rotate(0deg) scale(1); }
-    25% { transform: rotate(5deg) scale(1.05); }
-    75% { transform: rotate(-5deg) scale(1.05); }
-  }
-
-  @keyframes bot-nod {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(10px) rotate(5deg); }
-  }
-
-  @keyframes bot-happy-eyes {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.4); }
+  @keyframes kit-wiggle {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.05) rotate(5deg); }
+    75% { transform: scale(1.05) rotate(-5deg); }
   }
 
   @keyframes heart-float {
     0% { transform: translateY(0) scale(0.5); opacity: 0; }
     20% { opacity: 1; }
-    100% { transform: translateY(-50px) translateX(10px) scale(1.3); opacity: 0; }
+    100% { transform: translateY(-60px) translateX(15px) scale(1.5); opacity: 0; }
   }
 
   @keyframes bubble-pop {
-    0% { transform: scale(0.4) translateY(20px); opacity: 0; }
-    70% { transform: scale(1.1) translateY(-5px); }
-    100% { transform: scale(1) translateY(0); opacity: 1; }
+    0% { transform: scale(0.4) translateX(20px); opacity: 0; }
+    70% { transform: scale(1.1) translateX(-5px); }
+    100% { transform: scale(1) translateX(0); opacity: 1; }
   }
 
-  .animate-bot-bob { animation: bot-bob 3s ease-in-out infinite; }
-  .animate-bot-blink { animation: bot-blink 4s ease-in-out infinite; }
-  .animate-bot-look { animation: bot-look 6s ease-in-out infinite; }
-  .animate-bot-sway { animation: bot-sway 4s ease-in-out infinite; }
-  .animate-bot-wiggle { animation: bot-wiggle 0.3s ease-in-out infinite; }
-  .animate-bot-nod { animation: bot-nod 0.4s ease-in-out; }
-  .animate-bot-happy-eyes { animation: bot-happy-eyes 0.5s ease-in-out; }
+  .animate-kit-sway { animation: kit-sway 4s ease-in-out infinite; }
+  .animate-kit-blink { animation: kit-blink 4s ease-in-out infinite; }
+  .animate-kit-ear-twitch { animation: kit-ear-twitch 3s ease-in-out infinite; }
+  .animate-kit-tail-flick { animation: kit-tail-flick 2s ease-in-out infinite; }
+  .animate-kit-wiggle { animation: kit-wiggle 0.4s ease-in-out; }
   .animate-heart-float { animation: heart-float 1.5s ease-out forwards; }
-  .animate-bubble-pop { animation: bubble-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+  .animate-bubble-pop { animation: bubble-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 }
 
 .font-headline {
