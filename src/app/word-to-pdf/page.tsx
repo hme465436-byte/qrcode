@@ -13,11 +13,11 @@ import {
   FileEdit,
   ArrowRightLeft,
   FileCode,
-  Save,
   Monitor,
   Layout,
   Zap,
-  AlertCircle
+  AlertCircle,
+  Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -250,7 +250,7 @@ export default function WordToPdfPage() {
                 <div className="flex-1 flex flex-col items-center justify-center space-y-8">
                    <div className="relative">
                       <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                      <FileCode className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
+                      <FileCode className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                    </div>
                    <div className="text-center space-y-2">
                       <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Executing Translation Protocol</p>
@@ -285,7 +285,7 @@ export default function WordToPdfPage() {
                         <Monitor className="w-4 h-4" />
                         <h4 className="text-[10px] font-black uppercase tracking-widest">Matrix Preview (First Pass)</h4>
                      </div>
-                     <div className="p-5 bg-background/50 rounded-xl font-mono text-[10px] text-foreground/40 leading-relaxed max-h-[150px] overflow-auto custom-scrollbar border border-border shadow-inner">
+                     <div className="p-5 bg-background/50 rounded-xl font-mono text-[10px] text-foreground/40 leading-relaxed max-h-[200px] overflow-auto custom-scrollbar border border-border shadow-inner">
                         {previewText || "Linguistic buffer initialized."}
                      </div>
                   </div>
@@ -299,17 +299,17 @@ export default function WordToPdfPage() {
 
               <div className="mt-auto pt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
-                    <Maximize className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                    <Maximize2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="space-y-1">
                       <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Master Accuracy</p>
-                      <p className="text-[10px] text-foreground/60 leading-relaxed font-medium">1:1 character preservation via direct binary mapping.</p>
+                      <p className="text-[10px] text-foreground/60 leading-relaxed font-medium uppercase">1:1 character preservation via direct binary mapping.</p>
                     </div>
                  </div>
                  <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
                     <Info className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="space-y-1">
                       <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</p>
-                      <p className="text-[10px] text-foreground/60 leading-relaxed font-medium">Binary re-synthesis happens 100% in browser memory.</p>
+                      <p className="text-[10px] text-foreground/60 leading-relaxed font-medium uppercase">Binary re-synthesis happens 100% in browser memory.</p>
                     </div>
                  </div>
               </div>
