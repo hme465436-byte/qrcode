@@ -167,15 +167,15 @@ const TOOLS: Tool[] = [
 ];
 
 const BUBBLE_MESSAGES = [
-  "Meow! Ready to work?", "Need a tool?", "Pet me", "PDF to chhota?", "Purrr...", 
-  "Crop time?", "I’m hiding", "Psst...", "Got a file?", "Let’s convert", 
+  "Ready to work?", "Need a tool?", "Pet me!", "PDF to chhota?", "Purrr...", 
+  "Crop time?", "I’m peeking", "Psst...", "Got a file?", "Let’s convert", 
   "Passport pic?", "I see you", "Tap for help", "Mew?", "I’m hungry", 
   "JPG or PDF?", "Compress?", "Merge PDFs?", "Blurry photo?", "I can fix it", 
   "Don’t be shy", "Need info?", "Quick job?", "I’m Kit!", 
-  "Try search", "Open a tool", "What today?", "Mew mew!", "Still here", 
+  "Try search", "Open a tool", "What today?", "Hello again", "Still here", 
   "One click", "Zoom?", "Enhance?", "QR?", "I’m peeking", "Work mode on", 
   "File ready?", "Let’s go", "Need steps?", "Ask Kit", "Hi friend", 
-  "Milk then tools?", "Tool belt is on!", "Pixel mess?", "Make it print?", "Secret helper"
+  "Coffee then tools?", "Oops wrong pocket", "Boss called? I’m here", "Pixel mess?", "Make it print?", "Secret helper"
 ];
 
 export function StudioBot() {
@@ -204,7 +204,7 @@ export function StudioBot() {
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Arrival Protocol: Show fully for 5 seconds
+    // Arrival Protocol: Stay fully visible for 5s
     const initialShowTimer = setTimeout(() => {
       setIsInitialShow(false);
     }, 5000);
@@ -218,7 +218,7 @@ export function StudioBot() {
       const nextDelay = 12000 + Math.random() * 13000;
       bubbleTimeoutRef.current = setTimeout(triggerBubble, nextDelay);
     };
-    bubbleTimeoutRef.current = setTimeout(triggerBubble, 10000);
+    bubbleTimeoutRef.current = setTimeout(triggerBubble, 8000);
 
     return () => { 
       if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current); 
@@ -252,14 +252,6 @@ export function StudioBot() {
       }]);
     }
   }, [messages.length]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) setIsOpen(false);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -350,41 +342,60 @@ export function StudioBot() {
     }, 400);
   };
 
-  const KitMascot = ({ mode = "full" }: { mode?: "full" | "peek" | "chat" }) => {
-    const isPeek = mode === "peek";
+  const KitMascot = ({ mode }: { mode: "A" | "B" }) => {
+    const isPoseB = mode === "B";
     return (
       <div className={cn(
-        "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-out",
-        isPeek && "rotate-[15deg] translate-x-[15px]"
+        "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
+        isPoseB ? "rotate-[-12deg]" : "rotate-0"
       )}>
-        <svg viewBox="0 0 100 120" className="w-full h-full p-1 drop-shadow-xl overflow-visible">
+        <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow-xl overflow-visible">
           <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")}>
+            {/* Tail */}
             <path d="M 80 90 Q 95 80 90 65" stroke="#fefce8" strokeWidth="6" fill="none" strokeLinecap="round" className="animate-kit-tail-flick" />
+            
+            {/* Ears */}
             <g className="animate-kit-ear-twitch">
                <path d="M 20 25 L 5 45 L 35 45 Z" fill="#fefce8" />
                <path d="M 22 30 L 12 42 L 32 42 Z" fill="#fecaca" opacity="0.6" />
                <path d="M 80 25 L 65 45 L 95 45 Z" fill="#fefce8" />
                <path d="M 78 30 L 68 42 L 88 42 Z" fill="#fecaca" opacity="0.6" />
             </g>
+            
+            {/* Body */}
             <circle cx="50" cy="65" r="45" fill="#fefce8" />
+            
+            {/* Toolbelt */}
             <path d="M 20 85 Q 50 105 80 85" fill="none" stroke="#bfdbfe" strokeWidth="12" strokeLinecap="round" />
+            
+            {/* Eyes */}
             <g className="animate-kit-blink">
                <circle cx="32" cy="62" r="10" fill="#1e293b" />
                <circle cx="30" cy="59" r="3.5" fill="white" className="opacity-90" />
                <circle cx="68" cy="62" r="10" fill="#1e293b" />
                <circle cx="66" cy="59" r="3.5" fill="white" className="opacity-90" />
             </g>
+            
+            {/* Blush */}
             <ellipse cx="28" cy="76" rx="6" ry="3" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "scale-150 opacity-100")} />
             <ellipse cx="72" cy="76" rx="6" ry="3" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "scale-150 opacity-100")} />
+            
+            {/* Mouth */}
             <path d="M 44 76 Q 47 80 50 76 Q 53 80 56 76" fill="none" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" />
-            {isPeek ? (
-              <g className="animate-kit-grip">
-                <path d="M 12 55 Q 5 60 12 65" fill="#fefce8" stroke="#1e293b" strokeWidth="1" />
-                <path d="M 12 75 Q 5 80 12 85" fill="#fefce8" stroke="#1e293b" strokeWidth="1" />
+            
+            {/* Paws - Dynamic per state */}
+            {isPoseB ? (
+              // POSE B: Both hands grabbing the border (at x=45 mark)
+              <g>
+                <circle cx="45" cy="55" r="8" fill="#fefce8" className="animate-kit-grip" />
+                <circle cx="45" cy="85" r="8" fill="#fefce8" className="animate-kit-grip" />
               </g>
             ) : (
+              // POSE A: Normal standing + Waving
               <g>
+                {/* Left Paw */}
                 <circle cx="20" cy="95" r="8" fill="#fefce8" />
+                {/* Right Paw - Waving */}
                 <g className="origin-[80px_95px] animate-kit-wave">
                    <circle cx="80" cy="95" r="8" fill="#fefce8" />
                 </g>
@@ -405,12 +416,12 @@ export function StudioBot() {
 
   return (
     <>
-      {/* Permanent Mascot Trigger - Fixed at high z-index */}
+      {/* Permanent Mascot Trigger */}
       <div 
         className={cn(
           "fixed bottom-[90px] z-[150] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
-          isStateShow ? "right-6" : "right-[-60px]"
         )}
+        style={{ right: isStateShow ? '24px' : '-55px' }}
       >
         <div className="relative flex flex-col items-center">
           {/* Speech Bubble */}
@@ -436,7 +447,7 @@ export function StudioBot() {
               isPetting && "scale-90"
             )}
           >
-            <KitMascot mode={isStateShow ? "full" : "peek"} />
+            <KitMascot mode={isStateShow ? "A" : "B"} />
             {!isOpen && (
               <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_12px_rgba(74,222,128,0.8)]" />
             )}
@@ -444,7 +455,7 @@ export function StudioBot() {
         </div>
       </div>
 
-      {/* assistance Interface (Chat Window) */}
+      {/* Assistant Interface */}
       <div className={cn(
         "fixed bottom-0 right-0 lg:bottom-6 lg:right-6 w-full lg:w-[420px] bg-[#0a0a0c] border-t lg:border border-white/10 lg:rounded-[2.5rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.8)] z-[140] flex flex-col overflow-hidden transition-all duration-500 transform origin-bottom-right",
         isOpen ? (isMinimized ? "h-[80px]" : "h-[720px] max-h-[85vh] scale-100 opacity-100") : "h-0 scale-90 opacity-0 pointer-events-none"
@@ -453,7 +464,7 @@ export function StudioBot() {
         <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-[#fefce8] flex items-center justify-center shadow-lg border border-white/10 relative overflow-hidden">
-              <KitMascot mode="chat" />
+              <KitMascot mode="A" />
             </div>
             <div className="space-y-0.5">
               <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Kit • Studio Helper</h4>
@@ -647,10 +658,15 @@ export function StudioBot() {
 
         @keyframes kit-wave {
           0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(-25deg); }
-          75% { transform: rotate(25deg); }
+          50% { transform: rotate(-25deg); }
         }
-        .animate-kit-wave { animation: kit-wave 1s ease-in-out infinite; }
+        .animate-kit-wave { animation: kit-wave 0.8s ease-in-out infinite; }
+
+        @keyframes kit-grip-adjust {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(3px); }
+        }
+        .animate-kit-grip { animation: kit-grip-adjust 2s ease-in-out infinite; }
       `}</style>
     </>
   );
