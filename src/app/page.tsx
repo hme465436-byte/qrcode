@@ -61,7 +61,9 @@ import {
   FileJson,
   Braces,
   SquareUser,
-  Camera
+  Camera,
+  Sparkles,
+  Wand2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -90,6 +92,16 @@ const TOOLS = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+  },
+  { 
+    href: '/photo-enhance-fix', 
+    icon: Wand2, 
+    title: 'Photo Enhance / Pixel Fix', 
+    desc: 'Upscale resolution, sharpen edges, and restore clarity.', 
+    label: 'IMAGE', 
+    color: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
+    glowClass: 'bg-violet-400/10',
+    keywords: ['photo enhance', 'pixel fix', 'upscale', 'sharpen', 'clarity', 'quality', 'unblur', 'resolution']
   },
   { 
     href: '/passport-photo-maker', 
