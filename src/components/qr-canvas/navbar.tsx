@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Menu, 
@@ -58,14 +58,84 @@ import {
   Activity,
   Mic,
   Table,
-  FileJson
+  FileJson,
+  Wand2,
+  SquareUser,
+  FileSignature,
+  Shapes,
+  AlignRight,
+  Monitor,
+  Zap,
+  CheckCircle2,
+  AlertCircle,
+  Terminal,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+
+// Full Studio Tool Registry
+const SEARCHABLE_TOOLS = [
+  { href: '/single', title: 'Single Studio', icon: QrCode, label: 'QR', keywords: ['qr', 'generator', 'logo', 'brand'] },
+  { href: '/bulk', title: 'Bulk Production', icon: Layers, label: 'BATCH', keywords: ['bulk', 'batch', 'mass', 'zip'] },
+  { href: '/photo-enhance-fix', title: 'Photo Enhance', icon: Wand2, label: 'IMAGE', keywords: ['upscale', 'sharpen', 'clarity', 'fix'] },
+  { href: '/passport-photo-maker', title: 'Passport Photo', icon: SquareUser, label: 'IDENTITY', keywords: ['visa', 'id', 'print', 'sheet'] },
+  { href: '/live-wallpaper', title: 'Live Wallpaper', icon: MonitorPlay, label: 'MEDIA', keywords: ['video', 'loop', 'pc', 'phone'] },
+  { href: '/rename-file', title: 'Rename File', icon: FileSignature, label: 'UTIL', keywords: ['change name', 'extension', 'relabel'] },
+  { href: '/csv-to-json', title: 'CSV to JSON', icon: Table, label: 'DATA', keywords: ['convert', 'excel', 'parse'] },
+  { href: '/json-to-csv', title: 'JSON to CSV', icon: FileJson, label: 'DATA', keywords: ['convert', 'flatten', 'excel'] },
+  { href: '/image-url-downloader', title: 'URL Downloader', icon: DownloadCloud, label: 'MEDIA', keywords: ['extract', 'save image', 'scrape'] },
+  { href: '/speaker-tester', title: 'Speaker Tester', icon: Activity, label: 'HARDWARE', keywords: ['audio', 'left right', 'frequency'] },
+  { href: '/mic-tester', title: 'Mic Tester', icon: Mic, label: 'HARDWARE', keywords: ['microphone', 'record', 'input'] },
+  { href: '/youtube-thumbnail-downloader', title: 'YT Downloader', icon: MonitorPlay, label: 'MEDIA', keywords: ['youtube', 'thumbnail', 'extract'] },
+  { href: '/logo-maker', title: 'Logo Maker', icon: Type, label: 'BRANDING', keywords: ['logo', 'text logo', 'avatar'] },
+  { href: '/pdf-unlock', title: 'PDF Unlock', icon: Unlock, label: 'SECURITY', keywords: ['password', 'decrypt', 'remove lock'] },
+  { href: '/pdf-password-protect', title: 'PDF Password', icon: ShieldAlert, label: 'SECURITY', keywords: ['encrypt', 'lock', 'secure'] },
+  { href: '/text-to-pdf', title: 'Text to PDF', icon: FileText, label: 'DOCUMENT', keywords: ['convert', 'txt', 'write'] },
+  { href: '/pdf-rotator', title: 'PDF Rotator', icon: RotateCw, label: 'DOCUMENT', keywords: ['orientation', 'fix', 'pages'] },
+  { href: '/pdf-to-word', title: 'PDF to Word', icon: FileEdit, label: 'DOCUMENT', keywords: ['convert', 'docx', 'editable'] },
+  { href: '/word-to-pdf', title: 'Word to PDF', icon: FileText, label: 'DOCUMENT', keywords: ['docx', 'convert', 'doc'] },
+  { href: '/pdf-to-image', title: 'PDF to Image', icon: FileImage, label: 'CONVERT', keywords: ['png', 'jpg', 'extract'] },
+  { href: '/pdf-splitter', title: 'PDF Splitter', icon: Split, label: 'DOCUMENT', keywords: ['extract', 'pages', 'divide'] },
+  { href: '/pdf-compressor', title: 'PDF Compressor', icon: FileArchive, label: 'OPTIMIZE', keywords: ['shrink', 'smaller', 'kb'] },
+  { href: '/duplicate-finder', title: 'Duplicate Purge', icon: Files, label: 'STUDIO', keywords: ['clean', 'redundant', 'zip'] },
+  { href: '/duplicate-line-remover', title: 'Line Purge', icon: ListFilter, label: 'TEXT', keywords: ['unique', 'lines', 'clean list'] },
+  { href: '/whatsapp-dp-maker', title: 'WhatsApp DP', icon: User, label: 'IDENTITY', keywords: ['profile', 'hd', 'no crop'] },
+  { href: '/pdf-merger', title: 'PDF Merger', icon: FileStack, label: 'DOCUMENT', keywords: ['combine', 'join', 'unity'] },
+  { href: '/image-to-file', title: 'Image to File', icon: ArrowRightLeft, label: 'CONVERT', keywords: ['converter', 'pdf', 'webp'] },
+  { href: '/file-compressor', title: 'File Compressor', icon: FileArchive, label: 'OPTIMIZE', keywords: ['shrink', 'size', 'reduce'] },
+  { href: '/youtube-thumbnail-maker', title: 'YT Thumbnail', icon: MonitorPlay, label: 'YOUTUBE', keywords: ['size', '1280x720', 'maker'] },
+  { href: '/age-calculator', title: 'Age Calculator', icon: Clock, label: 'STATS', keywords: ['date', 'birth', 'birthday'] },
+  { href: '/password-generator', title: 'Password Studio', icon: Lock, label: 'SECURITY', keywords: ['random', 'strong', 'key'] },
+  { href: '/youtube-banner-maker', title: 'YouTube Banner', icon: Youtube, label: 'YOUTUBE', keywords: ['cover', 'art', 'safe area'] },
+  { href: '/collage-maker', title: 'Collage Studio', icon: Grid2X2, label: 'GRID', keywords: ['grid', 'combine', 'merge'] },
+  { href: '/favicon-generator', title: 'Favicon Studio', icon: LayoutGrid, label: 'WEB', keywords: ['ico', 'manifest', 'icon'] },
+  { href: '/metadata-remover', title: 'Privacy Purge', icon: EyeOff, label: 'SECURE', keywords: ['exif', 'gps', 'clean'] },
+  { href: '/word-counter', title: 'Word Counter', icon: AlignLeft, label: 'TEXT', keywords: ['count', 'stats', 'chars'] },
+  { href: '/color-picker', title: 'Color Picker', icon: Pipette, label: 'DESIGN', keywords: ['hex', 'pick', 'eye dropper'] },
+  { href: '/rgb-picker', title: 'RGB Studio', icon: Palette, label: 'ENGINE', keywords: ['convert', 'cmyk', 'hsl'] },
+  { href: '/markdown-preview', title: 'Markdown Preview', icon: FileEdit, label: 'MARKUP', keywords: ['md', 'html', 'live'] },
+  { href: '/image-converter', title: 'Image Converter', icon: RefreshCcw, label: 'FORMAT', keywords: ['png to jpg', 'convert'] },
+  { href: '/image-resizer', title: 'Image Resizer', icon: Maximize, label: 'SCALE', keywords: ['dimension', 'size', 'resize'] },
+  { href: '/image-compressor', title: 'Image Compressor', icon: Maximize, label: 'OPTIMIZE', keywords: ['shrink', 'kb', 'smaller'] },
+  { href: '/image-to-pdf', title: 'Image to PDF', icon: FileStack, label: 'DOCUMENT', keywords: ['convert', 'photo to pdf'] },
+  { href: '/photo-editor', title: 'Photo Studio', icon: ImageIcon, label: 'EDITOR', keywords: ['edit', 'crop', 'filter'] },
+  { href: '/vocal-separator', title: 'Vocal Remover', icon: MicOff, label: 'KARAOKE', keywords: ['karaoke', 'music', 'instrumental'] },
+  { href: '/video-to-audio', title: 'Video to MP3', icon: Music, label: 'MEDIA', keywords: ['extract', 'audio', 'mp4'] },
+  { href: '/video-to-gif', title: 'Video to GIF', icon: Film, label: 'ANIMATION', keywords: ['make gif', 'mp4 to gif'] },
+  { href: '/audio-joiner', title: 'Audio Joiner', icon: ListMusic, label: 'PRODUCTION', keywords: ['merge', 'combine', 'mp3'] },
+  { href: '/audio-booster', title: 'Volume Booster', icon: Volume2, label: 'BOOST', keywords: ['louder', 'gain', 'amplify'] },
+  { href: '/letter-art', title: 'Letter Art Studio', icon: CaseSensitive, label: 'ASCII', keywords: ['text art', 'ascii', 'letters'] },
+  { href: '/ocr', title: 'OCR Extraction', icon: FileText, label: 'INTEL', keywords: ['extract', 'scan', 'read'] },
+  { href: '/dot-art', title: 'Dot Art Studio', icon: Grid3X3, label: 'CREATIVE', keywords: ['braille', 'dots', 'matrix'] },
+  { href: '/repeater', title: 'Text Repeater', icon: Repeat, label: 'UTIL', keywords: ['multiply', 'spam', 'copy'] },
+  { href: '/hex-converter', title: 'Hex Converter', icon: FileCode, label: 'BINARY', keywords: ['bytes', 'dump', 'hex'] },
+  { href: '/code-converter', title: 'AOB Converter', icon: Binary, label: 'DEV', keywords: ['pattern', 'hex', 'trainer'] },
+  { href: '/dictionary', title: 'Dictionary', icon: Info, label: 'LANG', keywords: ['meaning', 'word', 'english'] },
+];
 
 const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, iconOnly?: boolean }) => (
   <div className={cn("flex items-center gap-3", className)}>
@@ -79,7 +149,6 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
         </div>
       </div>
     </div>
-    
     {!iconOnly && (
       <div className="font-headline font-black text-xl tracking-tighter leading-none flex items-center">
         <span className="text-[#0f172a] dark:text-white uppercase">MY KIT</span>
@@ -90,17 +159,17 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
 );
 
 const NAV_ITEMS = [
-  { label: 'Home', href: '/', icon: Home, keywords: ['start', 'dashboard', 'main'] },
-  { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
-  { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
-  { label: 'CSV to JSON', href: '/csv-to-json', icon: Table, keywords: ['convert', 'data', 'excel', 'json'] },
-  { label: 'JSON to CSV', href: '/json-to-csv', icon: FileJson, keywords: ['convert', 'data', 'flatten', 'csv'] },
-  { label: 'YT Downloader', href: '/youtube-thumbnail-downloader', icon: MonitorPlay, keywords: ['youtube', 'thumbnail', 'downloader', 'yt'] },
-  { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
+  { label: 'Home', href: '/', icon: Home },
+  { label: 'Single QR', href: '/single', icon: QrCode },
+  { label: 'Bulk Mode', href: '/bulk', icon: Layers },
+  { label: 'CSV to JSON', href: '/csv-to-json', icon: Table },
+  { label: 'JSON to CSV', href: '/json-to-csv', icon: FileJson },
+  { label: 'Logo Maker', href: '/logo-maker', icon: Type },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,13 +184,7 @@ export function Navbar() {
   const [isFocused, setIsFocused] = useState(false);
 
   const phrases = useMemo(() => {
-    const list = [
-      'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
-      'PDF to Word', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
-      'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
-      'Video to MP3', 'Image to PDF', 'AOB Converter'
-    ];
-    return [...list].sort(() => Math.random() - 0.5);
+    return SEARCHABLE_TOOLS.map(t => t.title).sort(() => Math.random() - 0.5);
   }, []);
 
   useEffect(() => {
@@ -132,7 +195,6 @@ export function Navbar() {
 
     const timeout = setTimeout(() => {
       const currentPhrase = phrases[toolIndex];
-      
       if (!isDeleting) {
         setPlaceholder(currentPhrase.substring(0, placeholder.length + 1));
         if (placeholder.length === currentPhrase.length) {
@@ -162,9 +224,7 @@ export function Navbar() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('mykit_theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
+    if (savedTheme) setTheme(savedTheme);
   }, []);
 
   useEffect(() => {
@@ -176,18 +236,25 @@ export function Navbar() {
     localStorage.setItem('mykit_theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
+  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-  const filteredNavItems = useMemo(() => {
-    if (!searchQuery.trim()) return NAV_ITEMS;
+  const filteredTools = useMemo(() => {
+    if (!searchQuery.trim()) {
+      // Popular tools when empty
+      return SEARCHABLE_TOOLS.slice(0, 6);
+    }
     const words = searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-    return NAV_ITEMS.filter(item => {
-      const targetString = `${item.label}`.toLowerCase();
+    return SEARCHABLE_TOOLS.filter(tool => {
+      const targetString = `${tool.title} ${tool.keywords.join(' ')}`.toLowerCase();
       return words.every(word => targetString.includes(word));
-    });
+    }).slice(0, 10);
   }, [searchQuery]);
+
+  const handleToolClick = (href: string) => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    router.push(href);
+  };
 
   return (
     <>
@@ -216,7 +283,6 @@ export function Navbar() {
              <button 
                 onClick={() => setIsSearchOpen(true)}
                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all group icon-container-3d"
-                aria-label="Search Tools"
              >
                <Search className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </button>
@@ -242,10 +308,7 @@ export function Navbar() {
                     <Menu className="w-5 h-5 icon-3d" />
                   </button>
                 </SheetTrigger>
-                <SheetContent 
-                  side="right" 
-                  className="w-full max-w-[320px] bg-card p-0 overflow-hidden text-foreground border-l border-white/5 top-0 h-full z-[100]"
-                >
+                <SheetContent side="right" className="w-full max-w-[320px] bg-card p-0 overflow-hidden text-foreground border-l border-white/5 top-0 h-full z-[100]">
                   <div className="h-full flex flex-col">
                     <SheetHeader className="p-8 border-b border-white/5 text-left">
                       <SheetTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Navigation Matrix</SheetTitle>
@@ -274,21 +337,15 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Global Search Dialog with Hyper-Glow Moving Border Protocol */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-visible outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
           <DialogHeader className="p-6 border-b border-white/5 bg-white/2 relative overflow-visible">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>
-            
             <div className="relative group/search z-20">
-               {/* Inner Atmosphere Glow */}
                <div className="absolute -inset-10 bg-primary/10 blur-[40px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000 pointer-events-none" />
-              
-               {/* Hyper-Visible Moving Glow Line Protocol */}
                <div className="moving-border-matrix" />
-
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d z-20" />
-              <Input 
+               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d z-20" />
+               <Input 
                 autoFocus
                 placeholder={dynamicPlaceholder}
                 aria-label="Search tools"
@@ -298,32 +355,32 @@ export function Navbar() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-16 pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-lg font-medium tracking-tight placeholder:text-foreground/10 relative z-10"
               />
-              
-              {/* Focused Glow Base Bar */}
               <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/80 to-transparent scale-x-0 group-focus-within/search:scale-x-100 transition-transform duration-700" />
             </div>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
-            {filteredNavItems.length > 0 ? (
+            {filteredTools.length > 0 ? (
               <div className="grid grid-cols-1 gap-1">
-                {filteredNavItems.map((item) => (
-                  <Link 
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
-                    className="flex items-center justify-between p-5 rounded-2xl hover:bg-primary/5 group transition-all duration-300"
+                {filteredTools.map((tool) => (
+                  <button 
+                    key={tool.href}
+                    onClick={() => handleToolClick(tool.href)}
+                    className="w-full flex items-center justify-between p-5 rounded-2xl hover:bg-primary/5 group transition-all duration-300 text-left"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-transparent group-hover:border-primary/20 icon-container-3d">
-                        <item.icon className="w-5 h-5 icon-3d" />
+                        <tool.icon className="w-5 h-5 icon-3d" />
                       </div>
-                      <p className="text-sm font-black uppercase tracking-widest text-foreground/60 group-hover:text-foreground">{item.label}</p>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{tool.label}</p>
+                        <p className="text-sm font-black uppercase tracking-widest text-foreground/60 group-hover:text-foreground">{tool.title}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">
                        <span className="text-[9px] font-black uppercase tracking-widest text-primary">Execute</span>
                        <ArrowRight className="w-4 h-4 text-primary icon-3d" />
                     </div>
-                  </Link>
+                  </button>
                 ))}
               </div>
             ) : (
@@ -334,7 +391,7 @@ export function Navbar() {
             )}
           </div>
           <div className="p-4 bg-secondary/30 border-t border-white/5 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20">
-            <span>MY KIT TOOL REGISTRY MATRIX</span>
+            <span>{searchQuery ? 'SEARCH RESULTS' : 'POPULAR TOOLS'}</span>
             <span>ESC TO EXIT</span>
           </div>
         </DialogContent>
