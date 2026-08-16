@@ -41,7 +41,6 @@ import {
   Clock,
   MonitorPlay,
   Type,
-  Command,
   FileArchive,
   ArrowRightLeft,
   User,
@@ -50,7 +49,9 @@ import {
   Copy,
   ListFilter,
   Split,
-  FileImage
+  FileImage,
+  RotateCw,
+  Command
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -86,6 +87,16 @@ const TOOLS = [
     color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/pdf-rotator', 
+    icon: RotateCw, 
+    title: 'PDF Rotator', 
+    desc: 'Correct orientation of PDF pages with live visual preview.', 
+    label: 'DOCUMENT', 
+    color: 'text-blue-600 bg-blue-600/10 border-blue-600/20',
+    glowClass: 'bg-blue-600/10',
+    keywords: ['rotate pdf', 'fix orientation', 'sideways pdf', 'upside down', 'pdf fixer']
   },
   { 
     href: '/pdf-to-word', 
@@ -423,7 +434,7 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
   },

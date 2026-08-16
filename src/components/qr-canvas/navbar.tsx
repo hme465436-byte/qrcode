@@ -49,7 +49,8 @@ import {
   Files,
   ListFilter,
   Split,
-  FileImage
+  FileImage,
+  RotateCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -86,6 +87,7 @@ const NAV_ITEMS = [
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
+  { label: 'PDF Rotator', href: '/pdf-rotator', icon: RotateCw, keywords: ['rotate pdf', 'fix orientation', 'sideways pdf', 'upside down', 'pdf fixer'] },
   { label: 'PDF to Word', href: '/pdf-to-word', icon: FileEdit, keywords: ['pdf to word', 'docx', 'convert', 'editable'] },
   { label: 'Word to PDF', href: '/word-to-pdf', icon: FileText, keywords: ['word to pdf', 'docx to pdf', 'convert word', 'word converter', 'doc to pdf'] },
   { label: 'PDF to Image', href: '/pdf-to-image', icon: FileImage, keywords: ['pdf to image', 'pdf to png', 'pdf to jpg', 'convert pdf', 'extract images from pdf'] },
