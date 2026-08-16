@@ -21,7 +21,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -34,29 +35,63 @@ interface Tool {
   keywords: string[];
 }
 
+/**
+ * FULL STUDIO REGISTRY
+ * Comprehensive keyword mapping for Roman Urdu / Slang / Task-based search.
+ */
 const TOOLS: Tool[] = [
-  { href: '/single', title: 'Single Studio', desc: 'Branded QR codes with logos and AI backgrounds.', keywords: ['qr', 'qr code', 'barcode', 'logo', 'brand', 'scan', 'generator'] },
-  { href: '/bulk', title: 'Bulk Production', desc: 'Generate hundreds of QR assets in seconds.', keywords: ['bulk', 'batch', 'mass', 'many', 'qr', 'zip', 'production'] },
-  { href: '/photo-enhance-fix', title: 'Photo Enhance', desc: 'Upscale resolution and sharpen photo clarity.', keywords: ['enhance', 'fix', 'pixel', 'upscale', 'quality', 'photo', 'restore', 'blur'] },
-  { href: '/passport-photo-maker', title: 'Passport Photo', desc: 'Create official ID photos and printable sheets.', keywords: ['passport', 'id', 'visa', 'print', '35x45', 'photo', 'identity', '2x2'] },
+  { href: '/single', title: 'Single Studio', desc: 'Branded QR codes with logos and AI backgrounds.', keywords: ['qr', 'generator', 'logo', 'brand', 'scan', 'create qr', 'barcode', 'website qr'] },
+  { href: '/bulk', title: 'Bulk Production', desc: 'Generate hundreds of QR assets in seconds.', keywords: ['bulk', 'batch', 'mass', 'many', 'zip', 'production', 'multiple qr'] },
+  { href: '/photo-enhance-fix', title: 'Photo Enhance / Pixel Fix', desc: 'Upscale resolution and sharpen photo clarity.', keywords: ['enhance', 'fix', 'pixel', 'upscale', 'quality', 'restore', 'blur', 'saaf', 'clear', 'blurry', 'hq'] },
+  { href: '/passport-photo-maker', title: 'Passport Photo', desc: 'Create official ID photos and printable sheets.', keywords: ['passport', 'id', 'visa', 'print', '35x45', 'photo', 'identity', '2x2', 'form photo'] },
   { href: '/csv-to-json', title: 'CSV to JSON', desc: 'Convert CSV lists into optimized JSON matrices.', keywords: ['csv', 'json', 'convert', 'data', 'table', 'parse', 'excel'] },
   { href: '/json-to-csv', title: 'JSON to CSV', desc: 'Convert JSON objects into flat CSV files.', keywords: ['json', 'csv', 'convert', 'data', 'flatten', 'parse'] },
-  { href: '/image-url-downloader', title: 'URL Downloader', desc: 'Extract high-res images from any page URL.', keywords: ['image', 'downloader', 'save', 'url', 'extract', 'scrape', 'yt'] },
-  { href: '/mic-tester', title: 'Mic Tester', desc: 'Test hardware input levels and loopback echo.', keywords: ['mic', 'microphone', 'test', 'voice', 'audio', 'hardware', 'record'] },
-  { href: '/speaker-tester', title: 'Speaker Tester', desc: 'Test stereo channels and frequency response.', keywords: ['speaker', 'audio', 'sound', 'stereo', 'left', 'right', 'test'] },
-  { href: '/logo-maker', title: 'Logo Maker', desc: 'Generate premium text-based brand identities.', keywords: ['logo', 'text', 'brand', 'avatar', 'identity', 'design'] },
-  { href: '/pdf-to-word', title: 'PDF to Word', desc: 'Convert PDF files into editable Word documents.', keywords: ['pdf', 'word', 'convert', 'docx', 'text', 'extract'] },
-  { href: '/word-to-pdf', title: 'Word to PDF', desc: 'Convert Word documents into sanitized PDF masters.', keywords: ['word', 'pdf', 'convert', 'docx', 'save', 'print'] },
-  { href: '/pdf-compressor', title: 'PDF Compressor', desc: 'Shrink PDF file size locally in your browser.', keywords: ['compress', 'smaller', 'pdf', 'shrink', 'size', 'optimize'] },
-  { href: '/pdf-merger', title: 'PDF Merger', desc: 'Combine multiple PDF files into one.', keywords: ['merge', 'join', 'combine', 'pdf', 'add', 'stack'] },
-  { href: '/pdf-splitter', title: 'PDF Splitter', desc: 'Separate PDF pages into individual files.', keywords: ['split', 'cut', 'separate', 'pages', 'extract', 'pdf'] },
-  { href: '/duplicate-finder', title: 'Duplicate Purge', desc: 'Remove redundant files from project bundles.', keywords: ['duplicate', 'finder', 'purge', 'clean', 'redundant', 'same'] },
-  { href: '/vocal-separator', title: 'Vocal Remover', desc: 'Isolate or remove vocals from stereo music.', keywords: ['vocal', 'remove', 'karaoke', 'music', 'separate', 'instrumental'] },
-  { href: '/ocr', title: 'OCR Extraction', desc: 'Identify and extract text from images locally.', keywords: ['ocr', 'text', 'extract', 'read', 'scan', 'image', 'document'] },
-  { href: '/password-generator', title: 'Password Studio', desc: 'Generate strong secure random passwords.', keywords: ['password', 'secure', 'random', 'key', 'safe', 'pass'] },
-  { href: '/markdown-preview', title: 'Markdown Preview', desc: 'Live Markdown to HTML writing environment.', keywords: ['markdown', 'md', 'html', 'preview', 'editor', 'markup'] },
-  { href: '/image-resizer', title: 'Image Resizer', desc: 'Scale photo pixel dimensions with ratio control.', keywords: ['resize', 'scale', 'dimension', 'width', 'height', 'px'] },
-  { href: '/image-compressor', title: 'Image Compressor', desc: 'Reduce photo file size with quality control.', keywords: ['compress', 'shrink', 'smaller', 'kb', 'mb', 'image', 'optimize'] },
+  { href: '/image-url-downloader', title: 'URL Image Downloader', desc: 'Extract high-res images from any page URL.', keywords: ['image', 'downloader', 'save', 'url', 'extract', 'scrape', 'yt', 'pinterest'] },
+  { href: '/speaker-tester', title: 'Speaker Tester', desc: 'Test stereo channels and frequency response.', keywords: ['speaker', 'audio', 'sound', 'stereo', 'left', 'right', 'test', 'headphone'] },
+  { href: '/mic-tester', title: 'Mic Tester Studio', desc: 'Test hardware input levels and loopback echo.', keywords: ['mic', 'microphone', 'test', 'voice', 'audio', 'hardware', 'record'] },
+  { href: '/youtube-thumbnail-downloader', title: 'YT Downloader', desc: 'Extract and save thumbnails in all available qualities.', keywords: ['youtube', 'thumbnail', 'downloader', 'yt', 'save youtube', 'img'] },
+  { href: '/logo-maker', title: 'Logo Text Studio', desc: 'Generate premium text-based brand identities.', keywords: ['logo', 'text', 'brand', 'avatar', 'identity', 'design', 'name'] },
+  { href: '/pdf-unlock', title: 'PDF Unlock', desc: 'Remove security passwords from protected PDFs.', keywords: ['unlock', 'password', 'decrypt', 'remove pass', 'open pdf', 'protected'] },
+  { href: '/pdf-password-protect', title: 'PDF Password', desc: 'Encrypt PDF documents with passwords.', keywords: ['password', 'encrypt', 'lock', 'protect', 'secure', 'pdf pass'] },
+  { href: '/text-to-pdf', title: 'Text to PDF', desc: 'Convert raw text or .txt files into PDF masters.', keywords: ['text', 'pdf', 'txt', 'convert', 'make pdf', 'write pdf'] },
+  { href: '/pdf-rotator', title: 'PDF Rotator', desc: 'Correct orientation of PDF pages.', keywords: ['rotate', 'fix', 'sideways', 'upside down', 'orientation', 'tilt'] },
+  { href: '/pdf-to-word', title: 'PDF to Word', desc: 'Convert PDF files into editable Word documents.', keywords: ['pdf to word', 'convert', 'docx', 'edit pdf', 'extract text'] },
+  { href: '/word-to-pdf', title: 'Word to PDF', desc: 'Convert Word documents into sanitized PDF masters.', keywords: ['word to pdf', 'convert', 'docx', 'save', 'print'] },
+  { href: '/pdf-to-image', title: 'PDF to Image', desc: 'Convert PDF pages into high-res PNG/JPG assets.', keywords: ['pdf to png', 'pdf to jpg', 'extract image', 'convert'] },
+  { href: '/pdf-splitter', title: 'PDF Splitter', desc: 'Separate PDF pages into individual files.', keywords: ['split', 'cut', 'separate', 'pages', 'extract', 'alag', 'hisse'] },
+  { href: '/pdf-compressor', title: 'PDF Compressor', desc: 'Shrink PDF file size locally in your browser.', keywords: ['compress', 'smaller', 'shrink', 'size', 'optimize', 'kb', 'chhota', 'kam'] },
+  { href: '/duplicate-finder', title: 'Duplicate Purge', desc: 'Remove redundant files from project bundles.', keywords: ['duplicate', 'finder', 'purge', 'clean', 'redundant', 'same', 'faltu'] },
+  { href: '/duplicate-line-remover', title: 'Line Purge', desc: 'Remove duplicate lines from text or lists.', keywords: ['duplicate lines', 'line remover', 'unique', 'text', 'clean list'] },
+  { href: '/whatsapp-dp-maker', title: 'WhatsApp DP', desc: 'Make full-size WhatsApp profile pics without crop.', keywords: ['whatsapp', 'dp', 'profile', 'uncut', 'square', 'picture'] },
+  { href: '/pdf-merger', title: 'PDF Merger', desc: 'Combine multiple PDF files into one.', keywords: ['merge', 'join', 'combine', 'stack', 'ek sath', 'joren'] },
+  { href: '/image-to-file', title: 'Image to File', desc: 'Convert imagery to PNG, JPG, WebP, or PDF.', keywords: ['convert', 'image', 'photo se pdf', 'format', 'change'] },
+  { href: '/file-compressor', title: 'File Compressor', desc: 'Size reduction for visual and digital assets.', keywords: ['compress', 'smaller', 'shrink', 'size', 'kb', 'mb', 'kam', 'chhota'] },
+  { href: '/youtube-thumbnail-maker', title: 'YT Thumbnail', desc: 'Resize and frame images for thumbnails.', keywords: ['youtube', 'thumbnail', 'size', '1280x720', 'resizer'] },
+  { href: '/age-calculator', title: 'Age Calculator', desc: 'Calculate exact age and birthday countdowns.', keywords: ['age', 'birth', 'how old', 'birthday', 'date', 'umr'] },
+  { href: '/password-generator', title: 'Password Studio', desc: 'Generate secure random passwords.', keywords: ['password', 'secure', 'random', 'key', 'safe', 'pass'] },
+  { href: '/youtube-banner-maker', title: 'YouTube Banner', desc: 'Create 2560x1440 channel art.', keywords: ['banner', 'channel', 'art', 'yt cover', 'size', '2560x1440'] },
+  { href: '/collage-maker', title: 'Collage Studio', desc: 'Combine images into grid layouts.', keywords: ['collage', 'grid', 'merge photos', 'photo grid', 'combine'] },
+  { href: '/favicon-generator', title: 'Favicon Studio', desc: 'Generate web icon sets from any image.', keywords: ['favicon', 'site icon', 'ico', 'web icon', 'manifest'] },
+  { href: '/metadata-remover', title: 'Privacy Purge', desc: 'Strip GPS and EXIF metadata from photos.', keywords: ['exif', 'metadata', 'gps', 'privacy', 'remove location', 'secure'] },
+  { href: '/word-counter', title: 'Word Counter', desc: 'Live text analysis and reading time.', keywords: ['word count', 'chars', 'reading time', 'text count'] },
+  { href: '/color-picker', title: 'Color Picker', desc: 'Extract HEX/RGB from any image.', keywords: ['color', 'hex', 'rgb', 'pick', 'eye dropper', 'photo color'] },
+  { href: '/rgb-picker', title: 'RGB Studio', desc: 'Precision color picking and conversion.', keywords: ['rgb', 'color', 'conversion', 'hex', 'cmyk', 'hsl'] },
+  { href: '/markdown-preview', title: 'Markdown Preview', desc: 'Live Markdown to HTML writing environment.', keywords: ['markdown', 'md', 'html', 'preview', 'editor'] },
+  { href: '/image-resizer', title: 'Image Resizer', desc: 'Scale photo pixel dimensions.', keywords: ['resize', 'scale', 'dimension', 'width', 'height', 'px'] },
+  { href: '/image-compressor', title: 'Image Compressor', desc: 'Reduce photo file size locally.', keywords: ['compress', 'shrink', 'smaller', 'kb', 'image', 'photo size'] },
+  { href: '/image-to-pdf', title: 'Image to PDF', desc: 'Convert multiple images into a PDF.', keywords: ['image to pdf', 'photo to pdf', 'jpg to pdf', 'bundle'] },
+  { href: '/photo-editor', title: 'Photo Studio', desc: 'Professional filters and image editing.', keywords: ['photo', 'edit', 'crop', 'filter', 'editor', 'picture'] },
+  { href: '/vocal-separator', title: 'Vocal Remover', desc: 'Isolate or remove vocals from music.', keywords: ['vocal', 'remove', 'karaoke', 'music', 'separate', 'instrumental'] },
+  { href: '/video-to-audio', title: 'Video to MP3', desc: 'Extract audio tracks from videos.', keywords: ['mp4 to mp3', 'video to audio', 'extract', 'music', 'sound'] },
+  { href: '/video-to-gif', title: 'Video to GIF', desc: 'Synthesize animated GIFs from clips.', keywords: ['video to gif', 'mp4 to gif', 'make gif', 'animated'] },
+  { href: '/audio-joiner', title: 'Audio Joiner', desc: 'Merge multiple audio files.', keywords: ['audio join', 'merge mp3', 'combine audio', 'joiner'] },
+  { href: '/audio-booster', title: 'Volume Booster', desc: 'Amplify audio levels safely.', keywords: ['volume', 'booster', 'louder', 'boost', 'amp', 'loud'] },
+  { href: '/letter-art', title: 'Letter Art Studio', desc: 'Image to text conversion.', keywords: ['ascii', 'text art', 'letters art', 'image to text'] },
+  { href: '/ocr', title: 'OCR Extraction', desc: 'Identify and extract text from images.', keywords: ['ocr', 'text', 'extract', 'read', 'scan', 'image', 'saaf text'] },
+  { href: '/dot-art', title: 'Dot Art Studio', desc: 'Convert images to Braille character art.', keywords: ['dots', 'braille', 'art', 'image to text'] },
+  { href: '/repeater', title: 'Text Repeater', desc: 'Emoji and text multiplication.', keywords: ['repeat', 'multiply', 'repeater', 'spam'] },
+  { href: '/hex-converter', title: 'Hex Converter', desc: 'Convert binary files to hex matrix.', keywords: ['hex', 'binary', 'file', 'matrix', 'dump'] },
+  { href: '/code-converter', title: 'AOB Converter', desc: 'Professional AOB pattern conversion.', keywords: ['aob', 'code', 'binary', 'convert', 'pattern'] },
 ];
 
 interface HelpProtocol {
@@ -108,7 +143,6 @@ export function StudioBot() {
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Initialize bot on mount
   useEffect(() => {
     const timer = setTimeout(() => setHasPulsed(true), 3000);
     setMessages([{ 
@@ -119,7 +153,6 @@ export function StudioBot() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Keyboard protocols
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) setIsOpen(false);
@@ -140,15 +173,13 @@ export function StudioBot() {
     const userMsg = input.trim();
     const nextMsg = { type: 'user' as const, content: userMsg, id: Date.now().toString() };
     
-    // Memory protocol: last 5 messages
     setMessages(prev => [...prev, nextMsg].slice(-10));
     setQuery('');
 
-    // Logic Matrix
     const lowQuery = userMsg.toLowerCase();
     
-    // 1. Context Check (Help for current page)
-    if (lowQuery.includes('how') || lowQuery.includes('help') || lowQuery.includes('guide') || lowQuery.includes('step')) {
+    // 1. Context Help Logic
+    if (lowQuery.match(/(how|help|guide|step|kese|tarika)/)) {
       const help = HELP_PROTOCOLS[pathname];
       if (help) {
         setMessages(prev => [...prev, { 
@@ -161,20 +192,34 @@ export function StudioBot() {
       }
     }
 
-    // 2. Registry Search
-    const keywords = lowQuery.split(/\s+/).filter(k => k.length > 2);
-    const matches = TOOLS.filter(t => {
-      const target = `${t.title} ${t.desc} ${t.keywords.join(' ')}`.toLowerCase();
-      return keywords.some(k => target.includes(k));
-    });
+    // 2. Advanced Keyword Matching Matrix
+    const queryWords = lowQuery.split(/\s+/).filter(k => k.length > 1);
+    
+    const results = TOOLS.map(tool => {
+      let score = 0;
+      const toolText = `${tool.title} ${tool.desc} ${tool.keywords.join(' ')}`.toLowerCase();
+      
+      queryWords.forEach(word => {
+        if (toolText.includes(word)) score++;
+        // Boost exact matches in title
+        if (tool.title.toLowerCase().includes(word)) score += 2;
+        // Boost for specific phrases like "size kam"
+        if (word === 'kam' && tool.keywords.includes('kam')) score += 1;
+        if (word === 'chhota' && tool.keywords.includes('chhota')) score += 1;
+      });
+      
+      return { tool, score };
+    })
+    .filter(r => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(r => r.tool);
 
-    if (matches.length > 0) {
-      // Rank and limit to top 3
-      const ranked = matches.slice(0, 3);
+    if (results.length > 0) {
       setMessages(prev => [...prev, { 
         type: 'bot', 
-        content: `I identified ${ranked.length} relevant production unit(s):`,
-        links: ranked,
+        content: `I identified ${results.length} relevant production unit(s) for your job:`,
+        links: results,
         id: `match-${Date.now()}`
       }].slice(-10));
     } else {
@@ -216,7 +261,6 @@ export function StudioBot() {
       "fixed bottom-0 right-0 lg:bottom-6 lg:right-6 w-full lg:w-[400px] bg-[#0a0a0c] border-t lg:border border-white/10 lg:rounded-[2.5rem] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.8)] z-[100] flex flex-col overflow-hidden transition-all duration-500",
       isMinimized ? "h-[72px]" : "h-[600px] max-h-[90vh]"
     )}>
-      {/* Header */}
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
@@ -245,7 +289,6 @@ export function StudioBot() {
 
       {!isMinimized && (
         <>
-          {/* Chat Body */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-checkered">
             {messages.map((msg) => (
               <div key={msg.id} className={cn(
@@ -303,21 +346,10 @@ export function StudioBot() {
                     ))}
                   </div>
                 )}
-
-                {msg.type === 'bot' && msg.id !== 'init' && (
-                  <div className="flex items-center gap-4 px-1">
-                     <p className="text-[9px] font-black uppercase text-foreground/20">Helpful?</p>
-                     <div className="flex gap-2">
-                        <button onClick={() => toast({ title: "Feedback Received" })} className="text-foreground/20 hover:text-primary transition-colors"><ThumbsUp className="w-3 h-3" /></button>
-                        <button onClick={() => toast({ title: "Feedback Received" })} className="text-foreground/20 hover:text-destructive transition-colors"><ThumbsDown className="w-3 h-3" /></button>
-                     </div>
-                  </div>
-                )}
               </div>
             ))}
           </div>
 
-          {/* Quick Chips & Input Footer */}
           <div className="p-4 border-t border-white/5 bg-white/[0.02] space-y-4">
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                {QUICK_CHIPS.map(chip => (
@@ -337,7 +369,7 @@ export function StudioBot() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask for a job (e.g. 'I need PDF')"
+                placeholder="Ask for a job (e.g. 'kb kam' or 'pdf merge')"
                 className="w-full h-12 pl-4 pr-12 rounded-xl bg-background border border-white/10 text-[11px] font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 relative z-10"
                />
                <button 
