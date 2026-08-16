@@ -468,7 +468,7 @@ const TOOLS = [
     title: 'Video to GIF', 
     desc: 'Synthesize high-quality animated GIFs from clips.', 
     label: 'ANIMATION', 
-    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
+    color: 'text-orange-600 bg-orange-500/10 border-orange-600/20',
     glowClass: 'bg-orange-500/10',
     keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip']
   },
@@ -596,7 +596,7 @@ export default function Home() {
             {/* Pulse Glow Border Layer */}
             <div className="absolute -inset-[2px] rounded-[1.4rem] bg-primary/20 opacity-0 group-hover:opacity-40 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[1px] pointer-events-none" />
 
-            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/20 group-focus-within:from-primary/50 group-focus-within:to-primary/20 overflow-hidden">
+            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/20 group-focus-within:from-primary/50 group-focus-within:to-primary/20 overflow-visible">
               {/* Moving Glow Line Protocol */}
               <div className="moving-border-matrix" />
               

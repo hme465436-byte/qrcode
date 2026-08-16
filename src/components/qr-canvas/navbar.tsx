@@ -219,26 +219,26 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Global Search Dialog with Premium Glow */}
+      {/* Global Search Dialog with Moving Border Protocol */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-        <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
-          <DialogHeader className="p-6 border-b border-white/5 bg-white/2 relative overflow-hidden">
+        <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-visible outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
+          <DialogHeader className="p-6 border-b border-white/5 bg-white/2 relative overflow-visible">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>
-            
-            {/* Moving Glow Line Protocol */}
-            <div className="moving-border-matrix" />
             
             <div className="relative group/search z-20">
                {/* Inner Atmosphere Glow */}
                <div className="absolute inset-0 bg-primary/5 blur-[25px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-700 pointer-events-none" />
               
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d" />
+               {/* Moving Glow Line Protocol */}
+               <div className="moving-border-matrix" />
+
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d z-20" />
               <Input 
                 autoFocus
                 placeholder="Query professional studio tools..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-16 pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-lg font-medium tracking-tight placeholder:text-foreground/10"
+                className="h-16 pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-lg font-medium tracking-tight placeholder:text-foreground/10 relative z-10"
               />
               
               {/* Focused Glow Base Bar */}
