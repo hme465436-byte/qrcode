@@ -49,7 +49,8 @@ import {
   Fingerprint,
   Files,
   Copy,
-  ListFilter
+  ListFilter,
+  Split
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -85,6 +86,16 @@ const TOOLS = [
     color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/pdf-splitter', 
+    icon: Split, 
+    title: 'PDF Splitter', 
+    desc: 'Extract pages, custom ranges, or chunks from documents.', 
+    label: 'DOCUMENT', 
+    color: 'text-blue-600 bg-blue-600/10 border-blue-600/20',
+    glowClass: 'bg-blue-600/10',
+    keywords: ['pdf split', 'extract pages', 'separate pdf', 'pdf chunks', 'split document']
   },
   { 
     href: '/duplicate-finder', 
@@ -322,7 +333,7 @@ const TOOLS = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
   },
