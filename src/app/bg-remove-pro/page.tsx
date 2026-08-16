@@ -26,7 +26,8 @@ import {
   ShieldCheck,
   AlertCircle,
   Sparkles,
-  Search
+  Search,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +35,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import imglyRemoveBackground from "@imgly/background-removal";
+import { removeBackground } from "@imgly/background-removal";
 
 export default function BGRemoveProPage() {
   const { toast } = useToast();
@@ -78,7 +79,7 @@ export default function BGRemoveProPage() {
     
     try {
       setLoadingStatus('Isolating Subject Matrix...');
-      const blob = await imglyRemoveBackground(imageSource, {
+      const blob = await removeBackground(imageSource, {
         progress: (key, current, total) => {
           setLoadingStatus(`Rendering: ${Math.round((current / total) * 100)}%`);
         }
@@ -101,7 +102,6 @@ export default function BGRemoveProPage() {
         
         // Draw the auto result to the mask. 
         // We basically just want to copy its alpha channel.
-        // We can do this by drawing it directly as a starting point.
         mCtx.drawImage(processedImg, 0, 0);
         
         // Now convert non-transparent pixels to solid white (opaque mask)
