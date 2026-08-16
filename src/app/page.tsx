@@ -62,7 +62,8 @@ import {
   Unlock,
   Book,
   Shapes,
-  FileSignature
+  FileSignature,
+  Monitor
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -129,6 +130,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-400/10',
     keywords: ['passport photo', 'id photo', 'visa photo', 'print photos', '35x45mm', '2x2 inch', 'photo maker'],
     category: 'image'
+  },
+  { 
+    href: '/live-wallpaper', 
+    icon: MonitorPlay, 
+    title: 'Live Wallpaper', 
+    desc: 'Turn any video into a looping live wallpaper for PC or phone.', 
+    label: 'MEDIA', 
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    glowClass: 'bg-indigo-400/10',
+    keywords: ['live wallpaper', 'video wallpaper', 'loop', 'pc', 'phone', 'lively', 'wallpaper engine'],
+    category: 'utilities'
   },
   { 
     href: '/rename-file', 
