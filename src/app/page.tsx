@@ -59,7 +59,9 @@ import {
   Wand2,
   List,
   RotateCcw,
-  Unlock
+  Unlock,
+  Book,
+  Shapes
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -68,7 +70,21 @@ import { SpaceBackground } from '@/components/qr-canvas/space-background';
 
 const VIEW_MODE_KEY = 'mykit_view_mode';
 
-const TOOLS = [
+type ToolCategory = 'all' | 'pdf' | 'image' | 'generators' | 'utilities';
+
+interface Tool {
+  href: string;
+  icon: any;
+  title: string;
+  desc: string;
+  label: string;
+  color: string;
+  glowClass: string;
+  keywords: string[];
+  category: ToolCategory;
+}
+
+const TOOLS: Tool[] = [
   { 
     href: '/single', 
     icon: QrCode, 
@@ -77,7 +93,8 @@ const TOOLS = [
     label: 'PRO MODE', 
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
-    keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan']
+    keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
   },
   { 
     href: '/bulk', 
@@ -87,7 +104,8 @@ const TOOLS = [
     label: 'BATCH', 
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
-    keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many']
+    keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
+    category: 'generators'
   },
   { 
     href: '/photo-enhance-fix', 
@@ -97,7 +115,8 @@ const TOOLS = [
     label: 'IMAGE', 
     color: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
     glowClass: 'bg-violet-400/10',
-    keywords: ['photo enhance', 'pixel fix', 'upscale', 'sharpen', 'clarity', 'quality', 'unblur', 'resolution']
+    keywords: ['photo enhance', 'pixel fix', 'upscale', 'sharpen', 'clarity', 'quality', 'unblur', 'resolution'],
+    category: 'image'
   },
   { 
     href: '/passport-photo-maker', 
@@ -107,7 +126,8 @@ const TOOLS = [
     label: 'IDENTITY', 
     color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
     glowClass: 'bg-blue-400/10',
-    keywords: ['passport photo', 'id photo', 'visa photo', 'print photos', '35x45mm', '2x2 inch', 'photo maker']
+    keywords: ['passport photo', 'id photo', 'visa photo', 'print photos', '35x45mm', '2x2 inch', 'photo maker'],
+    category: 'image'
   },
   { 
     href: '/csv-to-json', 
@@ -117,7 +137,8 @@ const TOOLS = [
     label: 'DATA', 
     color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['csv to json', 'convert csv', 'excel to json', 'data converter', 'json maker', 'parse csv']
+    keywords: ['csv to json', 'convert csv', 'excel to json', 'data converter', 'json maker', 'parse csv'],
+    category: 'utilities'
   },
   { 
     href: '/json-to-csv', 
@@ -127,7 +148,8 @@ const TOOLS = [
     label: 'DATA', 
     color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
     glowClass: 'bg-blue-400/10',
-    keywords: ['json to csv', 'convert json', 'flatten json', 'data converter', 'csv maker', 'parse json']
+    keywords: ['json to csv', 'convert json', 'flatten json', 'data converter', 'csv maker', 'parse json'],
+    category: 'utilities'
   },
   { 
     href: '/image-url-downloader', 
@@ -137,7 +159,8 @@ const TOOLS = [
     label: 'MEDIA', 
     color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
-    keywords: ['image downloader', 'save image', 'url image', 'extract images', 'yt thumbnail', 'downloader']
+    keywords: ['image downloader', 'save image', 'url image', 'extract images', 'yt thumbnail', 'downloader'],
+    category: 'image'
   },
   { 
     href: '/speaker-tester', 
@@ -147,7 +170,8 @@ const TOOLS = [
     label: 'HARDWARE', 
     color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['speaker tester', 'audio test', 'left right', 'frequency sweep', 'sound test', 'headphones']
+    keywords: ['speaker tester', 'audio test', 'left right', 'frequency sweep', 'sound test', 'headphones'],
+    category: 'utilities'
   },
   { 
     href: '/mic-tester', 
@@ -157,7 +181,8 @@ const TOOLS = [
     label: 'HARDWARE', 
     color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['mic tester', 'microphone test', 'audio input', 'record test', 'voice test', 'hardware check']
+    keywords: ['mic tester', 'microphone test', 'audio input', 'record test', 'voice test', 'hardware check'],
+    category: 'utilities'
   },
   { 
     href: '/youtube-thumbnail-downloader', 
@@ -167,7 +192,8 @@ const TOOLS = [
     label: 'MEDIA', 
     color: 'text-red-500 bg-red-500/10 border-red-500/20',
     glowClass: 'bg-red-500/10',
-    keywords: ['youtube thumbnail downloader', 'save youtube image', 'yt thumbnail', 'extract thumbnail']
+    keywords: ['youtube thumbnail downloader', 'save youtube image', 'yt thumbnail', 'extract thumbnail'],
+    category: 'image'
   },
   { 
     href: '/logo-maker', 
@@ -177,7 +203,8 @@ const TOOLS = [
     label: 'BRANDING', 
     color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
-    keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+    keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo'],
+    category: 'generators'
   },
   { 
     href: '/pdf-unlock', 
@@ -187,7 +214,8 @@ const TOOLS = [
     label: 'SECURITY', 
     color: 'text-green-500 bg-green-500/10 border-green-500/20',
     glowClass: 'bg-green-500/10',
-    keywords: ['unlock pdf', 'remove password', 'decrypt pdf', 'pdf remover', 'open protected pdf']
+    keywords: ['unlock pdf', 'remove password', 'decrypt pdf', 'pdf remover', 'open protected pdf'],
+    category: 'pdf'
   },
   { 
     href: '/pdf-password-protect', 
@@ -197,7 +225,8 @@ const TOOLS = [
     label: 'SECURITY', 
     color: 'text-red-500 bg-red-500/10 border-red-500/20',
     glowClass: 'bg-red-500/10',
-    keywords: ['pdf password', 'encrypt pdf', 'lock pdf', 'protect document', 'secure pdf']
+    keywords: ['pdf password', 'encrypt pdf', 'lock pdf', 'protect document', 'secure pdf'],
+    category: 'pdf'
   },
   { 
     href: '/text-to-pdf', 
@@ -207,7 +236,8 @@ const TOOLS = [
     label: 'DOCUMENT', 
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
-    keywords: ['text to pdf', 'convert text', 'txt to pdf', 'make pdf from text', 'type to pdf']
+    keywords: ['text to pdf', 'convert text', 'txt to pdf', 'make pdf from text', 'type to pdf'],
+    category: 'pdf'
   },
   { 
     href: '/pdf-rotator', 
@@ -217,7 +247,8 @@ const TOOLS = [
     label: 'DOCUMENT', 
     color: 'text-blue-600 bg-blue-600/10 border-blue-600/20',
     glowClass: 'bg-blue-600/10',
-    keywords: ['rotate pdf', 'fix orientation', 'sideways pdf', 'upside down', 'pdf fixer']
+    keywords: ['rotate pdf', 'fix orientation', 'sideways pdf', 'upside down', 'pdf fixer'],
+    category: 'pdf'
   },
   { 
     href: '/pdf-to-word', 
@@ -227,7 +258,8 @@ const TOOLS = [
     label: 'DOCUMENT', 
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
-    keywords: ['pdf to word', 'convert pdf', 'editable word', 'pdf to docx', 'extract text']
+    keywords: ['pdf to word', 'convert pdf', 'editable word', 'pdf to docx', 'extract text'],
+    category: 'pdf'
   },
   { 
     href: '/word-to-pdf', 
@@ -237,7 +269,8 @@ const TOOLS = [
     label: 'DOCUMENT', 
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
-    keywords: ['word to pdf', 'docx to pdf', 'convert word', 'word converter', 'doc to pdf']
+    keywords: ['word to pdf', 'docx to pdf', 'convert word', 'word converter', 'doc to pdf'],
+    category: 'pdf'
   },
   { 
     href: '/pdf-to-image', 
@@ -247,7 +280,8 @@ const TOOLS = [
     label: 'CONVERT', 
     color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
     glowClass: 'bg-indigo-400/10',
-    keywords: ['pdf to image', 'pdf to png', 'pdf to jpg', 'convert pdf', 'extract images from pdf']
+    keywords: ['pdf to image', 'pdf to png', 'pdf to jpg', 'convert pdf', 'extract images from pdf'],
+    category: 'pdf'
   },
   { 
     href: '/pdf-splitter', 
@@ -257,7 +291,8 @@ const TOOLS = [
     label: 'DOCUMENT', 
     color: 'text-blue-600 bg-blue-600/10 border-blue-600/20',
     glowClass: 'bg-blue-600/10',
-    keywords: ['pdf split', 'extract pages', 'separate pdf', 'pdf chunks', 'split document']
+    keywords: ['pdf split', 'extract pages', 'separate pdf', 'pdf chunks', 'split document'],
+    category: 'pdf'
   },
   { 
     href: '/pdf-compressor', 
@@ -267,7 +302,8 @@ const TOOLS = [
     label: 'OPTIMIZE', 
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
-    keywords: ['pdf compress', 'shrink pdf', 'smaller pdf', 'optimize document']
+    keywords: ['pdf compress', 'shrink pdf', 'smaller pdf', 'optimize document'],
+    category: 'pdf'
   },
   { 
     href: '/duplicate-finder', 
@@ -277,7 +313,8 @@ const TOOLS = [
     label: 'STUDIO', 
     color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
-    keywords: ['duplicate finder', 'clean files', 'remove duplicate', 'zip cleaner', 'project optimization', 'duplicates']
+    keywords: ['duplicate finder', 'clean files', 'remove duplicate', 'zip cleaner', 'project optimization', 'duplicates'],
+    category: 'utilities'
   },
   { 
     href: '/duplicate-line-remover', 
@@ -287,7 +324,8 @@ const TOOLS = [
     label: 'TEXT', 
     color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
     glowClass: 'bg-orange-500/10',
-    keywords: ['duplicate lines', 'line remover', 'unique lines', 'remove repeated', 'list cleaner', 'text purge']
+    keywords: ['duplicate lines', 'line remover', 'unique lines', 'remove repeated', 'list cleaner', 'text purge'],
+    category: 'utilities'
   },
   { 
     href: '/whatsapp-dp-maker', 
@@ -297,7 +335,8 @@ const TOOLS = [
     label: 'IDENTITY', 
     color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['whatsapp dp maker', 'profile picture', 'uncut dp', 'whatsapp quality', 'whatsquality', 'hd dp', 'profile maker']
+    keywords: ['whatsapp dp maker', 'profile picture', 'uncut dp', 'whatsapp quality', 'whatsquality', 'hd dp', 'profile maker'],
+    category: 'generators'
   },
   { 
     href: '/pdf-merger', 
@@ -307,7 +346,8 @@ const TOOLS = [
     label: 'DOCUMENT', 
     color: 'text-red-500 bg-red-500/10 border-red-500/20',
     glowClass: 'bg-red-500/10',
-    keywords: ['pdf merge', 'combine pdf', 'join pdf', 'multiple pdfs', 'document joiner']
+    keywords: ['pdf merge', 'combine pdf', 'join pdf', 'multiple pdfs', 'document joiner'],
+    category: 'pdf'
   },
   { 
     href: '/image-to-file', 
@@ -317,7 +357,8 @@ const TOOLS = [
     label: 'CONVERT', 
     color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
     glowClass: 'bg-blue-400/10',
-    keywords: ['image to file', 'image converter', 'jpg to pdf', 'webp converter', 'png to webp', 'photo to pdf']
+    keywords: ['image to file', 'image converter', 'jpg to pdf', 'webp converter', 'png to webp', 'photo to pdf'],
+    category: 'image'
   },
   { 
     href: '/file-compressor', 
@@ -327,7 +368,8 @@ const TOOLS = [
     label: 'OPTIMIZE', 
     color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
-    keywords: ['compress file', 'reduce size', 'optimize', 'shrink', 'smaller', 'pdf compress', 'image compress']
+    keywords: ['compress file', 'reduce size', 'optimize', 'shrink', 'smaller', 'pdf compress', 'image compress'],
+    category: 'utilities'
   },
   { 
     href: '/youtube-thumbnail-maker', 
@@ -337,7 +379,8 @@ const TOOLS = [
     label: 'YOUTUBE', 
     color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
     glowClass: 'bg-rose-500/10',
-    keywords: ['youtube thumbnail size', '1280x720', 'yt thumbnail maker', 'thumbnail resizer', 'youtube thumbnail resizer']
+    keywords: ['youtube thumbnail size', '1280x720', 'yt thumbnail maker', 'thumbnail resizer', 'youtube thumbnail resizer'],
+    category: 'generators'
   },
   { 
     href: '/age-calculator', 
@@ -347,7 +390,8 @@ const TOOLS = [
     label: 'STATS', 
     color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['age calculator', 'date of birth', 'how old am i', 'birthday', 'chronos', 'time lived']
+    keywords: ['age calculator', 'date of birth', 'how old am i', 'birthday', 'chronos', 'time lived'],
+    category: 'utilities'
   },
   { 
     href: '/password-generator', 
@@ -357,7 +401,8 @@ const TOOLS = [
     label: 'SECURITY', 
     color: 'text-slate-400 bg-slate-400/10 border-slate-400/20',
     glowClass: 'bg-slate-400/10',
-    keywords: ['password generator', 'random password', 'strong password', 'security', 'safe', 'key']
+    keywords: ['password generator', 'random password', 'strong password', 'security', 'safe', 'key'],
+    category: 'generators'
   },
   { 
     href: '/youtube-banner-maker', 
@@ -367,7 +412,8 @@ const TOOLS = [
     label: 'YOUTUBE', 
     color: 'text-red-500 bg-red-500/10 border-red-500/20',
     glowClass: 'bg-red-500/10',
-    keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area']
+    keywords: ['youtube banner maker', 'youtube banner size', 'channel art', 'youtube cover maker', 'yt banner', 'safe area'],
+    category: 'generators'
   },
   { 
     href: '/collage-maker', 
@@ -377,7 +423,8 @@ const TOOLS = [
     label: 'GRID', 
     color: 'text-teal-500 bg-teal-500/10 border-teal-500/20',
     glowClass: 'bg-teal-500/10',
-    keywords: ['collage maker', 'photo grid', 'merge photos', '2x2 collage', 'photo collage', 'combine images']
+    keywords: ['collage maker', 'photo grid', 'merge photos', '2x2 collage', 'photo collage', 'combine images'],
+    category: 'image'
   },
   { 
     href: '/favicon-generator', 
@@ -387,7 +434,8 @@ const TOOLS = [
     label: 'WEB', 
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
-    keywords: ['favicon generator', 'favicon from image', 'site icon', 'ico maker', 'favicon png', 'apple touch icon']
+    keywords: ['favicon generator', 'favicon from image', 'site icon', 'ico maker', 'favicon png', 'apple touch icon'],
+    category: 'image'
   },
   { 
     href: '/metadata-remover', 
@@ -397,7 +445,8 @@ const TOOLS = [
     label: 'SECURE', 
     color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
     glowClass: 'bg-orange-500/10',
-    keywords: ['remove exif', 'metadata remover', 'strip gps', 'privacy photo', 'remove location from image', 'exif']
+    keywords: ['remove exif', 'metadata remover', 'strip gps', 'privacy photo', 'remove location from image', 'exif'],
+    category: 'image'
   },
   { 
     href: '/word-counter', 
@@ -407,7 +456,8 @@ const TOOLS = [
     label: 'TEXT', 
     color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
-    keywords: ['word counter', 'character count', 'reading time', 'word count tool', 'text counter', 'speaking time']
+    keywords: ['word counter', 'character count', 'reading time', 'word count tool', 'text counter', 'speaking time'],
+    category: 'utilities'
   },
   { 
     href: '/color-picker', 
@@ -417,7 +467,8 @@ const TOOLS = [
     label: 'DESIGN', 
     color: 'text-pink-500 bg-rose-500/10 border-rose-500/20',
     glowClass: 'bg-pink-500/10',
-    keywords: ['color picker', 'pick color from image', 'hex', 'rgb', 'eye dropper', 'color from photo', 'palette']
+    keywords: ['color picker', 'pick color from image', 'hex', 'rgb', 'eye dropper', 'color from photo', 'palette'],
+    category: 'image'
   },
   { 
     href: '/rgb-picker', 
@@ -427,7 +478,8 @@ const TOOLS = [
     label: 'ENGINE', 
     color: 'text-fuchsia-500 bg-fuchsia-500/10 border-fuchsia-500/20',
     glowClass: 'bg-fuchsia-500/10',
-    keywords: ['rgb picker', 'hex color', 'hsl', 'color converter', 'color picker', 'cmyk', 'hsv']
+    keywords: ['rgb picker', 'hex color', 'hsl', 'color converter', 'color picker', 'cmyk', 'hsv'],
+    category: 'image'
   },
   { 
     href: '/markdown-preview', 
@@ -437,7 +489,8 @@ const TOOLS = [
     label: 'MARKUP', 
     color: 'text-sky-500 bg-sky-500/10 border-sky-500/20',
     glowClass: 'bg-sky-500/10',
-    keywords: ['markdown preview', 'md to html', 'markdown editor', 'markdown to html', 'live markdown', 'markup']
+    keywords: ['markdown preview', 'md to html', 'markdown editor', 'markdown to html', 'live markdown', 'markup'],
+    category: 'utilities'
   },
   { 
     href: '/image-converter', 
@@ -447,7 +500,8 @@ const TOOLS = [
     label: 'FORMAT', 
     color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
-    keywords: ['png to jpg', 'jpg to png', 'convert image', 'png jpg converter', 'jpeg', 'image format']
+    keywords: ['png to jpg', 'jpg to png', 'convert image', 'png jpg converter', 'jpeg', 'image format'],
+    category: 'image'
   },
   { 
     href: '/image-resizer', 
@@ -457,7 +511,8 @@ const TOOLS = [
     label: 'SCALE', 
     color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
     glowClass: 'bg-emerald-400/10',
-    keywords: ['resize', 'resizer', 'image resizer', 'resize photo', 'change size', 'width height', 'px', 'scale image', 'dimension']
+    keywords: ['resize', 'resizer', 'image resizer', 'resize photo', 'change size', 'width height', 'px', 'scale image', 'dimension'],
+    category: 'image'
   },
   { 
     href: '/image-compressor', 
@@ -467,7 +522,8 @@ const TOOLS = [
     label: 'OPTIMIZE', 
     color: 'text-lime-500 bg-lime-500/10 border-lime-500/20',
     glowClass: 'bg-lime-500/10',
-    keywords: ['compress', 'image compressor', 'reduce size', 'jpg', 'photo size', 'optimize', 'shrink', 'smaller']
+    keywords: ['compress', 'image compressor', 'reduce size', 'jpg', 'photo size', 'optimize', 'shrink', 'smaller'],
+    category: 'image'
   },
   { 
     href: '/image-to-pdf', 
@@ -477,7 +533,8 @@ const TOOLS = [
     label: 'DOCUMENT', 
     color: 'text-red-500 bg-red-500/10 border-red-500/20',
     glowClass: 'bg-red-500/10',
-    keywords: ['image to pdf', 'jpg to pdf', 'png to pdf', 'photo pdf', 'convert pdf', 'bundle', 'pdf']
+    keywords: ['image to pdf', 'jpg to pdf', 'png to pdf', 'photo pdf', 'convert pdf', 'bundle', 'pdf'],
+    category: 'image'
   },
   { 
     href: '/photo-editor', 
@@ -487,7 +544,8 @@ const TOOLS = [
     label: 'EDITOR', 
     color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
-    keywords: ['photo', 'image', 'edit', 'crop', 'filter', 'editor', 'picture', 'manipulate', 'brightness', 'contrast']
+    keywords: ['photo', 'image', 'edit', 'crop', 'filter', 'editor', 'picture', 'manipulate', 'brightness', 'contrast'],
+    category: 'image'
   },
   { 
     href: '/vocal-separator', 
@@ -497,7 +555,8 @@ const TOOLS = [
     label: 'KARAOKE', 
     color: 'text-rose-600 bg-rose-500/10 border-rose-500/20',
     glowClass: 'bg-rose-500/10',
-    keywords: ['vocal remover', 'karaoke', 'remove vocals', 'instrumental', 'music separator', 'audio separator']
+    keywords: ['vocal remover', 'karaoke', 'remove vocals', 'instrumental', 'music separator', 'audio separator'],
+    category: 'utilities'
   },
   { 
     href: '/video-to-audio', 
@@ -507,7 +566,8 @@ const TOOLS = [
     label: 'MEDIA', 
     color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
-    keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
+    keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg'],
+    category: 'utilities'
   },
   { 
     href: '/video-to-gif', 
@@ -515,9 +575,10 @@ const TOOLS = [
     title: 'Video to GIF', 
     desc: 'Synthesize high-quality animated GIFs from clips.', 
     label: 'ANIMATION', 
-    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
-    glowClass: 'bg-orange-500/10',
-    keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip']
+    color: 'text-orange-600 bg-orange-600/10 border-orange-600/20',
+    glowClass: 'bg-orange-600/10',
+    keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip'],
+    category: 'utilities'
   },
   { 
     href: '/audio-joiner', 
@@ -527,7 +588,8 @@ const TOOLS = [
     label: 'PRODUCTION', 
     color: 'text-blue-600 bg-blue-600/10 border-blue-600/20',
     glowClass: 'bg-blue-600/10',
-    keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound']
+    keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound'],
+    category: 'utilities'
   },
   { 
     href: '/audio-booster', 
@@ -537,7 +599,8 @@ const TOOLS = [
     label: 'BOOST', 
     color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
     glowClass: 'bg-teal-500/10',
-    keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav']
+    keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
+    category: 'utilities'
   },
   { 
     href: '/letter-art', 
@@ -547,7 +610,8 @@ const TOOLS = [
     label: 'ASCII', 
     color: 'text-slate-500 bg-slate-500/10 border-slate-500/20',
     glowClass: 'bg-slate-500/10',
-    keywords: ['image to text', 'ascii art', 'letters art', 'custom characters', 'image to alphabet', 'text art', 'alphabet art']
+    keywords: ['image to text', 'ascii art', 'letters art', 'custom characters', 'image to alphabet', 'text art', 'alphabet art'],
+    category: 'image'
   },
   { 
     href: '/ocr', 
@@ -555,9 +619,10 @@ const TOOLS = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read']
+    keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
+    category: 'utilities'
   },
   { 
     href: '/dot-art', 
@@ -567,7 +632,8 @@ const TOOLS = [
     label: 'CREATIVE', 
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
-    keywords: ['dots', 'braille', 'art', 'image to text', 'ascii']
+    keywords: ['dots', 'braille', 'art', 'image to text', 'ascii'],
+    category: 'image'
   },
   { 
     href: '/repeater', 
@@ -577,7 +643,8 @@ const TOOLS = [
     label: 'UTIL', 
     color: 'text-pink-600 bg-pink-500/10 border-pink-600/20',
     glowClass: 'bg-pink-500/10',
-    keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner']
+    keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner'],
+    category: 'generators'
   },
   { 
     href: '/hex-converter', 
@@ -587,7 +654,8 @@ const TOOLS = [
     label: 'BINARY', 
     color: 'text-indigo-600 bg-indigo-600/10 border-indigo-600/20',
     glowClass: 'bg-indigo-600/10',
-    keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset']
+    keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset'],
+    category: 'utilities'
   },
   { 
     href: '/code-converter', 
@@ -597,12 +665,31 @@ const TOOLS = [
     label: 'DEV', 
     color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
     glowClass: 'bg-cyan-500/10',
-    keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
+    keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
+    category: 'utilities'
+  },
+  { 
+    href: '/dictionary', 
+    icon: Book, 
+    title: 'English Dictionary', 
+    desc: 'Professional linguistic analysis and definitions.', 
+    label: 'LANG', 
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    glowClass: 'bg-amber-500/10',
+    keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
+    category: 'utilities'
   }
 ];
 
-// Memoized Card component to prevent expensive re-renders
-const ToolItem = React.memo(({ item, mode }: { item: typeof TOOLS[0], mode: 'grid' | 'list' }) => {
+const CATEGORIES: { id: ToolCategory; label: string; icon: any }[] = [
+  { id: 'all', label: 'All', icon: LayoutGrid },
+  { id: 'pdf', label: 'PDF', icon: FileText },
+  { id: 'image', label: 'Image', icon: ImageIcon },
+  { id: 'generators', label: 'Generators', icon: Shapes },
+  { id: 'utilities', label: 'Utilities', icon: Zap },
+];
+
+const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list' }) => {
   const isGrid = mode === 'grid';
 
   return (
@@ -669,6 +756,7 @@ ToolItem.displayName = 'ToolItem';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<ToolCategory>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
@@ -682,14 +770,24 @@ export default function Home() {
   };
 
   const filteredTools = useMemo(() => {
-    if (!searchQuery.trim()) return TOOLS;
-    const words = searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+    let result = TOOLS;
     
-    return TOOLS.filter(tool => {
-      const targetString = `${tool.title} ${tool.desc} ${tool.keywords.join(' ')}`.toLowerCase();
-      return words.every(word => targetString.includes(word));
-    });
-  }, [searchQuery]);
+    // Filter by Category
+    if (selectedCategory !== 'all') {
+      result = result.filter(tool => tool.category === selectedCategory);
+    }
+    
+    // Filter by Search Query
+    if (searchQuery.trim()) {
+      const words = searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+      result = result.filter(tool => {
+        const targetString = `${tool.title} ${tool.desc} ${tool.keywords.join(' ')}`.toLowerCase();
+        return words.every(word => targetString.includes(word));
+      });
+    }
+
+    return result;
+  }, [searchQuery, selectedCategory]);
 
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
@@ -714,38 +812,60 @@ export default function Home() {
             Professional high-fidelity asset generation and technical data translation. 100% private, client-side, and engineered for high-performance workflows.
           </p>
 
-          {/* Search Bar with Atmospheric Glow */}
-          <div className="max-w-2xl mx-auto mb-10 px-4 group relative">
-            <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none" />
-            <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
+          {/* Search & Category Bar */}
+          <div className="max-w-4xl mx-auto space-y-10 px-4">
+             {/* Search Input */}
+             <div className="max-w-2xl mx-auto group relative">
+                <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+                <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
 
-            <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/30 group-focus-within:from-primary/60 group-focus-within:to-primary/30">
-              <div className="moving-border-matrix" />
-              <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
-                <div className="absolute inset-y-0 left-5 flex items-center pointer-none">
-                  <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors icon-3d" />
+                <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/30 group-focus-within:from-primary/60 group-focus-within:to-primary/30">
+                  <div className="moving-border-matrix" />
+                  <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
+                    <div className="absolute inset-y-0 left-5 flex items-center pointer-none">
+                      <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors icon-3d" />
+                    </div>
+                    <Input 
+                      type="text"
+                      placeholder="Query professional studio tools..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-full w-full pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-base font-medium placeholder:text-foreground/20"
+                    />
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery('')}
+                        className="absolute inset-y-0 right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
+                      >
+                        <X className="w-5 h-5 icon-3d" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <Input 
-                  type="text"
-                  placeholder="Query professional studio tools..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-full w-full pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-base font-medium placeholder:text-foreground/20"
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="absolute inset-y-0 right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
+             </div>
+
+             {/* Category Pills - Sticky Row */}
+             <div className="sticky top-20 z-20 flex flex-wrap items-center justify-center gap-2 p-2 rounded-[2rem] bg-secondary/50 border border-white/5 backdrop-blur-xl shadow-2xl">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-6 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
+                      selectedCategory === cat.id 
+                        ? "bg-primary text-primary-foreground border-primary shadow-xl shadow-primary/20 scale-105" 
+                        : "bg-white/5 border-white/5 text-foreground/40 hover:text-primary hover:border-primary/20 hover:bg-primary/5"
+                    )}
                   >
-                    <X className="w-5 h-5 icon-3d" />
+                    <cat.icon className={cn("w-3.5 h-3.5", selectedCategory === cat.id ? "icon-3d" : "")} />
+                    {cat.label}
                   </button>
-                )}
-              </div>
-            </div>
+                ))}
+             </div>
           </div>
 
           {/* View Toggle */}
-          <div className="flex justify-center mb-16">
+          <div className="flex justify-center mt-12 mb-16">
             <div className="inline-flex p-1.5 rounded-2xl bg-secondary/50 border border-white/5 backdrop-blur-xl relative group/toggle shadow-2xl">
                <div 
                   className={cn(
@@ -784,7 +904,7 @@ export default function Home() {
                 <ToolItem key={item.href} item={item} mode={viewMode} />
               ))
             ) : (
-              <EmptyState onReset={() => setSearchQuery('')} />
+              <EmptyState onReset={() => { setSearchQuery(''); setSelectedCategory('all'); }} />
             )}
           </div>
         </div>
@@ -863,7 +983,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
     <div className="col-span-full py-24 glass-card rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-8">
       <Search className="w-12 h-12 text-foreground/5 animate-pulse icon-3d" />
       <div className="space-y-2">
-        <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">Zero Identifiers</h3>
+        <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">Coming Soon</h3>
         <p className="text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
       </div>
       <ShadButton 
