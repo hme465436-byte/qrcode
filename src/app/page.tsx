@@ -459,7 +459,7 @@ const TOOLS = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
   },
@@ -627,32 +627,45 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
             {filteredTools.length > 0 ? (
               filteredTools.map((item, i) => (
                 <Link key={i} href={item.href} className="group relative flex flex-col h-full">
-                  <div className="glass-card p-10 rounded-[2rem] border-white/5 hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 text-left relative overflow-hidden flex-1 flex flex-col shadow-xl group-hover:shadow-primary/5">
+                  <div className="relative flex-1 flex flex-col p-8 rounded-[2.5rem] bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 hover:-translate-y-2 text-left shadow-2xl group-hover:shadow-primary/5 overflow-hidden">
+                    {/* Animated Surface Light (Subtle) */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    {/* Icon Badge Cell */}
                     <div className={cn(
-                      "w-12 h-12 rounded-xl flex items-center justify-center mb-10 border transition-all duration-500 icon-container-3d",
+                      "w-14 h-14 rounded-2xl flex items-center justify-center mb-10 border transition-all duration-500 icon-container-3d relative z-10",
                       item.color
                     )}>
-                      <item.icon className="w-6 h-6 icon-3d" />
+                      <item.icon className="w-7 h-7 icon-3d" />
+                      {/* Localized Icon Glow */}
+                      <div className={cn("absolute inset-0 blur-xl opacity-20 transition-opacity group-hover:opacity-40", item.glowClass)} />
                     </div>
-                    <div className="space-y-4 flex-1 flex flex-col">
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
-                        <h3 className="text-xl font-headline font-bold text-foreground uppercase tracking-tight">{item.title}</h3>
+
+                    <div className="relative z-10 space-y-4 flex-1 flex flex-col">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />
+                        </div>
+                        <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight leading-none group-hover:text-primary transition-colors">{item.title}</h3>
                       </div>
-                      <p className="text-sm text-foreground/40 leading-relaxed font-medium">
+                      
+                      <p className="text-sm text-foreground/40 leading-relaxed font-medium line-clamp-2">
                         {item.desc}
                       </p>
-                      <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary opacity-0 group-hover:opacity-100 transition-all duration-500">
-                        Launch <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-500 icon-3d" />
+                      
+                      <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                        Initialize <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
                       </div>
                     </div>
-                    {/* Subtle Hover Glow */}
+
+                    {/* Atmospheric Corner Glow */}
                     <div className={cn(
-                      "absolute -right-20 -bottom-20 w-40 h-40 rounded-full blur-[80px] opacity-0 group-hover:opacity-20 transition-opacity duration-1000",
+                      "absolute -right-16 -bottom-16 w-32 h-32 rounded-full blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity duration-1000",
                       item.glowClass
                     )} />
                   </div>
