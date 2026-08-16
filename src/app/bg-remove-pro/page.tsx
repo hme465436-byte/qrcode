@@ -117,18 +117,28 @@ export default function BGRemoveProPage() {
 
   /**
    * Auto Removal Logic via @imgly/background-removal
+   * Features a fail-safe timeout protocol to prevent hanging promises
    */
   const executeAutoRemove = async (imageSource: string) => {
     setIsProcessing(true);
     setLoadingStatus('Removing background...');
     setError(null);
     
+    const timeoutSeconds = 40;
+    
     try {
-      const blob = await removeBackground(imageSource, {
+      // Fail-safe Timeout Matrix
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), timeoutSeconds * 1000)
+      );
+
+      const removalPromise = removeBackground(imageSource, {
         progress: (key, current, total) => {
           setLoadingStatus(`Removing background: ${Math.round((current / total) * 100)}%`);
         }
       });
+
+      const blob = await Promise.race([removalPromise, timeoutPromise]) as Blob;
 
       const processedUrl = URL.createObjectURL(blob);
       const processedImg = new Image();
@@ -164,10 +174,17 @@ export default function BGRemoveProPage() {
       };
       processedImg.src = processedUrl;
     } catch (err: any) {
-      console.error('Auto remove error:', err);
-      setError("Auto removal failed. Use manual brushing for this asset.");
+      console.error('Auto remove failure:', err);
+      const msg = err.message === "Timeout" 
+        ? "Auto-removal timed out. Please proceed with Manual controls." 
+        : "Auto-removal failed. The visual matrix is too complex. Proceeding to Manual Mode.";
+      
+      setError(msg);
       setIsProcessing(false);
       setLoadingStatus('');
+      
+      // Ensure the manual tool still shows the image if auto fails
+      drawWorkspace();
     }
   };
 
@@ -181,6 +198,7 @@ export default function BGRemoveProPage() {
 
     setIsProcessing(true);
     setLoadingStatus('Initializing...');
+    setError(null);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -200,7 +218,7 @@ export default function BGRemoveProPage() {
           maskCanvas.width = img.width;
           maskCanvas.height = img.height;
           
-          // Initial mask: fully opaque for visual verification
+          // Initial mask: fully opaque for manual fallback
           const mCtx = maskCanvas.getContext('2d');
           if (mCtx) {
             mCtx.fillStyle = 'white';
@@ -260,7 +278,7 @@ export default function BGRemoveProPage() {
   };
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!image) return;
+    if (!image || isProcessing) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
@@ -277,7 +295,7 @@ export default function BGRemoveProPage() {
   };
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!image) return;
+    if (!image || isProcessing) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
@@ -300,7 +318,7 @@ export default function BGRemoveProPage() {
   const handleDownload = () => {
     if (!canvasRef.current || !image) return;
     const link = document.createElement('a');
-    link.download = `qrcanvas-pro-mask-${Date.now()}.png`;
+    link.download = `mykit-pro-mask-${Date.now()}.png`;
     
     // Final composite render for high quality export
     const finalCanvas = document.createElement('canvas');
