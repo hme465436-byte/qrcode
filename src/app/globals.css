@@ -246,6 +246,16 @@
     75% { transform: scale(1.05) rotate(-5deg); }
   }
 
+  @keyframes kit-wave {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-30deg); }
+  }
+
+  @keyframes kit-grip-adjust {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(2px); }
+  }
+
   @keyframes heart-float {
     0% { transform: translateY(0) scale(0.5); opacity: 0; }
     20% { opacity: 1; }
@@ -263,6 +273,8 @@
   .animate-kit-ear-twitch { animation: kit-ear-twitch 3s ease-in-out infinite; }
   .animate-kit-tail-flick { animation: kit-tail-flick 2s ease-in-out infinite; }
   .animate-kit-wiggle { animation: kit-wiggle 0.4s ease-in-out; }
+  .animate-kit-wave { animation: kit-wave 0.8s ease-in-out infinite; }
+  .animate-kit-grip { animation: kit-grip-adjust 2s ease-in-out infinite; }
   .animate-heart-float { animation: heart-float 1.5s ease-out forwards; }
   .animate-bubble-pop { animation: bubble-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 }

@@ -190,6 +190,7 @@ export function StudioBot() {
   const [isPetting, setIsPetting] = useState(false);
   const [isHappy, setIsHappy] = useState(false);
   const [isInitialShow, setIsInitialShow] = useState(true);
+  const [isWaving, setIsWaving] = useState(false);
   const [lastBubbleMsg, setLastBubbleMsg] = useState('');
   
   const [messages, setMessages] = useState<{ 
@@ -204,6 +205,10 @@ export function StudioBot() {
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Initial arrival protocol
+    setIsWaving(true);
+    const waveTimer = setTimeout(() => setIsWaving(false), 4000);
+    
     const initialShowTimer = setTimeout(() => {
       setIsInitialShow(false);
     }, 5000);
@@ -229,6 +234,7 @@ export function StudioBot() {
     return () => { 
       if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current); 
       clearTimeout(initialShowTimer);
+      clearTimeout(waveTimer);
     };
   }, [isOpen, isMinimized, lastBubbleMsg]);
 
@@ -356,52 +362,64 @@ export function StudioBot() {
     }, 400);
   };
 
-  const KitMascot = ({ className = "" }: { className?: string }) => (
-    <div className={cn("relative w-full h-full flex flex-col items-center justify-center transition-all duration-300", className)}>
-      <svg viewBox="0 0 100 120" className="w-full h-full p-1 drop-shadow-xl">
+  const KitMascot = ({ mode = "full" }: { mode?: "full" | "peek" | "chat" }) => (
+    <div className={cn(
+      "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-out",
+      mode === "peek" && "rotate-[15deg] translate-x-[20px]"
+    )}>
+      <svg viewBox="0 0 100 120" className="w-full h-full p-1 drop-shadow-xl overflow-visible">
         <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")}>
           {/* Tail */}
           <path d="M 80 90 Q 95 80 90 65" stroke="#fefce8" strokeWidth="6" fill="none" strokeLinecap="round" className="animate-kit-tail-flick" />
           
           {/* Ears */}
           <g className="animate-kit-ear-twitch">
-             {/* Left Ear */}
              <path d="M 20 25 L 5 45 L 35 45 Z" fill="#fefce8" />
              <path d="M 22 30 L 12 42 L 32 42 Z" fill="#fecaca" opacity="0.6" />
-             
-             {/* Right Ear */}
              <path d="M 80 25 L 65 45 L 95 45 Z" fill="#fefce8" />
              <path d="M 78 30 L 68 42 L 88 42 Z" fill="#fecaca" opacity="0.6" />
           </g>
 
-          {/* Round Body/Head (Kit is very round) */}
+          {/* Round Body/Head */}
           <circle cx="50" cy="65" r="45" fill="#fefce8" />
           
           {/* Baby Blue Belly / Toolbelt Area */}
           <path d="M 20 85 Q 50 105 80 85" fill="none" stroke="#bfdbfe" strokeWidth="12" strokeLinecap="round" />
-          {/* Wrench Icon on Belt */}
           <rect x="46" y="88" width="8" height="2" rx="1" fill="#94a3b8" />
           <path d="M 46 88 L 44 86 M 54 88 L 56 86" stroke="#94a3b8" strokeWidth="1" />
 
-          {/* Facial Elements */}
+          {/* Facial Elements - Repositioned slightly for peek if needed */}
           <g className="animate-kit-blink">
-             {/* Large Glossy Eyes */}
              <circle cx="32" cy="62" r="10" fill="#1e293b" />
              <circle cx="30" cy="59" r="3.5" fill="white" className="opacity-90" />
-             <circle cx="34" cy="65" r="1.5" fill="white" className="opacity-40" />
-
              <circle cx="68" cy="62" r="10" fill="#1e293b" />
              <circle cx="66" cy="59" r="3.5" fill="white" className="opacity-90" />
-             <circle cx="70" cy="65" r="1.5" fill="white" className="opacity-40" />
           </g>
           
-          {/* Pink Blush */}
           <ellipse cx="28" cy="76" rx="6" ry="3" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "scale-150 opacity-100")} />
           <ellipse cx="72" cy="76" rx="6" ry="3" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "scale-150 opacity-100")} />
           
-          {/* Cat Mouth (w) */}
           <path d="M 44 76 Q 47 80 50 76 Q 53 80 56 76" fill="none" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" />
-          <circle cx="50" cy="74" r="1.5" fill="#fecaca" /> {/* Tiny Nose */}
+          <circle cx="50" cy="74" r="1.5" fill="#fecaca" />
+
+          {/* Paws Protocol */}
+          {mode === "peek" ? (
+            // Gripping the edge of the screen (Left side of SVG since Kit is on right edge)
+            <g className="animate-kit-grip">
+               <path d="M 5 60 Q 0 65 5 70" fill="#fefce8" stroke="#1e293b" strokeWidth="1" />
+               <path d="M 5 80 Q 0 85 5 90" fill="#fefce8" stroke="#1e293b" strokeWidth="1" />
+            </g>
+          ) : (
+            // Regular standing or waving paws
+            <g>
+              {/* Left Paw */}
+              <circle cx="20" cy="95" r="8" fill="#fefce8" />
+              {/* Right Paw (Waving if isWaving) */}
+              <g className={cn("origin-[80px_95px] transition-transform", isWaving && "animate-kit-wave")}>
+                 <circle cx="80" cy="95" r="8" fill="#fefce8" />
+              </g>
+            </g>
+          )}
         </g>
       </svg>
       
@@ -419,7 +437,7 @@ export function StudioBot() {
       <div 
         className={cn(
           "fixed bottom-8 z-[100] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
-          isShowingFully ? "right-8" : "right-[-48px] sm:right-[-58px]"
+          isShowingFully ? "right-8" : "right-[-52px] sm:right-[-62px]"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -446,7 +464,7 @@ export function StudioBot() {
               isPetting && "scale-90"
             )}
           >
-            <KitMascot className={cn(isHovered ? "rotate-0" : "rotate-1")} />
+            <KitMascot mode={isShowingFully ? "full" : "peek"} />
             <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_12px_rgba(74,222,128,0.8)]" />
           </button>
         </div>
@@ -463,7 +481,7 @@ export function StudioBot() {
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-[#fefce8] flex items-center justify-center shadow-lg border border-white/10 relative overflow-hidden">
-            <KitMascot />
+            <KitMascot mode="chat" />
           </div>
           <div className="space-y-0.5">
             <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Kit • Studio Helper</h4>
