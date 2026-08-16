@@ -51,7 +51,8 @@ import {
   Split,
   FileImage,
   RotateCw,
-  Command
+  Command,
+  Unlock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -87,6 +88,16 @@ const TOOLS = [
     color: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
     glowClass: 'bg-violet-500/10',
     keywords: ['logo text maker', 'text logo generator', 'brand name logo', 'avatar creator', 'business logo']
+  },
+  { 
+    href: '/pdf-unlock', 
+    icon: Unlock, 
+    title: 'PDF Unlock', 
+    desc: 'Remove security passwords from protected PDF masters.', 
+    label: 'SECURITY', 
+    color: 'text-green-500 bg-green-500/10 border-green-500/20',
+    glowClass: 'bg-green-500/10',
+    keywords: ['unlock pdf', 'remove password', 'decrypt pdf', 'pdf remover', 'open protected pdf']
   },
   { 
     href: '/pdf-password-protect', 
@@ -484,7 +495,7 @@ const TOOLS = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes']
   }

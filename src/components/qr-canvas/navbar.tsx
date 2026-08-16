@@ -52,7 +52,8 @@ import {
   FileImage,
   RotateCw,
   ShieldAlert,
-  Command
+  Command,
+  Unlock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -89,6 +90,7 @@ const NAV_ITEMS = [
   { label: 'Single QR', href: '/single', icon: QrCode, keywords: ['qr', 'generator', 'logo', 'brand', 'barcode'] },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers, keywords: ['batch', 'mass', 'multiple', 'zip', 'production'] },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type, keywords: ['logo', 'text logo', 'branding', 'avatar', 'name'] },
+  { label: 'PDF Unlock', href: '/pdf-unlock', icon: Unlock, keywords: ['unlock pdf', 'remove password', 'decrypt pdf', 'open'] },
   { label: 'PDF Lock', href: '/pdf-password-protect', icon: ShieldAlert, keywords: ['pdf password', 'encrypt pdf', 'lock pdf', 'secure'] },
   { label: 'PDF Rotator', href: '/pdf-rotator', icon: RotateCw, keywords: ['rotate pdf', 'fix orientation', 'sideways pdf', 'upside down', 'pdf fixer'] },
   { label: 'PDF to Word', href: '/pdf-to-word', icon: FileEdit, keywords: ['pdf to word', 'docx', 'convert', 'editable'] },
@@ -125,7 +127,7 @@ const NAV_ITEMS = [
   { label: 'Volume Booster', href: '/audio-booster', icon: Volume2, keywords: ['loud', 'gain', 'amplify', 'boost', 'audio', 'volume'] },
   { label: 'Letter Art', href: '/letter-art', icon: CaseSensitive, keywords: ['ascii', 'text art', 'alphabet', 'letters', 'image to text'] },
   { label: 'OCR Text', href: '/ocr', icon: FileText, keywords: ['ocr', 'extract', 'recognize', 'scan', 'read'] },
-  { label: 'Dot Art', href: '/dot-art', icon: Grid3X3, keywords: ['dots', 'braille', 'creative', 'art', 'matrix'] },
+  { label: 'Dot Art', href: '/dot- art', icon: Grid3X3, keywords: ['dots', 'braille', 'creative', 'art', 'matrix'] },
   { label: 'Repeater', href: '/repeater', icon: Repeat, keywords: ['repeat', 'text', 'emoji', 'spam', 'cloner'] },
   { label: 'Hex Converter', href: '/hex-converter', icon: FileCode, keywords: ['binary', 'hexadecimal', 'bytes', 'dump'] },
   { label: 'AOB Converter', href: '/code-converter', icon: Binary, keywords: ['aob', 'pattern', 'trainer', 'hex', 'convert'] },
