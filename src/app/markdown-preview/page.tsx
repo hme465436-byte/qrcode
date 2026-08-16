@@ -1,7 +1,6 @@
-
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   FileText, 
   Eye, 
@@ -328,7 +327,7 @@ export default function MarkdownPreviewPage() {
                              {isCopiedHtml ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                              Copy HTML
                            </Button>
-                           <Button onClick={() => handleDownload(html, 'export.html', 'text/html')} className="h-14 rounded-2xl bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20">
+                           <Button onClick={() => handleDownload(html, 'export.html', 'text/html')} className="h-14 rounded-2xl bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/30">
                              <FileDown className="w-4 h-4 mr-2" />
                              Save .html
                            </Button>
@@ -396,7 +395,3 @@ export default function MarkdownPreviewPage() {
     </div>
   );
 }
-
-const useMemo = (fn: () => any, deps: any[]) => {
-  return React.useMemo(fn, deps);
-};

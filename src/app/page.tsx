@@ -636,7 +636,7 @@ export default function Home() {
             <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/30 group-focus-within:from-primary/60 group-focus-within:to-primary/30">
               <div className="moving-border-matrix" />
               <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
-                <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-5 flex items-center pointer-none">
                   <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors icon-3d" />
                 </div>
                 <Input 
@@ -847,7 +847,3 @@ function EmptyState({ onReset }: { onReset: () => void }) {
     </div>
   );
 }
-
-const useMemo = (fn: () => any, deps: any[]) => {
-  return React.useMemo(fn, deps);
-};
