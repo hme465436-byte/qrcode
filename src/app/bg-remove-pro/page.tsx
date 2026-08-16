@@ -70,81 +70,6 @@ export default function BGRemoveProPage() {
   const lastMousePos = useRef({ x: 0, y: 0 });
 
   /**
-   * Auto Removal Logic via @imgly/background-removal
-   */
-  const executeAutoRemove = async (imageSource: string) => {
-    setIsProcessing(true);
-    setLoadingStatus('Initializing AI Engine...');
-    setError(null);
-    
-    try {
-      setLoadingStatus('Isolating Subject Matrix...');
-      const blob = await removeBackground(imageSource, {
-        progress: (key, current, total) => {
-          setLoadingStatus(`Rendering: ${Math.round((current / total) * 100)}%`);
-        }
-      });
-
-      const processedUrl = URL.createObjectURL(blob);
-      const processedImg = new Image();
-      processedImg.crossOrigin = "anonymous";
-      
-      processedImg.onload = () => {
-        // We now have the auto-removed image. 
-        // We need to convert it into our manual mask buffer.
-        const maskCanvas = maskCanvasRef.current;
-        if (!maskCanvas) return;
-        const mCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
-        if (!mCtx) return;
-
-        // Clear mask
-        mCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-        
-        // Draw the auto result to the mask. 
-        // We basically just want to copy its alpha channel.
-        mCtx.drawImage(processedImg, 0, 0);
-        
-        // Now convert non-transparent pixels to solid white (opaque mask)
-        const imgData = mCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 4) {
-          // If the library removed it, alpha is 0. If it kept it, alpha > 0.
-          if (data[i + 3] > 0) {
-            data[i] = 255;
-            data[i + 1] = 255;
-            data[i + 2] = 255;
-            data[i + 3] = 255;
-          }
-        }
-        mCtx.putImageData(imgData, 0, 0);
-
-        URL.revokeObjectURL(processedUrl);
-        setIsProcessing(false);
-        setLoadingStatus('');
-        drawWorkspace();
-        toast({ title: "Auto-Scrub Complete", description: "Subject isolated via neural matrix." });
-      };
-      processedImg.src = processedUrl;
-    } catch (err: any) {
-      console.error('Auto remove error:', err);
-      setError("The neural engine encountered an initialization error. Reverting to manual mode.");
-      setIsProcessing(false);
-      setLoadingStatus('');
-      
-      // Fallback: Initialize mask as fully opaque white
-      const maskCanvas = maskCanvasRef.current;
-      if (maskCanvas) {
-        const mCtx = maskCanvas.getContext('2d');
-        if (mCtx) {
-          mCtx.fillStyle = 'white';
-          mCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-          drawWorkspace();
-        }
-      }
-    }
-  };
-
-  /**
    * Main Workspace Rendering Logic
    */
   const drawWorkspace = useCallback(() => {
@@ -171,8 +96,6 @@ export default function BGRemoveProPage() {
 
     // Default: 'result'
     // Composite: (Background Color) -> (Original Image clipped by Mask)
-    
-    // Create a composite layer
     ctx.save();
     
     // Draw background color if selected
@@ -191,58 +114,118 @@ export default function BGRemoveProPage() {
     ctx.restore();
   }, [displayMode, bgColor]);
 
+  /**
+   * Auto Removal Logic via @imgly/background-removal
+   */
+  const executeAutoRemove = async (imageSource: string) => {
+    setIsProcessing(true);
+    setLoadingStatus('Initializing AI Engine...');
+    setError(null);
+    
+    try {
+      setLoadingStatus('Isolating Subject Matrix...');
+      const blob = await removeBackground(imageSource, {
+        progress: (key, current, total) => {
+          setLoadingStatus(`Rendering: ${Math.round((current / total) * 100)}%`);
+        }
+      });
+
+      const processedUrl = URL.createObjectURL(blob);
+      const processedImg = new Image();
+      processedImg.crossOrigin = "anonymous";
+      
+      processedImg.onload = () => {
+        const maskCanvas = maskCanvasRef.current;
+        if (!maskCanvas) return;
+        const mCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+        if (!mCtx) return;
+
+        mCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+        mCtx.drawImage(processedImg, 0, 0);
+        
+        // Convert non-transparent pixels to solid white (opaque mask)
+        const imgData = mCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] > 0) {
+            data[i] = 255;
+            data[i + 1] = 255;
+            data[i + 2] = 255;
+            data[i + 3] = 255;
+          }
+        }
+        mCtx.putImageData(imgData, 0, 0);
+
+        URL.revokeObjectURL(processedUrl);
+        setIsProcessing(false);
+        setLoadingStatus('');
+        drawWorkspace();
+        toast({ title: "Auto-Scrub Complete", description: "Subject isolated via neural matrix." });
+      };
+      processedImg.src = processedUrl;
+    } catch (err: any) {
+      console.error('Auto remove error:', err);
+      setError("AI Engine was restricted. Reverting to manual mode.");
+      setIsProcessing(false);
+      setLoadingStatus('');
+    }
+  };
+
   useEffect(() => {
     drawWorkspace();
   }, [drawWorkspace]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-          mainImageRef.current = img;
-          setImage(result);
+    if (!file) return;
+
+    setIsProcessing(true);
+    setLoadingStatus('Mapping Visual Matrix...');
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        mainImageRef.current = img;
+        setImage(result);
+        
+        // Setup canvas sizes
+        const canvas = canvasRef.current;
+        const maskCanvas = maskCanvasRef.current;
+        if (canvas && maskCanvas) {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          maskCanvas.width = img.width;
+          maskCanvas.height = img.height;
           
-          // Setup canvas sizes
-          const canvas = canvasRef.current;
-          const maskCanvas = maskCanvasRef.current;
-          if (canvas && maskCanvas) {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            maskCanvas.width = img.width;
-            maskCanvas.height = img.height;
-            
-            // Auto start the neural process
-            executeAutoRemove(result);
+          // Initial mask: fully opaque so user sees the image immediately
+          const mCtx = maskCanvas.getContext('2d');
+          if (mCtx) {
+            mCtx.fillStyle = 'white';
+            mCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
           }
           
           setZoom(1);
           setPan({ x: 0, y: 0 });
-        };
-        img.src = result;
+          drawWorkspace();
+          
+          // Trigger the AI heavy-lifting
+          executeAutoRemove(result);
+        }
       };
-      reader.readAsDataURL(file);
-    }
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
   };
 
-  /**
-   * Manual Brushing Logic
-   */
   const getCanvasCoords = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    
-    // Scale mapping for CSS display vs real pixels
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    
-    // Coordinates relative to the center of the zoom/pan transform
-    // But since we are getting rect.left/top, it's easier to map directly to the raw viewport
     return {
       x: (clientX - rect.left) * scaleX,
       y: (clientY - rect.top) * scaleY
@@ -277,7 +260,7 @@ export default function BGRemoveProPage() {
   };
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!image || isProcessing) return;
+    if (!image) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
@@ -294,7 +277,7 @@ export default function BGRemoveProPage() {
   };
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!image || isProcessing) return;
+    if (!image) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
@@ -314,9 +297,6 @@ export default function BGRemoveProPage() {
     isDrawing.current = false;
   };
 
-  /**
-   * Utilities
-   */
   const handleDownload = () => {
     if (!canvasRef.current || !image) return;
     const link = document.createElement('a');
@@ -357,8 +337,8 @@ export default function BGRemoveProPage() {
               <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tight">
                 BG Remove <span className="text-primary italic">Pro</span>
               </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional-grade background extraction. High-fidelity neural scrubbing with manual spectral refinement. 100% private re-matricing occurring strictly in browser memory.
+              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed uppercase tracking-tighter">
+                Professional-grade background extraction. 100% private re-matricing occurring strictly in browser memory.
               </p>
            </div>
         </div>
@@ -374,7 +354,7 @@ export default function BGRemoveProPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
-              {/* Mode Toggle */}
+              {/* Brushing Mode */}
               <div className="space-y-4">
                 <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Brushing Mode</Label>
                 <div className="grid grid-cols-2 gap-3 p-1.5 rounded-2xl bg-background border border-border">
@@ -401,7 +381,7 @@ export default function BGRemoveProPage() {
                 </div>
               </div>
 
-              {/* Brush Settings */}
+              {/* Brush & Zoom Settings */}
               <div className="space-y-8">
                  <div className="space-y-4">
                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-foreground/40">
@@ -444,7 +424,7 @@ export default function BGRemoveProPage() {
                 </div>
               </div>
 
-              {/* Composition environment */}
+              {/* Composition Environment */}
               <div className="space-y-4">
                 <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Composition Background</Label>
                 <div className="grid grid-cols-5 gap-2">
@@ -482,10 +462,10 @@ export default function BGRemoveProPage() {
               {/* Global Actions */}
               <div className="flex gap-4 pt-4 border-t border-border">
                  <Button variant="outline" onClick={resetMask} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-destructive/10 hover:text-destructive">
-                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset Matrix
+                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
                  </Button>
                  <Button variant="outline" onClick={() => setPan({ x: 0, y: 0 })} className="flex-1 h-12 border-border text-[9px] font-black uppercase tracking-widest rounded-xl">
-                    <Crosshair className="w-3.5 h-3.5 mr-2" /> Recenter
+                    <Crosshair className="w-3.5 h-3.5 mr-2" /> Center
                  </Button>
               </div>
             </CardContent>
@@ -494,7 +474,7 @@ export default function BGRemoveProPage() {
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Protocol Intelligence</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Protocol Intel</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
                 Brushing utilizes destination-out logic for clinical removal. Use ALT + Drag to pan across high-res matrices.
               </p>
@@ -523,18 +503,24 @@ export default function BGRemoveProPage() {
             </CardHeader>
             <CardContent className="flex-1 p-0 flex items-center justify-center bg-[#060608] relative overflow-hidden">
                {!image ? (
-                 <div 
-                   onClick={() => fileInputRef.current?.click()}
-                   className="h-full w-full flex flex-col items-center justify-center cursor-pointer group p-20"
-                 >
-                    <div className="w-24 h-24 rounded-[2.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover:text-primary group-hover:scale-110 group-hover:border-primary/40 transition-all duration-700 shadow-xl">
+                 <div className="h-full w-full flex flex-col items-center justify-center p-20">
+                    <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-24 h-24 rounded-[2.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 hover:text-primary hover:scale-110 hover:border-primary/40 transition-all duration-700 shadow-xl cursor-pointer"
+                    >
                       <ImagePlus className="w-10 h-10" />
                     </div>
                     <div className="mt-8 text-center space-y-2">
-                      <h3 className="text-sm font-black text-foreground/40 uppercase tracking-[0.3em] group-hover:text-primary transition-colors">Import Visual Matrix</h3>
+                      <h3 className="text-sm font-black text-foreground/40 uppercase tracking-[0.3em]">Import Visual Matrix</h3>
                       <p className="text-[10px] text-foreground/20 font-bold uppercase tracking-widest">JPG, PNG, WebP up to 10MB</p>
                     </div>
-                    <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileUpload} className="hidden" />
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      accept=".jpg,.jpeg,.png,.webp" 
+                      onChange={handleFileUpload} 
+                      className="hidden" 
+                    />
                  </div>
                ) : (
                  <div className="absolute inset-0 cursor-crosshair overflow-hidden bg-checkered">
