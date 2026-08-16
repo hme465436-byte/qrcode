@@ -156,57 +156,71 @@
     filter: drop-shadow(0 0 20px hsla(var(--primary), 1)) drop-shadow(0 0 45px hsla(var(--primary), 0.7)) drop-shadow(0 0 80px hsla(var(--primary), 0.3));
   }
 
-  /* Shooting Star Protocol V2 - Luxury Refinement */
-  @keyframes shooting-star-path {
+  /* Shooting Star Protocol V3 - Hyper-Glow with Light Blue Trail */
+  @keyframes shooting-star-path-v3 {
     0% {
-      transform: translateX(0) translateY(0) rotate(-45deg) scale(0);
+      transform: translateX(0) translateY(0) rotate(-40deg) scale(0);
       opacity: 0;
     }
     1% {
       opacity: 1;
       scale: 1;
     }
-    3% {
-      opacity: 1;
-    }
-    20% {
-      transform: translateX(-140vw) translateY(140vh) rotate(-45deg) scale(1.5);
+    15% {
+      transform: translateX(-150vw) translateY(120vh) rotate(-40deg) scale(2);
       opacity: 0;
     }
     100% {
-      transform: translateX(-140vw) translateY(140vh) rotate(-45deg) scale(1.5);
+      transform: translateX(-150vw) translateY(120vh) rotate(-40deg) scale(2);
       opacity: 0;
     }
   }
 
-  .shooting-star-protocol {
+  .shooting-star-protocol-v2 {
     position: absolute;
-    width: 5px;
-    height: 5px;
+    width: 8px;
+    height: 8px;
     background: #fff;
     border-radius: 50%;
     box-shadow: 
-      0 0 30px 6px rgba(255,255,255,1), 
-      0 0 60px 12px hsla(var(--primary), 0.6),
-      0 0 100px 20px hsla(var(--primary), 0.2);
-    animation: shooting-star-path 20s linear infinite;
+      0 0 30px 8px rgba(255,255,255,1), 
+      0 0 60px 15px hsla(217, 91%, 60%, 0.8), /* Site Primary Blue */
+      0 0 100px 30px hsla(217, 91%, 60%, 0.4);
+    animation: shooting-star-path-v3 18s linear infinite;
     opacity: 0;
     z-index: 0;
     pointer-events: none;
   }
 
-  .shooting-star-protocol::after {
+  .shooting-star-protocol-v2::after {
     content: "";
     position: absolute;
     top: 50%;
     left: 0;
     transform: translateY(-50%);
-    width: 500px;
-    height: 3px;
-    background: linear-gradient(90deg, #fff, hsla(var(--primary), 0.6), hsla(var(--primary), 0.2), transparent);
+    width: 800px; /* Longer tail */
+    height: 4px;
+    background: linear-gradient(90deg, #fff, hsla(217, 91%, 60%, 0.6), hsla(217, 91%, 60%, 0.1), transparent);
     border-radius: 100%;
-    filter: blur(0.5px);
+    filter: blur(1.5px);
   }
+
+  /* Floating Elements Animations */
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+    33% { transform: translateY(-30px) translateX(15px) rotate(5deg); }
+    66% { transform: translateY(15px) translateX(-20px) rotate(-5deg); }
+  }
+
+  @keyframes ship-drift {
+    0% { transform: translateX(100vw) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.15; }
+    90% { opacity: 0.15; }
+    100% { transform: translateX(-100vw) rotate(10deg); opacity: 0; }
+  }
+
+  .animate-float { animation: float-slow 25s ease-in-out infinite; }
+  .animate-ship-drift { animation: ship-drift 40s linear infinite; }
 
   /* Twinkle Animation */
   @keyframes star-twinkle {
