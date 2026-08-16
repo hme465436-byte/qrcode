@@ -214,7 +214,6 @@ export function StudioBot() {
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Initial visibility window
     const initialShowTimer = setTimeout(() => {
       setIsInitialShow(false);
     }, 5000);
@@ -373,36 +372,47 @@ export function StudioBot() {
 
   const RobotFace = ({ className = "" }: { className?: string }) => (
     <div className={cn("relative w-full h-full flex flex-col items-center justify-center transition-all duration-300", className)}>
-      <svg viewBox="0 0 100 100" className="w-full h-full p-1.5 drop-shadow-xl">
-        {/* Antenna with glow */}
-        <path d="M50 25 L50 12" stroke="#60a5fa" strokeWidth="4" strokeLinecap="round" className="animate-pulse" />
-        <circle cx="50" cy="10" r="4" fill="#60a5fa">
-          <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
-        </circle>
-        
-        {/* Body (Creamy White) */}
-        <circle cx="50" cy="58" r="38" fill="#fefce8" stroke="#e2e8f0" strokeWidth="1.5" />
-        
-        {/* Eyes (Large, Shiny) */}
-        <g className={cn("transition-transform duration-300", isNodding && "translate-y-1")}>
-          <circle cx="35" cy="54" r="7" fill="#1e293b" className="animate-bot-blink" />
-          <circle cx="33" cy="51" r="2.5" fill="white" className="opacity-80" />
-          
-          <circle cx="65" cy="54" r="7" fill="#1e293b" className="animate-bot-blink" />
-          <circle cx="63" cy="51" r="2.5" fill="white" className="opacity-80" />
+      <svg viewBox="0 0 100 120" className="w-full h-full p-1.5 drop-shadow-2xl">
+        <g className={cn("transition-transform duration-300", isPetting ? "animate-bot-wiggle" : "animate-bot-sway")}>
+          {/* Tiny Body */}
+          <circle cx="50" cy="95" r="18" fill="#fefce8" />
+          <circle cx="50" cy="95" r="10" fill="#bfdbfe" /> 
+
+          {/* Round Ears */}
+          <circle cx="15" cy="50" r="10" fill="#fefce8" />
+          <circle cx="85" cy="50" r="10" fill="#fefce8" />
+
+          {/* Big Head */}
+          <circle cx="50" cy="50" r="42" fill="#fefce8" stroke="#f1f5f9" strokeWidth="1.5" />
+
+          {/* Spring Antenna with Star */}
+          <path d="M50 10 Q 55 0 50 -8" stroke="#94a3b8" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          <path d="M50 -12 L 52 -8 L 57 -8 L 53 -5 L 54 0 L 50 -3 L 46 0 L 47 -5 L 43 -8 L 48 -8 Z" fill="#fbbf24" stroke="#d97706" strokeWidth="0.5" className="animate-pulse" />
+
+          {/* Face Elements */}
+          <g className={cn("transition-transform duration-500", isNodding ? "translate-y-2" : "animate-bot-look")}>
+             {/* Huge Glossy Eyes */}
+             <g className="animate-bot-blink">
+               <circle cx="30" cy="52" r="11" fill="#1e293b" />
+               <circle cx="27" cy="48" r="3.5" fill="white" className="opacity-90" /> 
+               
+               <circle cx="70" cy="52" r="11" fill="#1e293b" />
+               <circle cx="67" cy="48" r="3.5" fill="white" className="opacity-90" />
+             </g>
+             
+             {/* Blush */}
+             <ellipse cx="26" cy="68" rx="7" ry="3.5" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "opacity-100 scale-125")} />
+             <ellipse cx="74" cy="68" rx="7" ry="3.5" fill="#fecaca" opacity="0.6" className={cn("transition-all duration-300", isHappy && "opacity-100 scale-125")} />
+             
+             {/* Tiny Closed-Smile */}
+             <path d="M46 72 Q 50 76 54 72" fill="none" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
+          </g>
         </g>
-        
-        {/* Blush (Cute Pink) */}
-        <circle cx="28" cy="65" r="4.5" fill="#fecaca" opacity="0.5" className={cn("transition-all", isHappy && "opacity-80 scale-125")} />
-        <circle cx="72" cy="65" r="4.5" fill="#fecaca" opacity="0.5" className={cn("transition-all", isHappy && "opacity-80 scale-125")} />
-        
-        {/* Smile */}
-        <path d="M42 72 Q50 78 58 72" fill="none" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
       </svg>
       
       {isPetting && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Heart className="w-10 h-10 text-rose-400 fill-current animate-heart-float opacity-0" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Heart className="w-12 h-12 text-rose-400 fill-current animate-heart-float opacity-0" />
         </div>
       )}
     </div>
@@ -414,17 +424,16 @@ export function StudioBot() {
       <div 
         className={cn(
           "fixed bottom-8 z-[100] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
-          isShowingFully ? "right-8" : "right-[-40px] sm:right-[-50px]"
+          isShowingFully ? "right-8" : "right-[-48px] sm:right-[-58px]"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         <div className="relative flex flex-col items-center">
-          {/* Pretty Speech Bubble */}
           <div className={cn(
             "absolute px-4 py-2 rounded-2xl bg-white dark:bg-zinc-800 text-foreground text-[10px] font-black uppercase tracking-widest shadow-2xl transition-all duration-300 transform origin-bottom whitespace-nowrap border border-primary/20",
             showBubble ? "animate-bubble-pop" : "opacity-0 scale-50 translate-y-2 pointer-events-none",
-            isShowingFully ? "bottom-full left-1/2 -translate-x-1/2 mb-4" : "right-full mr-5 bottom-1/2 translate-y-1/2"
+            isShowingFully ? "bottom-full left-1/2 -translate-x-1/2 mb-4" : "right-full mr-6 bottom-1/2 translate-y-1/2"
           )}>
             {bubbleText}
             <div className={cn(
@@ -438,13 +447,12 @@ export function StudioBot() {
           <button 
             onClick={handleRobotClick}
             className={cn(
-              "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-500/10 backdrop-blur-md flex items-center justify-center shadow-[0_20px_50px_-10px_rgba(59,130,246,0.5)] border-4 border-white/20 transition-all duration-500 relative group overflow-hidden motion-safe:animate-bot-bob",
+              "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-blue-500/5 backdrop-blur-sm flex items-center justify-center transition-all duration-500 relative group overflow-visible",
               isPetting && "scale-90"
             )}
           >
-            <RobotFace className={cn(isHovered ? "rotate-0" : "rotate-2")} />
-            
-            <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]" />
+            <RobotFace className={cn(isHovered ? "rotate-0" : "rotate-1")} />
+            <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_12px_rgba(74,222,128,0.8)]" />
           </button>
         </div>
       </div>
@@ -459,14 +467,14 @@ export function StudioBot() {
     )}>
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#fefce8] flex items-center justify-center shadow-lg border-2 border-white/20 relative overflow-hidden">
+          <div className="w-12 h-12 rounded-full bg-[#fefce8] flex items-center justify-center shadow-lg border border-white/10 relative overflow-hidden">
             <RobotFace />
           </div>
           <div className="space-y-0.5">
             <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Studio Buddy PRO</h4>
             <div className="flex items-center gap-1.5">
                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-               <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Awaiting Command</span>
+               <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Protocol Monitoring</span>
             </div>
           </div>
         </div>

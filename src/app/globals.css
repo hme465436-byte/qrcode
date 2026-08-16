@@ -234,10 +234,15 @@
     40%, 60% { transform: translateX(3px); }
   }
 
-  @keyframes bot-squash {
-    0%, 100% { transform: scale(1); }
-    20% { transform: scale(1.2, 0.8); }
-    40% { transform: scale(0.9, 1.1); }
+  @keyframes bot-sway {
+    0%, 100% { transform: rotate(-1.5deg); }
+    50% { transform: rotate(1.5deg); }
+  }
+
+  @keyframes bot-wiggle {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(5deg) scale(1.05); }
+    75% { transform: rotate(-5deg) scale(1.05); }
   }
 
   @keyframes bot-nod {
@@ -265,7 +270,8 @@
   .animate-bot-bob { animation: bot-bob 3s ease-in-out infinite; }
   .animate-bot-blink { animation: bot-blink 4s ease-in-out infinite; }
   .animate-bot-look { animation: bot-look 6s ease-in-out infinite; }
-  .animate-bot-squash { animation: bot-squash 0.5s ease-in-out; }
+  .animate-bot-sway { animation: bot-sway 4s ease-in-out infinite; }
+  .animate-bot-wiggle { animation: bot-wiggle 0.3s ease-in-out infinite; }
   .animate-bot-nod { animation: bot-nod 0.4s ease-in-out; }
   .animate-bot-happy-eyes { animation: bot-happy-eyes 0.5s ease-in-out; }
   .animate-heart-float { animation: heart-float 1.5s ease-out forwards; }
