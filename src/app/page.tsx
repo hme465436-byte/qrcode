@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -831,7 +830,9 @@ export default function Home() {
           setTypingSpeed(70);
         }
       } else {
-        setPlaceholder(currentPhrase.substring(0, placeholder.length - 1));
+        // Range Guard: ensure we don't pass negative length to slice/substring
+        const nextLength = Math.max(0, placeholder.length - 1);
+        setPlaceholder(currentPhrase.slice(0, nextLength));
         setTypingSpeed(35);
         if (placeholder.length === 0) {
           setIsDeleting(false);

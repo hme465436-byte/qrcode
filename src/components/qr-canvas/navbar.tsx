@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -206,7 +205,9 @@ export function Navbar() {
           setTypingSpeed(70);
         }
       } else {
-        setPlaceholder(currentPhrase.substring(0, placeholder.length - 1));
+        // Range Guard for string manipulation
+        const nextLen = Math.max(0, placeholder.length - 1);
+        setPlaceholder(currentPhrase.slice(0, nextLen));
         setTypingSpeed(35);
         if (placeholder.length === 0) {
           setIsDeleting(false);
@@ -339,7 +340,7 @@ export function Navbar() {
         </div>
       </header>
 
-      <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+      <Dialog open={isSearchOpen} onOpenChange={(open) => !open && handleClose()}>
         <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-visible outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
           <DialogHeader className="p-6 border-b border-white/5 bg-white/2 relative overflow-visible">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>

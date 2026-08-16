@@ -62,7 +62,7 @@ const TOOLS: Tool[] = [
   { 
     href: '/bulk', 
     title: 'Bulk Production', 
-    desc: 'Generate hundreds of high-res QR assets in a single batch.', 
+    desc: 'Generate hundreds of high-res assets in a single batch.', 
     useCase: 'Inventory labels, mass ticketing, or large-scale retail campaigns.',
     keywords: ['bulk', 'batch', 'mass', 'many', 'zip', 'production', 'multiple qr', 'ek sath qr'],
     filesAllowed: 'Text list (URLs)',
@@ -187,7 +187,7 @@ const PandaMascot = ({ mode, isPetting, isHappy }: { mode: "A" | "B", isPetting:
   const isPoseB = mode === "B";
   return (
     <div className={cn(
-      "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] overflow-visible",
+      "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-in-out overflow-visible",
       isPoseB ? "rotate-[-12deg] origin-right" : "rotate-0"
     )}>
       <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow-2xl overflow-visible">
@@ -471,7 +471,7 @@ export function StudioBot() {
     <>
       <div 
         className={cn(
-          "fixed bottom-[90px] z-[150] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] overflow-visible",
+          "fixed bottom-[90px] z-[150] flex items-end justify-end transition-all duration-700 ease-in-out overflow-visible",
           isOpen ? "opacity-0 pointer-events-none translate-x-20 scale-50" : "opacity-100"
         )}
         style={{ right: isStateShow ? '24px' : '-25px' }}

@@ -107,8 +107,8 @@ export default function EmojiLetterWriterPage() {
               rowStr += emptyChar;
             }
           }
-          // Horizontal gap between characters
-          rowStr += emptyChar.repeat(charGap);
+          // Horizontal gap between characters - Range Guard added
+          rowStr += emptyChar.repeat(Math.max(0, charGap));
         }
         finalResult += rowStr + '\n';
       }
