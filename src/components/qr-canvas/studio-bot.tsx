@@ -183,6 +183,88 @@ const BUBBLE_MESSAGES = [
 
 const GREETING_MESSAGES = ["Hello Hi!", "How are you?", "Hi friend!"];
 
+const PandaMascot = ({ mode, isPetting, isHappy }: { mode: "A" | "B", isPetting: boolean, isHappy: boolean }) => {
+  const isPoseB = mode === "B";
+  return (
+    <div className={cn(
+      "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] overflow-visible",
+      isPoseB ? "rotate-[-12deg] origin-right" : "rotate-0"
+    )}>
+      <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow-2xl overflow-visible">
+        <defs>
+           <filter id="innerShine" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+              <feOffset dx="1" dy="1" />
+              <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowDiff" />
+              <feFlood floodColor="white" floodOpacity="0.4" />
+              <feComposite in2="shadowDiff" operator="in" />
+              <feComposite in2="SourceGraphic" operator="over" />
+           </filter>
+        </defs>
+        
+        <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")} filter="url(#innerShine)">
+          {/* Panda Ears */}
+          <circle cx="22" cy="22" r="12" fill="#1e293b" />
+          <circle cx="78" cy="22" r="12" fill="#1e293b" />
+
+          {/* Small Round Body */}
+          <circle cx="50" cy="90" r="25" fill="#ffffff" stroke="#1e293b" strokeWidth="1.5" />
+          
+          {/* Big Round Head */}
+          <circle cx="50" cy="45" r="38" fill="#ffffff" stroke="#1e293b" strokeWidth="1.5" />
+          
+          {/* Iconic Black Eye Patches */}
+          <ellipse cx="35" cy="48" rx="11" ry="14" fill="#1e293b" transform="rotate(-10, 35, 48)" />
+          <ellipse cx="65" cy="48" rx="11" ry="14" fill="#1e293b" transform="rotate(10, 65, 48)" />
+
+          {/* Shiny Eyes */}
+          <g className="animate-kit-blink">
+             <circle cx="35" cy="48" r="4.5" fill="#ffffff" />
+             <circle cx="33.5" cy="46" r="1.5" fill="#1e293b" />
+             
+             <circle cx="65" cy="48" r="4.5" fill="#ffffff" />
+             <circle cx="63.5" cy="46" r="1.5" fill="#1e293b" />
+          </g>
+
+          {/* Nose & Smile */}
+          <circle cx="50" cy="56" r="3" fill="#1e293b" />
+          <path d="M 47 62 Q 50 64 53 62" stroke="#1e293b" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+
+          {/* Pink Blush */}
+          <circle cx="25" cy="58" r="5" fill="#fda4af" opacity="0.6" className={cn("transition-all", isHappy && "scale-125 opacity-100")} />
+          <circle cx="75" cy="58" r="5" fill="#fda4af" opacity="0.6" className={cn("transition-all", isHappy && "scale-125 opacity-100")} />
+
+          {/* Site Signature: Light Blue Scarf */}
+          <path d="M 32 75 Q 50 82 68 75" stroke="#8EBBF0" strokeWidth="8" strokeLinecap="round" />
+          <path d="M 32 75 L 28 90" stroke="#8EBBF0" strokeWidth="6" strokeLinecap="round" />
+
+          {/* Articulated Appendages */}
+          {isPoseB ? (
+            <g className="animate-kit-grip">
+              {/* Peek Mode: Holding the edge (Grip point X=71) */}
+              <path d="M 58 78 L 71 78" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" />
+              <path d="M 58 92 L 71 92" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" />
+              <circle cx="71" cy="78" r="8" fill="#ffffff" stroke="#1e293b" strokeWidth="1.2" />
+              <circle cx="71" cy="92" r="8" fill="#ffffff" stroke="#1e293b" strokeWidth="1.2" />
+            </g>
+          ) : (
+            <g>
+              {/* Hello Mode: Waving */}
+              <path d="M 35 88 L 22 95" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
+              <circle cx="22" cy="95" r="8" fill="#ffffff" stroke="#1e293b" strokeWidth="1.2" />
+              
+              <g className="origin-[65px_85px] animate-kit-wave">
+                 <path d="M 65 85 L 82 65" stroke="#ffffff" strokeWidth="10" strokeLinecap="round" />
+                 <circle cx="82" cy="65" r="8" fill="#ffffff" stroke="#1e293b" strokeWidth="1.2" />
+              </g>
+            </g>
+          )}
+        </g>
+      </svg>
+    </div>
+  );
+};
+
 export function StudioBot() {
   const pathname = usePathname();
   const { toast } = useToast();
@@ -373,100 +455,8 @@ export function StudioBot() {
     setIsPetting(true);
     setTimeout(() => {
       setIsPetting(false);
-      setIsOpen(!isOpen);
+      setIsOpen(true);
     }, 400);
-  };
-
-  const RobotMascot = ({ mode }: { mode: "A" | "B" }) => {
-    const isPoseB = mode === "B";
-    return (
-      <div className={cn(
-        "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] overflow-visible",
-        isPoseB ? "rotate-[-12deg] origin-right" : "rotate-0"
-      )}>
-        <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow-2xl overflow-visible">
-          <defs>
-             <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
-                <stop offset="0%" stopColor="#fdf6e3" />
-                <stop offset="100%" stopColor="#fefce8" />
-             </radialGradient>
-             <linearGradient id="eyeGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#1e293b" />
-                <stop offset="100%" stopColor="#0f172a" />
-             </linearGradient>
-             <filter id="innerShine" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
-                <feOffset dx="1" dy="1" />
-                <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowDiff" />
-                <feFlood floodColor="white" floodOpacity="0.5" />
-                <feComposite in2="shadowDiff" operator="in" />
-                <feComposite in2="SourceGraphic" operator="over" />
-             </filter>
-          </defs>
-          <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")} filter="url(#innerShine)">
-            {/* Tiny Body */}
-            <rect x="35" y="78" width="30" height="22" rx="10" fill="#bfdbfe" stroke="#1e293b" strokeWidth="1.5" />
-            
-            {/* Big Round Head */}
-            <circle cx="50" cy="45" r="38" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.5" />
-            
-            {/* Huge Glossy Eyes */}
-            <g className="animate-kit-blink">
-               {/* Left Eye */}
-               <circle cx="35" cy="45" r="8" fill="#0f172a" />
-               <circle cx="33" cy="42" r="2.5" fill="white" opacity="0.9" />
-               <circle cx="37" cy="48" r="1" fill="white" opacity="0.5" />
-               
-               {/* Right Eye */}
-               <circle cx="65" cy="45" r="8" fill="#0f172a" />
-               <circle cx="63" cy="42" r="2.5" fill="white" opacity="0.9" />
-               <circle cx="67" cy="48" r="1" fill="white" opacity="0.5" />
-            </g>
-
-            {/* Pink Blush */}
-            <circle cx="28" cy="56" r="4" fill="#fda4af" opacity="0.6" className={cn("transition-all", isHappy && "scale-125 opacity-100")} />
-            <circle cx="72" cy="56" r="4" fill="#fda4af" opacity="0.6" className={cn("transition-all", isHappy && "scale-125 opacity-100")} />
-
-            {/* Tiny Smile */}
-            <path d="M 47 56 Q 50 58 53 56" stroke="#1e293b" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            
-            {/* Tiny Antenna with Heart */}
-            <path d="M 50 7 L 50 15" stroke="#1e293b" strokeWidth="1" strokeLinecap="round" />
-            <path d="M 50 5 C 48 2, 45 4, 50 8 C 55 4, 52 2, 50 5" fill="#f43f5e" stroke="#1e293b" strokeWidth="0.5" className="animate-pulse" />
-            
-            {/* Arms & Small Round Hands */}
-            {isPoseB ? (
-              <g className="animate-kit-grip">
-                {/* Grip Arms */}
-                <path d="M 55 85 L 72 85" stroke="#bfdbfe" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M 55 95 L 72 95" stroke="#bfdbfe" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-                
-                {/* Grip Hands (X=72 is the edge) */}
-                <circle cx="72" cy="85" r="7" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.2" />
-                <circle cx="72" cy="95" r="7" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.2" />
-              </g>
-            ) : (
-              <g>
-                {/* Left Arm/Hand (Static) */}
-                <path d="M 35 85 L 22 92" stroke="#bfdbfe" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="22" cy="92" r="6" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.2" />
-                
-                {/* Right Arm/Hand (Wave Animation) */}
-                <g className="origin-[65px_85px] animate-kit-wave">
-                   <path d="M 65 85 L 80 65" stroke="#bfdbfe" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-                   <circle cx="80" cy="65" r="6" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.2" />
-                </g>
-              </g>
-            )}
-          </g>
-        </svg>
-        {isPetting && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <Heart className="w-12 h-12 text-rose-400 fill-current animate-heart-float opacity-0" />
-          </div>
-        )}
-      </div>
-    );
   };
 
   const isStateShow = isOpen || isInitialShow;
@@ -476,6 +466,7 @@ export function StudioBot() {
       <div 
         className={cn(
           "fixed bottom-[90px] z-[150] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] overflow-visible",
+          isOpen ? "opacity-0 pointer-events-none translate-x-20 scale-50" : "opacity-100"
         )}
         style={{ right: isStateShow ? '24px' : '-25px' }}
       >
@@ -501,7 +492,7 @@ export function StudioBot() {
               isPetting && "scale-90"
             )}
           >
-            <RobotMascot mode={isStateShow ? "A" : "B"} />
+            <PandaMascot mode={isStateShow ? "A" : "B"} isPetting={isPetting} isHappy={isHappy} />
             {!isOpen && (
               <div className="absolute top-4 right-4 w-3.5 h-3.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_15px_rgba(74,222,128,0.8)]" />
             )}
@@ -516,7 +507,7 @@ export function StudioBot() {
         <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center shadow-lg border border-white/10 relative overflow-hidden">
-              <RobotMascot mode="A" />
+              <PandaMascot mode="A" isPetting={false} isHappy={false} />
             </div>
             <div className="space-y-0.5">
               <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Astro • Assistant</h4>
@@ -741,3 +732,4 @@ export function StudioBot() {
     </>
   );
 }
+
