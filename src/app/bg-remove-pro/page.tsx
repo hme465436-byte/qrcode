@@ -38,7 +38,6 @@ export default function BGRemoveProPage() {
   const { toast } = useToast();
   const [image, setImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isManualMode, setIsManualMode] = useState(true);
   const [brushSize, setBrushSize] = useState(30);
   const [toolMode, setToolMode] = useState<'erase' | 'restore'>('erase');
   const [zoom, setZoom] = useState(1);
@@ -156,10 +155,10 @@ export default function BGRemoveProPage() {
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
     if (!image) return;
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
-    if (e.altKey || (e as any).button === 1) {
+    if ((e as React.MouseEvent).altKey || (e as any).button === 1) {
       isDragging.current = true;
       lastMousePos.current = { x: clientX, y: clientY };
     } else {
@@ -171,8 +170,8 @@ export default function BGRemoveProPage() {
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!image) return;
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
     if (isDragging.current) {
       const dx = clientX - lastMousePos.current.x;
@@ -241,8 +240,7 @@ export default function BGRemoveProPage() {
       data[i] = 255 - data[i];         // R
       data[i + 1] = 255 - data[i + 1]; // G
       data[i + 2] = 255 - data[i + 2]; // B
-      // A stays or gets inverted based on usage, but for destination-in we use Alpha
-      data[i + 3] = 255 - data[i + 3];
+      data[i + 3] = 255 - data[i + 3]; // A
     }
     ctx.putImageData(imgData, 0, 0);
     drawWorkspace();
@@ -260,7 +258,6 @@ export default function BGRemoveProPage() {
 
   const handleClear = () => {
     setImage(null);
-    setLoadedImage(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
     toast({ title: "Workspace Reset", description: "Buffers cleared." });
   };
