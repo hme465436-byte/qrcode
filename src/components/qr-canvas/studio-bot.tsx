@@ -380,43 +380,55 @@ export function StudioBot() {
       )}>
         <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow-xl overflow-visible">
           <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")}>
-            {/* Body */}
-            <rect x="25" y="65" width="50" height="40" rx="10" fill="#94a3b8" />
-            <rect x="30" y="70" width="40" height="15" rx="4" fill="#1e293b" opacity="0.2" />
+            {/* Body - Soft Cream Metal */}
+            <rect x="22" y="65" width="56" height="42" rx="14" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+            <rect x="28" y="72" width="44" height="18" rx="8" fill="#bfdbfe" opacity="0.6" />
             
-            {/* Head */}
-            <circle cx="50" cy="45" r="30" fill="#cbd5e1" stroke="#1e293b" strokeWidth="1" />
+            {/* Head - Smooth Round */}
+            <circle cx="50" cy="45" r="32" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
             
-            {/* Visor */}
-            <rect x="30" y="38" width="40" height="18" rx="9" fill="#1e293b" />
+            {/* Visor - Baby Blue Metal */}
+            <rect x="28" y="36" width="44" height="20" rx="10" fill="#1e293b" />
             
-            {/* Eyes */}
+            {/* Eyes - Glossy & Shiny */}
             <g className="animate-kit-blink">
-               <circle cx="40" cy="47" r="4" fill="#3b82f6" className={cn("transition-all duration-300", isHappy && "scale-150")} />
-               <circle cx="60" cy="47" r="4" fill="#3b82f6" className={cn("transition-all duration-300", isHappy && "scale-150")} />
+               <circle cx="38" cy="46" r="5" fill="#60a5fa" className={cn("transition-all duration-300", isHappy && "scale-150")} />
+               <circle cx="36" cy="44" r="1.5" fill="white" opacity="0.8" />
+               
+               <circle cx="62" cy="46" r="5" fill="#60a5fa" className={cn("transition-all duration-300", isHappy && "scale-150")} />
+               <circle cx="60" cy="44" r="1.5" fill="white" opacity="0.8" />
             </g>
+
+            {/* Blush */}
+            <circle cx="30" cy="52" r="3" fill="#fda4af" opacity="0.3" />
+            <circle cx="70" cy="52" r="3" fill="#fda4af" opacity="0.3" />
+
+            {/* Mouth */}
+            <path d="M 47 52 Q 50 54 53 52" stroke="#1e293b" strokeWidth="1" fill="none" strokeLinecap="round" />
             
-            {/* Antenna */}
-            <line x1="50" y1="15" x2="50" y2="25" stroke="#1e293b" strokeWidth="2" />
-            <circle cx="50" cy="12" r="4" fill="#3b82f6" className="animate-pulse" />
+            {/* Antenna - Springy */}
+            <path d="M 50 15 L 50 22" stroke="#1e293b" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="50" cy="12" r="4" fill="#60a5fa" className="animate-pulse shadow-lg" />
             
-            {/* Arms & Hands */}
+            {/* Arms & Hands - Separate Paths */}
             {isPoseB ? (
-              <g>
-                {/* Gripping Hands at Viewport Edge */}
-                <circle cx="35" cy="55" r="7" fill="#cbd5e1" stroke="#1e293b" strokeWidth="2" className="animate-kit-grip" />
-                <circle cx="35" cy="85" r="7" fill="#cbd5e1" stroke="#1e293b" strokeWidth="2" className="animate-kit-grip" />
+              <g className="animate-kit-grip">
+                {/* Gripping Hands at Edge */}
+                <path d="M 22 75 L 12 75" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" strokeDasharray="0" />
+                <path d="M 22 88 L 12 88" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" strokeDasharray="0" />
+                <circle cx="12" cy="75" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+                <circle cx="12" cy="88" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
               </g>
             ) : (
               <g>
                 {/* Left Arm/Hand */}
-                <path d="M 25 80 L 10 95" stroke="#94a3b8" strokeWidth="6" strokeLinecap="round" />
-                <circle cx="10" cy="95" r="7" fill="#cbd5e1" stroke="#1e293b" strokeWidth="2" />
+                <path d="M 22 80 L 10 95" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
+                <circle cx="10" cy="95" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
                 
-                {/* Right Arm/Hand - Waving */}
-                <g className="origin-[75px_80px] animate-kit-wave">
-                   <path d="M 75 80 L 85 55" stroke="#94a3b8" strokeWidth="8" strokeLinecap="round" />
-                   <circle cx="85" cy="55" r="7" fill="#cbd5e1" stroke="#1e293b" strokeWidth="2" />
+                {/* Right Arm/Hand - Springy Wave */}
+                <g className="origin-[78px_80px] animate-kit-wave">
+                   <path d="M 78 80 L 88 55" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
+                   <circle cx="88" cy="55" r="8" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
                 </g>
               </g>
             )}
@@ -459,7 +471,7 @@ export function StudioBot() {
           <button 
             onClick={handleMascotClick}
             className={cn(
-              "w-24 h-24 rounded-full bg-blue-500/5 backdrop-blur-sm flex items-center justify-center transition-all duration-500 relative group overflow-visible",
+              "w-24 h-24 rounded-full bg-primary/5 backdrop-blur-sm flex items-center justify-center transition-all duration-500 relative group overflow-visible",
               isPetting && "scale-90"
             )}
           >
@@ -484,7 +496,7 @@ export function StudioBot() {
               <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Astro • Assistant</h4>
               <div className="flex items-center gap-1.5">
                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                 <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Active Listening</span>
+                 <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Active Monitoring</span>
               </div>
             </div>
           </div>
@@ -671,15 +683,15 @@ export function StudioBot() {
 
         @keyframes kit-wave {
           0%, 100% { transform: rotate(0deg); }
-          50% { transform: rotate(-25deg); }
+          50% { transform: rotate(-28deg); }
         }
         .animate-kit-wave { animation: kit-wave 0.8s ease-in-out infinite; }
 
         @keyframes kit-grip-adjust {
           0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(3px); }
+          50% { transform: translateX(4px); }
         }
-        .animate-kit-grip { animation: kit-grip-adjust 2s ease-in-out infinite; }
+        .animate-kit-grip { animation: kit-grip-adjust 1.5s ease-in-out infinite; }
       `}</style>
     </>
   );
