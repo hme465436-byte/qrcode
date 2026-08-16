@@ -11,7 +11,6 @@ import {
   Maximize2, 
   Info,
   CheckCircle2,
-  Loader2,
   Layers,
   Palette,
   Eye,
@@ -24,11 +23,8 @@ import {
   MousePointer2,
   Settings2,
   ShieldCheck,
-  AlertCircle,
-  Sparkles,
   Search,
-  X,
-  Undo2
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +32,6 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { removeBackground } from "@imgly/background-removal";
 
 export default function BGRemoveProPage() {
   const { toast } = useToast();
@@ -44,8 +39,6 @@ export default function BGRemoveProPage() {
   // Image states
   const [image, setImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [loadingStatus, setLoadingStatus] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
   // Brush settings
   const [brushSize, setBrushSize] = useState(30);
@@ -115,79 +108,6 @@ export default function BGRemoveProPage() {
     ctx.restore();
   }, [displayMode, bgColor]);
 
-  /**
-   * Auto Removal Logic via @imgly/background-removal
-   * Features a fail-safe timeout protocol to prevent hanging promises
-   */
-  const executeAutoRemove = async (imageSource: string) => {
-    setIsProcessing(true);
-    setLoadingStatus('Removing background...');
-    setError(null);
-    
-    const timeoutSeconds = 40;
-    
-    try {
-      // Fail-safe Timeout Matrix
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), timeoutSeconds * 1000)
-      );
-
-      const removalPromise = removeBackground(imageSource, {
-        progress: (key, current, total) => {
-          setLoadingStatus(`Removing background: ${Math.round((current / total) * 100)}%`);
-        }
-      });
-
-      const blob = await Promise.race([removalPromise, timeoutPromise]) as Blob;
-
-      const processedUrl = URL.createObjectURL(blob);
-      const processedImg = new Image();
-      processedImg.crossOrigin = "anonymous";
-      
-      processedImg.onload = () => {
-        const maskCanvas = maskCanvasRef.current;
-        if (!maskCanvas) return;
-        const mCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
-        if (!mCtx) return;
-
-        mCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-        mCtx.drawImage(processedImg, 0, 0);
-        
-        // Convert the semi-transparent output to a solid white mask for the manual editor
-        const imgData = mCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 4) {
-          if (data[i + 3] > 0) {
-            data[i] = 255;
-            data[i + 1] = 255;
-            data[i + 2] = 255;
-            data[i + 3] = 255;
-          }
-        }
-        mCtx.putImageData(imgData, 0, 0);
-
-        URL.revokeObjectURL(processedUrl);
-        setIsProcessing(false);
-        setLoadingStatus('');
-        drawWorkspace();
-        toast({ title: "Auto-Extraction Ready", description: "Subject isolated for refinement." });
-      };
-      processedImg.src = processedUrl;
-    } catch (err: any) {
-      console.error('Auto remove failure:', err);
-      const msg = err.message === "Timeout" 
-        ? "Auto-removal timed out. Please proceed with Manual controls." 
-        : "Auto-removal failed. The visual matrix is too complex. Proceeding to Manual Mode.";
-      
-      setError(msg);
-      setIsProcessing(false);
-      setLoadingStatus('');
-      
-      // Ensure the manual tool still shows the image if auto fails
-      drawWorkspace();
-    }
-  };
-
   useEffect(() => {
     drawWorkspace();
   }, [drawWorkspace]);
@@ -197,8 +117,6 @@ export default function BGRemoveProPage() {
     if (!file) return;
 
     setIsProcessing(true);
-    setLoadingStatus('Initializing...');
-    setError(null);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -218,7 +136,7 @@ export default function BGRemoveProPage() {
           maskCanvas.width = img.width;
           maskCanvas.height = img.height;
           
-          // Initial mask: fully opaque for manual fallback
+          // Initial mask: fully opaque for manual editing
           const mCtx = maskCanvas.getContext('2d');
           if (mCtx) {
             mCtx.fillStyle = 'white';
@@ -228,9 +146,8 @@ export default function BGRemoveProPage() {
           setZoom(1);
           setPan({ x: 0, y: 0 });
           drawWorkspace();
-          
-          // Trigger the AI extraction pass
-          executeAutoRemove(result);
+          setIsProcessing(false);
+          toast({ title: "Asset Imported", description: "Studio ready for manual masking." });
         }
       };
       img.src = result;
@@ -278,7 +195,7 @@ export default function BGRemoveProPage() {
   };
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!image || isProcessing) return;
+    if (!image) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
@@ -295,7 +212,7 @@ export default function BGRemoveProPage() {
   };
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!image || isProcessing) return;
+    if (!image) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
@@ -320,7 +237,6 @@ export default function BGRemoveProPage() {
     const link = document.createElement('a');
     link.download = `mykit-pro-mask-${Date.now()}.png`;
     
-    // Final composite render for high quality export
     const finalCanvas = document.createElement('canvas');
     finalCanvas.width = mainImageRef.current!.width;
     finalCanvas.height = mainImageRef.current!.height;
@@ -333,7 +249,7 @@ export default function BGRemoveProPage() {
 
     link.href = finalCanvas.toDataURL('image/png', 1.0);
     link.click();
-    toast({ title: "Asset Exported", description: "High-resolution PNG master saved." });
+    toast({ title: "Asset Exported", description: "Transparent PNG master saved." });
   };
 
   const resetMask = () => {
@@ -351,7 +267,6 @@ export default function BGRemoveProPage() {
   const handleClear = () => {
     setImage(null);
     mainImageRef.current = null;
-    setError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
     toast({ title: "Studio Reset", description: "Buffers cleared." });
   };
@@ -360,7 +275,7 @@ export default function BGRemoveProPage() {
     <div className="container mx-auto px-6 py-12 md:py-20 max-w-full">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Eraser className="w-3.5 h-3.5" /> High-Fidelity Suite
+          <Eraser className="w-3.5 h-3.5" /> Manual Mask Studio
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
            <div>
@@ -368,7 +283,7 @@ export default function BGRemoveProPage() {
                 BG Remove <span className="text-primary italic">Pro</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed uppercase tracking-tighter">
-                Professional-grade background extraction. 100% private local re-matricing occurring strictly in your browser.
+                Precision manual background extraction. 100% private local masking occurring strictly in your browser.
               </p>
            </div>
         </div>
@@ -380,7 +295,7 @@ export default function BGRemoveProPage() {
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                <Settings2 className="w-5 h-5 text-primary" /> Refinement Protocols
+                <Settings2 className="w-5 h-5 text-primary" /> Brushing Protocols
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
@@ -396,7 +311,7 @@ export default function BGRemoveProPage() {
                     )}
                   >
                     <Eraser className="w-4 h-4" />
-                    <span className="text-[8px] font-black uppercase tracking-widest">Neutralize</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest">Erase</span>
                   </button>
                   <button
                     onClick={() => setToolMode('restore')}
@@ -506,7 +421,7 @@ export default function BGRemoveProPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Sovereign</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                All image re-matricing happens locally. Hardware memory isolation ensures zero-leakage.
+                All image masking happens locally. Hardware memory isolation ensures zero-leakage.
               </p>
             </div>
           </div>
@@ -523,7 +438,7 @@ export default function BGRemoveProPage() {
               {image && (
                 <div className="flex items-center gap-4">
                   <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
-                    {isProcessing ? 'Processing...' : 'Verified'}
+                    Studio Active
                   </div>
                   <Button variant="ghost" size="icon" onClick={handleClear} className="h-10 w-10 rounded-xl text-foreground/20 hover:text-destructive">
                     <Trash2 className="w-4 h-4" />
@@ -542,7 +457,7 @@ export default function BGRemoveProPage() {
                     </div>
                     <div className="mt-8 space-y-3">
                       <h3 className="text-sm font-black text-white/40 uppercase tracking-[0.3em]">Import Source Asset</h3>
-                      <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest max-w-xs mx-auto">High-res JPG, PNG, or WebP recommended for best edge detection.</p>
+                      <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest max-w-xs mx-auto">High-res JPG, PNG, or WebP recommended.</p>
                     </div>
                     <input 
                       type="file" 
@@ -577,51 +492,25 @@ export default function BGRemoveProPage() {
                        <canvas ref={maskCanvasRef} className="hidden" />
                     </div>
 
-                    {/* HUD Layer */}
-                    {isProcessing && (
-                      <div className="absolute inset-0 bg-[#060608]/80 backdrop-blur-xl z-50 flex flex-col items-center justify-center gap-6 p-12 text-center">
-                         <div className="relative">
-                            <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                            <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
-                         </div>
-                         <div className="space-y-2">
-                            <p className="text-xl font-headline font-black text-white uppercase tracking-tight">{loadingStatus}</p>
-                            <p className="text-[10px] text-primary font-black uppercase tracking-[0.4em]">Please wait...</p>
-                         </div>
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-4">
+                      <div className="px-5 py-2.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 flex items-center gap-6 shadow-2xl">
+                          <div className="flex items-center gap-4">
+                            <button onClick={() => setZoom(z => Math.max(0.1, z - 0.2))} className="text-white/40 hover:text-white"><ZoomOut className="w-4 h-4" /></button>
+                            <span className="text-[10px] font-mono font-black text-primary w-12 text-center">{(zoom * 100).toFixed(0)}%</span>
+                            <button onClick={() => setZoom(z => Math.min(8, z + 0.2))} className="text-white/40 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
+                          </div>
+                          <div className="w-[1px] h-4 bg-white/10" />
+                          <div className="flex items-center gap-3">
+                             <MousePointer2 className="w-4 h-4 text-primary" />
+                             <span className="text-[9px] font-black uppercase text-white/40 tracking-widest">ALT + DRAG TO PAN</span>
+                          </div>
                       </div>
-                    )}
-
-                    {error && (
-                      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4">
-                         <div className="px-6 py-3 rounded-2xl bg-destructive text-white flex items-center gap-4 shadow-2xl">
-                            <AlertCircle className="w-5 h-5" />
-                            <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
-                            <button onClick={() => setError(null)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
-                         </div>
-                      </div>
-                    )}
-
-                    {!isProcessing && (
-                      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-4">
-                        <div className="px-5 py-2.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 flex items-center gap-6 shadow-2xl">
-                            <div className="flex items-center gap-4">
-                              <button onClick={() => setZoom(z => Math.max(0.1, z - 0.2))} className="text-white/40 hover:text-white"><ZoomOut className="w-4 h-4" /></button>
-                              <span className="text-[10px] font-mono font-black text-primary w-12 text-center">{(zoom * 100).toFixed(0)}%</span>
-                              <button onClick={() => setZoom(z => Math.min(8, z + 0.2))} className="text-white/40 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
-                            </div>
-                            <div className="w-[1px] h-4 bg-white/10" />
-                            <div className="flex items-center gap-3">
-                               <MousePointer2 className="w-4 h-4 text-primary" />
-                               <span className="text-[9px] font-black uppercase text-white/40 tracking-widest">ALT + DRAG TO PAN</span>
-                            </div>
-                        </div>
-                      </div>
-                    )}
+                    </div>
                  </div>
                )}
             </CardContent>
             
-            {image && !isProcessing && (
+            {image && (
               <div className="p-8 border-t border-border bg-[#0a0a0c]">
                  <div className="flex flex-col sm:flex-row gap-4">
                     <Button 
@@ -629,7 +518,7 @@ export default function BGRemoveProPage() {
                       className="flex-[2] h-16 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                     >
                       <Save className="w-6 h-6" />
-                      Download Result
+                      Download Transparent PNG
                     </Button>
                  </div>
               </div>
