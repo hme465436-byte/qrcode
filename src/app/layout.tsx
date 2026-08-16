@@ -3,6 +3,7 @@ import './globals.css';
 import { Navbar } from '@/components/qr-canvas/navbar';
 import { Footer } from '@/components/qr-canvas/footer';
 import { Toaster } from '@/components/ui/toaster';
+import { StudioBot } from '@/components/qr-canvas/studio-bot';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -57,6 +58,7 @@ export default function RootLayout({
         <main className="min-h-screen pt-16 w-full max-w-full">
           {children}
         </main>
+        <StudioBot />
         <Footer />
         <Toaster />
       </body>
