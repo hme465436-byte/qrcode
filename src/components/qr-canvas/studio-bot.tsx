@@ -221,7 +221,6 @@ export function StudioBot() {
           setBubbleText(GREETING_MESSAGES[count]);
         } else {
           clearInterval(interval);
-          // Initial greeting bubble stays until hide timer kicks in below
         }
       }, 1500);
       
@@ -443,29 +442,29 @@ export function StudioBot() {
             {isPoseB ? (
               <g className="animate-kit-grip">
                 {/* Longer, reachy arms for Peek Mode (Grip point X=71) */}
-                <path d="M 58 75 L 71 75" stroke="#fdf6e3" strokeWidth="10" strokeLinecap="round" strokeJoin="round" />
-                <path d="M 58 88 L 71 88" stroke="#fdf6e3" strokeWidth="10" strokeLinecap="round" strokeJoin="round" />
+                <path d="M 58 75 L 71 75" stroke="#fdf6e3" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M 58 88 L 71 88" stroke="#fdf6e3" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
                 
                 {/* Gripping Claws wrapping the edge */}
                 <g transform="translate(71, 75)">
                    <circle r="9" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
-                   <path d="M -3 -11 Q 5 -6 5 0 Q 5 6 -3 11" stroke="#1e293b" strokeWidth="3" fill="none" strokeLinecap="round" />
-                   <path d="M -2 -11 Q 6 -6 6 0 Q 6 6 -2 11" stroke="white" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4" />
+                   <path d="M -3 -11 Q 5 -6 5 0 Q 5 6 -3 11" stroke="#1e293b" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                   <path d="M -2 -11 Q 6 -6 6 0 Q 6 6 -2 11" stroke="white" strokeWidth="1" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
                 </g>
                 <g transform="translate(71, 88)">
                    <circle r="9" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
-                   <path d="M -3 -11 Q 5 -6 5 0 Q 5 6 -3 11" stroke="#1e293b" strokeWidth="3" fill="none" strokeLinecap="round" />
-                   <path d="M -2 -11 Q 6 -6 6 0 Q 6 6 -2 11" stroke="white" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4" />
+                   <path d="M -3 -11 Q 5 -6 5 0 Q 5 6 -3 11" stroke="#1e293b" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                   <path d="M -2 -11 Q 6 -6 6 0 Q 6 6 -2 11" stroke="white" strokeWidth="1" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
                 </g>
               </g>
             ) : (
               <g>
-                <path d="M 22 80 L 10 95" stroke="#fdf6e3" strokeWidth="8" strokeLinecap="round" />
+                <path d="M 22 80 L 10 95" stroke="#fdf6e3" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="10" cy="95" r="7.5" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
                 
                 {/* Hello Wave Arm */}
                 <g className="origin-[78px_80px] animate-kit-wave">
-                   <path d="M 78 80 L 88 55" stroke="#fdf6e3" strokeWidth="8" strokeLinecap="round" />
+                   <path d="M 78 80 L 88 55" stroke="#fdf6e3" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
                    <circle cx="88" cy="55" r="7.5" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
                 </g>
               </g>
@@ -574,7 +573,7 @@ export function StudioBot() {
                          <div className="flex items-center justify-between border-b border-primary/10 pb-4">
                             <div className="flex items-center gap-3">
                                <CheckCircle2 className="w-4 h-4 text-primary" />
-                               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">{msg.toolInfo.title}</h4>
+                               <h4 className="text-[11px] font-black uppercase tracking-widest">{msg.toolInfo.title}</h4>
                             </div>
                             <button onClick={() => copySteps(msg.toolInfo!)} className="text-foreground/20 hover:text-primary transition-colors">
                               <Copy className="w-3.5 h-3.5" />
