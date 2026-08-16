@@ -7,7 +7,6 @@ import {
   Layers, 
   Zap, 
   ShieldCheck, 
-  Palette, 
   Download,
   ArrowRight,
   Smartphone,
@@ -25,6 +24,7 @@ import {
   CaseSensitive,
   RefreshCcw,
   Pipette,
+  Palette,
   ShieldAlert,
   EyeOff,
   ListMusic,
@@ -49,21 +49,17 @@ import {
   Split,
   FileImage,
   RotateCw,
-  Unlock,
   Activity,
   Mic,
   Command,
-  Heart,
   Play,
-  RotateCcw,
-  List,
   Table,
   FileJson,
-  Braces,
   SquareUser,
-  Camera,
-  Sparkles,
-  Wand2
+  Wand2,
+  List,
+  RotateCcw,
+  Unlock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -509,7 +505,7 @@ const TOOLS = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg']
   },
@@ -519,7 +515,7 @@ const TOOLS = [
     title: 'Video to GIF', 
     desc: 'Synthesize high-quality animated GIFs from clips.', 
     label: 'ANIMATION', 
-    color: 'text-orange-600 bg-orange-500/10 border-orange-600/20',
+    color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
     glowClass: 'bg-orange-500/10',
     keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip']
   },
@@ -605,6 +601,72 @@ const TOOLS = [
   }
 ];
 
+// Memoized Card component to prevent expensive re-renders
+const ToolItem = React.memo(({ item, mode }: { item: typeof TOOLS[0], mode: 'grid' | 'list' }) => {
+  const isGrid = mode === 'grid';
+
+  return (
+    <Link 
+      href={item.href} 
+      className={cn(
+        "group relative flex transition-all duration-300",
+        isGrid ? "flex-col h-full" : "w-full"
+      )}
+    >
+      <div className={cn(
+        "relative flex-1 flex rounded-[2.5rem] bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 shadow-2xl group-hover:shadow-primary/5 overflow-hidden",
+        isGrid ? "flex-col p-8 hover:-translate-y-2 text-left" : "flex-row items-center p-6 hover:-translate-x-1 gap-6"
+      )}>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        <div className={cn(
+          "rounded-2xl flex items-center justify-center border transition-all duration-500 icon-container-3d relative z-10 shrink-0",
+          isGrid ? "w-14 h-14 mb-10" : "w-12 h-12",
+          item.color
+        )}>
+          <item.icon className={cn("icon-3d", isGrid ? "w-7 h-7" : "w-6 h-6")} />
+          <div className={cn("absolute inset-0 blur-xl opacity-20 transition-opacity group-hover:opacity-40", item.glowClass)} />
+        </div>
+
+        <div className="relative z-10 space-y-4 flex-1 min-w-0">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
+              {isGrid && <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />}
+            </div>
+            <h3 className={cn(
+              "font-headline font-black text-foreground uppercase tracking-tight leading-none group-hover:text-primary transition-colors truncate",
+              isGrid ? "text-xl" : "text-lg"
+            )}>
+              {item.title}
+            </h3>
+          </div>
+          <p className={cn(
+            "text-sm text-foreground/40 leading-relaxed font-medium",
+            isGrid ? "line-clamp-2" : "truncate"
+          )}>
+            {item.desc}
+          </p>
+          {isGrid && (
+            <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+              Initialize <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
+            </div>
+          )}
+        </div>
+
+        {!isGrid && (
+          <div className="flex items-center gap-3 shrink-0 relative z-10 ml-auto">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/0 group-hover:text-primary transition-all translate-x-2 group-hover:translate-x-0 hidden sm:inline-block">Open Studio</span>
+            <ArrowRight className="w-5 h-5 text-primary/20 group-hover:text-primary transition-all group-hover:translate-x-1 icon-3d" />
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+});
+
+ToolItem.displayName = 'ToolItem';
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -687,7 +749,7 @@ export default function Home() {
             <div className="inline-flex p-1.5 rounded-2xl bg-secondary/50 border border-white/5 backdrop-blur-xl relative group/toggle shadow-2xl">
                <div 
                   className={cn(
-                    "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-primary rounded-xl transition-all duration-500 shadow-lg shadow-primary/20",
+                    "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-primary rounded-xl transition-all duration-300 shadow-lg shadow-primary/20",
                     viewMode === 'grid' ? "left-1.5" : "left-[calc(50%+1.5px)]"
                   )}
                />
@@ -712,75 +774,19 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Tool Matrix */}
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
-              {filteredTools.length > 0 ? (
-                filteredTools.map((item, i) => (
-                  <Link key={i} href={item.href} className="group relative flex flex-col h-full">
-                    <div className="relative flex-1 flex flex-col p-8 rounded-[2.5rem] bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 hover:-translate-y-2 text-left shadow-2xl group-hover:shadow-primary/5 overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <div className={cn(
-                        "w-14 h-14 rounded-2xl flex items-center justify-center mb-10 border transition-all duration-500 icon-container-3d relative z-10",
-                        item.color
-                      )}>
-                        <item.icon className="w-7 h-7 icon-3d" />
-                        <div className={cn("absolute inset-0 blur-xl opacity-20 transition-opacity group-hover:opacity-40", item.glowClass)} />
-                      </div>
-                      <div className="relative z-10 space-y-4 flex-1 flex flex-col">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />
-                          </div>
-                          <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight leading-none group-hover:text-primary transition-colors">{item.title}</h3>
-                        </div>
-                        <p className="text-sm text-foreground/40 leading-relaxed font-medium line-clamp-2">{item.desc}</p>
-                        <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-                          Initialize <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <EmptyState onReset={() => setSearchQuery('')} />
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
-               {filteredTools.length > 0 ? (
-                filteredTools.map((item, i) => (
-                  <Link 
-                    key={i} 
-                    href={item.href} 
-                    className="group relative flex items-center gap-6 p-6 rounded-[2rem] bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 hover:-translate-x-1 shadow-2xl overflow-hidden"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className={cn(
-                      "w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-500 icon-container-3d relative z-10 shrink-0",
-                      item.color
-                    )}>
-                      <item.icon className="w-6 h-6 icon-3d" />
-                    </div>
-                    <div className="flex-1 min-w-0 text-left relative z-10">
-                      <div className="flex items-center gap-3 mb-0.5">
-                         <h3 className="text-lg font-headline font-black text-foreground uppercase tracking-tight group-hover:text-primary transition-colors truncate">{item.title}</h3>
-                         <span className="text-[8px] font-black text-primary/40 uppercase tracking-widest border border-primary/20 px-2 py-0.5 rounded-full hidden sm:inline-block">{item.label}</span>
-                      </div>
-                      <p className="text-sm text-foreground/40 font-medium truncate">{item.desc}</p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0 relative z-10">
-                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/0 group-hover:text-primary transition-all translate-x-2 group-hover:translate-x-0 hidden sm:inline-block">Open Studio</span>
-                       <ArrowRight className="w-5 h-5 text-primary/20 group-hover:text-primary transition-all group-hover:translate-x-1 icon-3d" />
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <EmptyState onReset={() => setSearchQuery('')} />
-              )}
-            </div>
-          )}
+          {/* Unified Tool Matrix Container */}
+          <div className={cn(
+            "w-full transition-all duration-300",
+            viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "flex flex-col gap-4 max-w-4xl mx-auto"
+          )}>
+            {filteredTools.length > 0 ? (
+              filteredTools.map((item) => (
+                <ToolItem key={item.href} item={item} mode={viewMode} />
+              ))
+            ) : (
+              <EmptyState onReset={() => setSearchQuery('')} />
+            )}
+          </div>
         </div>
       </section>
 
