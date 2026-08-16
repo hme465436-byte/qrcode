@@ -208,7 +208,7 @@ export function StudioBot() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initial Greeting Rotation Protocol
+  // Initial Greeting Protocol
   useEffect(() => {
     if (isInitialShow && !isOpen) {
       let count = 0;
@@ -221,7 +221,7 @@ export function StudioBot() {
           setBubbleText(GREETING_MESSAGES[count]);
         } else {
           clearInterval(interval);
-          setShowBubble(false);
+          // Initial greeting bubble stays until hide timer kicks in below
         }
       }, 1500);
       
@@ -229,11 +229,19 @@ export function StudioBot() {
     }
   }, [isInitialShow, isOpen]);
 
+  // Hide logic for initial arrival
   useEffect(() => {
-    const initialShowTimer = setTimeout(() => {
-      setIsInitialShow(false);
+    const timer = setTimeout(() => {
+      if (!isOpen) {
+        setIsInitialShow(false);
+        setShowBubble(false);
+      }
     }, 5000);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
+  // Periodic random bubble logic
+  useEffect(() => {
     const triggerBubble = () => {
       if (isOpen || isMinimized || isInitialShow) return;
       const nextMsg = BUBBLE_MESSAGES[Math.floor(Math.random() * BUBBLE_MESSAGES.length)];
@@ -250,7 +258,6 @@ export function StudioBot() {
 
     return () => { 
       if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current); 
-      clearTimeout(initialShowTimer);
       clearTimeout(startDelayTimer);
     };
   }, [isOpen, isMinimized, isInitialShow]);
@@ -375,14 +382,14 @@ export function StudioBot() {
     const isPoseB = mode === "B";
     return (
       <div className={cn(
-        "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
-        isPoseB ? "rotate-[-12deg]" : "rotate-0"
+        "relative w-full h-full flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] overflow-visible",
+        isPoseB ? "rotate-[-12deg] origin-right" : "rotate-0"
       )}>
         <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow-2xl overflow-visible">
           <defs>
              <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
-                <stop offset="0%" stopColor="#fefce8" />
-                <stop offset="100%" stopColor="#fef3c7" />
+                <stop offset="0%" stopColor="#fdf6e3" />
+                <stop offset="100%" stopColor="#fefce8" />
              </radialGradient>
              <linearGradient id="visorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#1e293b" />
@@ -392,28 +399,33 @@ export function StudioBot() {
                 <stop offset="0%" stopColor="#60a5fa" />
                 <stop offset="100%" stopColor="#2563eb" />
              </radialGradient>
+             <filter id="innerShine" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+                <feOffset dx="1" dy="1" />
+                <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowDiff" />
+                <feFlood floodColor="white" floodOpacity="0.4" />
+                <feComposite in2="shadowDiff" operator="in" />
+                <feComposite in2="SourceGraphic" operator="over" />
+             </filter>
           </defs>
-          <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")}>
+          <g className={cn("transition-transform duration-300", isPetting ? "animate-kit-wiggle" : "animate-kit-sway")} filter="url(#innerShine)">
             {/* Body */}
             <rect x="22" y="65" width="56" height="42" rx="14" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.5" />
             <rect x="28" y="72" width="44" height="18" rx="8" fill="#bfdbfe" opacity="0.4" />
             
-            {/* Head - Premium Shading */}
+            {/* Head */}
             <circle cx="50" cy="45" r="32" fill="url(#bodyGrad)" stroke="#1e293b" strokeWidth="1.5" />
-            <circle cx="40" cy="30" r="10" fill="white" opacity="0.15" /> {/* Highlight */}
             
             {/* Visor */}
             <rect x="28" y="36" width="44" height="20" rx="10" fill="url(#visorGrad)" />
             
-            {/* Eyes - Glossy Specs */}
+            {/* Eyes */}
             <g className="animate-kit-blink">
                <circle cx="38" cy="46" r="5" fill="url(#eyeGlow)" className={cn("transition-all duration-300", isHappy && "scale-125")} />
                <circle cx="37" cy="44" r="1.5" fill="white" opacity="0.9" />
-               <circle cx="39" cy="47" r="0.8" fill="white" opacity="0.3" />
                
                <circle cx="62" cy="46" r="5" fill="url(#eyeGlow)" className={cn("transition-all duration-300", isHappy && "scale-125")} />
                <circle cx="61" cy="44" r="1.5" fill="white" opacity="0.9" />
-               <circle cx="63" cy="47" r="0.8" fill="white" opacity="0.3" />
             </g>
 
             {/* Blush */}
@@ -427,26 +439,34 @@ export function StudioBot() {
             <path d="M 50 15 L 50 22" stroke="#1e293b" strokeWidth="1.2" strokeLinecap="round" />
             <circle cx="50" cy="12" r="4" fill="#60a5fa" className="animate-pulse shadow-lg" />
             
-            {/* Arms & Hands */}
+            {/* Arms & Hands Matrix */}
             {isPoseB ? (
               <g className="animate-kit-grip">
-                {/* Peek Gripping Logic */}
-                <path d="M 22 75 L 12 75" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
-                <path d="M 22 88 L 12 88" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
-                <circle cx="12" cy="75" r="7.5" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
-                <circle cx="12" cy="88" r="7.5" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
-                <circle cx="10" cy="73" r="1.5" fill="white" opacity="0.5" />
+                {/* Longer, reachy arms for Peek Mode (Grip point X=71) */}
+                <path d="M 58 75 L 71 75" stroke="#fdf6e3" strokeWidth="10" strokeLinecap="round" strokeJoin="round" />
+                <path d="M 58 88 L 71 88" stroke="#fdf6e3" strokeWidth="10" strokeLinecap="round" strokeJoin="round" />
+                
+                {/* Gripping Claws wrapping the edge */}
+                <g transform="translate(71, 75)">
+                   <circle r="9" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
+                   <path d="M -3 -11 Q 5 -6 5 0 Q 5 6 -3 11" stroke="#1e293b" strokeWidth="3" fill="none" strokeLinecap="round" />
+                   <path d="M -2 -11 Q 6 -6 6 0 Q 6 6 -2 11" stroke="white" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4" />
+                </g>
+                <g transform="translate(71, 88)">
+                   <circle r="9" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
+                   <path d="M -3 -11 Q 5 -6 5 0 Q 5 6 -3 11" stroke="#1e293b" strokeWidth="3" fill="none" strokeLinecap="round" />
+                   <path d="M -2 -11 Q 6 -6 6 0 Q 6 6 -2 11" stroke="white" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4" />
+                </g>
               </g>
             ) : (
               <g>
-                <path d="M 22 80 L 10 95" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
-                <circle cx="10" cy="95" r="7.5" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
+                <path d="M 22 80 L 10 95" stroke="#fdf6e3" strokeWidth="8" strokeLinecap="round" />
+                <circle cx="10" cy="95" r="7.5" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
                 
-                {/* Waving Arm Group */}
+                {/* Hello Wave Arm */}
                 <g className="origin-[78px_80px] animate-kit-wave">
-                   <path d="M 78 80 L 88 55" stroke="#fefce8" strokeWidth="8" strokeLinecap="round" />
-                   <circle cx="88" cy="55" r="7.5" fill="#fefce8" stroke="#1e293b" strokeWidth="1.5" />
-                   <circle cx="85" cy="53" r="1.5" fill="white" opacity="0.5" />
+                   <path d="M 78 80 L 88 55" stroke="#fdf6e3" strokeWidth="8" strokeLinecap="round" />
+                   <circle cx="88" cy="55" r="7.5" fill="#fdf6e3" stroke="#1e293b" strokeWidth="1.5" />
                 </g>
               </g>
             )}
@@ -467,11 +487,11 @@ export function StudioBot() {
     <>
       <div 
         className={cn(
-          "fixed bottom-[90px] z-[150] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
+          "fixed bottom-[90px] z-[150] flex items-end justify-end transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] overflow-visible",
         )}
-        style={{ right: isStateShow ? '24px' : '-55px' }}
+        style={{ right: isStateShow ? '24px' : '-25px' }}
       >
-        <div className="relative flex flex-col items-center">
+        <div className="relative flex flex-col items-center overflow-visible">
           <div className={cn(
             "absolute px-5 py-3 rounded-[1.5rem] bg-white dark:bg-zinc-800 text-foreground text-[10px] font-black uppercase tracking-widest shadow-2xl transition-all duration-500 transform origin-bottom whitespace-nowrap border border-primary/20 z-[160]",
             showBubble && !isOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 scale-50 translate-y-2 pointer-events-none",
@@ -701,20 +721,19 @@ export function StudioBot() {
 
         @keyframes kit-wave {
           0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(-25deg); }
-          75% { transform: rotate(25deg); }
+          50% { transform: rotate(-25deg); }
         }
-        .animate-kit-wave { animation: kit-wave 1.2s ease-in-out infinite; }
+        .animate-kit-wave { animation: kit-wave 1.5s ease-in-out infinite; }
 
         @keyframes kit-grip-adjust {
           0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(3px); }
+          50% { transform: translateX(2px); }
         }
-        .animate-kit-grip { animation: kit-grip-adjust 1.8s ease-in-out infinite; }
+        .animate-kit-grip { animation: kit-grip-adjust 2s ease-in-out infinite; }
         
         @keyframes kit-sway {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-4px) rotate(1deg); }
+          0%, 100% { transform: translateY(0) rotate(0.5deg); }
+          50% { transform: translateY(-3px) rotate(-0.5deg); }
         }
         .animate-kit-sway { animation: kit-sway 4s ease-in-out infinite; }
         
@@ -723,6 +742,13 @@ export function StudioBot() {
           50% { transform: scaleY(0.05); }
         }
         .animate-kit-blink { animation: kit-blink 4s ease-in-out infinite; }
+        
+        @keyframes kit-wiggle {
+          0%, 100% { transform: scale(1); }
+          25% { transform: scale(0.9) rotate(-3deg); }
+          75% { transform: scale(1.1) rotate(3deg); }
+        }
+        .animate-kit-wiggle { animation: kit-wiggle 0.3s ease-in-out 2; }
       `}</style>
     </>
   );
