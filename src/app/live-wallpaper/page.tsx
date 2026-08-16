@@ -34,7 +34,7 @@ import {
   Tablet,
   Square as SquareIcon,
   Maximize2,
-  AlertTriangle,
+  AlertCircle,
   History,
   ArrowRight,
   Image as ImageIcon
@@ -466,7 +466,7 @@ export default function AdvancedLiveWallpaperPage() {
                           <div className="relative w-full aspect-video bg-zinc-900 rounded-lg p-2 shadow-2xl border-4 border-zinc-800 ring-1 ring-zinc-700">
                              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-16 h-6 bg-zinc-800 rounded-b-xl" />
                              <div className="w-full h-full rounded bg-black overflow-hidden">
-                                <video src={mp4Url || ''} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                                {mp4Url && <video src={mp4Url} className="w-full h-full object-cover" autoPlay loop muted playsInline />}
                              </div>
                           </div>
                        </div>
@@ -476,7 +476,7 @@ export default function AdvancedLiveWallpaperPage() {
                           <div className="relative w-40 aspect-[9/19.5] bg-zinc-900 rounded-[2.5rem] p-2 shadow-2xl border-4 border-zinc-800 ring-1 ring-zinc-700 overflow-hidden">
                              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-5 bg-black rounded-full z-10" />
                              <div className="w-full h-full rounded-[1.8rem] bg-black overflow-hidden relative">
-                                <video src={mp4Url || ''} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                                {mp4Url && <video src={mp4Url} className="w-full h-full object-cover" autoPlay loop muted playsInline />}
                                 <div className="absolute top-12 left-0 w-full text-center text-white/80 space-y-1">
                                    <p className="text-3xl font-headline font-black">09:41</p>
                                    <p className="text-[8px] font-bold uppercase tracking-widest">Monday, March 10</p>
