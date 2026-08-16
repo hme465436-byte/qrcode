@@ -9,9 +9,6 @@ import {
   Settings2, 
   Info,
   CheckCircle2,
-  Maximize,
-  Move,
-  Palette,
   Eye,
   Loader2,
   Maximize2,
@@ -23,18 +20,15 @@ import {
   FileText,
   ScanFace,
   SlidersHorizontal,
-  ChevronRight,
-  Crosshair,
   ShieldCheck,
   Sun,
   Contrast as ContrastIcon,
   Scaling,
-  Type,
-  Calendar,
   AlertCircle,
-  RotateCw,
+  Star,
   EyeOff,
-  Star
+  Move,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -112,7 +106,7 @@ export default function PassportPhotoPage() {
 
   const mmToPx = (mm: number) => Math.round((mm / 25.4) * dpi);
 
-  const renderCanvas = useCallback((targetCanvas?: HTMLCanvasElement, guidesOn = true) => {
+  const renderCanvas = useCallback((targetCanvas?: HTMLCanvasElement) => {
     const canvas = targetCanvas || canvasRef.current;
     if (!canvas || !loadedImage) return;
     const ctx = canvas.getContext('2d', { alpha: false });
@@ -252,9 +246,14 @@ export default function PassportPhotoPage() {
     const photoH = mmToPx(targetHeightMM);
 
     // Grid Calc
-    const cols = 2; // Always 2 cols to fit most sizes safely side-by-side
+    const availableW = a4WPx - (margin * 2);
+    const availableH = a4HPx - (margin * 2);
+    const cols = Math.floor((availableW + gap) / (photoW + gap));
+    const rows = Math.floor((availableH + gap) / (photoH + gap));
     
-    for (let i = 0; i < sheetCount; i++) {
+    const limit = Math.min(sheetCount, cols * rows);
+
+    for (let i = 0; i < limit; i++) {
       const col = i % cols;
       const row = Math.floor(i / cols);
       const x = margin + col * (photoW + gap);
@@ -284,7 +283,7 @@ export default function PassportPhotoPage() {
     }
 
     setIsProcessing(false);
-    toast({ title: "Sheet Production Complete", description: `A4 master exported at ${dpi} DPI.` });
+    toast({ title: "Production Success", description: `A4 master exported as ${format.toUpperCase()}.` });
   };
 
   const handleClear = () => {
@@ -319,9 +318,14 @@ export default function PassportPhotoPage() {
                 <Button variant="outline" onClick={handleClear} className="h-12 px-6 rounded-xl border-border bg-secondary text-[10px] font-black uppercase tracking-widest hover:text-destructive">
                    <Trash2 className="w-4 h-4 mr-2" /> Purge
                 </Button>
-                <Button onClick={() => downloadA4Sheet('pdf')} className="h-12 px-8 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30">
-                   <Printer className="w-4 h-4 mr-2" /> Production PDF
-                </Button>
+                <div className="flex bg-primary rounded-xl overflow-hidden shadow-xl shadow-primary/30">
+                  <Button onClick={() => downloadA4Sheet('png')} className="h-12 px-6 bg-transparent hover:bg-white/10 text-white font-black uppercase text-[10px] border-r border-white/20 rounded-none shadow-none">
+                     <Download className="w-4 h-4 mr-2" /> Download PNG
+                  </Button>
+                  <Button onClick={() => downloadA4Sheet('pdf')} className="h-12 px-6 bg-transparent hover:bg-white/10 text-white font-black uppercase text-[10px] rounded-none shadow-none">
+                     <Printer className="w-4 h-4 mr-2" /> Download PDF
+                  </Button>
+                </div>
              </div>
            )}
         </div>
@@ -652,14 +656,22 @@ export default function PassportPhotoPage() {
                         </div>
                      </div>
 
-                     <div className="pt-6">
+                     <div className="pt-6 grid grid-cols-1 gap-4">
                         <Button 
-                          onClick={() => downloadA4Sheet('pdf')}
+                          onClick={() => downloadA4Sheet('png')}
                           disabled={!image || isProcessing}
                           className="w-full h-16 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-sm uppercase tracking-widest shadow-xl shadow-primary/30"
                         >
-                           {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Printer className="w-5 h-5" />}
-                           Export Production PDF
+                           {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                           Download PNG Sheet
+                        </Button>
+                        <Button 
+                          onClick={() => downloadA4Sheet('pdf')}
+                          disabled={!image || isProcessing}
+                          className="w-full h-16 bg-secondary border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-sm uppercase tracking-widest transition-all"
+                        >
+                           {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
+                           Download PDF Sheet
                         </Button>
                      </div>
                   </CardContent>
