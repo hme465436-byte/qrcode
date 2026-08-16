@@ -173,13 +173,16 @@ const TOOLS: Tool[] = [
 ];
 
 const BUBBLE_MESSAGES = [
-  "Need help?",
-  "Pet me!",
-  "Want a tool?",
-  "Info?",
-  "I can find it!",
-  "Ready to work?",
-  "Studio logic on!"
+  "Ready to work?", "Need a tool?", "Pet me", "PDF?", "Make it smaller?", 
+  "Crop time?", "I’m hiding", "Psst...", "Got a file?", "Let’s convert", 
+  "Passport pic?", "I see you", "Tap me", "Help?", "I’m bored", 
+  "JPG or PDF?", "Compress?", "Merge PDFs?", "Blurry photo?", "I can find it", 
+  "Don’t be shy", "Need info?", "Quick job?", "I’m tiny but useful", 
+  "Try search", "Open a tool", "What today?", "Hello again", "Still here", 
+  "One click", "Zoom?", "Enhance?", "QR?", "I’m peeking", "Work mode on", 
+  "File ready?", "Let’s go", "Need steps?", "Ask me", "Hi friend", 
+  "Coffee then tools?", "Oops wrong pocket", "Boss called? I’m here", 
+  "Pixel mess?", "Make it print?", "Secret helper"
 ];
 
 export function StudioBot() {
@@ -197,6 +200,7 @@ export function StudioBot() {
   const [isNodding, setIsNodding] = useState(false);
   const [isHappy, setIsHappy] = useState(false);
   const [isInitialShow, setIsInitialShow] = useState(true);
+  const [lastBubbleMsg, setLastBubbleMsg] = useState('');
   
   const [messages, setMessages] = useState<{ 
     type: 'user' | 'bot', 
@@ -217,8 +221,16 @@ export function StudioBot() {
 
     const triggerBubble = () => {
       if (isOpen || isMinimized) return;
-      setBubbleText(BUBBLE_MESSAGES[Math.floor(Math.random() * BUBBLE_MESSAGES.length)]);
+      
+      let nextMsg = '';
+      do {
+        nextMsg = BUBBLE_MESSAGES[Math.floor(Math.random() * BUBBLE_MESSAGES.length)];
+      } while (nextMsg === lastBubbleMsg);
+      
+      setLastBubbleMsg(nextMsg);
+      setBubbleText(nextMsg);
       setShowBubble(true);
+      
       setTimeout(() => setShowBubble(false), 3000);
       const nextDelay = 12000 + Math.random() * 13000;
       bubbleTimeoutRef.current = setTimeout(triggerBubble, nextDelay);
@@ -229,7 +241,7 @@ export function StudioBot() {
       if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current); 
       clearTimeout(initialShowTimer);
     };
-  }, [isOpen, isMinimized]);
+  }, [isOpen, isMinimized, lastBubbleMsg]);
 
   useEffect(() => {
     if (isOpen && messages.length <= 1) {
@@ -371,12 +383,20 @@ export function StudioBot() {
         onMouseLeave={() => setIsHovered(false)}
       >
         <div className="relative flex flex-col items-center">
+          {/* Adaptive Bubble: Shifts left when peeking to ensure visibility */}
           <div className={cn(
-            "absolute bottom-full mb-4 px-3 py-1.5 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl transition-all duration-300 transform origin-bottom",
-            showBubble ? "animate-bubble-pop" : "opacity-0 scale-50 translate-y-2 pointer-events-none"
+            "absolute px-3 py-1.5 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-xl transition-all duration-300 transform origin-bottom whitespace-nowrap",
+            showBubble ? "animate-bubble-pop" : "opacity-0 scale-50 translate-y-2 pointer-events-none",
+            isShowingFully ? "bottom-full left-1/2 -translate-x-1/2 mb-4" : "right-full mr-4 bottom-1/2 translate-y-1/2"
           )}>
             {bubbleText}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-primary" />
+            {/* Bubble Tail repositioning */}
+            <div className={cn(
+              "absolute w-0 h-0 border-transparent",
+              isShowingFully 
+                ? "top-full left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-t-primary" 
+                : "left-full top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-l-[6px] border-l-primary"
+            )} />
           </div>
 
           <button 
