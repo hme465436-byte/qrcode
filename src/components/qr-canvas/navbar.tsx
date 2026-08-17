@@ -11,13 +11,10 @@ import {
   Home,
   QrCode,
   Layers,
-  FileJson,
   Type,
   Coffee,
-  Table,
   X,
-  User,
-  Command
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -55,8 +52,10 @@ export function Navbar() {
   const pathname = usePathname();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const savedTheme = localStorage.getItem('mykit_theme') as 'light' | 'dark' | null;
     if (savedTheme) setTheme(savedTheme);
   }, []);
@@ -105,6 +104,7 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
+             {/* Identity & Support Cluster */}
              <Link 
                 href="/about"
                 title="About My Kit Tool"
@@ -121,12 +121,14 @@ export function Navbar() {
                <Coffee className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
-             <button 
-                onClick={toggleTheme}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all icon-container-3d"
-             >
-               {theme === 'light' ? <Moon className="w-4 h-4 icon-3d" /> : <Sun className="w-4 h-4 icon-3d" />}
-             </button>
+             {mounted && (
+               <button 
+                  onClick={toggleTheme}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all icon-container-3d"
+               >
+                 {theme === 'light' ? <Moon className="w-4 h-4 icon-3d" /> : <Sun className="w-4 h-4 icon-3d" />}
+               </button>
+             )}
 
              <button 
                 onClick={() => setIsScannerOpen(true)}
