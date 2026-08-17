@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -115,6 +114,17 @@ const TOOLS: Tool[] = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
+    category: 'generators'
+  },
+  { 
+    href: '/images-to-gif', 
+    icon: Film, 
+    title: 'Images to GIF', 
+    desc: 'Synthesize high-fidelity animated GIFs from multiple photos locally.', 
+    label: 'ANIMATE', 
+    color: 'text-pink-500 bg-pink-500/10 border-pink-500/20',
+    glowClass: 'bg-pink-500/10',
+    keywords: ['image to gif', 'photos to gif', 'animate', 'make gif', 'slideshow', 'gif maker'],
     category: 'generators'
   },
   { 
@@ -893,7 +903,8 @@ export default function Home() {
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
-      'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader'
+      'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
+      'Images to GIF'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

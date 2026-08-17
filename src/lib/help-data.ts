@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -44,6 +43,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Use PNG format for the highest fidelity in print workflows.'
     ],
     privacy: 'Mass rendering is performed locally via WebAssembly. Your data list is never transmitted.'
+  },
+  'images-to-gif': {
+    title: 'Images to GIF Studio',
+    description: 'Synthesize professional animated GIFs from a sequence of static images.',
+    steps: [
+      'Import 2 to 30 photos (JPG, PNG, or WebP) into the asset pipeline.',
+      'Use the sequence management tools to reorder or remove specific frames.',
+      'Configure the temporal delay (speed) and loop protocol.',
+      'Select your resolution protocol (480px, 720px, or Native).',
+      'Execute the synthesis protocol and download your master GIF.'
+    ],
+    tips: [
+      'Ensure all images have consistent aspect ratios for the smoothest animation.',
+      'Use delay settings around 200-500ms for standard "stop-motion" effects.'
+    ],
+    privacy: 'GIF synthesis is performed 100% locally using FFmpeg WASM. Your photos never leave your device memory.'
   },
   'barcode-reader': {
     title: 'Barcode & QR Reader',
