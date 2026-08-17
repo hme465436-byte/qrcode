@@ -310,7 +310,7 @@ export default function CustomWatermarkPage() {
   };
 
   const handleDragStart = (e: any) => {
-    if (!image) return;
+    if (!file) return;
     isDragging.current = true;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -536,7 +536,7 @@ export default function CustomWatermarkPage() {
                           <Label>Rotation Vector</Label>
                           <span className="text-primary font-mono">{rotation}°</span>
                        </div>
-                       <Slider value={[rotation]} min={0} max={360} step={1} onValueChange={v => setRotation(v[0])} />
+                       <Slider value={[rotation]} min={0} max={360} step={1} onValueChange={(v) => { setRotation(v[0]); if(mediaType === 'image') renderFrame(); }} />
                     </div>
                  </div>
 
@@ -565,7 +565,7 @@ export default function CustomWatermarkPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/20 flex items-start gap-4">
+                      <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/20 flex items-start gap-4">
                          <Grid3X3 className="w-5 h-5 text-primary mt-1 shrink-0" />
                          <div className="space-y-1">
                             <p className="text-[10px] font-black uppercase text-foreground">Global Tile Logic</p>
