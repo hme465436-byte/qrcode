@@ -9,16 +9,13 @@ import {
   AlertCircle, 
   ArrowLeft,
   Globe,
-  Monitor,
   Copy,
   CheckCircle2,
   FileCode,
-  Terminal,
-  ArrowRight
+  Terminal
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 export default function HostedPageViewer() {
   const { id } = useParams();
@@ -39,10 +36,10 @@ export default function HostedPageViewer() {
         if (docSnap.exists()) {
           setData(docSnap.data() as any);
         } else {
-          setError("Protocol Not Found: This identity token is invalid or the page has expired.");
+          setError("This link is invalid or has expired.");
         }
-      } catch (err) {
-        setError("Uplink Failure: Could not negotiate connection with document matrix.");
+      } catch (err: any) {
+        setError(err.message || "Failed to connect to database.");
       } finally {
         setLoading(false);
       }
@@ -66,7 +63,7 @@ export default function HostedPageViewer() {
            <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
            <Globe className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Fetching Document Matrix...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Fetching Content...</p>
       </div>
     );
   }
@@ -76,7 +73,7 @@ export default function HostedPageViewer() {
       <div className="fixed inset-0 bg-[#0a0a0c] flex flex-col items-center justify-center p-6 text-center gap-10">
         <AlertCircle className="w-20 h-20 text-destructive animate-bounce" />
         <div className="space-y-4">
-           <h2 className="text-2xl font-headline font-black text-white uppercase tracking-tight">Signal Interrupted</h2>
+           <h2 className="text-2xl font-headline font-black text-white uppercase tracking-tight">Access Denied</h2>
            <p className="text-sm text-white/30 font-bold uppercase tracking-widest max-w-sm mx-auto leading-relaxed">{error}</p>
         </div>
         <Button asChild variant="outline" className="h-14 px-10 rounded-2xl border-white/10 bg-white/5 text-white">
@@ -108,7 +105,7 @@ export default function HostedPageViewer() {
                   </div>
                   <div className="space-y-0.5">
                      <h2 className="text-sm font-black uppercase text-white tracking-widest">{data.title}</h2>
-                     <p className="text-[8px] font-bold text-white/20 uppercase tracking-[0.2em]">{data.language || 'text'} protocol</p>
+                     <p className="text-[8px] font-bold text-white/20 uppercase tracking-[0.2em]">{data.language || 'text'} content</p>
                   </div>
                </div>
                <Button onClick={handleCopy} className="h-10 px-6 rounded-xl bg-white text-black font-black uppercase text-[10px] tracking-widest shadow-xl">
@@ -134,7 +131,7 @@ export default function HostedPageViewer() {
           <div className="flex items-center gap-2">
              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
              <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">
-               Live {isHtml ? 'Page' : 'Code'} Matrix: {data.title}
+               Live {isHtml ? 'Page' : 'Code'}: {data.title}
              </span>
           </div>
           <Link href="/" className="flex items-center gap-2 text-[9px] font-black text-primary uppercase tracking-widest hover:text-white transition-all">

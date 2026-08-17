@@ -1,20 +1,14 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
-  FileCode, 
-  Link as LinkIcon, 
   Trash2, 
-  Sparkles, 
-  Loader2, 
   Info,
   CheckCircle2,
   Copy,
   Globe,
   ExternalLink,
   Zap,
-  ShieldCheck,
   Code2,
   Activity,
   Eye,
@@ -23,10 +17,11 @@ import {
   Layout,
   Terminal,
   Play,
-  ShieldAlert,
   X,
   History,
-  Clock
+  Clock,
+  Loader2,
+  Link as LinkIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,11 +32,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const ID_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
 const HISTORY_KEY = 'htmlToUrlHistory';
 
 interface HistoryItem {
@@ -93,7 +87,6 @@ export default function HtmlToUrlPage() {
     }
   }, []);
 
-  // Sync History to Storage
   const updateLocalHistory = (item: HistoryItem) => {
     const next = [item, ...localHistory.filter(h => h.id !== item.id)].slice(0, 50);
     setLocalHistory(next);
@@ -105,10 +98,9 @@ export default function HtmlToUrlPage() {
     const next = localHistory.filter(h => h.id !== id);
     setLocalHistory(next);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-    toast({ title: "History Updated", description: "Link removed from your device registry." });
+    toast({ title: "History Updated", description: "Link removed from your device." });
   };
 
-  // Logic: Identify effective language
   const effectiveLanguage = useMemo(() => {
     if (language !== 'auto') return language;
     const low = html.toLowerCase();
@@ -118,7 +110,6 @@ export default function HtmlToUrlPage() {
     return 'text';
   }, [language, html]);
 
-  // Error Listening Protocol
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'RUNTIME_ERROR') {
@@ -151,9 +142,9 @@ export default function HtmlToUrlPage() {
       `;
 
       if (effectiveLanguage === 'css') {
-        content = `<html><head>${errorCaptureScript}<style>${html}</style></head><body style="background:#f8fafc;padding:40px;font-family:sans-serif;"><div style="max-width:600px;margin:0 auto;background:white;padding:40px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.05);"><h1 class="preview-heading">CSS Visual Master</h1><p class="preview-text">Styles applied to canvas environment.</p><button style="padding:10px 20px;border-radius:8px;cursor:pointer;">Action Component</button></div></body></html>`;
+        content = `<html><head>${errorCaptureScript}<style>${html}</style></head><body style="background:#f8fafc;padding:40px;font-family:sans-serif;"><div style="max-width:600px;margin:0 auto;background:white;padding:40px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.05);"><h1 class="preview-heading">CSS Viewer</h1><p class="preview-text">Styles applied to canvas.</p><button style="padding:10px 20px;border-radius:8px;cursor:pointer;">Action Component</button></div></body></html>`;
       } else if (effectiveLanguage === 'javascript') {
-        content = `<html><body style="background:#0f172a;color:#22d3ee;padding:20px;font-family:monospace;">${errorCaptureScript}<div id="root">Executing JS Matrix...</div><script>try{ ${html} }catch(e){ console.error(e.message); }</script></body></html>`;
+        content = `<html><body style="background:#0f172a;color:#22d3ee;padding:20px;font-family:monospace;">${errorCaptureScript}<div id="root">Executing JS...</div><script>try{ ${html} }catch(e){ console.error(e.message); }</script></body></html>`;
       } else {
         if (content.includes('<head>')) {
           content = content.replace('<head>', '<head>' + errorCaptureScript);
@@ -167,7 +158,6 @@ export default function HtmlToUrlPage() {
     }
   }, [html, effectiveLanguage]);
 
-  // Debounced Auto-Preview Protocol
   useEffect(() => {
     const timer = setTimeout(() => {
       syncPreview();
@@ -175,7 +165,6 @@ export default function HtmlToUrlPage() {
     return () => clearTimeout(timer);
   }, [html, effectiveLanguage, syncPreview]);
 
-  // Load Pyodide on Demand
   useEffect(() => {
     if (effectiveLanguage === 'python' && !pyodideRef.current && !isPyodideLoading) {
       const loadPy = async () => {
@@ -188,9 +177,9 @@ export default function HtmlToUrlPage() {
             await new Promise((resolve) => (script.onload = resolve));
           }
           pyodideRef.current = await (window as any).loadPyodide();
-          toast({ title: "Python Engine Ready" });
+          toast({ title: "Python Ready" });
         } catch (e) {
-          setRuntimeError("Python WASM runtime could not be loaded.");
+          setRuntimeError("Python engine failed to load.");
         } finally {
           setIsPyodideLoading(false);
         }
@@ -206,7 +195,7 @@ export default function HtmlToUrlPage() {
     setRuntimeError(null);
 
     if (!pyodideRef.current) {
-      setConsoleOutput(['[SYSTEM] Waiting for Python WASM Engine...']);
+      setConsoleOutput(['Waiting for Python engine...']);
       setIsExecuting(false);
       return;
     }
@@ -221,7 +210,7 @@ export default function HtmlToUrlPage() {
 
     try {
       await pyodideRef.current.runPythonAsync(html);
-      if (logs.length === 0) logs.push('[SYSTEM] Execution complete. No output.');
+      if (logs.length === 0) logs.push('Execution complete.');
       setConsoleOutput([...logs]);
     } catch (e: any) {
       setRuntimeError(e.message);
@@ -230,57 +219,52 @@ export default function HtmlToUrlPage() {
     setIsExecuting(false);
   };
 
-  const generateId = () => {
-    return Array.from({ length: 5 }, () => ID_CHARS[Math.floor(Math.random() * ID_CHARS.length)]).join('');
-  };
-
   const fullUrl = (id: string) => typeof window !== 'undefined' ? `${window.location.origin}/p/${id}` : '';
 
   const handleMakeLink = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!html.trim()) {
-      toast({ variant: "destructive", title: "Payload Empty" });
+      toast({ variant: "destructive", title: "Empty Payload" });
       return;
     }
 
     if (!firestore) {
-      toast({ variant: "destructive", title: "Signaling Inactive", description: "Could not connect to Firestore matrix." });
+      toast({ variant: "destructive", title: "Database Offline", description: "Please check your connection." });
       return;
     }
 
     const size = new TextEncoder().encode(html).length;
     if (size > 150 * 1024) {
-      toast({ variant: "destructive", title: "Heavy Payload", description: "Matrix exceeded 150KB limit." });
+      toast({ variant: "destructive", title: "Too Large", description: "Content exceeds 150KB limit." });
       return;
     }
 
     setIsProcessing(true);
     setGeneratedId(null);
 
-    const id = generateId();
     try {
-      await setDoc(doc(firestore, "pages", id), {
+      const docRef = await addDoc(collection(firestore, "pages"), {
         html: html.trim(),
-        title: title.trim() || 'Untitled Studio Page',
+        title: title.trim() || 'Untitled Page',
         language: language === 'auto' ? effectiveLanguage : language,
         createdAt: serverTimestamp()
       });
       
-      const newUrl = fullUrl(id);
-      setGeneratedId(id);
+      const newUrl = fullUrl(docRef.id);
+      setGeneratedId(docRef.id);
       
       updateLocalHistory({
-        id,
-        title: title.trim() || 'Untitled Studio Page',
+        id: docRef.id,
+        title: title.trim() || 'Untitled Page',
         url: newUrl,
         date: Date.now(),
         language: effectiveLanguage
       });
 
-      toast({ title: "Published", description: "Identity link generated and saved to history." });
+      toast({ title: "Published", description: "Link generated and saved to history." });
     } catch (err: any) {
-      console.error("Firestore Publish Error:", err);
-      toast({ variant: "destructive", title: "Publish Error", description: "Could not write to document matrix." });
+      console.error("Publish Error:", err);
+      toast({ variant: "destructive", title: "Error", description: err.message || "Could not save to database." });
     } finally {
       setIsProcessing(false);
     }
@@ -309,7 +293,7 @@ export default function HtmlToUrlPage() {
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Globe className="w-3.5 h-3.5" /> Universal Hosting Studio
+          <Globe className="w-3.5 h-3.5" /> Web Hosting
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="min-w-0">
@@ -317,7 +301,7 @@ export default function HtmlToUrlPage() {
               Code & <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Synthesize code strings into hosted visual pages or shareable blocks. Secure sandboxed previews and instant anonymous publishing.
+              Convert any code or text into a hosted link. Preview your page in real-time and share it instantly.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -331,8 +315,8 @@ export default function HtmlToUrlPage() {
         <div className="lg:col-span-6 xl:col-span-6 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Tabs value={activeView} onValueChange={(v: any) => setActiveView(v)} className="w-full lg:hidden">
              <TabsList className="grid grid-cols-2 bg-secondary p-1.5 rounded-2xl h-14 mb-8">
-                <TabsTrigger value="edit" className="rounded-xl text-[9px] font-black uppercase">Edit Matrix</TabsTrigger>
-                <TabsTrigger value="preview" className="rounded-xl text-[9px] font-black uppercase">Visual Master</TabsTrigger>
+                <TabsTrigger value="edit" className="rounded-xl text-[9px] font-black uppercase">Editor</TabsTrigger>
+                <TabsTrigger value="preview" className="rounded-xl text-[9px] font-black uppercase">Preview</TabsTrigger>
              </TabsList>
           </Tabs>
 
@@ -341,7 +325,7 @@ export default function HtmlToUrlPage() {
               <CardHeader className="pb-6 border-b border-border bg-secondary/30">
                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                       <Code2 className="w-5 h-5 text-primary" /> Matrix Input
+                       <Code2 className="w-5 h-5 text-primary" /> Input
                     </CardTitle>
                     <div className="flex items-center gap-3">
                        <Select value={language} onValueChange={setLanguage}>
@@ -363,14 +347,14 @@ export default function HtmlToUrlPage() {
                     <Input 
                       value={title}
                       onChange={e => setTitle(e.target.value)}
-                      placeholder="ENTER PAGE TITLE..."
+                      placeholder="Page Title..."
                       className="h-14 bg-secondary border-border rounded-2xl text-lg font-bold px-6 focus:ring-primary/40 uppercase"
                     />
                  </div>
 
                  <div className="space-y-4">
                     <div className="flex justify-between items-center px-1">
-                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Source Code</Label>
+                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Code Content</Label>
                       <span className={cn("text-[9px] font-mono", html.length > 150000 ? "text-red-500" : "text-primary/60")}>
                         {Math.round(html.length / 1024)} KB / 150 KB
                       </span>
@@ -418,19 +402,19 @@ export default function HtmlToUrlPage() {
               </CardContent>
             </Card>
 
-            {/* Local History Dashboard */}
-            <Card className="glass-card border-border shadow-xl overflow-hidden animate-in slide-in-from-bottom-6 duration-700">
+            {/* Local History */}
+            <Card className="glass-card border-border shadow-xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                   <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground/60">
-                    <History className="w-4 h-4" /> My Local Links
+                    <History className="w-4 h-4 text-primary" /> My Links
                   </CardTitle>
-                  <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Recorded</span>
+                  <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Saved</span>
               </CardHeader>
               <CardContent className="p-0">
                   {!localHistory.length ? (
                     <div className="py-20 text-center space-y-4 opacity-20">
                       <Globe className="w-12 h-12 mx-auto" />
-                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No active hosting protocols found on this device.</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No links found on this device.</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
@@ -478,10 +462,10 @@ export default function HtmlToUrlPage() {
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
                     {['html', 'css', 'javascript'].includes(effectiveLanguage) ? <Eye className="w-3.5 h-3.5" /> : <Terminal className="w-3.5 h-3.5" />}
-                    {effectiveLanguage === 'python' ? 'Python Console' : 'Visual Master'}
+                    {effectiveLanguage === 'python' ? 'Console' : 'Preview'}
                  </CardTitle>
                  <div className="flex items-center gap-2">
-                    <button onClick={openFullscreenPreview} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Open Fullscreen">
+                    <button onClick={openFullscreenPreview} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Fullscreen">
                        <Maximize2 className="w-3.5 h-3.5 text-foreground/40" />
                     </button>
                  </div>
@@ -493,7 +477,7 @@ export default function HtmlToUrlPage() {
                        {consoleOutput.length > 0 ? consoleOutput.map((line, i) => (
                          <div key={i} className="mb-1">&gt; {line}</div>
                        )) : (
-                         <div className="opacity-20 italic">Awaiting Python trigger...</div>
+                         <div className="opacity-20 italic">Awaiting Python...</div>
                        )}
                     </div>
                  ) : (
@@ -501,7 +485,7 @@ export default function HtmlToUrlPage() {
                       <iframe 
                         id="previewFrame"
                         srcDoc={previewSrcDoc}
-                        title="Studio Preview"
+                        title="Preview"
                         sandbox="allow-scripts allow-forms"
                         className="w-full flex-1 border-none bg-transparent block"
                         style={{ minHeight: '320px' }}
@@ -511,9 +495,9 @@ export default function HtmlToUrlPage() {
 
                  {runtimeError && (
                    <div className="p-4 bg-red-500/10 border-t border-red-500/20 text-red-500 flex items-start gap-3 animate-in slide-in-from-bottom-2">
-                      <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                         <p className="text-[10px] font-black uppercase tracking-widest leading-none">Runtime Error</p>
+                         <p className="text-[10px] font-black uppercase tracking-widest leading-none">Error</p>
                          <p className="text-[10px] font-bold leading-relaxed">{runtimeError}</p>
                       </div>
                    </div>
@@ -525,7 +509,7 @@ export default function HtmlToUrlPage() {
               <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden relative animate-in zoom-in duration-500">
                  <CardHeader className="py-8 border-b border-primary/10">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.5em] flex items-center gap-3 text-primary">
-                      <CheckCircle2 className="w-4 h-4" /> Identity Link Published
+                      <CheckCircle2 className="w-4 h-4" /> Link Published
                     </CardTitle>
                  </CardHeader>
                  <CardContent className="pt-10 space-y-8 text-center">
@@ -534,7 +518,7 @@ export default function HtmlToUrlPage() {
                     </div>
                     <div className="flex gap-4">
                        <Button onClick={() => handleCopy(fullUrl(generatedId), 'link')} className="h-14 flex-1 bg-primary text-white font-black uppercase text-[10px] rounded-2xl shadow-xl">
-                          {isCopied === 'link' ? 'Identity Copied' : 'Copy Link'}
+                          {isCopied === 'link' ? 'Copied' : 'Copy Link'}
                        </Button>
                        <Button asChild variant="outline" className="h-14 px-8 rounded-2xl border-white/10 bg-white/5 text-white">
                           <a href={`/p/${generatedId}`} target="_blank"><ExternalLink className="w-4 h-4 mr-2" /> Open</a>
@@ -550,9 +534,9 @@ export default function HtmlToUrlPage() {
                      <ShieldCheck className="w-7 h-7" />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Anonymous Persistence</h4>
+                    <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local Privacy</h4>
                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                      No account required. Your generated links are tracked locally on your device using browser storage. Documents remain live in the cloud matrix via high-readability 5-char tokens.
+                      Drafting and previews happen entirely on your device. Only published links are saved to the database.
                     </p>
                   </div>
                </div>
