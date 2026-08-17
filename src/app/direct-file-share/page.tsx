@@ -22,7 +22,9 @@ import {
   Smartphone,
   MoveHorizontal,
   WifiOff,
-  AlertCircle
+  AlertCircle,
+  Database,
+  CloudOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,7 +47,7 @@ import {
   updateDoc
 } from 'firebase/firestore';
 
-const CHUNK_SIZE = 16384; // 16KB standard for data channel stability
+const CHUNK_SIZE = 16384; 
 
 export default function DirectFileSharePage() {
   const { toast } = useToast();
@@ -79,7 +81,6 @@ export default function DirectFileSharePage() {
   const lastBytesRef = useRef(0);
   const qrRef = useRef<HTMLDivElement>(null);
 
-  // --- Logic Matrix: Room Generation ---
   const generateRoomId = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
     let result = '';
@@ -89,7 +90,6 @@ export default function DirectFileSharePage() {
     return result;
   };
 
-  // --- Logic Matrix: Peer Setup ---
   const initPeer = useCallback(() => {
     const servers = {
       iceServers: [
@@ -102,9 +102,11 @@ export default function DirectFileSharePage() {
     return pc;
   }, []);
 
-  // --- Sender Logic ---
   const startSending = async (selectedFile: File) => {
-    if (!firestore) return;
+    if (!firestore) {
+      toast({ variant: "destructive", title: "Signaling Offline", description: "Firebase configuration is missing or invalid." });
+      return;
+    }
     setMode('send');
     setFile(selectedFile);
     setStatus('searching');
@@ -121,7 +123,6 @@ export default function DirectFileSharePage() {
       sendFile();
     };
 
-    // Signaling
     const roomRef = doc(firestore, 'p2p_signaling', code);
     const callerCandidates = collection(roomRef, 'callerCandidates');
     const calleeCandidates = collection(roomRef, 'calleeCandidates');
@@ -144,7 +145,6 @@ export default function DirectFileSharePage() {
       }
     });
 
-    // Listen for answer
     const unsubscribe = onSnapshot(roomRef, (snapshot) => {
       const data = snapshot.data();
       if (!pc.currentRemoteDescription && data?.answer) {
@@ -156,7 +156,6 @@ export default function DirectFileSharePage() {
       }
     });
 
-    // Listen for callee candidates
     onSnapshot(calleeCandidates, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
@@ -196,7 +195,6 @@ export default function DirectFileSharePage() {
       const p = Math.round((offset / file.size) * 100);
       setProgress(p);
       
-      // Speed check
       const now = Date.now();
       if (now - lastTimeRef.current > 1000) {
         const bytes = offset - lastBytesRef.current;
@@ -206,7 +204,6 @@ export default function DirectFileSharePage() {
       }
 
       if (dc.bufferedAmount > 1024 * 1024) {
-        // Slow down if buffer is full
         dc.onbufferedamountlow = () => {
           dc.onbufferedamountlow = null;
           slice();
@@ -219,9 +216,13 @@ export default function DirectFileSharePage() {
     slice();
   };
 
-  // --- Receiver Logic ---
   const startReceiving = async () => {
-    if (!firestore || !inputRoomId.trim()) return;
+    if (!firestore) {
+      toast({ variant: "destructive", title: "Signaling Offline", description: "Firebase configuration is missing or invalid." });
+      return;
+    }
+    if (!inputRoomId.trim()) return;
+    
     const code = inputRoomId.trim().toUpperCase();
     setMode('receive');
     setStatus('connecting');
@@ -266,7 +267,6 @@ export default function DirectFileSharePage() {
         answer: answer.sdp
       });
 
-      // Listen for caller candidates
       onSnapshot(callerCandidates, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
           if (change.type === 'added') {
@@ -333,7 +333,6 @@ export default function DirectFileSharePage() {
     cleanupRoom();
   };
 
-  // --- Interaction Protocols ---
   const handleCopyCode = () => {
     navigator.clipboard.writeText(roomId);
     setIsCopied(true);
@@ -351,7 +350,6 @@ export default function DirectFileSharePage() {
     URL.revokeObjectURL(url);
   };
 
-  // Prevent closing tab during transfer
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (status === 'transferring' || status === 'connecting') {
@@ -363,7 +361,6 @@ export default function DirectFileSharePage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [status]);
 
-  // QR Code Synthesis
   useEffect(() => {
     if (roomId && (window as any).QRCodeStyling && qrRef.current) {
       const qr = new (window as any).QRCodeStyling({
@@ -379,20 +376,6 @@ export default function DirectFileSharePage() {
       qr.append(qrRef.current);
     }
   }, [roomId, showQr]);
-
-  // Handle direct join from URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const joinCode = params.get('join');
-    if (joinCode && mode === 'idle') {
-      setInputRoomId(joinCode);
-      // Auto-trigger join logic after brief mount delay
-      setTimeout(() => {
-        const btn = document.getElementById('join-btn-trigger');
-        btn?.click();
-      }, 500);
-    }
-  }, [mode]);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-full overflow-hidden">
@@ -415,6 +398,18 @@ export default function DirectFileSharePage() {
         </div>
       </div>
 
+      {!firestore && (
+        <div className="mb-10 p-6 rounded-[2rem] bg-amber-500/10 border border-amber-500/20 flex items-center gap-6 animate-in zoom-in">
+           <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-xl shadow-amber-500/20 shrink-0">
+              <CloudOff className="w-6 h-6" />
+           </div>
+           <div className="space-y-1">
+              <h4 className="text-[11px] font-black uppercase tracking-widest text-amber-600">Signaling Matrix Inactive</h4>
+              <p className="text-[11px] text-amber-600/60 font-medium leading-tight">Firebase credentials are missing. P2P handshakes cannot be established.</p>
+           </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
         {/* Workspace Pane */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-6">
@@ -424,10 +419,12 @@ export default function DirectFileSharePage() {
              <CardContent className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 relative overflow-hidden">
                 {mode === 'idle' ? (
                   <div className="w-full max-w-lg space-y-12">
-                    {/* Send Block */}
                     <div 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="group/send relative h-56 rounded-[2.5rem] border-2 border-dashed border-white/10 hover:border-primary/40 flex flex-col items-center justify-center gap-6 cursor-pointer bg-black/40 transition-all duration-500 shadow-xl"
+                      onClick={() => firestore && fileInputRef.current?.click()}
+                      className={cn(
+                        "group/send relative h-56 rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-6 transition-all duration-500 shadow-xl",
+                        firestore ? "border-white/10 hover:border-primary/40 cursor-pointer bg-black/40" : "border-white/5 opacity-50 cursor-not-allowed bg-black/10"
+                      )}
                     >
                       <div className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center text-white/10 group-hover/send:text-primary group-hover/send:scale-110 transition-all">
                         <Upload className="w-8 h-8" />
@@ -444,17 +441,17 @@ export default function DirectFileSharePage() {
                        <span className="relative px-4 bg-transparent text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">OR</span>
                     </div>
 
-                    {/* Receive Block */}
                     <div className="space-y-4">
                       <Label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Receive Protocol</Label>
                       <div className="flex gap-2">
                          <Input 
                           value={inputRoomId} 
+                          disabled={!firestore}
                           onChange={(e) => setInputRoomId(e.target.value.toUpperCase())}
                           placeholder="ENTER 6-DIGIT CODE" 
                           className="h-14 bg-black/40 border-white/10 rounded-2xl text-center text-lg font-black tracking-widest placeholder:text-white/5" 
                          />
-                         <Button id="join-btn-trigger" onClick={startReceiving} className="h-14 px-8 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20">
+                         <Button onClick={startReceiving} disabled={!firestore} className="h-14 px-8 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30">
                             Join
                          </Button>
                       </div>
@@ -462,7 +459,6 @@ export default function DirectFileSharePage() {
                   </div>
                 ) : (
                   <div className="w-full max-w-2xl space-y-12 animate-in fade-in zoom-in duration-500">
-                     {/* Transfer Status Matrix */}
                      <div className="flex flex-col items-center gap-8">
                         <div className="relative w-40 h-40">
                            <svg className="w-full h-full transform -rotate-90">
@@ -571,7 +567,6 @@ export default function DirectFileSharePage() {
           </div>
         </div>
 
-        {/* Sidebar Info */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
            <Card className="glass-card border-border shadow-2xl">
               <CardHeader className="py-6 border-b border-white/5 bg-white/2">
@@ -608,29 +603,6 @@ export default function DirectFileSharePage() {
            </Card>
         </div>
       </div>
-      
-      <style jsx global>{`
-        .bg-checkered {
-          background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #111113 75%), 
-                            linear-gradient(-45deg, transparent 75%, #111113 75%);
-          background-size: 20px 20px;
-        }
-        .scanner-line {
-          animation: scan 2.5s ease-in-out infinite;
-        }
-        @keyframes scan {
-          0%, 100% { top: 0%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { top: 100%; opacity: 0; }
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-      `}</style>
     </div>
   );
 }
-
