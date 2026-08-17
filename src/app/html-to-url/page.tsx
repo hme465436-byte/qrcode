@@ -24,7 +24,8 @@ import {
   Layout,
   User,
   LogOut,
-  AlertCircle
+  AlertCircle,
+  LogIn
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +36,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { doc, setDoc, serverTimestamp, collection, query, where, orderBy } from 'firebase/firestore';
-import { useFirestore, useUser, useCollection } from '@/firebase';
+import { signInAnonymously } from 'firebase/auth';
+import { useFirestore, useUser, useCollection, useAuth } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
 const ID_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
@@ -43,12 +45,14 @@ const ID_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
 export default function HtmlToUrlPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const auth = useAuth();
   const { user, loading: authLoading } = useUser();
   
   const [html, setHtml] = useState('');
   const [debouncedHtml, setDebouncedHtml] = useState('');
   const [title, setTitle] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [generatedId, setGeneratedId] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
@@ -79,9 +83,22 @@ export default function HtmlToUrlPage() {
 
   const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId}` : '';
 
+  const handleLogin = async () => {
+    if (!auth) return;
+    setIsLoggingIn(true);
+    try {
+      await signInAnonymously(auth);
+      toast({ title: "Welcome to the Studio", description: "Identity verified successfully." });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Login Failed", description: err.message });
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
   const handleMakeLink = async () => {
     if (!user) {
-      toast({ variant: "destructive", title: "Login Required", description: "Please log in to publish your matrix." });
+      handleLogin();
       return;
     }
 
@@ -215,10 +232,14 @@ export default function HtmlToUrlPage() {
 
                  <div className="pt-4">
                     {!user ? (
-                      <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex flex-col items-center gap-4 text-center">
-                         <AlertCircle className="w-6 h-6 text-amber-500" />
-                         <p className="text-[10px] font-black uppercase text-amber-700/60 leading-relaxed">Identity verification required to publish to public matrix.</p>
-                      </div>
+                      <Button 
+                        onClick={handleLogin}
+                        disabled={isLoggingIn}
+                        className="h-16 w-full bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg transition-all active:scale-95"
+                      >
+                        {isLoggingIn ? <Loader2 className="w-6 h-6 animate-spin" /> : <LogIn className="w-6 h-6 text-primary" />}
+                        Log in to Publish
+                      </Button>
                     ) : (
                       <Button 
                         onClick={handleMakeLink}
