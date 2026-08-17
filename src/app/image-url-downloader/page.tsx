@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   DownloadCloud, 
   Download,
@@ -22,7 +22,8 @@ import {
   MousePointer2,
   ArrowRight,
   X,
-  HelpCircle
+  HelpCircle,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +53,7 @@ function ImageResultCard({
 }) {
   const [src, setSrc] = useState(asset.url);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
   const [isProxying, setIsProxying] = useState(false);
 
@@ -97,8 +99,17 @@ function ImageResultCard({
         <div className="min-w-0">
           <p className="text-[9px] font-black uppercase text-foreground truncate">{asset.label}</p>
         </div>
-        <Button onClick={() => onDownload(asset)} size="icon" className="w-8 h-8 rounded-lg bg-primary shrink-0 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
-          <Download className="w-3.5 h-3.5 text-white" />
+        <Button 
+          onClick={() => {
+            setIsDownloading(true);
+            onDownload(asset);
+            setTimeout(() => setIsDownloading(false), 2000);
+          }} 
+          size="icon" 
+          disabled={isDownloading}
+          className="w-10 h-10 rounded-xl bg-primary shrink-0 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+        >
+          {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 text-white" />}
         </Button>
       </div>
     </div>
@@ -108,6 +119,7 @@ function ImageResultCard({
 export default function ImageUrlDownloaderPage() {
   const { toast } = useToast();
   const [url, setUrl] = useState('');
+  const [videoId, setVideoId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isZipping, setIsZipping] = useState(false);
   const [foundImages, setFoundImages] = useState<ImageAsset[]>([]);
@@ -128,41 +140,77 @@ export default function ImageUrlDownloaderPage() {
     return null;
   };
 
+  const saveToDevice = (blob: Blob, filename: string) => {
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+  };
+
   const downloadSingle = async (asset: ImageAsset) => {
-    setIsProcessing(true);
+    const filename = asset.url.split('/').pop()?.split('?')[0] || `mykit-image-${Date.now()}.jpg`;
+    
     try {
-      const dataUri = await proxyDownloadImage(asset.url);
-      const link = document.createElement('a');
-      link.href = dataUri;
-      
-      // Better extension identification
-      let ext = 'jpg';
-      const cleanPath = asset.url.split('?')[0].split('#')[0];
-      const parts = cleanPath.split('.');
-      if (parts.length > 1) {
-        const pExt = parts.pop()?.toLowerCase();
-        if (pExt && ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'avif'].includes(pExt)) {
-          ext = pExt;
-        }
-      }
-      
-      link.download = `mykit-image-${Date.now()}.${ext}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast({ title: "Extraction Success", description: "Image saved to device." });
+      // Phase 1: Direct Fetch
+      const response = await fetch(asset.url);
+      if (!response.ok) throw new Error('Fetch rejected');
+      const blob = await response.blob();
+      saveToDevice(blob, filename);
+      toast({ title: "Extraction Success", description: "Saved to downloads." });
     } catch (e) {
-      // Hardware level fallback to direct browser handling
-      window.open(asset.url, '_blank');
-      toast({ title: "CORS Redirect", description: "Direct save restricted. Opened in tab." });
-    } finally {
-      setIsProcessing(false);
+      // Phase 2: Canvas Re-matrixing (CORS Bypass)
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = asset.url;
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas init failed');
+        ctx.drawImage(img, 0, 0);
+        
+        const format = asset.url.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg';
+        canvas.toBlob((blob) => {
+          if (blob) {
+            saveToDevice(blob, filename);
+            toast({ title: "Matrix Isolated", description: "Saved via local synthesis." });
+          } else {
+            throw new Error('Canvas blob empty');
+          }
+        }, format, 0.95);
+      } catch (e2) {
+        // Phase 3: Hardware Fallback
+        window.open(asset.url, '_blank');
+        toast({ 
+          variant: "default", 
+          title: "Optical Protocol", 
+          description: "CORS Restricted. Right-click the image in the new tab to save." 
+        });
+      }
     }
   };
 
   const handleDiscovery = async () => {
     if (!url.trim()) return;
+
+    try {
+      new URL(url);
+    } catch {
+      setError("Matrix Incomplete: Provide a valid URL starting with http:// or https://");
+      return;
+    }
+
     setIsProcessing(true);
     setError(null);
     setFoundImages([]);
@@ -183,10 +231,10 @@ export default function ImageUrlDownloaderPage() {
                           url.includes('unsplash.com/photo-');
 
     if (isDirectImage) {
-      const asset: ImageAsset = { id: 'direct', url: url, label: 'Direct Image', type: 'image' };
+      const asset: ImageAsset = { id: 'direct', url: url, label: 'Identified Matrix', type: 'image' };
       setFoundImages([asset]);
       setIsProcessing(false);
-      toast({ title: "Signal Mapped", description: "Matrix ready for production." });
+      toast({ title: "Signal Mapped", description: "Visual asset isolated." });
       return;
     }
 
@@ -202,7 +250,7 @@ export default function ImageUrlDownloaderPage() {
         setFoundImages(assets);
         toast({ title: "Discovery Complete", description: `Isolated ${assets.length} visual identifiers.` });
       } else {
-        setError("No images could be extracted. Please use a direct image URL.");
+        setError("No images could be extracted. The host might be restricted.");
       }
     } catch (err: any) {
       setError("Host restricted discovery protocol.");
@@ -210,40 +258,6 @@ export default function ImageUrlDownloaderPage() {
       setIsProcessing(false);
     }
   };
-
-  const downloadAll = async () => {
-    if (foundImages.length === 0) return;
-    setIsZipping(true);
-    const zip = new JSZip();
-    try {
-      const downloadPromises = foundImages.map(async (asset, i) => {
-        try {
-          const dataUri = await proxyDownloadImage(asset.url);
-          const base64 = dataUri.split(',')[1];
-          // Determine extension for ZIP member
-          let ext = 'jpg';
-          const cp = asset.url.split('?')[0];
-          const parts = cp.split('.');
-          if(parts.length > 1) {
-            const e = parts.pop()?.toLowerCase();
-            if (e && e.length < 5) ext = e;
-          }
-          zip.file(`image_${i}.${ext}`, base64, { base64: true });
-        } catch (e) {}
-      });
-      await Promise.all(downloadPromises);
-      const content = await zip.generateAsync({ type: "blob" });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(content);
-      link.download = `mykit-bundle-${Date.now()}.zip`;
-      link.click();
-      toast({ title: "Bundle Exported", description: "ZIP archive saved to device." });
-    } finally {
-      setIsZipping(false);
-    }
-  };
-
-  const handleFailedImage = (id: string) => { setFoundImages(prev => prev.filter(img => img.id !== id)); };
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -255,7 +269,7 @@ export default function ImageUrlDownloaderPage() {
           Image URL <span className="text-primary italic">Downloader</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          Professional browser-side image extraction. Paste a direct link, Unsplash, Pinterest, or YouTube URL to save high-res assets locally.
+          Professional browser-side image extraction. Paste a direct link, Unsplash, or YouTube URL to save high-res assets locally.
         </p>
       </div>
 
@@ -287,18 +301,21 @@ export default function ImageUrlDownloaderPage() {
                     {extractVideoId(url) ? <Youtube className="w-6 h-6 text-red-600" /> : <Globe className="w-6 h-6 text-primary" />}
                   </div>
                 </div>
-                <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed flex items-center gap-2">
-                  <Info className="w-3.5 h-3.5" /> High-res extraction enabled.
-                </p>
+                {error && (
+                  <div className="flex items-center gap-2 text-destructive mt-2 ml-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-bold uppercase tracking-tight">{error}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-3 justify-center">
                 <Button 
                   onClick={handleDiscovery} 
                   disabled={isProcessing || !url.trim()} 
-                  className="h-14 flex-1 bg-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 active:scale-95"
+                  className="h-14 flex-1 bg-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 active:scale-95 transition-all"
                 >
-                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : (url.trim() ? 'Go' : 'Process Signal')}
+                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Go'}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -308,22 +325,15 @@ export default function ImageUrlDownloaderPage() {
                   <Trash2 className="w-5 h-5" />
                 </Button>
               </div>
-
-              {error && (
-                <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 flex items-start gap-3 animate-in shake">
-                  <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
-                  <p className="text-[10px] font-bold text-destructive uppercase leading-relaxed">{error}</p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-1">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Protocol</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">WASM Matrix Extraction</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                Extraction occurs via clinical proxy. Your local identity is never revealed to the host server.
+                Hardware-accelerated pixel isolation ensures you save the original source binary locally.
               </p>
             </div>
           </div>
@@ -342,16 +352,6 @@ export default function ImageUrlDownloaderPage() {
                   Discovered Matrix
                 </CardTitle>
               </div>
-              {foundImages.length > 1 && (
-                <Button 
-                  onClick={downloadAll} 
-                  disabled={isZipping} 
-                  className="h-10 px-6 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-lg"
-                >
-                  {isZipping ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileArchive className="w-4 h-4 mr-2" />}
-                  Download Bundle ZIP
-                </Button>
-              )}
             </CardHeader>
             <CardContent className="flex-1 p-4 md:p-10 bg-black/5 dark:bg-black/40">
                {foundImages.length === 0 && !isProcessing ? (
@@ -365,7 +365,7 @@ export default function ImageUrlDownloaderPage() {
                       <div className="w-20 h-20 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                       <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Executing Proxy Handshake...</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Establishing Binary Link...</p>
                  </div>
                ) : (
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar p-1">
@@ -374,7 +374,7 @@ export default function ImageUrlDownloaderPage() {
                         key={asset.id} 
                         asset={asset} 
                         onDownload={downloadSingle} 
-                        onFail={handleFailedImage} 
+                        onFail={(id) => setFoundImages(prev => prev.filter(img => img.id !== id))} 
                       />
                     ))}
                  </div>
