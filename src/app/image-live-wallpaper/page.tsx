@@ -435,7 +435,7 @@ export default function AdvancedImageLiveWallpaperPage() {
                   </div>
 
                   <div className="pt-4 space-y-4 border-t border-border">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Optical Overlays</іLabel>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Optical Overlays</Label>
                     <div className="grid grid-cols-1 gap-3">
                        <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border border-border group hover:border-primary/20 transition-all">
                           <div className="space-y-0.5">
@@ -554,7 +554,7 @@ export default function AdvancedImageLiveWallpaperPage() {
                     {isProcessing && (
                       <div className="w-full max-w-sm space-y-4 animate-in fade-in zoom-in">
                         <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-primary">
-                          <span className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Recording Matrix Stream...</span>
+                          <span className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Recording Matrix stream...</span>
                           <span>{progress}%</span>
                         </div>
                         <Progress value={progress} className="h-1.5 rounded-full" />
