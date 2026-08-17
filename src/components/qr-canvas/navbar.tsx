@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -104,6 +105,14 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
+             <Link 
+                href="/about"
+                title="About My Kit Tool"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all group icon-container-3d"
+             >
+               <User className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
+             </Link>
+
              <Link 
                 href="/donate"
                 title="Support Studio"
