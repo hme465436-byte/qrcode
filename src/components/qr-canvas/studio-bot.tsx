@@ -298,7 +298,7 @@ export function StudioBot() {
 
   // Initial Greeting Protocol
   useEffect(() => {
-    if (isInitialShow && !isOpen) {
+    if (isInitialShow && !isOpen && pathname === '/') {
       let count = 0;
       setBubbleText(GREETING_MESSAGES[0]);
       setShowBubble(true);
@@ -314,7 +314,7 @@ export function StudioBot() {
       
       return () => clearInterval(interval);
     }
-  }, [isInitialShow, isOpen]);
+  }, [isInitialShow, isOpen, pathname]);
 
   // Hide logic for initial arrival
   useEffect(() => {
@@ -330,7 +330,7 @@ export function StudioBot() {
   // Periodic random bubble logic
   useEffect(() => {
     const triggerBubble = () => {
-      if (isOpen || isMinimized || isInitialShow) return;
+      if (isOpen || isMinimized || isInitialShow || pathname !== '/') return;
       const nextMsg = BUBBLE_MESSAGES[Math.floor(Math.random() * BUBBLE_MESSAGES.length)];
       setBubbleText(nextMsg);
       setShowBubble(true);
@@ -347,7 +347,7 @@ export function StudioBot() {
       if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current); 
       clearTimeout(startDelayTimer);
     };
-  }, [isOpen, isMinimized, isInitialShow]);
+  }, [isOpen, isMinimized, isInitialShow, pathname]);
 
   useEffect(() => {
     if (isOpen && messages.length <= 1) {
@@ -464,6 +464,8 @@ export function StudioBot() {
       setIsOpen(true);
     }, 400);
   };
+
+  if (pathname !== '/') return null;
 
   const isStateShow = isOpen || isInitialShow;
 
