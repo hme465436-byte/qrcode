@@ -56,85 +56,32 @@ interface Message {
 }
 
 /**
- * Premium Mascot Illustration
- * High-fidelity hardware-native matrix
+ * Simple Cute Box Robot SVG
  */
 function RobotSVG({ className }: { className?: string }) {
   return (
     <div className={cn("relative pointer-events-none select-none", className)}>
-      <svg viewBox="0 0 128 128" className="w-full h-full overflow-visible">
-        <defs>
-          <linearGradient id="premium-helmet" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#F4F7FB" />
-            <stop offset="100%" stopColor="#6B7C93" />
-          </linearGradient>
-          
-          <filter id="eye-glow-pro" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.5" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
+      <svg viewBox="0 0 64 64" className="w-full h-full overflow-visible">
+        {/* Antenna */}
+        <line x1="32" y1="16" x2="32" y2="8" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="32" cy="6" r="3" fill="#22D3EE" className="animate-pulse" />
 
-          <filter id="smile-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-        </defs>
+        {/* Side Bolts / Ears */}
+        <rect x="8" y="28" width="4" height="10" rx="1" fill="#9CA3AF" />
+        <rect x="52" y="28" width="4" height="10" rx="1" fill="#9CA3AF" />
 
-        {/* 1. Ground Shadow */}
-        <ellipse cx="64" cy="120" rx="38" ry="6" fill="black" opacity="0.2" />
+        {/* Box Head */}
+        <rect x="12" y="16" width="40" height="36" rx="6" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="1" />
 
-        {/* 2. Neck */}
-        <rect x="54" y="94" width="20" height="12" rx="4" fill="#2D3748" />
+        {/* Circle Visor */}
+        <circle cx="32" cy="34" r="13" fill="#1F2937" />
 
-        {/* 3. Head: Rounded Helmet */}
-        <path 
-          d="M36,25 L92,25 C112,25 116,38 118,55 L118,80 C118,100 106,108 92,108 L36,108 C22,108 10,100 10,80 L10,55 C10,38 14,25 36,25 Z" 
-          fill="url(#premium-helmet)" 
-          stroke="#4A5568" 
-          strokeWidth="1"
-        />
-        
-        {/* Top-Left Inset Highlight */}
-        <path d="M36,28 L92,28 Q106,28 110,40" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.35" />
+        {/* Eyes */}
+        <circle cx="27" cy="32" r="2.5" fill="#22D3EE" />
+        <circle cx="37" cy="32" r="2.5" fill="#22D3EE" />
 
-        {/* 4. Face Plate Inset */}
-        <rect x="24" y="42" width="80" height="50" rx="12" fill="#1A202C" opacity="0.1" />
-
-        {/* 5. Visor: Glossy Capsule */}
-        <rect x="28" y="48" width="72" height="26" rx="13" fill="#0F172A" />
-        <path d="M42,52 L86,52" fill="none" stroke="#00E5FF" strokeWidth="1" opacity="0.2" strokeLinecap="round" />
-
-        {/* 6. Eyes: Glowing Capsules */}
-        <g filter="url(#eye-glow-pro)">
-          <rect x="40" y="55" width="14" height="12" rx="6" fill="#00E5FF" />
-          <circle cx="43" cy="58" r="1.5" fill="white" />
-          
-          <rect x="74" y="55" width="14" height="12" rx="6" fill="#00E5FF" />
-          <circle cx="77" cy="58" r="1.5" fill="white" />
-        </g>
-
-        {/* 7. Center Logic LED */}
-        <circle cx="64" cy="61" r="1.5" fill="#00E5FF" className="animate-pulse" />
-
-        {/* 8. Cheek Speaker Grills */}
-        <g fill="#4A5568" opacity="0.5">
-          <circle cx="28" cy="82" r="1" /> <circle cx="32" cy="82" r="1" /> <circle cx="36" cy="82" r="1" />
-          <circle cx="28" cy="86" r="1" /> <circle cx="32" cy="86" r="1" /> <circle cx="36" cy="86" r="1" />
-          
-          <circle cx="92" cy="82" r="1" /> <circle cx="96" cy="82" r="1" /> <circle cx="100" cy="82" r="1" />
-          <circle cx="92" cy="86" r="1" /> <circle cx="96" cy="86" r="1" /> <circle cx="100" cy="86" r="1" />
-        </g>
-
-        {/* 9. Top Antenna + Pulsing Signal */}
-        <line x1="64" y1="25" x2="64" y2="8" stroke="#4A5568" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx="64" cy="8" r="4" fill="#00E5FF" className="animate-pulse" />
-
-        {/* 10. Side Bolts */}
-        <circle cx="18" cy="66" r="4" fill="none" stroke="#4A5568" strokeWidth="1.5" opacity="0.3" />
-        <circle cx="110" cy="66" r="4" fill="none" stroke="#4A5568" strokeWidth="1.5" opacity="0.3" />
-
-        {/* 11. Smile: Glowing Cyan Curve */}
-        <path d="M54,92 Q64,98 74,92" fill="none" stroke="#00E5FF" strokeWidth="1.5" strokeLinecap="round" filter="url(#smile-glow)" opacity="0.6" />
+        {/* Smile */}
+        <path d="M28 38 Q32 41 36 38" stroke="#22D3EE" strokeWidth="1.5" fill="none" strokeLinecap="round" />
       </svg>
     </div>
   );
@@ -147,7 +94,7 @@ export function StudioBot() {
     {
       id: 'init',
       role: 'assistant',
-      content: "Studio Assistant online. How can I help with your digital production?"
+      content: "Studio Assistant online. Need help finding a tool?"
     }
   ]);
   const [input, setInput] = useState('');
@@ -160,7 +107,7 @@ export function StudioBot() {
     }
   }, [messages, isTyping]);
 
-  // Hook order safety: visibility check performed at end of block
+  // Protocol Check: Assistant is only available on the Home page.
   if (pathname !== '/') return null;
 
   const processQuery = async (query: string) => {
@@ -175,9 +122,9 @@ export function StudioBot() {
 
     let response = "";
     if (foundTools.length > 0) {
-      response = `I've identified these relevant production units:`;
+      response = `I've found these tools in the registry:`;
     } else {
-      response = "I couldn't locate a specific tool for that request. Try keywords like 'QR', 'PDF', or 'Image'.";
+      response = "I couldn't find a specific tool for that. Try searching for 'QR', 'PDF', or 'Image'.";
     }
 
     setMessages(prev => [...prev, {
@@ -203,42 +150,42 @@ export function StudioBot() {
       {!isOpen ? (
         <button 
           onClick={() => setIsOpen(true)}
-          className="pointer-events-auto group w-[72px] h-[72px] bg-transparent border-none flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all active:scale-95 duration-500"
+          className="pointer-events-auto group w-14 h-14 bg-transparent border-none flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all active:scale-95 duration-500 drop-shadow-xl"
           aria-label="Open Studio Assistant"
         >
-          <RobotSVG className="w-full h-full drop-shadow-2xl" />
+          <RobotSVG className="w-full h-full" />
         </button>
       ) : (
         <div className="pointer-events-auto flex flex-col items-end animate-in slide-in-from-bottom-4 zoom-in-95 duration-300 w-[280px] sm:w-[340px]">
-          <Card className="w-full border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col bg-[#0a0a0c]/95 backdrop-blur-2xl rounded-[2.5rem] border">
+          <Card className="w-full border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col bg-[#0a0a0c]/95 backdrop-blur-2xl rounded-[2rem] border">
             {/* Header */}
-            <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-secondary/30 shrink-0">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                  <Bot className="w-5 h-5" />
+            <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-secondary/30 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                  <Bot className="w-4 h-4" />
                 </div>
                 <div className="space-y-0.5">
-                  <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Assistant</h4>
-                  <p className="text-[8px] font-bold text-primary uppercase tracking-[0.2em]">Matrix Mode</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Assistant</h4>
+                  <p className="text-[8px] font-bold text-primary uppercase tracking-[0.2em]">Online</p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsOpen(false)} 
-                className="w-9 h-9 rounded-xl text-foreground/20 hover:text-foreground hover:bg-white/5 transition-all flex items-center justify-center"
+                className="w-8 h-8 rounded-lg text-foreground/20 hover:text-foreground hover:bg-white/5 transition-all flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Chat Body */}
-            <div ref={scrollRef} className="h-[300px] overflow-y-auto p-5 space-y-4 custom-scrollbar bg-transparent">
+            <div ref={scrollRef} className="h-[280px] overflow-y-auto p-4 space-y-4 custom-scrollbar bg-transparent">
               {messages.map((msg) => (
                 <div key={msg.id} className={cn(
                   "flex flex-col gap-2 animate-in slide-in-from-bottom-1 duration-200",
                   msg.role === 'user' ? "items-end" : "items-start"
                 )}>
                   <div className={cn(
-                    "max-w-[85%] px-4 py-3 rounded-2xl text-[11px] font-medium leading-relaxed shadow-lg",
+                    "max-w-[85%] px-4 py-3 rounded-2xl text-[10px] font-medium leading-relaxed shadow-lg",
                     msg.role === 'user' 
                       ? "bg-primary text-primary-foreground rounded-tr-none" 
                       : "bg-white/5 text-foreground/80 rounded-tl-none border border-white/5"
@@ -255,12 +202,12 @@ export function StudioBot() {
                           className="w-full flex items-center justify-between p-3 rounded-xl bg-background/50 border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all group shadow-sm"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
-                              <tool.icon className="w-4 h-4" />
+                            <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                              <tool.icon className="w-3.5 h-3.5" />
                             </div>
-                            <span className="text-[10px] font-black uppercase text-foreground/60 group-hover:text-primary transition-colors">{tool.title}</span>
+                            <span className="text-[9px] font-black uppercase text-foreground/60 group-hover:text-primary transition-colors">{tool.title}</span>
                           </div>
-                          <ArrowRight className="w-3.5 h-3.5 text-primary/40 group-hover:text-primary transition-all group-hover:translate-x-0.5" />
+                          <ArrowRight className="w-3 h-3 text-primary/40 group-hover:text-primary transition-all group-hover:translate-x-0.5" />
                         </button>
                       ))}
                     </div>
@@ -269,24 +216,24 @@ export function StudioBot() {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-white/5 px-4 py-3 rounded-2xl rounded-tl-none border border-white/5 flex gap-1.5 items-center">
-                    <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" />
-                    <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
-                    <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+                  <div className="bg-white/5 px-4 py-2 rounded-2xl rounded-tl-none border border-white/5 flex gap-1 items-center">
+                    <div className="w-1 h-1 bg-primary/40 rounded-full animate-bounce" />
+                    <div className="w-1 h-1 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                    <div className="w-1 h-1 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
                   </div>
                 </div>
               )}
             </div>
 
             {/* Input Area */}
-            <div className="p-5 bg-secondary/30 border-t border-white/5">
+            <div className="p-4 bg-secondary/30 border-t border-white/5">
               <form onSubmit={handleSubmit} className="flex gap-2">
                 <input 
                   type="text"
                   placeholder="Need a tool?"
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  className="flex-1 h-10 px-4 bg-background border border-white/10 rounded-xl text-[11px] font-medium focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-foreground/10"
+                  className="flex-1 h-10 px-4 bg-background border border-white/10 rounded-xl text-[10px] font-medium focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-foreground/10"
                 />
                 <button 
                   type="submit"
