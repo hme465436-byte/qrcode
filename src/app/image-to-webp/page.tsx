@@ -81,7 +81,7 @@ export default function ImageToWebPPage() {
 
     setAssets(prev => [...prev, ...newAssets]);
     if (!activePreviewId && newAssets.length > 0) setActivePreviewId(newAssets[0].id);
-    toast({ title: "Signal Injected", description: `Added ${newAssets.length} assets to the pipeline.` });
+    toast({ title: "Photo Added", description: `Added ${newAssets.length} items to your list.` });
     if (e.target) e.target.value = '';
   };
 
@@ -148,7 +148,7 @@ export default function ImageToWebPPage() {
     }
 
     setIsProcessing(false);
-    toast({ title: "Synthesis Complete", description: "All visuals optimized for WebP protocol." });
+    toast({ title: "Complete", description: "Photos converted to the new format." });
   };
 
   const downloadAll = async () => {
@@ -168,7 +168,7 @@ export default function ImageToWebPPage() {
       const content = await zip.generateAsync({ type: "blob" });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
-      link.download = `webp_production_bundle_${Date.now()}.zip`;
+      link.download = `photos_bundle_${Date.now()}.zip`;
       link.click();
     }
   };
@@ -192,15 +192,15 @@ export default function ImageToWebPPage() {
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-full">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <TrendingDown className="w-3.5 h-3.5" /> Performance Suite
+          <TrendingDown className="w-3.5 h-3.5" /> Size Reduction
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
            <div className="min-w-0">
               <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-                Image to <span className="text-primary italic">WebP Studio</span>
+                Image to <span className="text-primary italic">WebP</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional-grade bitstream optimization. Convert standard images into high-compression WebP matrices locally with absolute data privacy.
+                Save space by converting your photos to a more efficient format. Everything happens on your device with complete privacy.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -221,12 +221,12 @@ export default function ImageToWebPPage() {
              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
              <CardHeader className="py-4 border-b border-white/5 bg-white/5 flex flex-row items-center justify-between shrink-0">
                 <CardTitle className="text-[9px] font-black text-primary uppercase tracking-[0.4em] flex items-center gap-2">
-                   <MonitorPlay className="w-3.5 h-3.5" /> Studio Master Preview
+                   <MonitorPlay className="w-3.5 h-3.5" /> Preview
                 </CardTitle>
                 {activeAsset && (
                    <div className="flex gap-2">
                       <div className="px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-[7px] font-black text-primary uppercase">
-                        {activeAsset.status === 'completed' ? 'WebP Master' : 'Inbound Source'}
+                        {activeAsset.status === 'completed' ? 'New Photo' : 'Original'}
                       </div>
                    </div>
                 )}
@@ -237,7 +237,7 @@ export default function ImageToWebPPage() {
                      <div className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center text-white/10 group-hover:text-primary group-hover:scale-110 transition-all shadow-xl">
                         <Upload className="w-8 h-8" />
                      </div>
-                     <span className="text-[10px] font-black uppercase text-white/30 tracking-widest">Inject Visual Pipeline</span>
+                     <span className="text-[10px] font-black uppercase text-white/30 tracking-widest">Select Photo</span>
                   </div>
                 ) : (
                   <div className="relative w-full h-full flex items-center justify-center">
@@ -259,12 +259,12 @@ export default function ImageToWebPPage() {
              </CardContent>
           </Card>
 
-          {/* Asset Pipeline List */}
+          {/* Photo List */}
           {assets.length > 0 && (
             <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-500">
                <div className="flex items-center justify-between px-2">
-                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Queue Pipeline</Label>
-                  <span className="text-[9px] font-black uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-lg">{assets.length} Assets</span>
+                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Selected Photos</Label>
+                  <span className="text-[9px] font-black uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-lg">{assets.length} Photos</span>
                </div>
                <div className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-4">
                   {assets.map((a) => (
@@ -299,7 +299,7 @@ export default function ImageToWebPPage() {
                     className="min-w-[160px] aspect-video sm:aspect-auto rounded-[2rem] border-2 border-dashed border-border flex flex-col items-center justify-center gap-3 bg-secondary/20 hover:border-primary/40 transition-all group/add"
                   >
                      <Plus className="w-5 h-5 text-foreground/10 group-hover/add:text-primary transition-all" />
-                     <span className="text-[8px] font-black uppercase text-foreground/30">Add Asset</span>
+                     <span className="text-[8px] font-black uppercase text-foreground/30">Add Photo</span>
                   </button>
                </div>
             </div>
@@ -311,7 +311,7 @@ export default function ImageToWebPPage() {
            <Card className="glass-card border-border shadow-2xl">
               <CardHeader className="py-6 border-b border-white/5 bg-white/2">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Settings2 className="w-5 h-5 text-primary" /> Matrix Parameters
+                    <Settings2 className="w-5 h-5 text-primary" /> Settings
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-10">
@@ -324,7 +324,7 @@ export default function ImageToWebPPage() {
                       )}
                     >
                       <ImageIcon className="w-4 h-4 text-white/10 mr-3" />
-                      <span className="text-[9px] font-black uppercase text-white/30">{assets.length > 0 ? 'Inject More Assets' : 'Import Photo Set'}</span>
+                      <span className="text-[9px] font-black uppercase text-white/30">{assets.length > 0 ? 'Add More' : 'Select Photos'}</span>
                       <input type="file" ref={fileInputRef} accept="image/jpeg,image/png,image/gif,image/bmp" multiple onChange={handleFileUpload} className="hidden" />
                     </div>
                  </div>
@@ -333,18 +333,18 @@ export default function ImageToWebPPage() {
                    <div className="space-y-10 animate-in zoom-in duration-500">
                       <div className="space-y-6">
                         <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-foreground/30">
-                           <Label className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-primary" /> Encoding Quality</Label>
+                           <Label className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-primary" /> Quality</Label>
                            <span className="text-primary font-mono text-lg">{quality}%</span>
                         </div>
                         <Slider value={[quality]} min={10} max={100} step={1} onValueChange={v => setQuality(v[0])} />
                       </div>
 
                       <div className="space-y-4">
-                         <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Optional Max Width (px)</Label>
+                         <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Maximum Width (px)</Label>
                          <div className="relative group/scale">
                             <Input 
                               type="number" 
-                              placeholder="Original Resolution" 
+                              placeholder="Original Size" 
                               value={maxWidth} 
                               onChange={e => setMaxWidth(e.target.value === '' ? '' : parseInt(e.target.value))}
                               className="h-12 bg-secondary border-border rounded-xl text-xs font-bold pl-10" 
@@ -360,8 +360,8 @@ export default function ImageToWebPPage() {
                                   <TrendingDown className="w-5 h-5" />
                                 </div>
                                 <div>
-                                   <p className="text-[10px] font-black uppercase text-foreground/60">Optimization Logic</p>
-                                   <p className="text-[8px] font-bold text-foreground/20 uppercase">Next-Gen WebP Matrix</p>
+                                   <p className="text-[10px] font-black uppercase text-foreground/60">Auto Optimize</p>
+                                   <p className="text-[8px] font-bold text-foreground/20 uppercase">Save Space</p>
                                 </div>
                             </div>
                             {isProcessing ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(59,130,246,0.5)]" />}
@@ -375,7 +375,7 @@ export default function ImageToWebPPage() {
                           className="h-16 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 active:scale-95 transition-all group/btn"
                          >
                             {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                            Execute Synthesis
+                            Convert
                          </Button>
                          {assets.some(a => a.status === 'completed') && (
                            <Button 
@@ -384,7 +384,7 @@ export default function ImageToWebPPage() {
                             className="h-14 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-[10px] active:scale-95 transition-all shadow-lg"
                            >
                              <Download className="w-4 h-4 mr-2" /> 
-                             Download {assets.filter(a => a.status === 'completed').length > 1 ? 'ZIP Bundle' : 'WebP Master'}
+                             Download {assets.filter(a => a.status === 'completed').length > 1 ? 'Bundle' : 'Photo'}
                            </Button>
                          )}
                       </div>
@@ -399,9 +399,9 @@ export default function ImageToWebPPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hardware Isolation</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Privacy</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All bitstream translation occurs 100% locally in your browser memory. Visual assets and original metadata are never transmitted, ensuring absolute data privacy.
+                    Processing happens on your device. Your photos and data are never sent to any server.
                   </p>
                 </div>
              </div>
@@ -413,7 +413,7 @@ export default function ImageToWebPPage() {
       {assets.some(a => a.status === 'completed') && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#0a0a0c]/80 backdrop-blur-3xl border-t border-white/10 z-[100] lg:hidden flex gap-3 animate-in slide-in-from-bottom-full duration-500">
           <Button onClick={downloadAll} className="flex-1 h-14 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-2xl">
-             <Download className="w-4 h-4" /> Download Result
+             <Download className="w-4 h-4" /> Download
           </Button>
         </div>
       )}

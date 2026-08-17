@@ -45,20 +45,20 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     privacy: 'Mass rendering is performed locally via WebAssembly. Your data list is never transmitted.'
   },
   'image-to-webp': {
-    title: 'Image to WebP Studio',
-    description: 'Convert standard images into highly optimized, next-gen WebP format masters.',
+    title: 'Image to WebP',
+    description: 'Save space by converting your photos to a more efficient format. Professional-grade size reduction.',
     steps: [
-      'Upload one or more images (JPG, PNG, GIF, BMP) to the asset pipeline.',
-      'Adjust the encoding quality matrix (10-100) to balance size and fidelity.',
-      'Optionally set a maximum pixel width to auto-scale high-res assets.',
-      'Click the individual Download icon or use Download All for a ZIP bundle.',
-      'Review the bitstream reduction metrics for each converted asset.'
+      'Upload one or more photos (JPG, PNG, GIF, BMP) to your list.',
+      'Adjust the Quality setting (10-100) to balance size and look.',
+      'Optionally set a maximum width to resize large photos.',
+      'Click Download to save individual photos or the whole list as a bundle.',
+      'See your size saving for each converted photo.'
     ],
     tips: [
       'Quality settings between 75-85 yield the best balance for web use.',
-      'Use the ZIP export when processing more than 3 assets for efficiency.'
+      'Use the bundle download when processing many photos for efficiency.'
     ],
-    privacy: 'Conversion occurs entirely on your device using the browser Canvas engine. No imagery is ever transmitted.'
+    privacy: 'Processing happens on your device. No photos are ever sent to any server.'
   },
   'images-to-gif': {
     title: 'Images to GIF Studio',
