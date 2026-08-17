@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -76,7 +77,8 @@ import {
   Ghost,
   Wifi,
   Share2,
-  MoveHorizontal
+  MoveHorizontal,
+  Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -110,6 +112,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/hide-message-photo', 
+    icon: Lock, 
+    title: 'Hide in Photo', 
+    desc: 'Embed secret messages inside images using steganography.', 
+    label: 'SECRET', 
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    glowClass: 'bg-indigo-400/10',
+    keywords: ['hide text in image', 'secret photo', 'steganography', 'private message', 'hidden text', 'reveal'],
+    category: 'image'
   },
   { 
     href: '/direct-file-share', 
@@ -756,7 +769,7 @@ const TOOLS: Tool[] = [
     desc: 'Synthesize high-quality animated GIFs from clips.', 
     label: 'ANIMATION', 
     color: 'text-orange-600 bg-orange-600/10 border-orange-600/20',
-    glowClass: 'bg-orange-600/10',
+    glowClass: 'bg-orange-500/10',
     keywords: ['video to gif', 'mp4 to gif', 'make gif', 'convert gif', 'animated', 'clip'],
     category: 'utilities'
   },
@@ -954,7 +967,8 @@ export default function Home() {
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
-      'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee'
+      'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
+      'Hide text in image', 'Secret photo', 'Steganography'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
