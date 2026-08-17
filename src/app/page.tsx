@@ -70,7 +70,8 @@ import {
   WholeWord,
   Frame,
   Stamp,
-  Scan
+  Scan,
+  TrendingDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -115,6 +116,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
     category: 'generators'
+  },
+  { 
+    href: '/image-to-webp', 
+    icon: TrendingDown, 
+    title: 'Image to WebP', 
+    desc: 'Convert imagery into next-gen optimized WebP masters locally.', 
+    label: 'OPTIMIZE', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['webp', 'convert webp', 'jpg to webp', 'png to webp', 'next-gen image', 'smaller images'],
+    category: 'image'
   },
   { 
     href: '/images-to-gif', 
@@ -694,7 +706,7 @@ const TOOLS: Tool[] = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg'],
     category: 'utilities'
@@ -727,7 +739,7 @@ const TOOLS: Tool[] = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
@@ -804,7 +816,7 @@ const TOOLS: Tool[] = [
     title: 'English Dictionary', 
     desc: 'Professional linguistic analysis and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
@@ -904,7 +916,7 @@ export default function Home() {
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
-      'Images to GIF'
+      'Images to GIF', 'Image to WebP'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
