@@ -56,88 +56,85 @@ interface Message {
 }
 
 /**
- * Premium High-Fidelity Robot Illustration
- * Inline SVG with clinical detail and depth protocols
+ * Premium Mascot Illustration
+ * High-fidelity hardware-native matrix
  */
 function RobotSVG({ className }: { className?: string }) {
   return (
     <div className={cn("relative pointer-events-none select-none", className)}>
-      <svg viewBox="0 0 64 64" className="w-full h-full overflow-visible">
+      <svg viewBox="0 0 128 128" className="w-full h-full overflow-visible">
         <defs>
-          {/* Metal Casing Gradient */}
-          <linearGradient id="metal-helmet" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#E8EEF4" />
-            <stop offset="100%" stopColor="#8A96A8" />
+          <linearGradient id="premium-helmet" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#F4F7FB" />
+            <stop offset="100%" stopColor="#6B7C93" />
           </linearGradient>
           
-          {/* Eye Glow Filter */}
-          <filter id="optics-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <filter id="eye-glow-pro" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
 
-          {/* Depth Shadow */}
-          <filter id="hardware-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.2" />
+          <filter id="smile-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
 
-        {/* Antenna Infrastructure */}
-        <line x1="32" y1="14" x2="32" y2="4" stroke="#4B5563" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx="32" cy="4" r="3" fill="#22D3EE" className="animate-pulse" />
-        
-        {/* Helmet Shaped Head */}
-        <rect 
-          x="10" y="14" 
-          width="44" height="42" 
-          rx="12" 
-          fill="url(#metal-helmet)" 
-          stroke="#525B6A" 
-          strokeWidth="1.5" 
-          filter="url(#hardware-shadow)"
+        {/* 1. Ground Shadow */}
+        <ellipse cx="64" cy="120" rx="38" ry="6" fill="black" opacity="0.2" />
+
+        {/* 2. Neck */}
+        <rect x="54" y="94" width="20" height="12" rx="4" fill="#2D3748" />
+
+        {/* 3. Head: Rounded Helmet */}
+        <path 
+          d="M36,25 L92,25 C112,25 116,38 118,55 L118,80 C118,100 106,108 92,108 L36,108 C22,108 10,100 10,80 L10,55 C10,38 14,25 36,25 Z" 
+          fill="url(#premium-helmet)" 
+          stroke="#4A5568" 
+          strokeWidth="1"
         />
-
-        {/* Side Ear Vents (Left) */}
-        <g stroke="#525B6A" strokeWidth="1" strokeLinecap="round" opacity="0.6">
-          <line x1="10" y1="30" x2="6" y2="30" />
-          <line x1="10" y1="34" x2="6" y2="34" />
-          <line x1="10" y1="38" x2="6" y2="38" />
-        </g>
-
-        {/* Side Ear Vents (Right) */}
-        <g stroke="#525B6A" strokeWidth="1" strokeLinecap="round" opacity="0.6">
-          <line x1="54" y1="30" x2="58" y2="30" />
-          <line x1="54" y1="34" x2="58" y2="34" />
-          <line x1="54" y1="38" x2="58" y2="38" />
-        </g>
-
-        {/* Obsidian Visor Bar */}
-        <rect x="14" y="24" width="36" height="14" rx="5" fill="#0F172A" />
-
-        {/* Cyan Optical Sensors */}
-        <g filter="url(#optics-glow)">
-          {/* Left Eye */}
-          <ellipse cx="23" cy="31" rx="3.5" ry="5" fill="#22D3EE" className="animate-pulse" />
-          <circle cx="21.5" cy="29" r="1" fill="#FFFFFF" opacity="0.8" />
-          
-          {/* Right Eye */}
-          <ellipse cx="41" cy="31" rx="3.5" ry="5" fill="#22D3EE" className="animate-pulse" />
-          <circle cx="39.5" cy="29" r="1" fill="#FFFFFF" opacity="0.8" />
-        </g>
-
-        {/* Center Sensor / Camera Unit */}
-        <circle cx="32" cy="31" r="1.5" fill="#4B5563" />
         
-        {/* Chin Plate & Speaker Matrix */}
-        <path d="M18 46 Q32 50 46 46" stroke="#525B6A" strokeWidth="1.5" fill="none" opacity="0.5" />
-        <g fill="#4B5563" opacity="0.4">
-          <circle cx="28" cy="50" r="0.8" />
-          <circle cx="32" cy="50" r="0.8" />
-          <circle cx="36" cy="50" r="0.8" />
+        {/* Top-Left Inset Highlight */}
+        <path d="M36,28 L92,28 Q106,28 110,40" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.35" />
+
+        {/* 4. Face Plate Inset */}
+        <rect x="24" y="42" width="80" height="50" rx="12" fill="#1A202C" opacity="0.1" />
+
+        {/* 5. Visor: Glossy Capsule */}
+        <rect x="28" y="48" width="72" height="26" rx="13" fill="#0F172A" />
+        <path d="M42,52 L86,52" fill="none" stroke="#00E5FF" strokeWidth="1" opacity="0.2" strokeLinecap="round" />
+
+        {/* 6. Eyes: Glowing Capsules */}
+        <g filter="url(#eye-glow-pro)">
+          <rect x="40" y="55" width="14" height="12" rx="6" fill="#00E5FF" />
+          <circle cx="43" cy="58" r="1.5" fill="white" />
+          
+          <rect x="74" y="55" width="14" height="12" rx="6" fill="#00E5FF" />
+          <circle cx="77" cy="58" r="1.5" fill="white" />
         </g>
 
-        {/* Mouth Slit */}
-        <rect x="27" y="42" width="10" height="1" rx="0.5" fill="#1E293B" opacity="0.6" />
+        {/* 7. Center Logic LED */}
+        <circle cx="64" cy="61" r="1.5" fill="#00E5FF" className="animate-pulse" />
+
+        {/* 8. Cheek Speaker Grills */}
+        <g fill="#4A5568" opacity="0.5">
+          <circle cx="28" cy="82" r="1" /> <circle cx="32" cy="82" r="1" /> <circle cx="36" cy="82" r="1" />
+          <circle cx="28" cy="86" r="1" /> <circle cx="32" cy="86" r="1" /> <circle cx="36" cy="86" r="1" />
+          
+          <circle cx="92" cy="82" r="1" /> <circle cx="96" cy="82" r="1" /> <circle cx="100" cy="82" r="1" />
+          <circle cx="92" cy="86" r="1" /> <circle cx="96" cy="86" r="1" /> <circle cx="100" cy="86" r="1" />
+        </g>
+
+        {/* 9. Top Antenna + Pulsing Signal */}
+        <line x1="64" y1="25" x2="64" y2="8" stroke="#4A5568" strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="64" cy="8" r="4" fill="#00E5FF" className="animate-pulse" />
+
+        {/* 10. Side Bolts */}
+        <circle cx="18" cy="66" r="4" fill="none" stroke="#4A5568" strokeWidth="1.5" opacity="0.3" />
+        <circle cx="110" cy="66" r="4" fill="none" stroke="#4A5568" strokeWidth="1.5" opacity="0.3" />
+
+        {/* 11. Smile: Glowing Cyan Curve */}
+        <path d="M54,92 Q64,98 74,92" fill="none" stroke="#00E5FF" strokeWidth="1.5" strokeLinecap="round" filter="url(#smile-glow)" opacity="0.6" />
       </svg>
     </div>
   );
@@ -163,6 +160,7 @@ export function StudioBot() {
     }
   }, [messages, isTyping]);
 
+  // Hook order safety: visibility check performed at end of block
   if (pathname !== '/') return null;
 
   const processQuery = async (query: string) => {
@@ -205,14 +203,14 @@ export function StudioBot() {
       {!isOpen ? (
         <button 
           onClick={() => setIsOpen(true)}
-          className="pointer-events-auto group w-16 h-16 bg-transparent border-none flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all active:scale-95 duration-500"
+          className="pointer-events-auto group w-[72px] h-[72px] bg-transparent border-none flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all active:scale-95 duration-500"
           aria-label="Open Studio Assistant"
         >
-          <RobotSVG className="w-16 h-16 drop-shadow-2xl" />
+          <RobotSVG className="w-full h-full drop-shadow-2xl" />
         </button>
       ) : (
         <div className="pointer-events-auto flex flex-col items-end animate-in slide-in-from-bottom-4 zoom-in-95 duration-300 w-[280px] sm:w-[340px]">
-          <Card className="w-full border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col bg-[#0a0a0c]/95 backdrop-blur-2xl rounded-[2rem] border">
+          <Card className="w-full border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col bg-[#0a0a0c]/95 backdrop-blur-2xl rounded-[2.5rem] border">
             {/* Header */}
             <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-secondary/30 shrink-0">
               <div className="flex items-center gap-4">
@@ -220,7 +218,7 @@ export function StudioBot() {
                   <Bot className="w-5 h-5" />
                 </div>
                 <div className="space-y-0.5">
-                  <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Robot Assistant</h4>
+                  <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Assistant</h4>
                   <p className="text-[8px] font-bold text-primary uppercase tracking-[0.2em]">Matrix Mode</p>
                 </div>
               </div>
@@ -285,7 +283,7 @@ export function StudioBot() {
               <form onSubmit={handleSubmit} className="flex gap-2">
                 <input 
                   type="text"
-                  placeholder="Ask about a studio tool..."
+                  placeholder="Need a tool?"
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   className="flex-1 h-10 px-4 bg-background border border-white/10 rounded-xl text-[11px] font-medium focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-foreground/10"
