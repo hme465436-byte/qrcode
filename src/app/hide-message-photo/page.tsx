@@ -141,6 +141,27 @@ export default function HideMessagePhotoPage() {
     return checksum;
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsProcessing(true);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          setLoadedImage(img);
+          setImage(result);
+          setIsProcessing(false);
+          toast({ title: "Carrier Integrated", description: "Ready for encoding." });
+        };
+        img.src = result;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const executeHide = async () => {
     if (!loadedImage || !canvasRef.current) return;
     if (!message.trim() && !embeddedFile) {
@@ -185,14 +206,11 @@ export default function HideMessagePhotoPage() {
     const filenameBytes = embeddedFile ? encoder.encode(embeddedFile.name) : new Uint8Array(0);
     const checksum = simpleChecksum(contentBytes);
 
-    // Header: [MAGIC 8b][IS_FILE 1b][CHECKSUM 4b][NAME_LEN 1b][PAYLOAD_LEN 2b] = 17 bytes approx
-    // Using simple buffer for 16-byte fixed header for robustness
     const header = new Uint8Array(HEADER_SIZE);
     for (let i = 0; i < MAGIC.length; i++) header[i] = MAGIC.charCodeAt(i);
     header[8] = embeddedFile ? 1 : 0;
     header[9] = strength === 'strong' ? 1 : 0;
     
-    // Lengths (Big Endian)
     const view = new DataView(header.buffer);
     view.setUint32(10, contentBytes.length);
     view.setUint16(14, checksum % 0xFFFF);
@@ -207,40 +225,33 @@ export default function HideMessagePhotoPage() {
       for (let i = 7; i >= 0; i--) bits.push((byte >> i) & 1);
     });
 
-    // Apply Encryption
     if (password) {
       const key = await getCryptoKey(password);
       bits = bits.map((b, i) => b ^ ((key[Math.floor(i / 8) % key.length] >> (i % 8)) & 1));
     }
 
-    // Apply Redundancy for Strong Mode
     if (strength === 'strong') {
       const redundantBits: number[] = [];
       bits.forEach(b => {
         redundantBits.push(b);
-        redundantBits.push(b); // 2x repeat
+        redundantBits.push(b); 
       });
       bits = redundantBits;
     }
 
-    // Phase 3: LSB Injection
     let bitIdx = 0;
-    const stride = strength === 'strong' ? 3 : 1; // Scatter bits in strong mode
+    const stride = strength === 'strong' ? 3 : 1; 
     for (let i = 0; i < data.length && bitIdx < bits.length; i += 4 * stride) {
-      // Red channel
       data[i] = (data[i] & 0xFE) | bits[bitIdx++];
       if (bitIdx >= bits.length) break;
-      // Green channel
       data[i + 1] = (data[i + 1] & 0xFE) | bits[bitIdx++];
       if (bitIdx >= bits.length) break;
-      // Blue channel
       data[i + 2] = (data[i + 2] & 0xFE) | bits[bitIdx++];
       if (bitIdx >= bits.length) break;
     }
 
     ctx.putImageData(imageData, 0, 0);
 
-    // Phase 4: Export
     const link = document.createElement('a');
     link.download = `secret_${Date.now()}.png`;
     link.href = canvas.toDataURL('image/png', 1.0);
@@ -269,23 +280,17 @@ export default function HideMessagePhotoPage() {
 
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-    // Extract raw bits
     const rawBits: number[] = [];
     for (let i = 0; i < data.length; i++) {
       if ((i + 1) % 4 === 0) continue;
       rawBits.push(data[i] & 1);
     }
 
-    // Decrypt if password
     let bits = rawBits;
     if (password) {
       const key = await getCryptoKey(password);
       bits = bits.map((b, i) => b ^ ((key[Math.floor(i / 8) % key.length] >> (i % 8)) & 1));
     }
-
-    // Recover from redundancy if strong (simple majority vote for 2x is just taking every 2nd or averaging)
-    // For 2x we check if the flag in the header says it's strong.
-    // We need to decode the header FIRST to know how to decode the rest.
     
     const decodeBits = (bitSource: number[], isStrong: boolean) => {
       const bytes = new Uint8Array(Math.floor(bitSource.length / (isStrong ? 16 : 8)));
@@ -295,7 +300,6 @@ export default function HideMessagePhotoPage() {
         for (let j = 0; j < 8; j++) {
           let b = bitSource[bitPtr];
           if (isStrong) {
-            // Take first of the pair (2x redundancy)
             b = bitSource[bitPtr];
             bitPtr += 2;
           } else {
@@ -309,7 +313,6 @@ export default function HideMessagePhotoPage() {
     };
 
     try {
-      // 1. Try Fast Mode Header
       let headerBytes = decodeBits(bits, false).slice(0, HEADER_SIZE);
       let isStrong = headerBytes[9] === 1;
       
@@ -328,12 +331,10 @@ export default function HideMessagePhotoPage() {
       const payloadLen = view.getUint32(10);
       const expectedChecksum = view.getUint16(14);
 
-      // 2. Decode Full Payload
       const fullBytes = decodeBits(bits, isStrong);
       const contentStart = HEADER_SIZE;
       const payload = fullBytes.slice(contentStart, contentStart + payloadLen);
 
-      // 3. Verify
       const actualChecksum = simpleChecksum(payload) % 0xFFFF;
       setIntegrityStatus(actualChecksum === expectedChecksum ? 'ok' : 'damaged');
 
@@ -365,8 +366,32 @@ export default function HideMessagePhotoPage() {
         setMessage('');
         toast({ title: "File Buffered" });
       };
-      reader.readAsArrayBuffer(file);
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleCopy = () => {
+    if (revealedData?.text) {
+      navigator.clipboard.writeText(revealedData.text);
+      setIsCopied(true);
+      toast({ title: "Content Copied" });
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
+
+  const handleClear = () => {
+    setImage(null);
+    setLoadedImage(null);
+    setRevealedData(null);
+    setError(null);
+    setIntegrityStatus(null);
+    setMessage('');
+    setEmbeddedFile(null);
+    setDecoyCaption('');
+    setPassword('');
+    setPasswordHint('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    toast({ title: "Studio Reset" });
   };
 
   return (
@@ -734,3 +759,4 @@ export default function HideMessagePhotoPage() {
     </div>
   );
 }
+
