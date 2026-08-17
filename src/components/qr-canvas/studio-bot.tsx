@@ -56,30 +56,32 @@ interface Message {
 }
 
 /**
- * Simple Robot Helper - High Fidelity SVG
+ * Clinical Robot Assistant - High Fidelity Vector Face
  */
 function RobotSVG({ className }: { className?: string }) {
   return (
     <div className={cn("relative pointer-events-none select-none", className)}>
-      <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-md overflow-visible">
-        {/* Antennae */}
-        <line x1="24" y1="12" x2="20" y2="4" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-        <line x1="40" y1="12" x2="44" y2="4" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-        <circle cx="20" cy="4" r="2" fill="#3b82f6" />
-        <circle cx="44" cy="4" r="2" fill="#3b82f6" />
+      <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-xl overflow-visible">
+        {/* Antenna */}
+        <line x1="32" y1="14" x2="32" y2="4" stroke="#9AA4B2" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="32" cy="4" r="2.5" fill="#22D3EE" className="animate-pulse" />
         
-        {/* Body/Head */}
-        <circle cx="32" cy="32" r="26" fill="#f8fafc" stroke="#94a3b8" strokeWidth="2" />
+        {/* Square/Round Metallic Head */}
+        <rect x="12" y="14" width="40" height="38" rx="8" fill="#9AA4B2" stroke="#4B5563" strokeWidth="1" />
         
-        {/* Eyes (Dots) */}
-        <circle cx="24" cy="28" r="3" fill="#1e293b" />
-        <circle cx="40" cy="28" r="3" fill="#1e293b" />
+        {/* Dark Visor Layer */}
+        <rect x="18" y="22" width="28" height="14" rx="4" fill="#1E293B" />
         
-        {/* Smile */}
-        <path d="M26 40 Q 32 46 38 40" fill="none" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" />
+        {/* Glowing Cyan Optical Sensors */}
+        <circle cx="26" cy="29" r="2.5" fill="#22D3EE" className="animate-pulse" />
+        <circle cx="38" cy="29" r="2.5" fill="#22D3EE" className="animate-pulse" />
         
-        {/* Accent Light */}
-        <circle cx="32" cy="52" r="2" fill="#3b82f6" className="animate-pulse" />
+        {/* Tiny Line Mouth */}
+        <line x1="28" y1="44" x2="36" y2="44" stroke="#1E293B" strokeWidth="1.5" strokeLinecap="round" />
+        
+        {/* Hardware Detail Bolts */}
+        <circle cx="17" cy="46" r="1.2" fill="#4B5563" />
+        <circle cx="47" cy="46" r="1.2" fill="#4B5563" />
       </svg>
     </div>
   );
