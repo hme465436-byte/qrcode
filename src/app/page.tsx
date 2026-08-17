@@ -113,6 +113,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/lorem-ipsum-generator', 
+    icon: AlignLeft, 
+    title: 'Lorem Ipsum', 
+    desc: 'Synthesize professional placeholder text for design prototypes.', 
+    label: 'TYPOGRAPHY', 
+    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+    glowClass: 'bg-amber-500/10',
+    keywords: ['lorem ipsum', 'placeholder text', 'dummy text', 'filler text', 'generator', 'text maker'],
+    category: 'generators'
+  },
+  { 
     href: '/hash-generator', 
     icon: Fingerprint, 
     title: 'Hash Generator', 
@@ -126,7 +137,7 @@ const TOOLS: Tool[] = [
   { 
     href: '/uuid-generator', 
     icon: Fingerprint, 
-    title: 'UUID Generator', 
+    title: 'UUID Generator Studio', 
     desc: 'Generate cryptographically-secure UUID v4 identifiers.', 
     label: 'IDENTITY', 
     color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
@@ -137,7 +148,7 @@ const TOOLS: Tool[] = [
   { 
     href: '/json-formatter', 
     icon: Braces, 
-    title: 'JSON Formatter', 
+    title: 'JSON Formatter PRO', 
     desc: 'Pretty-print, minify, and validate JSON data structures.', 
     label: 'DATA', 
     color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
@@ -148,7 +159,7 @@ const TOOLS: Tool[] = [
   { 
     href: '/regex-tester', 
     icon: Search, 
-    title: 'Regex Tester', 
+    title: 'Regex Tester PRO', 
     desc: 'Test and evaluate regular expressions with live matches.', 
     label: 'INTEL', 
     color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
@@ -833,7 +844,7 @@ export default function Home() {
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
-      'UUID Generator'
+      'UUID Generator', 'Lorem Ipsum'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
