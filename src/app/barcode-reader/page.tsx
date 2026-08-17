@@ -27,7 +27,9 @@ import {
   Barcode,
   Database,
   Share2,
-  Settings2
+  Settings2,
+  Activity,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -213,6 +215,18 @@ export default function BarcodeReaderPage() {
     setIsCopied(true);
     toast({ title: "Copied" });
     setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleOpenLink = () => {
+    if (result && isUrl(result.text)) {
+      window.open(result.text.startsWith('http') ? result.text : `https://${result.text}`, '_blank');
+    }
+  };
+
+  const handleReset = () => {
+    setResult(null);
+    setError(null);
+    stopScanner();
   };
 
   const downloadTxt = () => {
@@ -475,8 +489,8 @@ export default function BarcodeReaderPage() {
           <Button onClick={() => handleCopy(result.text)} className="flex-1 h-14 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-2xl">
              <Copy className="w-4 h-4" /> {isCopied ? 'Identity Copied' : 'Copy Result'}
           </Button>
-          <Button variant="outline" onClick={downloadTxt} className="h-14 px-6 bg-secondary border-white/10 text-white/40 font-black rounded-2xl text-[9px] uppercase">
-             .TXT
+          <Button variant="outline" onClick={handleReset} className="h-14 px-6 bg-secondary border-white/10 text-white/40 font-black rounded-2xl text-[9px] uppercase">
+             RESET
           </Button>
         </div>
       )}
