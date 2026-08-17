@@ -63,7 +63,8 @@ import {
   Book,
   Shapes,
   FileSignature,
-  Monitor
+  Monitor,
+  Braces
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -108,6 +109,28 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
     category: 'generators'
+  },
+  { 
+    href: '/json-formatter', 
+    icon: Braces, 
+    title: 'JSON Formatter', 
+    desc: 'Pretty-print, minify, and validate JSON data structures.', 
+    label: 'DATA', 
+    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    glowClass: 'bg-emerald-400/10',
+    keywords: ['json formatter', 'pretty print', 'minify json', 'validate json', 'json cleaner', 'data tool'],
+    category: 'utilities'
+  },
+  { 
+    href: '/regex-tester', 
+    icon: Search, 
+    title: 'Regex Tester', 
+    desc: 'Test and evaluate regular expressions with live matches.', 
+    label: 'INTEL', 
+    color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    glowClass: 'bg-blue-400/10',
+    keywords: ['regex', 'regular expression', 'regex test', 'pattern match', 'tester', 'intel'],
+    category: 'utilities'
   },
   { 
     href: '/photo-enhance-fix', 
@@ -785,7 +808,7 @@ export default function Home() {
       'Word to PDF', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter',
-      'Letter Art', 'Favicon Studio'
+      'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

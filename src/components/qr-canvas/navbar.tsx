@@ -65,7 +65,8 @@ import {
   ShieldAlert,
   Maximize,
   RefreshCcw,
-  Music
+  Music,
+  Braces
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -76,6 +77,8 @@ import { Input } from '@/components/ui/input';
 const SEARCHABLE_TOOLS = [
   { href: '/single', title: 'Single Studio', icon: QrCode, label: 'QR', keywords: ['qr', 'generator', 'logo', 'brand'] },
   { href: '/bulk', title: 'Bulk Production', icon: Layers, label: 'BATCH', keywords: ['bulk', 'batch', 'mass', 'zip'] },
+  { href: '/json-formatter', title: 'JSON Formatter', icon: Braces, label: 'DATA', keywords: ['json', 'format', 'pretty', 'minify'] },
+  { href: '/regex-tester', title: 'Regex Tester', icon: Search, label: 'INTEL', keywords: ['regex', 'test', 'pattern', 'eval'] },
   { href: '/photo-enhance-fix', title: 'Photo Enhance', icon: Wand2, label: 'IMAGE', keywords: ['upscale', 'sharpen', 'clarity', 'fix'] },
   { href: '/passport-photo-maker', title: 'Passport Photo', icon: SquareUser, label: 'IDENTITY', keywords: ['visa', 'id', 'print', 'sheet'] },
   { href: '/live-wallpaper', title: 'Live Wallpaper', icon: MonitorPlay, label: 'MEDIA', keywords: ['video', 'loop', 'pc', 'phone'] },
