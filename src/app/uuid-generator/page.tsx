@@ -41,6 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Logic Helpers ---
 
@@ -173,20 +174,21 @@ export default function UuidGeneratorPage() {
   }, [validatingText]);
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
-      <div className="mb-12 animate-reveal">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Fingerprint className="w-3.5 h-3.5" /> Identity Suite
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-full">
+      <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest mb-4">
+            <Fingerprint className="w-3.5 h-3.5" /> Identity Suite
+          </div>
+          <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight overflow-wrap-anywhere">
+            UUID <span className="text-primary">Generator Studio</span>
+          </h1>
+          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+            Advanced high-entropy identity matrixing. Generate secure UUID v4, v1-style, and custom identifiers locally with professional formatting and clinical validation.
+          </p>
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-           <div className="min-w-0">
-              <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight overflow-wrap-anywhere">
-                UUID <span className="text-primary italic">Generator Studio</span>
-              </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Advanced high-entropy identity matrixing. Generate secure UUID v4, v1-style, and custom identifiers locally with professional formatting and clinical validation.
-              </p>
-           </div>
+        <div className="shrink-0 pb-2">
+           <GetHelp toolId="uuid-generator" />
         </div>
       </div>
 
@@ -316,11 +318,11 @@ export default function UuidGeneratorPage() {
             </CardHeader>
             <CardContent className="pt-8 space-y-6">
                <div className="relative group/val">
-                  <Input 
+                  <input 
                     placeholder="Paste UUID to validate..." 
                     value={validatingText}
                     onChange={(e) => setValidatingText(e.target.value)}
-                    className="h-14 bg-secondary border-border rounded-xl font-mono text-xs pr-12 focus:ring-primary/40"
+                    className="h-14 w-full rounded-xl bg-secondary border border-border font-mono text-xs px-5 pr-12 focus:ring-1 focus:ring-primary outline-none"
                   />
                   <Shield className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/10 group-focus-within/val:text-primary transition-colors" />
                </div>
@@ -328,7 +330,7 @@ export default function UuidGeneratorPage() {
                {validationResult && (
                  <div className={cn(
                    "p-5 rounded-2xl border flex items-center gap-5 animate-in zoom-in duration-300",
-                   validationResult.valid ? "bg-green-500/10 border-green-500/20" : "bg-red-500/10 border-red-500/20"
+                   validationResult.valid ? "bg-green-500/10 border-green-500/20" : "bg-red-500/10 border-red-500/40"
                  )}>
                    <div className={cn(
                      "w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg",

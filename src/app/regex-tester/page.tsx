@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -25,7 +24,8 @@ import {
   FileCode,
   Sparkles,
   RefreshCcw,
-  Replace
+  Replace,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { GetHelp } from '@/components/qr-canvas/get-help';
 
 type Flags = {
   g: boolean;
@@ -91,7 +92,6 @@ export default function RegexTesterPage() {
     }
   }, [pattern, testText, flagString, replaceText, flags.g]);
 
-  // Sync scroll between textarea and highlights
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
     if (highlightRef.current) {
       highlightRef.current.scrollTop = e.currentTarget.scrollTop;
@@ -113,60 +113,48 @@ export default function RegexTesterPage() {
     toast({ title: "Studio Reset", description: "All buffers cleared." });
   };
 
-  // Generate highlighted text
   const highlightedJSX = useMemo(() => {
     if (results.error || !pattern || results.matches.length === 0) return testText;
 
     let lastIndex = 0;
     const segments = [];
-
-    // Sort matches by index to prevent overlaps
     const sortedMatches = [...results.matches].sort((a, b) => (a.index || 0) - (b.index || 0));
 
     sortedMatches.forEach((match, i) => {
       const start = match.index || 0;
       const end = start + match[0].length;
-
-      if (start > lastIndex) {
-        segments.push(testText.substring(lastIndex, start));
-      }
-
+      if (start > lastIndex) segments.push(testText.substring(lastIndex, start));
       segments.push(
         <mark key={i} className="bg-primary/30 text-transparent border-b-2 border-primary rounded-sm">
           {testText.substring(start, end)}
         </mark>
       );
-
       lastIndex = end;
     });
 
-    if (lastIndex < testText.length) {
-      segments.push(testText.substring(lastIndex));
-    }
-
+    if (lastIndex < testText.length) segments.push(testText.substring(lastIndex));
     return segments;
   }, [testText, results.matches, results.error, pattern]);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
-      <div className="mb-12 animate-reveal">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Search className="w-3.5 h-3.5" /> Intelligence Suite
+      <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest mb-4">
+            <Search className="w-3.5 h-3.5" /> Intelligence Suite
+          </div>
+          <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
+            Regex <span className="text-primary italic">Tester PRO</span>
+          </h1>
+          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+            Professional regular expression evaluator. Test patterns against linguistic payloads with real-time match identification, capture group analysis, and local-only production.
+          </p>
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <div>
-            <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
-              Regex <span className="text-primary italic">Tester PRO</span>
-            </h1>
-            <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Professional regular expression evaluator. Test patterns against linguistic payloads with real-time match identification, capture group analysis, and local-only production.
-            </p>
-          </div>
-          <div className="flex gap-3">
-             <Button variant="outline" onClick={handleClear} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                <Trash2 className="w-4 h-4 mr-2" /> Reset
-             </Button>
-          </div>
+        <div className="flex items-center gap-3 shrink-0 pb-2">
+           <GetHelp toolId="regex-tester" />
+           <Button variant="outline" onClick={handleClear} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-destructive transition-all shadow-lg">
+              <Trash2 className="w-4 h-4 mr-2" /> Reset
+           </Button>
         </div>
       </div>
 
@@ -255,7 +243,6 @@ export default function RegexTesterPage() {
                 </div>
                 
                 <div className="relative group/textarea min-h-[300px]">
-                  {/* Highlighting Overlay */}
                   <div 
                     ref={highlightRef}
                     className="absolute inset-0 p-8 text-lg leading-relaxed font-mono whitespace-pre-wrap break-all pointer-events-none select-none text-transparent overflow-hidden"
@@ -352,13 +339,11 @@ export default function RegexTesterPage() {
                            <p className="text-sm font-mono font-bold text-foreground break-all">{m[0]}</p>
                         </div>
 
-                        {/* Capture Groups Analysis */}
                         {m.length > 1 && (
                           <div className="space-y-2 pt-2">
                              <p className="text-[9px] font-black uppercase tracking-widest text-foreground/30 ml-1">Capture Groups</p>
                              <div className="space-y-1.5">
                                 {m.slice(1).map((group, gIdx) => {
-                                  // Determine if this is a named group
                                   const namedGroup = m.groups ? Object.entries(m.groups).find(([_, val]) => val === group) : null;
                                   return (
                                     <div key={gIdx} className="flex items-center gap-3 p-2 rounded-lg bg-secondary/50 border border-border">
@@ -403,9 +388,7 @@ export default function RegexTesterPage() {
       </div>
       
       <style jsx global>{`
-        mark {
-          color: transparent;
-        }
+        mark { color: transparent; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
@@ -414,4 +397,3 @@ export default function RegexTesterPage() {
     </div>
   );
 }
-

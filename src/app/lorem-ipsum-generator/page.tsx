@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -26,7 +25,8 @@ import {
   ShieldCheck,
   WrapText,
   Scaling,
-  Globe
+  Globe,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +36,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Linguistic Constants ---
 const LOREM_WORDS = [
@@ -184,27 +185,23 @@ export default function LoremIpsumGeneratorPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
-      <div className="mb-12 animate-reveal">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <AlignLeft className="w-3.5 h-3.5" /> Linguistic Suite
+      <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest mb-4">
+            <AlignLeft className="w-3.5 h-3.5" /> Linguistic Suite
+          </div>
+          <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
+            Lorem Ipsum <span className="text-primary">Generator Studio</span>
+          </h1>
+          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+            Professional-grade placeholder text synthesis. Generate high-quality paragraphs, markup tags, and dummy identity data with absolute hardware-native privacy.
+          </p>
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-           <div>
-              <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
-                Lorem Ipsum <span className="text-primary">Generator Studio</span>
-              </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional-grade placeholder text synthesis. Generate high-quality paragraphs, markup tags, and dummy identity data with absolute hardware-native privacy.
-              </p>
-           </div>
-           <div className="flex flex-wrap gap-3 shrink-0">
-              <Button variant="outline" onClick={synthesize} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all shadow-lg">
-                 <RefreshCcw className="w-4 h-4 mr-2" /> Regenerate
-              </Button>
-              <Button variant="outline" onClick={() => { setOutput(''); }} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                 <Trash2 className="w-4 h-4 mr-2" /> Clear
-              </Button>
-           </div>
+        <div className="flex flex-wrap gap-3 shrink-0 pb-2">
+           <GetHelp toolId="lorem-ipsum-generator" />
+           <Button variant="outline" onClick={synthesize} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all shadow-lg">
+              <RefreshCcw className="w-4 h-4 mr-2" /> Regenerate
+           </Button>
         </div>
       </div>
 
@@ -222,10 +219,8 @@ export default function LoremIpsumGeneratorPage() {
               </Tabs>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
-              
               <Tabs value={activeTab} className="w-full">
                 <TabsContent value="standard" className="space-y-10 m-0">
-                   {/* Mode Selection */}
                    <div className="space-y-4">
                       <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Linguistic Mode</Label>
                       <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
@@ -251,7 +246,6 @@ export default function LoremIpsumGeneratorPage() {
                       </div>
                    </div>
 
-                   {/* Protocol Options */}
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
                       <div className="p-4 rounded-2xl bg-secondary/50 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
                         <div className="space-y-0.5">
@@ -296,7 +290,6 @@ export default function LoremIpsumGeneratorPage() {
                 </TabsContent>
               </Tabs>
 
-              {/* Volume Slider */}
               <div className="space-y-6 pt-4 border-t border-border">
                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-foreground/50">
                   <Label>Production Volume</Label>

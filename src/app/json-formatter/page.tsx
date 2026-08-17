@@ -38,6 +38,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Recursive Tree Component ---
 const JsonTreeNode = ({ data, label, depth = 0, initialExpanded = true, searchQuery = '' }: { 
@@ -195,7 +196,6 @@ export default function JsonFormatterPage() {
         setOutput(JSON.stringify(input));
       } else {
         // Try to unescape by parsing it as a JSON string
-        // Note: input might need to be wrapped in quotes if it isn't a valid JSON string
         let toParse = input.trim();
         if (!toParse.startsWith('"')) toParse = `"${toParse}"`;
         setOutput(JSON.parse(toParse));
@@ -260,27 +260,26 @@ export default function JsonFormatterPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
-      <div className="mb-12 animate-reveal">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Braces className="w-3.5 h-3.5" /> Linguistic Suite
+      <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest mb-4">
+            <Braces className="w-3.5 h-3.5" /> Linguistic Suite
+          </div>
+          <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
+            JSON <span className="text-primary">Formatter PRO</span>
+          </h1>
+          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+            Professional-grade structuralization engine. Validate, beautify, and minify complex data structures locally with interactive tree visualization and clinical error reporting.
+          </p>
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-           <div>
-              <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
-                JSON <span className="text-primary italic">Formatter PRO</span>
-              </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional-grade structuralization engine. Validate, beautify, and minify complex data structures locally with interactive tree visualization and clinical error reporting.
-              </p>
-           </div>
-           <div className="flex flex-wrap gap-3 shrink-0">
-              <Button variant="outline" onClick={loadSample} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all">
-                 <Zap className="w-4 h-4 mr-2" /> Load Sample
-              </Button>
-              <Button variant="outline" onClick={() => { setInput(''); setOutput(''); setError(null); setParsedData(null); }} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                 <Trash2 className="w-4 h-4 mr-2" /> Clear Studio
-              </Button>
-           </div>
+        <div className="flex flex-wrap gap-3 shrink-0 pb-2">
+           <GetHelp toolId="json-formatter" />
+           <Button variant="outline" onClick={loadSample} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all">
+              <Zap className="w-4 h-4 mr-2" /> Sample
+           </Button>
+           <Button variant="outline" onClick={() => { setInput(''); setOutput(''); setError(null); setParsedData(null); }} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+              <Trash2 className="w-4 h-4 mr-2" /> Clear
+           </Button>
         </div>
       </div>
 

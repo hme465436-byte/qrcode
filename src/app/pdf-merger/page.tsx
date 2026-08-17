@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -20,7 +19,8 @@ import {
   Plus,
   ShieldCheck,
   Zap,
-  Activity
+  Activity,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +29,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { PDFDocument } from 'pdf-lib';
+import { GetHelp } from '@/components/qr-canvas/get-help';
 
 interface PDFFileItem {
   id: string;
@@ -136,17 +137,22 @@ export default function PdfMergerPage() {
   };
 
   return (
-    <div className="container mx-auto px-6 py-12 md:py-20">
-      <div className="mb-12 animate-reveal">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <FileStack className="w-3.5 h-3.5" /> Document Suite
+    <div className="container mx-auto px-6 py-12 md:py-20 max-w-7xl">
+      <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest mb-4">
+            <FileStack className="w-3.5 h-3.5" /> Document Suite
+          </div>
+          <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
+            PDF <span className="text-primary italic">Merger Studio</span>
+          </h1>
+          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+            Professional-grade document unification. Combine multiple PDF documents into a single master file locally in your browser with precision reordering.
+          </p>
         </div>
-        <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-          PDF <span className="text-primary italic">Merger Studio</span>
-        </h1>
-        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          Professional-grade document unification. Combine multiple PDF documents into a single master file locally in your browser with precision reordering.
-        </p>
+        <div className="shrink-0 pb-2">
+           <GetHelp toolId="pdf-merger" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
@@ -177,7 +183,7 @@ export default function PdfMergerPage() {
                   isProcessing && "cursor-not-allowed opacity-80"
                 )}
               >
-                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4 shadow-xl">
                   <Upload className="w-6 h-6" />
                 </div>
                 <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors">Import PDF Documents</p>
@@ -225,7 +231,7 @@ export default function PdfMergerPage() {
                      <Button 
                       onClick={mergePdfs}
                       disabled={isProcessing || files.length < 2}
-                      className="h-14 px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center gap-3 text-sm shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                      className="h-14 px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-3 text-sm shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                     >
                       {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />}
                       Merge Documents

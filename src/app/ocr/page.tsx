@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Tesseract from 'tesseract.js';
+import { GetHelp } from '@/components/qr-canvas/get-help';
 
 export default function OCRPage() {
   const { toast } = useToast();
@@ -82,16 +83,21 @@ export default function OCRPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
-      <div className="mb-10 animate-reveal">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <FileText className="w-3.5 h-3.5" /> Intelligence Suite
+      <div className="mb-10 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest mb-4">
+            <FileText className="w-3.5 h-3.5" /> Intelligence Suite
+          </div>
+          <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
+            Extract Text <span className="text-primary">(OCR)</span>
+          </h1>
+          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+            Professional Optical Character Recognition. Convert images into editable linguistic matrices locally and securely.
+          </p>
         </div>
-        <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-          Extract Text <span className="text-primary italic">(OCR)</span>
-        </h1>
-        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          Professional Optical Character Recognition.
-        </p>
+        <div className="shrink-0 pb-2">
+           <GetHelp toolId="ocr" />
+        </div>
       </div>
 
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 items-start">
@@ -159,6 +165,15 @@ export default function OCRPage() {
           </Card>
         </div>
       </div>
+      <style jsx global>{`
+        .bg-checkered {
+          background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+          background-size: 20px 20px;
+        }
+      `}</style>
     </div>
   );
 }

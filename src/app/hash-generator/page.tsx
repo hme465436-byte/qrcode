@@ -27,7 +27,8 @@ import {
   AlertCircle,
   FileCheck,
   Check,
-  X
+  X,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +40,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Local MD5 Implementation (Sanitized) ---
 const md5 = (string: string) => {
@@ -243,17 +245,20 @@ export default function HashGeneratorPage() {
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest mb-4">
           <ShieldCheck className="w-3.5 h-3.5" /> Security Suite
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-           <div>
+           <div className="min-w-0">
               <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
-                Hash <span className="text-primary italic">Generator Studio</span>
+                Hash <span className="text-primary">Generator Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
                 Advanced cryptographic production. Generate high-fidelity fingerprints and HMAC signatures for text or local binaries with 100% hardware-native privacy.
               </p>
+           </div>
+           <div className="shrink-0 pb-2">
+              <GetHelp toolId="hash-generator" />
            </div>
         </div>
       </div>
