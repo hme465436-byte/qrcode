@@ -11,7 +11,7 @@ import {
   CheckCircle2,
   FileVideo,
   Settings2,
-  Terminal,
+  Terminal, 
   Activity,
   Smartphone,
   Monitor,
@@ -28,7 +28,7 @@ import {
   Tablet,
   Square as SquareIcon,
   Maximize2,
-  Image as ImageIcon,
+  ImageIcon,
   Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -289,7 +289,7 @@ export default function AdvancedLiveWallpaperPage() {
           Live <span className="text-primary italic">Wallpaper Studio</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-3xl leading-relaxed">
-          Create perfectly calibrated, looping, high-fidelity background matrices. enforce a 15-second cap for 100% stable local production.
+          Create perfectly calibrated, looping, high-fidelity background matrices. Enforce a 15-second cap for 100% stable local production.
         </p>
       </div>
 
@@ -438,13 +438,13 @@ export default function AdvancedLiveWallpaperPage() {
                 <Button 
                   onClick={processWallpaper}
                   disabled={!file || isProcessing}
-                  className="flex-[2] h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                  className="flex-[2] h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl flex items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
-                  {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Synthesize Master
+                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 group-hover:rotate-12 transition-transform" />}
+                  Export
                 </Button>
-                <Button variant="outline" onClick={handleClear} disabled={isProcessing} className="flex-1 h-16 rounded-2xl border-border bg-secondary hover:text-destructive transition-all active:scale-95">
-                  <Trash2 className="w-6 h-6" />
+                <Button variant="outline" onClick={handleClear} disabled={isProcessing} className="flex-1 h-12 rounded-xl border-border bg-secondary hover:text-destructive transition-all active:scale-95">
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </CardContent>
@@ -465,7 +465,7 @@ export default function AdvancedLiveWallpaperPage() {
             </CardHeader>
             <CardContent className="flex-1 flex flex-col p-6 sm:p-12 bg-[#060608]">
                {!file && !isProcessing ? (
-                 <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6">
+                 <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-24">
                     <Activity className="w-24 h-24 text-primary" />
                     <p className="text-sm font-black uppercase tracking-[0.3em]">Studio Standby</p>
                  </div>
@@ -573,4 +573,3 @@ export default function AdvancedLiveWallpaperPage() {
     </div>
   );
 }
-
