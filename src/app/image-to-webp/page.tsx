@@ -19,7 +19,10 @@ import {
   X,
   Plus,
   MonitorPlay,
-  FileArchive
+  FileArchive,
+  ArrowRight,
+  Image as ImageIcon,
+  Maximize
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
