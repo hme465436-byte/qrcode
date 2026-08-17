@@ -303,15 +303,13 @@ export default function WhatsAppDPMakerPage() {
                   {image ? (
                     <div className="text-center p-4">
                        <CheckCircle2 className="w-8 h-8 text-primary mx-auto mb-2" />
-                       <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest">Visual Matrix Loaded</p>
+                       <p className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Visual Matrix Loaded</p>
                        <p className="text-[8px] font-bold text-foreground/20 uppercase mt-1">Tap to swap source</p>
                     </div>
                   ) : (
                     <>
-                       <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary transition-all mb-3 shadow-xl">
-                          <ImageIcon className="w-6 h-6" />
-                       </div>
-                       <span className="text-[10px] font-black uppercase text-foreground/30 tracking-widest group-hover/upload:text-primary transition-colors">Import Photo</span>
+                       {isProcessing ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Upload className="w-5 h-5 text-foreground/10 mb-3 shadow-xl" />}
+                       <span className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Import Photo</span>
                     </>
                   )}
                 </div>
@@ -397,10 +395,10 @@ export default function WhatsAppDPMakerPage() {
                 <Button 
                   onClick={handleDownload}
                   disabled={!image}
-                  className="h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                  className="h-12 w-fit px-10 mx-auto bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl flex items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
-                  <Download className="w-6 h-6" />
-                  Export 1080px Master
+                  <Download className="w-4 h-4" />
+                  Export
                 </Button>
                 {image && (
                   <Button 
@@ -441,6 +439,10 @@ export default function WhatsAppDPMakerPage() {
                             linear-gradient(45deg, transparent 75%, #111113 75%), 
                             linear-gradient(-45deg, transparent 75%, #111113 75%);
         }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
