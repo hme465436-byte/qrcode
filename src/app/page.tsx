@@ -115,6 +115,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/sim-data', 
+    icon: Smartphone, 
+    title: 'Sim Data Finder', 
+    desc: 'Identify carrier and regional data for Pakistani numbers.', 
+    label: 'INTEL', 
+    color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
+    glowClass: 'bg-cyan-500/10',
+    keywords: ['sim data', 'sim owner', 'number details', 'pakistan numbers', 'cnic details', 'carrier finder'],
+    category: 'utilities'
+  },
+  { 
     href: '/temp-room', 
     icon: ClipboardType, 
     title: 'Temp Room', 
@@ -980,7 +991,7 @@ export default function Home() {
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
-      'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 'Join code'
+      'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 'Join code', 'Sim Data'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

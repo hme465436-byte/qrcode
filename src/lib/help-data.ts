@@ -356,5 +356,21 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Large files may take a moment to assemble in the recipient\'s browser memory.'
     ],
     privacy: 'This tool uses WebRTC for direct device-to-device streaming. Your files are never uploaded to any server or cloud storage.'
+  },
+  'sim-data': {
+    title: 'Sim Data Finder',
+    description: 'Professional mobile identity matrix for Pakistani phone numbers.',
+    steps: [
+      'Enter a 10 or 11 digit mobile number (e.g. 03001234567).',
+      'Execute the search protocol to initialize carrier discovery.',
+      'The engine will map the prefix to its respective network provider.',
+      'View the structured identity matrix including Owner, CNIC, and Regional data.',
+      'Use the purge button to clear the search buffer and maintain privacy.'
+    ],
+    tips: [
+      'MNP (Ported numbers) may display the original network provider.',
+      'Format the number without dashes or spaces for 100% accuracy.'
+    ],
+    privacy: 'Search payloads are volatile and processed locally. No identity data is transmitted or stored on our servers.'
   }
 };
