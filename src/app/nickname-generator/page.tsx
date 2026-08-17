@@ -32,13 +32,15 @@ import {
   Download,
   X,
   History,
-  Crown
+  Crown,
+  Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -211,7 +213,7 @@ export default function AdvancedNicknameGeneratorPage() {
                       placeholder="Enter name..."
                       className="h-14 bg-secondary border-border rounded-2xl text-lg font-bold px-6 focus:ring-primary/40"
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/name:opacity-100 transition-opacity">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/name:opacity-100 transition-opacity pointer-events-none">
                       <Type className="w-6 h-6 text-primary" />
                     </div>
                   </div>
