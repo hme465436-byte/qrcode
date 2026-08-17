@@ -80,6 +80,7 @@ export default function DirectFileSharePage() {
   const lastTimeRef = useRef(0);
   const lastBytesRef = useRef(0);
   const qrRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateRoomId = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
