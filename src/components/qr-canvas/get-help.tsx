@@ -54,33 +54,33 @@ export function GetHelp({ toolId }: GetHelpProps) {
           Get Help
         </button>
       </DialogTrigger>
-      <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none">
-        <DialogHeader className="p-8 border-b border-white/5 bg-primary/5 relative">
+      <DialogContent className="glass-card max-w-2xl w-[calc(100%-32px)] md:w-full border-white/10 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
+        <DialogHeader className="p-6 sm:p-8 border-b border-white/5 bg-primary/5 relative shrink-0">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16" />
           <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-xl shadow-primary/20 border border-white/10">
-              <HelpCircle className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-xl shadow-primary/20 border border-white/10 shrink-0">
+              <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div className="space-y-1">
-              <DialogTitle className="text-2xl font-headline font-black uppercase tracking-tight text-foreground">
+            <div className="space-y-1 min-w-0">
+              <DialogTitle className="text-xl sm:text-2xl font-headline font-black uppercase tracking-tight text-foreground truncate">
                 {content.title}
               </DialogTitle>
-              <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Clinical Protocol Documentation</p>
+              <p className="text-[9px] sm:text-[10px] font-black text-primary uppercase tracking-[0.2em] truncate">Clinical Protocol Documentation</p>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="p-8 space-y-10 max-h-[60vh] overflow-y-auto custom-scrollbar bg-transparent">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-10 bg-transparent">
           <div className="space-y-3">
              <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground/40">Capability Matrix</h4>
-             <p className="text-[15px] font-medium text-foreground/70 leading-relaxed">{content.description}</p>
+             <p className="text-[14px] sm:text-[15px] font-medium text-foreground/70 leading-relaxed">{content.description}</p>
           </div>
 
           <div className="space-y-6">
              <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground/40">Execution Protocol</h4>
              <div className="space-y-4">
                 {content.steps.map((step, i) => (
-                  <div key={i} className="flex gap-5 group">
+                  <div key={i} className="flex gap-4 sm:gap-5 group">
                     <div className="w-6 h-6 rounded-lg bg-secondary border border-border flex items-center justify-center text-[10px] font-black text-primary shrink-0 transition-colors group-hover:border-primary/40 group-hover:bg-primary/10">
                       {i + 1}
                     </div>
@@ -90,7 +90,7 @@ export function GetHelp({ toolId }: GetHelpProps) {
              </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-white/5">
              <div className="space-y-4">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-primary/60 flex items-center gap-2">
                    <Zap className="w-3.5 h-3.5" /> Studio Tips
@@ -99,7 +99,7 @@ export function GetHelp({ toolId }: GetHelpProps) {
                    {content.tips.map((tip, i) => (
                      <li key={i} className="flex items-start gap-3">
                         <ArrowRight className="w-3 h-3 text-primary mt-1 shrink-0" />
-                        <span className="text-[11px] font-bold text-foreground/40 leading-relaxed uppercase">{tip}</span>
+                        <span className="text-[10px] sm:text-[11px] font-bold text-foreground/40 leading-relaxed uppercase">{tip}</span>
                      </li>
                    ))}
                 </ul>
@@ -114,10 +114,10 @@ export function GetHelp({ toolId }: GetHelpProps) {
           </div>
         </div>
 
-        <div className="p-6 bg-secondary/30 border-t border-white/5 flex items-center justify-between">
-           <span className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20">MY KIT TOOL • TECHNICAL DOCS</span>
+        <div className="p-4 sm:p-6 bg-secondary/30 border-t border-white/5 flex items-center justify-between shrink-0">
+           <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20">MY KIT TOOL • TECHNICAL DOCS</span>
            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black text-emerald-500 uppercase tracking-widest">
-              <CheckCircle2 className="w-3 h-3" /> Verified Protocol
+              <CheckCircle2 className="w-3 h-3" /> <span className="hidden xs:inline">Verified Protocol</span>
            </div>
         </div>
       </DialogContent>
