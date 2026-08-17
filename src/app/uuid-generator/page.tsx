@@ -139,6 +139,11 @@ export default function UuidGeneratorPage() {
     return formattedIds.join('\n');
   };
 
+  const handleCopyAll = () => {
+    const text = joinIds();
+    handleCopy(text, 'all');
+  };
+
   const handleDownload = (format: 'txt' | 'csv') => {
     const content = format === 'csv' ? `id\n${formattedIds.join('\n')}` : joinIds();
     const blob = new Blob([content], { type: format === 'csv' ? 'text/csv' : 'text/plain' });
@@ -169,22 +174,6 @@ export default function UuidGeneratorPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
-      {/* SEO Head Matrix */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            "name": "UUID Generator Studio",
-            "applicationCategory": "DeveloperApplication",
-            "operatingSystem": "Web",
-            "offers": { "@type": "Offer", "price": "0" },
-            "description": "Professional cryptographically-secure UUID v4, v1 and custom identifier production studio."
-          })
-        }}
-      />
-
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Fingerprint className="w-3.5 h-3.5" /> Identity Suite
@@ -365,7 +354,7 @@ export default function UuidGeneratorPage() {
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[700px]">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                   <Activity className="w-5 h-5" />
@@ -462,15 +451,6 @@ export default function UuidGeneratorPage() {
           )}
         </div>
       </div>
-      
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
 }
-
