@@ -12,12 +12,16 @@ import {
   ShieldAlert, 
   Heart,
   Zap,
-  ArrowRight,
-  Sparkles
+  QrCode,
+  Globe,
+  Coins,
+  BadgeCheck,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -37,145 +41,185 @@ export default function DonatePage() {
   };
 
   return (
-    <div className="container mx-auto px-6 py-12 md:py-20 max-w-5xl">
-      <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div className="min-w-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest mb-4">
-            <Coffee className="w-3.5 h-3.5" /> Support Studio
-          </div>
-          <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
-            Buy Me <span className="text-primary italic">a Coffee</span>
-          </h1>
-          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Fuel the tools. I’ll convert it to caffeine (and server bills). Your contributions keep MY KIT TOOL free, private, and permanent.
-          </p>
+    <div className="container mx-auto px-6 py-12 md:py-20 max-w-6xl">
+      {/* Hero Section */}
+      <div className="mb-16 animate-reveal text-center">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 text-primary mb-8 shadow-2xl shadow-primary/20">
+          <Coffee className="w-10 h-10 icon-3d" />
         </div>
-        <div className="shrink-0 pb-2">
-           <GetHelp toolId="donate" />
+        <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tight mb-4">
+          Buy Me <span className="text-primary italic">a Coffee</span>
+        </h1>
+        <p className="text-foreground/40 text-sm md:text-lg font-medium max-w-2xl mx-auto leading-relaxed uppercase tracking-widest">
+          Support My Kit Tool — Regional & Worldwide Protocols
+        </p>
+        <div className="mt-8 flex justify-center">
+          <GetHelp toolId="donate" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-        {/* Pakistan Protocol */}
-        <div className="space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-            <CardHeader className="pb-8 border-b border-border bg-secondary/30">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+        {/* Card 1: Pakistan */}
+        <Card className="glass-card border-border shadow-2xl overflow-hidden relative group hover:-translate-y-2 transition-all duration-500 flex flex-col h-full">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+          
+          <CardHeader className="pb-8 border-b border-border bg-secondary/30">
+            <div className="flex items-center justify-between">
               <CardTitle className="text-xl font-headline flex items-center gap-4 text-foreground">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner">
                   <Smartphone className="w-6 h-6" />
                 </div>
                 Pakistan Protocol
               </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-10 space-y-8">
-              <div className="space-y-6">
-                <div className="space-y-3">
-                   <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Easypaisa / JazzCash</Label>
-                   <div className="flex gap-2">
-                      <div className="flex-1 h-14 bg-secondary border border-border rounded-2xl flex items-center px-6 font-mono text-lg font-bold text-foreground overflow-hidden">
-                        03194259023
-                      </div>
-                      <Button 
-                        onClick={() => handleCopy('03194259023', 'easypaisa')}
-                        className="h-14 w-14 rounded-2xl bg-primary shadow-lg shadow-primary/20 shrink-0"
-                      >
-                        {isCopied === 'easypaisa' ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                      </Button>
-                   </div>
-                </div>
-
-                <div className="space-y-3">
-                   <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Bank RAAST / IBAN</Label>
-                   <div className="flex gap-2">
-                      <div className="flex-1 h-14 bg-secondary border border-border rounded-2xl flex items-center px-6 font-mono text-xs font-bold text-foreground overflow-hidden">
-                        PK26MEZN0000300112583758
-                      </div>
-                      <Button 
-                        onClick={() => handleCopy('PK26MEZN0000300112583758', 'iban')}
-                        className="h-14 w-14 rounded-2xl bg-primary shadow-lg shadow-primary/20 shrink-0"
-                      >
-                        {isCopied === 'iban' ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                      </Button>
-                   </div>
-                </div>
-              </div>
-
-              <div className="p-6 rounded-[2rem] bg-secondary border border-border flex items-start gap-4">
-                 <Building2 className="w-5 h-5 text-primary mt-1 shrink-0" />
-                 <p className="text-[11px] text-foreground/50 leading-relaxed font-medium uppercase">
-                   JazzCash, Easypaisa, or any RAAST-enabled bank transfer is supported.
-                 </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* International Matrix */}
-        <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <CardHeader className="py-8 border-b border-border bg-secondary/30">
-              <CardTitle className="text-xl font-headline flex items-center gap-4 text-foreground">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner group-hover:scale-110 transition-transform">
-                  <Wallet className="w-6 h-6" />
-                </div>
-                International Matrix
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-10 space-y-8">
-              <div className="space-y-4">
-                 <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Binance USDT (TRC20)</Label>
-                 <div className="p-6 bg-secondary/50 border border-border rounded-[2rem] space-y-6">
-                    <div className="flex flex-col items-center gap-6">
-                       {/* Simple placeholder QR style visual for context */}
-                       <div className="w-32 h-32 rounded-2xl bg-white p-2 shadow-inner">
-                          <div className="w-full h-full bg-black/5 flex items-center justify-center rounded-lg">
-                             <Zap className="w-10 h-10 text-primary/20" />
-                          </div>
-                       </div>
-                       <div className="w-full text-center space-y-4">
-                          <code className="block p-4 rounded-xl bg-background border border-border text-[10px] font-mono font-bold text-foreground break-all select-all">
-                             TDhUm3utKqQ4sE974RCRefAFpdNAVGcLtQ
-                          </code>
-                          <Button 
-                            onClick={() => handleCopy('TDhUm3utKqQ4sE974RCRefAFpdNAVGcLtQ', 'usdt')}
-                            className="w-full h-14 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[10px]"
-                          >
-                             {isCopied === 'usdt' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                             Copy USDT Address
-                          </Button>
-                       </div>
-                    </div>
-                 </div>
-              </div>
-
-              <div className="p-6 rounded-[2rem] bg-destructive/5 border border-destructive/20 flex items-start gap-4">
-                 <ShieldAlert className="w-5 h-5 text-destructive mt-1 shrink-0" />
-                 <p className="text-[10px] text-destructive/60 leading-relaxed font-bold uppercase tracking-tight">
-                   WARNING: SEND ONLY USDT ON THE TRC20 NETWORK. TRANSFER TO INCORRECT NETWORK PROTOCOLS WILL RESULT IN PERMANENT ASSET LOSS.
-                 </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Footer Note */}
-      <div className="mt-16 text-center animate-reveal stagger-3">
-         <div className="p-10 rounded-[3rem] glass-card border-border flex flex-col items-center gap-6">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-               <Heart className="w-8 h-8 fill-current" />
+              <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">
+                Local Transfer
+              </Badge>
             </div>
-            <div className="space-y-2">
-               <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">Thank You for Supporting Local Dev</h3>
-               <p className="text-sm text-foreground/40 font-medium max-w-xl mx-auto">
-                 Every contribution directly supports server costs and the development of new high-fidelity production units.
+          </CardHeader>
+          
+          <CardContent className="pt-10 space-y-10 flex-1">
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Easypaisa / JazzCash</Label>
+                <div className="flex gap-2 group/field">
+                  <div className="flex-1 h-16 bg-secondary border border-border rounded-2xl flex items-center px-6 font-mono text-xl font-bold text-foreground overflow-hidden group-hover/field:border-primary/20 transition-colors">
+                    03194259023
+                  </div>
+                  <Button 
+                    onClick={() => handleCopy('03194259023', 'easypaisa')}
+                    className="h-16 w-16 rounded-2xl bg-primary shadow-xl shadow-primary/20 shrink-0"
+                  >
+                    {isCopied === 'easypaisa' ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">RAAST IBAN Matrix</Label>
+                <div className="flex gap-2 group/field">
+                  <div className="flex-1 h-16 bg-secondary border border-border rounded-2xl flex items-center px-6 font-mono text-[11px] sm:text-sm font-bold text-foreground overflow-hidden group-hover/field:border-primary/20 transition-colors">
+                    PK26MEZN0000300112583758
+                  </div>
+                  <Button 
+                    onClick={() => handleCopy('PK26MEZN0000300112583758', 'iban')}
+                    className="h-16 w-16 rounded-2xl bg-primary shadow-xl shadow-primary/20 shrink-0"
+                  >
+                    {isCopied === 'iban' ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4">
+               <Label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] ml-1">Suggested Tiers</Label>
+               <div className="flex flex-wrap gap-2">
+                  {['Rs 100', 'Rs 500', 'Rs 1000'].map((tier) => (
+                    <div key={tier} className="px-4 py-2 rounded-xl bg-secondary/50 border border-border text-[10px] font-black text-foreground/40 uppercase tracking-widest cursor-default group-hover:border-primary/10 transition-all">
+                       {tier}
+                    </div>
+                  ))}
+               </div>
+            </div>
+
+            <div className="mt-auto p-6 rounded-[2rem] bg-secondary/50 border border-border flex items-start gap-4">
+               <Building2 className="w-5 h-5 text-primary mt-1 shrink-0" />
+               <p className="text-[11px] text-foreground/50 leading-relaxed font-medium uppercase">
+                 All local banks supported via RAAST. Direct transfers are processed manually within the banking network.
                </p>
             </div>
-            <div className="flex items-center gap-4">
-               <div className="px-4 py-1.5 rounded-full bg-secondary border border-border text-[8px] font-black uppercase tracking-widest text-foreground/40">Zero Spam</div>
-               <div className="px-4 py-1.5 rounded-full bg-secondary border border-border text-[8px] font-black uppercase tracking-widest text-foreground/40">100% Hardware Native</div>
+          </CardContent>
+        </Card>
+
+        {/* Card 2: Worldwide */}
+        <Card className="glass-card border-border shadow-2xl overflow-hidden relative group hover:-translate-y-2 transition-all duration-500 flex flex-col h-full">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+          
+          <CardHeader className="pb-8 border-b border-border bg-secondary/30">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl font-headline flex items-center gap-4 text-foreground">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner">
+                  <Globe className="w-6 h-6" />
+                </div>
+                Worldwide Protocol
+              </CardTitle>
+              <Badge className="bg-primary/10 text-primary border-primary/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">
+                USDT TRC20
+              </Badge>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="pt-10 space-y-10 flex-1">
+            <div className="space-y-8 flex-1">
+               <div className="flex flex-col items-center gap-8">
+                  {/* High-Fidelity QR Visual */}
+                  <div className="relative group/qr">
+                     <div className="absolute -inset-4 bg-primary/10 blur-2xl rounded-full opacity-0 group-hover/qr:opacity-100 transition-opacity duration-700" />
+                     <div className="w-48 h-48 rounded-[2.5rem] bg-white p-3 shadow-2xl ring-1 ring-black/5 relative z-10">
+                        <div className="w-full h-full bg-black/5 rounded-[1.5rem] flex items-center justify-center relative overflow-hidden border border-black/5">
+                           <QrCode className="w-20 h-20 text-black/10" />
+                           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
+                           <div className="absolute bottom-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black text-white text-[7px] font-black uppercase tracking-widest">
+                              <Coins className="w-2.5 h-2.5" /> TRC20 Only
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="w-full space-y-4">
+                     <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Binance / Crypto Wallet</Label>
+                     <div className="flex gap-2 group/field">
+                        <div className="flex-1 h-16 bg-secondary border border-border rounded-2xl flex items-center px-6 font-mono text-[9px] sm:text-xs font-bold text-foreground overflow-hidden break-all group-hover/field:border-primary/20 transition-colors">
+                           TDhUm3utKqQ4sE974RCRefAFpdNAVGcLtQ
+                        </div>
+                        <Button 
+                          onClick={() => handleCopy('TDhUm3utKqQ4sE974RCRefAFpdNAVGcLtQ', 'usdt')}
+                          className="h-16 w-16 rounded-2xl bg-primary shadow-xl shadow-primary/20 shrink-0"
+                        >
+                          {isCopied === 'usdt' ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                        </Button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            <div className="p-6 rounded-[2.5rem] bg-red-500/5 border border-red-500/10 flex items-start gap-4">
+               <ShieldAlert className="w-5 h-5 text-red-500 mt-1 shrink-0" />
+               <p className="text-[10px] text-red-500/70 leading-relaxed font-black uppercase tracking-tight">
+                 Warning: SEND ONLY USDT ON THE TRC20 NETWORK. TRANSFER TO INCORRECT NETWORK PROTOCOLS WILL RESULT IN PERMANENT ASSET LOSS.
+               </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Thank You Note */}
+      <div className="mt-20 text-center animate-reveal stagger-3">
+         <div className="p-12 rounded-[3.5rem] glass-card border-border flex flex-col items-center gap-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.05)_0%,transparent_70%)]" />
+            
+            <div className="flex gap-4">
+               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-xl ring-1 ring-primary/20">
+                  <Heart className="w-6 h-6 fill-current" />
+               </div>
+               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-xl ring-1 ring-primary/20">
+                  <Star className="w-6 h-6 fill-current" />
+               </div>
+               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-xl ring-1 ring-primary/20">
+                  <BadgeCheck className="w-6 h-6 fill-current" />
+               </div>
+            </div>
+
+            <div className="space-y-3 relative z-10">
+               <h3 className="text-2xl md:text-3xl font-headline font-black text-foreground uppercase tracking-tight leading-none">Thank You for Fueling the Engine</h3>
+               <p className="text-sm text-foreground/40 font-medium max-w-xl mx-auto leading-relaxed">
+                 Every contribution directly supports server costs and the development of new high-fidelity production units. Your support keeps the studio free for everyone.
+               </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 relative z-10">
+               <div className="px-5 py-2 rounded-full bg-secondary border border-border text-[8px] font-black uppercase tracking-[0.3em] text-foreground/30">Studio Standard v7.2</div>
+               <div className="px-5 py-2 rounded-full bg-secondary border border-border text-[8px] font-black uppercase tracking-[0.3em] text-foreground/30">Verified Secure</div>
+               <div className="px-5 py-2 rounded-full bg-secondary border border-border text-[8px] font-black uppercase tracking-[0.3em] text-foreground/30">100% Client-Side</div>
             </div>
          </div>
       </div>
