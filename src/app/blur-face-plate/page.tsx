@@ -28,12 +28,14 @@ import {
   Eraser,
   Grid2X2,
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -114,8 +116,8 @@ export default function AdvancedBlurFacePlatePage() {
         ctx.fillRect(region.x, region.y, region.w, region.h);
       } else if (region.type === 'blur') {
         const blurCanvas = document.createElement('canvas');
-        blurCanvas.width = region.w;
-        blurCanvas.height = region.h;
+        blurCanvas.width = Math.max(1, Math.abs(region.w));
+        blurCanvas.height = Math.max(1, Math.abs(region.h));
         const bCtx = blurCanvas.getContext('2d');
         if (bCtx) {
           bCtx.filter = `blur(${region.strength}px)`;
@@ -123,10 +125,10 @@ export default function AdvancedBlurFacePlatePage() {
           ctx.drawImage(blurCanvas, region.x, region.y);
         }
       } else if (region.type === 'pixelate') {
-        const pSize = Math.max(1, 40 - (region.strength / 2.5)); // Map strength 1-100 to pixel size
+        const pSize = Math.max(1, 40 - (region.strength / 2.5)); 
         const pCanvas = document.createElement('canvas');
-        const pW = Math.max(1, Math.floor(region.w / pSize));
-        const pH = Math.max(1, Math.floor(region.h / pSize));
+        const pW = Math.max(1, Math.floor(Math.abs(region.w) / pSize));
+        const pH = Math.max(1, Math.floor(Math.abs(region.h) / pSize));
         pCanvas.width = pW;
         pCanvas.height = pH;
         const pCtx = pCanvas.getContext('2d');
@@ -162,11 +164,9 @@ export default function AdvancedBlurFacePlatePage() {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect || !loadedImage) return { x: 0, y: 0 };
     
-    // Position within CSS display
     const cssX = clientX - rect.left;
     const cssY = clientY - rect.top;
 
-    // Viewport to actual image space (reversing zoom and pan)
     const zoomScale = rect.width / loadedImage.width;
     const x = (cssX / zoomScale - offset.x) / scale;
     const y = (cssY / zoomScale - offset.y) / scale;
@@ -180,9 +180,9 @@ export default function AdvancedBlurFacePlatePage() {
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     const { x, y } = getCanvasCoords(clientX, clientY);
 
-    // Check if clicking on an existing region
     const hit = [...regions].reverse().find(r => 
-      x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h
+      x >= Math.min(r.x, r.x + r.w) && x <= Math.max(r.x, r.x + r.w) && 
+      y >= Math.min(r.y, r.y + r.h) && y <= Math.max(r.y, r.y + r.h)
     );
 
     if (hit) {
@@ -198,7 +198,6 @@ export default function AdvancedBlurFacePlatePage() {
         initialH: hit.h
       };
     } else {
-      // Start creating new
       const newId = Math.random().toString(36).substr(2, 9);
       const newRegion: RedactionRegion = {
         id: newId,
@@ -236,14 +235,12 @@ export default function AdvancedBlurFacePlatePage() {
 
   const handleEnd = () => {
     if (dragRef.current?.type === 'create') {
-      // Normalize negative dimensions
       setRegions(prev => prev.map(r => {
         if (r.id === dragRef.current?.id) {
           const nx = r.w < 0 ? r.x + r.w : r.x;
           const ny = r.h < 0 ? r.y + r.h : r.y;
           const nw = Math.abs(r.w);
           const nh = Math.abs(r.h);
-          // Auto-remove tiny clicks
           if (nw < 5 || nh < 5) return null as any;
           return { ...r, x: nx, y: ny, w: nw, h: nh };
         }
@@ -267,7 +264,7 @@ export default function AdvancedBlurFacePlatePage() {
           setSelectedId(null);
           setScale(1);
           setOffset({ x: 0, y: 0 });
-          toast({ title: "Photo Imported", description: "Identity buffer initialized." });
+          toast({ title: "Photo Imported" });
         };
         img.src = event.target?.result as string;
       };
@@ -280,7 +277,6 @@ export default function AdvancedBlurFacePlatePage() {
     setIsProcessing(true);
     
     try {
-      // FaceDetector API is experimental but available in modern Chromium
       if ('FaceDetector' in window) {
         const detector = new (window as any).FaceDetector({ fastMode: true, maxFaces: 10 });
         const faces = await detector.detect(loadedImage);
@@ -299,15 +295,15 @@ export default function AdvancedBlurFacePlatePage() {
           }));
           setHistory([...history, regions]);
           setRegions([...regions, ...newRegions]);
-          toast({ title: "Identity Discovery", description: `Isolated ${faces.length} biometric markers.` });
+          toast({ title: "Faces Discovered", description: `Found ${faces.length} people.` });
         } else {
-          toast({ title: "No Faces Identified", description: "Manual alignment required." });
+          toast({ title: "No Faces Found" });
         }
       } else {
-        toast({ variant: "destructive", title: "API Unresponsive", description: "Your browser does not support AI Face Discovery." });
+        toast({ variant: "destructive", title: "Unsupported Browser", description: "Face detection is not available on this device." });
       }
     } catch (e) {
-      toast({ variant: "destructive", title: "Detection Failed" });
+      toast({ variant: "destructive", title: "Analysis Failed" });
     } finally {
       setIsProcessing(false);
     }
@@ -316,10 +312,10 @@ export default function AdvancedBlurFacePlatePage() {
   const handleDownload = () => {
     if (!canvasRef.current || !image) return;
     const link = document.createElement('a');
-    link.download = `sanitized_master_${Date.now()}.png`;
+    link.download = `sanitized_${Date.now()}.png`;
     link.href = canvasRef.current.toDataURL('image/png', 1.0);
     link.click();
-    toast({ title: "Sanitized Master Exported" });
+    toast({ title: "Export Success" });
   };
 
   const deleteSelected = () => {
@@ -327,7 +323,6 @@ export default function AdvancedBlurFacePlatePage() {
       setHistory([...history, regions]);
       setRegions(regions.filter(r => r.id !== selectedId));
       setSelectedId(null);
-      toast({ title: "Region Nuked" });
     }
   };
 
@@ -336,7 +331,6 @@ export default function AdvancedBlurFacePlatePage() {
       const prev = history[history.length - 1];
       setHistory(history.slice(0, -1));
       setRegions(prev);
-      toast({ title: "Step Reversed" });
     }
   };
 
@@ -346,7 +340,7 @@ export default function AdvancedBlurFacePlatePage() {
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-full overflow-hidden">
       <div className="mb-10 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <EyeOff className="w-3.5 h-3.5" /> High-Security Redaction Suite
+          <EyeOff className="w-3.5 h-3.5" /> Identity Protection
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
            <div>
@@ -354,18 +348,18 @@ export default function AdvancedBlurFacePlatePage() {
                 Blur Face <span className="text-primary italic">& Plate PRO</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
-                Professional visual anonymity. Mask biometric identifiers and industrial data locally using quad-protocol obfuscation and hardware-native scaling.
+                Professional visual anonymity. Mask people and sensitive data locally using multiple obfuscation protocols.
               </p>
            </div>
            <div className="flex items-center gap-3">
               <GetHelp toolId="blur-face-plate" />
               {image && (
                 <div className="flex gap-2">
-                   <Button variant="outline" size="sm" onClick={undo} disabled={history.length === 0} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest transition-all">
+                   <Button variant="outline" size="sm" onClick={undo} disabled={history.length === 0} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest">
                       <Undo2 className="w-3.5 h-3.5 mr-2" /> Undo
                    </Button>
                    <Button variant="outline" size="sm" onClick={() => { setImage(null); setLoadedImage(null); setRegions([]); setHistory([]); }} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
-                      <Trash2 className="w-3.5 h-3.5 mr-2" /> Purge
+                      <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
                    </Button>
                 </div>
               )}
@@ -374,19 +368,19 @@ export default function AdvancedBlurFacePlatePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-        {/* Viewport - Left */}
+        {/* Preview Pane */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-6">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[350px] max-h-[45vh] lg:max-h-none lg:min-h-[700px] bg-black/80">
              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
              <CardHeader className="py-4 border-b border-white/5 bg-white/5 flex flex-row items-center justify-between shrink-0">
                 <CardTitle className="text-[9px] font-black text-primary uppercase tracking-[0.4em] flex items-center gap-2">
-                   <Activity className="w-3.5 h-3.5" /> Optical Analysis Stream
+                   <Activity className="w-3.5 h-3.5" /> Workspace
                 </CardTitle>
                 <div className="flex items-center gap-3">
                    {image && (
                      <div className="flex bg-secondary/50 rounded-lg p-0.5 border border-white/5">
                         <button onClick={() => setScale(s => Math.max(0.5, s - 0.2))} className="w-7 h-7 flex items-center justify-center text-white/40 hover:text-white"><Minus className="w-3.5 h-3.5" /></button>
-                        <span className="px-2 py-1 text-[8px] font-black text-white/20 uppercase tabular-nums">{(scale * 100).toFixed(0)}%</span>
+                        <span className="px-2 py-1 text-[8px] font-black text-white/20 uppercase">{(scale * 100).toFixed(0)}%</span>
                         <button onClick={() => setScale(s => Math.min(5, s + 0.2))} className="w-7 h-7 flex items-center justify-center text-white/40 hover:text-white"><Plus className="w-3.5 h-3.5" /></button>
                      </div>
                    )}
@@ -401,23 +395,18 @@ export default function AdvancedBlurFacePlatePage() {
              </CardHeader>
              <CardContent className="flex-1 flex flex-col items-center justify-center p-4 lg:p-12 relative overflow-hidden">
                 {!image ? (
-                  <div onClick={() => fileInputRef.current?.click()} className="flex-1 flex flex-col items-center justify-center gap-8 cursor-pointer group w-full text-center border-2 border-dashed border-white/10 rounded-[3rem] hover:border-primary/40 transition-all duration-700">
-                     <div className="w-20 h-20 rounded-[2.5rem] bg-white/5 flex items-center justify-center text-white/10 group-hover:text-primary group-hover:scale-110 transition-all shadow-2xl">
+                  <div onClick={() => fileInputRef.current?.click()} className="flex-1 flex flex-col items-center justify-center gap-8 cursor-pointer group w-full text-center border-2 border-dashed border-white/10 rounded-[3rem] hover:border-primary/40 transition-all">
+                     <div className="w-20 h-20 rounded-[2.5rem] bg-white/5 flex items-center justify-center text-white/10 group-hover:text-primary group-hover:scale-110 transition-all">
                         <Upload className="w-10 h-10" />
                      </div>
-                     <div className="space-y-2">
-                        <span className="text-xl font-headline font-black uppercase text-white/40 group-hover:text-white transition-colors">Inject Visual Target</span>
-                        <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Hardware-Native Memory Isolation Enabled</p>
-                     </div>
+                     <span className="text-xl font-headline font-black uppercase text-white/40 group-hover:text-white">Import Photo</span>
                      <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileUpload} className="hidden" />
                   </div>
                 ) : (
                   <div className="relative w-full h-full flex items-center justify-center">
                     <div 
                       className="relative overflow-hidden cursor-crosshair transition-all duration-500 ease-out"
-                      style={{ 
-                        transform: `scale(${scale}) translate(${offset.x}px, ${offset.y}px)`
-                      }}
+                      style={{ transform: `scale(${scale}) translate(${offset.x}px, ${offset.y}px)` }}
                     >
                        <canvas 
                         ref={canvasRef} 
@@ -439,86 +428,83 @@ export default function AdvancedBlurFacePlatePage() {
              </CardContent>
           </Card>
 
-          <div className="hidden lg:grid grid-cols-2 gap-6 animate-in fade-in duration-1000">
-             <div className="p-8 rounded-[3rem] bg-secondary border border-white/5 flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+          <div className="hidden lg:grid grid-cols-2 gap-6">
+             <div className="p-8 rounded-[3rem] bg-secondary border border-white/5 flex items-start gap-6 group hover:bg-secondary/80 transition-all">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Volatile Buffer Protocol</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All redaction logic is executed 100% in local memory. Sensitive visual headers are never transmitted, ensuring absolute data privacy.
+                    All processing occurs 100% locally in your browser memory. Your un-redacted photo never leaves your device.
                   </p>
                 </div>
              </div>
-             <div className="p-8 rounded-[3rem] bg-secondary border border-white/5 flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+             <div className="p-8 rounded-[3rem] bg-secondary border border-white/5 flex items-start gap-6 group hover:bg-secondary/80 transition-all">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
                   <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hardware Synthesis</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Utilizing multi-threaded pixel interpolation and hardware-native blur dictionaries for consistent production-grade exports.
+                    High-fidelity visual redaction using hardware-native rendering protocols.
                   </p>
                 </div>
              </div>
           </div>
         </div>
 
-        {/* Controls - Right */}
+        {/* Controls Column */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
            <Card className="glass-card border-border shadow-2xl">
               <CardHeader className="py-6 border-b border-white/5 bg-white/2">
                  <div className="flex items-center justify-between">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                       <Settings2 className="w-5 h-5 text-primary" /> Studio Config
+                       <Settings2 className="w-5 h-5 text-primary" /> Options
                     </CardTitle>
-                    <Button onClick={detectFaces} disabled={isProcessing || !image} className="h-9 px-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[9px] font-black uppercase hover:bg-primary/20">
-                       <ScanFace className="w-4 h-4 mr-2" /> Auto Detect
+                    <Button onClick={detectFaces} disabled={isProcessing || !image} className="h-9 px-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[9px] font-black uppercase">
+                       <ScanFace className="w-4 h-4 mr-2" /> Detect Faces
                     </Button>
                  </div>
               </CardHeader>
               <CardContent className="pt-8 space-y-10">
                  {!selectedId ? (
-                   <div className="py-20 text-center space-y-6 opacity-30 animate-in fade-in">
+                   <div className="py-20 text-center space-y-6 opacity-30">
                       <div className="w-16 h-16 rounded-[1.5rem] bg-secondary border-border mx-auto flex items-center justify-center">
                          <Move className="w-8 h-8" />
                       </div>
-                      <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed px-12">
-                         Click or Drag on the Preview matrix to initialize a redaction region.
+                      <p className="text-[10px] font-black uppercase tracking-widest px-12">
+                         Click or Drag on the photo to start a redaction region.
                       </p>
                    </div>
                  ) : (
                    <div className="space-y-10 animate-in slide-in-from-bottom-2 duration-500">
                       <div className="space-y-4">
-                         <div className="flex justify-between items-center">
-                            <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Effect Protocol</Label>
-                            <span className="text-[8px] font-bold text-primary uppercase bg-primary/10 px-2 py-0.5 rounded">Region {selectedId.substring(0,4)}</span>
-                         </div>
-                         <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2 -mx-2 px-2 scroll-smooth snap-x">
+                         <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Type</Label>
+                         <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2">
                             {[
-                               { id: 'blur', icon: Activity, label: 'Soft Blur' },
+                               { id: 'blur', icon: Activity, label: 'Blur' },
                                { id: 'pixelate', icon: Grid2X2, label: 'Pixelate' },
                                { id: 'black', icon: Maximize2, label: 'Blackout' },
-                               { id: 'white', icon: Eraser, label: 'Solid Color' },
+                               { id: 'white', icon: Eraser, label: 'Color' },
                             ].map((t) => (
                                <button
                                  key={t.id}
                                  onClick={() => setRegions(prev => prev.map(r => r.id === selectedId ? { ...r, type: t.id as RedactionType } : r))}
                                  className={cn(
-                                   "flex-1 min-w-[100px] snap-start h-14 rounded-2xl border flex items-center justify-center gap-3 transition-all",
+                                   "flex-1 min-w-[100px] h-14 rounded-2xl border flex items-center justify-center gap-3 transition-all",
                                    activeRegion?.type === t.id ? "bg-primary text-white border-primary shadow-lg" : "bg-secondary/50 border-white/5 text-foreground/40 hover:text-foreground"
                                  )}
                                >
                                   <t.icon className="w-4 h-4" />
-                                  <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">{t.label}</span>
+                                  <span className="text-[9px] font-black uppercase">{t.label}</span>
                                </button>
                             ))}
                          </div>
                       </div>
 
                       <div className="space-y-4">
-                         <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Path Geometry</Label>
+                         <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Shape</Label>
                          <div className="grid grid-cols-2 gap-3">
                             <button
                                onClick={() => setRegions(prev => prev.map(r => r.id === selectedId ? { ...r, shape: 'rect' } : r))}
@@ -538,15 +524,15 @@ export default function AdvancedBlurFacePlatePage() {
                                )}
                             >
                                <Circle className="w-4 h-4" />
-                               <span className="text-[9px] font-black uppercase">Oval Path</span>
+                               <span className="text-[9px] font-black uppercase">Oval</span>
                             </button>
                          </div>
                       </div>
 
                       {(activeRegion?.type === 'blur' || activeRegion?.type === 'pixelate') && (
-                        <div className="space-y-4 animate-in slide-in-from-top-2">
+                        <div className="space-y-4">
                            <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-foreground/30">
-                              <Label>Matrix Intensity</Label>
+                              <Label>Strength</Label>
                               <span className="text-primary font-mono">{activeRegion.strength}%</span>
                            </div>
                            <Slider 
@@ -558,18 +544,8 @@ export default function AdvancedBlurFacePlatePage() {
                       )}
 
                       <div className="p-6 rounded-[2rem] bg-secondary border border-white/5 space-y-6">
-                         <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                               <p className="text-[10px] font-black text-foreground/60 uppercase">Edge Smoothing</p>
-                               <p className="text-[8px] font-bold text-foreground/20 uppercase">Feathered Alpha</p>
-                            </div>
-                            <Switch 
-                              checked={activeRegion?.feather} 
-                              onCheckedChange={v => setRegions(prev => prev.map(r => r.id === selectedId ? { ...r, feather: v } : r))}
-                            />
-                         </div>
                          <Button onClick={deleteSelected} variant="ghost" className="w-full h-11 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">
-                            <Trash2 className="w-4 h-4 mr-2" /> Kill Region
+                            <Trash2 className="w-4 h-4 mr-2" /> Remove Region
                          </Button>
                       </div>
                    </div>
@@ -577,7 +553,7 @@ export default function AdvancedBlurFacePlatePage() {
 
                  <div className="pt-4 border-t border-white/5">
                     <Button onClick={handleDownload} disabled={!image} className="w-full h-16 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                       <Download className="w-6 h-6" /> Export PNG Master
+                       <Download className="w-6 h-6" /> Download
                     </Button>
                  </div>
               </CardContent>
@@ -585,15 +561,6 @@ export default function AdvancedBlurFacePlatePage() {
         </div>
       </div>
       
-      {/* MOBILE STICKY ACTIONS */}
-      {image && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#0a0a0c]/80 backdrop-blur-3xl border-t border-white/10 z-[100] lg:hidden flex gap-3 animate-in slide-in-from-bottom-full duration-500">
-          <Button onClick={handleDownload} className="flex-1 h-14 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-2xl">
-             <Download className="w-4 h-4" /> Download
-          </Button>
-        </div>
-      )}
-
       <style jsx global>{`
         .bg-checkered {
           background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
@@ -611,4 +578,3 @@ export default function AdvancedBlurFacePlatePage() {
     </div>
   );
 }
-
