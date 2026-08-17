@@ -37,7 +37,7 @@ export function Footer() {
               The professional digital studio for high-fidelity asset production. Powered by client-side intelligence for maximum privacy and performance.
             </p>
             
-            <div className="flex flex-wrap items-center gap-8 pt-4">
+            <div className="flex wrap items-center gap-8 pt-4">
               <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
                 <Shield className="w-3.5 h-3.5 text-primary/40" /> Secure
               </div>
@@ -73,7 +73,7 @@ export function Footer() {
                 {[
                   { label: 'Help Center', href: '/faq' },
                   { label: 'Buy me a coffee', href: '/donate' },
-                  { label: 'About', href: '/about' },
+                  { label: 'About & My Work', href: '/about' },
                   { label: 'Privacy', href: '/privacy' },
                   { label: 'Terms', href: '/terms' },
                 ].map((link) => (

@@ -15,6 +15,7 @@ import {
   Coffee,
   Table,
   X,
+  User,
   Command
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -45,9 +46,8 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Single QR', href: '/single', icon: QrCode },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers },
-  { label: 'CSV to JSON', href: '/csv-to-json', icon: Table },
-  { label: 'JSON to CSV', href: '/json-to-csv', icon: FileJson },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type },
+  { label: 'About', href: '/about', icon: User },
 ];
 
 export function Navbar() {
