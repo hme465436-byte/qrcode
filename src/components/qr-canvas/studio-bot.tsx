@@ -20,14 +20,10 @@ import {
   User,
   Search,
   Zap,
-  Heart,
-  MessageSquare,
-  Type,
   Braces
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 interface Tool {
   href: string;
@@ -59,49 +55,52 @@ interface Message {
 }
 
 /**
- * High-Fidelity Vector Panda Character
+ * Kit the Panda - High Fidelity SVG Character
  */
-function KitCharacter({ className }: { className?: string }) {
+function KitSVG({ className, isPeeking = false }: { className?: string; isPeeking?: boolean }) {
   return (
-    <div className={cn("relative select-none pointer-events-none", className)}>
-      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
+    <div className={cn("relative pointer-events-none select-none", className)}>
+      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg overflow-visible">
         {/* Ears */}
-        <circle cx="25" cy="25" r="12" fill="#1a1a1a" />
-        <circle cx="75" cy="25" r="12" fill="#1a1a1a" />
+        <ellipse cx="28" cy="22" rx="10" ry="11" fill="#1A1A1A" />
+        <ellipse cx="72" cy="22" rx="10" ry="11" fill="#1A1A1A" />
         
-        {/* Face Base */}
-        <circle cx="50" cy="50" r="40" fill="white" stroke="#f0f0f0" strokeWidth="1" />
+        {/* Bamboo Leaf */}
+        <path d="M78 15 Q 85 5 95 12 Q 88 18 80 16" fill="#7CB342" stroke="#2B2B2B" strokeWidth="0.5" />
         
-        {/* Eyes Matrix */}
-        <circle cx="35" cy="45" r="8" fill="#1a1a1a" />
-        <circle cx="37" cy="42" r="3" fill="white" /> {/* Reflection */}
+        {/* Head */}
+        <circle cx="50" cy="50" r="42" fill="#F7F4EE" stroke="#2B2B2B" strokeWidth="2.5" />
         
-        <circle cx="65" cy="45" r="8" fill="#1a1a1a" />
-        <circle cx="67" cy="42" r="3" fill="white" /> {/* Reflection */}
+        {/* Eye Patches */}
+        <ellipse cx="36" cy="48" rx="11" ry="13" fill="#1A1A1A" transform="rotate(-15, 36, 48)" />
+        <ellipse cx="64" cy="48" rx="11" ry="13" fill="#1A1A1A" transform="rotate(15, 64, 48)" />
         
-        {/* Blush Matrix */}
-        <ellipse cx="25" cy="55" rx="6" ry="4" fill="#ffb7ce" opacity="0.6" />
-        <ellipse cx="75" cy="55" rx="6" ry="4" fill="#ffb7ce" opacity="0.6" />
+        {/* Eyes */}
+        <circle cx="36" cy="46" r="4.5" fill="white" />
+        <circle cx="37" cy="45.5" r="2.5" fill="black" />
+        <circle cx="38" cy="44.5" r="1" fill="white" /> {/* Sparkle */}
         
-        {/* Nose and Smile */}
-        <circle cx="50" cy="55" r="3" fill="#1a1a1a" />
-        <path d="M45 62 Q 50 66 55 62" fill="none" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    </div>
-  );
-}
+        <circle cx="64" cy="46" r="4.5" fill="white" />
+        <circle cx="63" cy="45.5" r="2.5" fill="black" />
+        <circle cx="62" cy="44.5" r="1" fill="white" /> {/* Sparkle */}
+        
+        {/* Cheeks */}
+        <ellipse cx="22" cy="62" rx="7" ry="4" fill="#FFB6C8" opacity="0.7" />
+        <ellipse cx="78" cy="62" rx="7" ry="4" fill="#FFB6C8" opacity="0.7" />
+        
+        {/* Nose & Mouth */}
+        <circle cx="50" cy="56" r="3.5" fill="#1A1A1A" />
+        <path d="M44 64 Q 50 69 56 64 M50 64 L 50 60" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" />
 
-/**
- * Kit's Waving Paw Protocol
- */
-function KitPaw({ className }: { className?: string }) {
-  return (
-    <div className={cn("relative w-12 h-12", className)}>
-      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
-        <path d="M20 80 Q 20 40 50 40 Q 80 40 80 80 L 80 100 L 20 100 Z" fill="white" />
-        <circle cx="35" cy="55" r="5" fill="#f0f0f0" />
-        <circle cx="50" cy="55" r="5" fill="#f0f0f0" />
-        <circle cx="65" cy="55" r="5" fill="#f0f0f0" />
+        {/* Waving Paw (visible in peek or open) */}
+        <g className={cn("transition-transform duration-700", isPeeking ? "translate-y-0" : "translate-y-20 translate-x-20")}>
+           <circle cx="85" cy="85" r="12" fill="#F7F4EE" stroke="#2B2B2B" strokeWidth="1.5" />
+           <circle cx="85" cy="82" r="4" fill="#1A1A1A" opacity="0.8" />
+           <circle cx="77" cy="85" r="2" fill="#1A1A1A" opacity="0.6" />
+           <circle cx="81" cy="90" r="2" fill="#1A1A1A" opacity="0.6" />
+           <circle cx="89" cy="90" r="2" fill="#1A1A1A" opacity="0.6" />
+           <circle cx="93" cy="85" r="2" fill="#1A1A1A" opacity="0.6" />
+        </g>
       </svg>
     </div>
   );
@@ -121,7 +120,7 @@ export function StudioBot() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // KIT MANDATE: Strictly only render on Home (/)
+  // KIT RULE: ONLY ON HOME (/)
   if (pathname !== '/') return null;
 
   useEffect(() => {
@@ -132,7 +131,7 @@ export function StudioBot() {
 
   const processQuery = async (query: string) => {
     setIsTyping(true);
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 1000));
 
     const lowQuery = query.toLowerCase();
     const foundTools = TOOLS.filter(t => 
@@ -142,9 +141,9 @@ export function StudioBot() {
 
     let response = "";
     if (foundTools.length > 0) {
-      response = `Found some tools for you:`;
+      response = `I found these tools for you:`;
     } else {
-      response = "I couldn't find that specific tool. Try searching for 'QR', 'PDF', or 'Image'.";
+      response = "I couldn't identify that tool. Try 'QR', 'PDF', or 'Image' for a list of available studios.";
     }
 
     setMessages(prev => [...prev, {
@@ -166,73 +165,71 @@ export function StudioBot() {
   };
 
   return (
-    <>
-      {/* PEEK STATE: Small paw and head waving from corner */}
-      {!isOpen && (
+    <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end pointer-events-none">
+      {!isOpen ? (
         <button 
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-0 right-6 z-[100] flex flex-col items-center group animate-kit-sway transition-transform hover:-translate-y-2 active:scale-95"
+          className="pointer-events-auto group relative flex items-end justify-end w-32 h-32 overflow-hidden outline-none"
+          aria-label="Open Kit"
         >
-          <KitCharacter className="w-16 h-16 sm:w-20 sm:h-20 translate-y-8 group-hover:translate-y-6 transition-transform duration-500" />
-          <KitPaw className="w-10 h-10 animate-bounce transition-all duration-[3000ms]" />
+          {/* Peeking animation - sits in the bottom corner */}
+          <div className="absolute -bottom-6 -right-6 w-28 h-28 transform transition-transform duration-300 group-hover:scale-105 animate-kit-bounce">
+            <KitSVG isPeeking={true} />
+          </div>
         </button>
-      )}
-
-      {/* OPEN STATE: Full card with Kit sitting on top */}
-      {isOpen && (
-        <div className="fixed right-6 bottom-6 z-[100] h-[520px] w-[90vw] sm:w-[380px] flex flex-col items-center animate-in slide-in-from-bottom-8 zoom-in-95 duration-500">
-          <div className="relative z-10 -mb-8 transition-transform duration-1000 hover:scale-105">
-            <KitCharacter className="w-24 h-24 sm:w-28 sm:h-28" />
+      ) : (
+        <div className="pointer-events-auto flex flex-col items-center animate-in slide-in-from-bottom-8 zoom-in-95 duration-500 w-[280px] sm:w-[320px]">
+          {/* Sitting Panda */}
+          <div className="relative z-10 -mb-6 animate-kit-wave">
+             <KitSVG className="w-24 h-24 sm:w-28 sm:h-28" />
           </div>
 
-          <Card className="flex-1 w-full border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col bg-[#0a0a0c]/95 backdrop-blur-2xl rounded-[3rem]">
-            {/* Header Protocol */}
-            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0 pt-10">
+          <Card className="w-full border-none shadow-[0_12px_40px_rgba(43,75,120,0.18)] overflow-hidden flex flex-col bg-[#FFF9F0]/92 backdrop-blur-xl rounded-[20px]">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-[#6B9BD1]/35 flex items-center justify-between bg-white/40 shrink-0 pt-6">
               <div className="space-y-0.5">
-                <h4 className="text-xl font-headline font-black uppercase tracking-tighter text-foreground">Kit</h4>
-                <span className="text-[8px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Studio Intel Active
-                </span>
+                <h4 className="text-sm font-black uppercase tracking-widest text-[#2B2B2B]">Kit</h4>
+                <p className="text-[8px] font-black text-[#6B9BD1] uppercase tracking-[0.2em]">Ask about tools</p>
               </div>
               <button 
                 onClick={() => setIsOpen(false)} 
-                className="w-10 h-10 rounded-2xl bg-white/5 text-white/20 hover:text-destructive hover:bg-destructive/10 transition-all flex items-center justify-center border border-white/5"
+                className="w-8 h-8 rounded-xl bg-white/20 text-[#2B2B2B]/40 hover:text-destructive transition-all flex items-center justify-center border border-[#6B9BD1]/20"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Linguistic Matrix (Chat) */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-gradient-to-b from-transparent to-primary/[0.02]">
+            {/* Chat Body */}
+            <div ref={scrollRef} className="h-[300px] overflow-y-auto p-4 space-y-4 custom-scrollbar-hidden bg-transparent">
               {messages.map((msg) => (
                 <div key={msg.id} className={cn(
-                  "flex flex-col gap-3 animate-in slide-in-from-bottom-4 duration-500",
+                  "flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-300",
                   msg.role === 'user' ? "items-end" : "items-start"
                 )}>
                   <div className={cn(
-                    "max-w-[85%] p-4 rounded-3xl text-sm font-medium leading-relaxed shadow-2xl",
+                    "max-w-[90%] px-4 py-3 rounded-2xl text-[12px] font-medium leading-relaxed shadow-sm",
                     msg.role === 'user' 
-                      ? "bg-primary text-white rounded-tr-none shadow-primary/20" 
-                      : "bg-[#1a1a1e] border border-white/5 text-foreground/80 rounded-tl-none"
+                      ? "bg-[#6B9BD1] text-white rounded-tr-none" 
+                      : "bg-white text-[#2B2B2B] rounded-tl-none border border-[#6B9BD1]/10"
                   )}>
                     {msg.content}
                   </div>
 
                   {msg.tools && (
-                    <div className="w-full grid grid-cols-1 gap-2 animate-in zoom-in-95 duration-500">
+                    <div className="w-full flex flex-col gap-1.5 animate-in zoom-in-95 duration-500">
                       {msg.tools.map((tool) => (
                         <button 
                           key={tool.href}
                           onClick={() => { setIsOpen(false); window.location.href = tool.href; }}
-                          className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-primary/10 hover:border-primary/20 transition-all group"
+                          className="w-full flex items-center justify-between p-3 rounded-xl bg-white/60 border border-[#6B9BD1]/20 hover:bg-[#6B9BD1]/10 transition-all group"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-primary border border-white/5 group-hover:scale-110 transition-transform">
-                              <tool.icon className="w-4 h-4" />
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-[#6B9BD1] border border-[#6B9BD1]/10 group-hover:scale-105 transition-transform">
+                              <tool.icon className="w-3.5 h-3.5" />
                             </div>
-                            <span className="text-[10px] font-black uppercase text-foreground/60 group-hover:text-foreground transition-colors">{tool.title}</span>
+                            <span className="text-[9px] font-black uppercase text-[#2B2B2B]/70 group-hover:text-[#6B9BD1] transition-colors">{tool.title}</span>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-white/10 group-hover:text-primary transition-all group-hover:translate-x-1" />
+                          <ArrowRight className="w-3 h-3 text-[#6B9BD1]/40 group-hover:text-[#6B9BD1] transition-all group-hover:translate-x-0.5" />
                         </button>
                       ))}
                     </div>
@@ -241,42 +238,52 @@ export function StudioBot() {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-[#1a1a1e] px-4 py-3 rounded-2xl rounded-tl-none border border-white/5 flex gap-1.5 items-center">
-                    <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" />
-                    <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
-                    <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+                  <div className="bg-white px-3 py-2 rounded-2xl rounded-tl-none border border-[#6B9BD1]/10 flex gap-1 items-center">
+                    <div className="w-1 h-1 bg-[#6B9BD1]/40 rounded-full animate-bounce" />
+                    <div className="w-1 h-1 bg-[#6B9BD1]/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                    <div className="w-1 h-1 bg-[#6B9BD1]/40 rounded-full animate-bounce [animation-delay:0.4s]" />
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Input Architecture */}
-            <div className="p-6 bg-white/[0.02] border-t border-white/5">
-              <form onSubmit={handleSubmit} className="relative group/input">
-                <div className="absolute -inset-1 bg-primary/10 rounded-2xl blur-lg opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-1000" />
+            {/* Input Area */}
+            <div className="p-4 bg-white/40 border-t border-[#6B9BD1]/20">
+              <form onSubmit={handleSubmit} className="flex gap-2">
                 <input 
                   type="text"
-                  placeholder="Ask me anything about tools..."
+                  placeholder="Which tool?"
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  className="relative w-full h-14 pl-5 pr-14 bg-background border border-white/10 rounded-2xl text-[13px] font-medium focus:ring-2 focus:ring-primary/40 outline-none transition-all placeholder:text-white/10"
+                  className="flex-1 h-9 px-4 bg-white/80 border border-[#6B9BD1]/30 rounded-xl text-[11px] font-medium focus:ring-1 focus:ring-[#6B9BD1] outline-none transition-all placeholder:text-[#2B2B2B]/20"
                 />
                 <button 
                   type="submit"
                   disabled={!input.trim()}
-                  className="absolute right-2 top-2 w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-xl active:scale-90 disabled:opacity-20 transition-all z-10"
+                  className="w-9 h-9 rounded-xl bg-[#6B9BD1] text-white flex items-center justify-center shadow-lg active:scale-90 disabled:opacity-30 transition-all shrink-0"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5" />
                 </button>
               </form>
-              <div className="mt-4 flex items-center justify-center gap-3">
-                <Heart className="w-3 h-3 text-primary/20 fill-current" />
-                <p className="text-[8px] font-black text-foreground/10 uppercase tracking-[0.4em]">Hardware Handshake Native</p>
-              </div>
             </div>
           </Card>
         </div>
       )}
-    </>
+      
+      <style jsx global>{`
+        @keyframes kit-bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+        @keyframes kit-wave {
+          0%, 100% { transform: rotate(0); }
+          50% { transform: rotate(-3deg); }
+        }
+        .animate-kit-bounce { animation: kit-bounce 2.4s ease-in-out infinite; }
+        .animate-kit-wave { animation: kit-wave 3s ease-in-out infinite; }
+        .custom-scrollbar-hidden::-webkit-scrollbar { display: none; }
+        .custom-scrollbar-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+    </div>
   );
 }
