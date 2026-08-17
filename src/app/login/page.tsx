@@ -37,9 +37,25 @@ export default function LoginPage() {
 
   const redirectTo = searchParams.get('redirect') || '/html-to-url';
 
+  const mapAuthError = (code: string) => {
+    switch (code) {
+      case 'auth/user-not-found': return "Identity not recognized in registry.";
+      case 'auth/wrong-password': return "Incorrect security key.";
+      case 'auth/email-already-in-use': return "Email already mapped to an existing identity.";
+      case 'auth/invalid-email': return "Malformed email format protocol.";
+      case 'auth/weak-password': return "Security key is too weak (min 6 chars).";
+      case 'auth/too-many-requests': return "Access throttled due to multiple failures. Try again later.";
+      case 'auth/operation-not-allowed': return "Authentication protocol is currently disabled.";
+      default: return "Authentication protocol failure. Check your connection.";
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) return;
+    if (!auth) {
+      setError("Firebase Auth not connected. Configuration missing.");
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -54,11 +70,8 @@ export default function LoginPage() {
       }
       router.push(redirectTo);
     } catch (err: any) {
-      console.error(err);
-      if (err.code === 'auth/user-not-found') setError("Identity not recognized in registry.");
-      else if (err.code === 'auth/wrong-password') setError("Incorrect security key.");
-      else if (err.code === 'auth/email-already-in-use') setError("Email already mapped to an existing user.");
-      else setError(err.message || "Authentication protocol failed.");
+      console.error("Auth Matrix Error:", err.code, err.message);
+      setError(mapAuthError(err.code));
     } finally {
       setIsLoading(false);
     }

@@ -17,22 +17,14 @@ import {
   ShieldCheck,
   Code2,
   Activity,
-  ArrowRight,
   Eye,
   RefreshCcw,
   Maximize2,
-  History,
   Layout,
-  User,
   LogOut,
-  AlertCircle,
   LogIn,
-  ChevronDown,
   Terminal,
-  FileJson,
-  FileText,
   Play,
-  Cpu,
   ShieldAlert,
   X
 } from 'lucide-react';
@@ -59,12 +51,8 @@ const LANGUAGES = [
   { id: 'css', label: 'CSS' },
   { id: 'javascript', label: 'JavaScript' },
   { id: 'python', label: 'Python' },
-  { id: 'java', label: 'Java' },
-  { id: 'cpp', label: 'C++' },
-  { id: 'php', label: 'PHP' },
   { id: 'json', label: 'JSON' },
   { id: 'text', label: 'Plain Text' },
-  { id: 'other', label: 'Other' },
 ];
 
 export default function HtmlToUrlPage() {
@@ -72,7 +60,7 @@ export default function HtmlToUrlPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user } = useUser();
+  const { user, loading: authLoading } = useUser();
   
   const [html, setHtml] = useState('');
   const [title, setTitle] = useState('');
@@ -128,8 +116,6 @@ export default function HtmlToUrlPage() {
 
     if (['html', 'css', 'javascript'].includes(effectiveLanguage)) {
       let content = html;
-      
-      // Inject Error Capture Proxy
       const errorCaptureScript = `
         <script>
           window.onerror = function(msg, url, line, col, error) {
@@ -147,7 +133,6 @@ export default function HtmlToUrlPage() {
       } else if (effectiveLanguage === 'javascript') {
         content = `<html><body style="background:#0f172a;color:#22d3ee;padding:20px;font-family:monospace;">${errorCaptureScript}<div id="root">Executing JS Matrix...</div><script>try{ ${html} }catch(e){ console.error(e.message); }</script></body></html>`;
       } else {
-        // Standard HTML: Inject script into head or start of body
         if (content.includes('<head>')) {
           content = content.replace('<head>', '<head>' + errorCaptureScript);
         } else {
@@ -233,7 +218,8 @@ export default function HtmlToUrlPage() {
 
   const fullUrl = (id: string) => typeof window !== 'undefined' ? `${window.location.origin}/p/${id}` : '';
 
-  const handleMakeLink = async () => {
+  const handleMakeLink = async (e: React.MouseEvent) => {
+    e.preventDefault();
     if (!user) {
       router.push(`/login?redirect=/html-to-url`);
       return;
@@ -245,7 +231,7 @@ export default function HtmlToUrlPage() {
     }
 
     if (!firestore) {
-      toast({ variant: "destructive", title: "Signaling Down" });
+      toast({ variant: "destructive", title: "Firebase Not Connected", description: "Firestore matrix is unavailable." });
       return;
     }
 
@@ -270,7 +256,8 @@ export default function HtmlToUrlPage() {
       setGeneratedId(id);
       toast({ title: "Published", description: "Identity link generated." });
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Publish Error" });
+      console.error("Firestore Publish Error:", err);
+      toast({ variant: "destructive", title: "Publish Error", description: "Could not write to document matrix." });
     } finally {
       setIsProcessing(false);
     }
@@ -304,6 +291,16 @@ export default function HtmlToUrlPage() {
       win.document.close();
     }
   };
+
+  if (!auth) {
+    return (
+      <div className="container mx-auto px-6 py-20 text-center">
+         <ShieldAlert className="w-16 h-16 text-destructive mx-auto mb-6" />
+         <h2 className="text-2xl font-headline font-black uppercase text-foreground">Auth Protocol Inactive</h2>
+         <p className="text-foreground/40 mt-2">Firebase environment variables are missing from the matrix.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
@@ -391,6 +388,7 @@ export default function HtmlToUrlPage() {
                  <div className="flex gap-4">
                     {effectiveLanguage === 'python' ? (
                        <Button 
+                        type="button"
                         onClick={handleRunPython}
                         disabled={isExecuting || isPyodideLoading || !html.trim()}
                         className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
@@ -400,6 +398,7 @@ export default function HtmlToUrlPage() {
                        </Button>
                     ) : (
                        <Button 
+                        type="button"
                         onClick={syncPreview}
                         className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
                        >
@@ -410,7 +409,8 @@ export default function HtmlToUrlPage() {
                     
                     {!user ? (
                       <Button 
-                        onClick={handleMakeLink}
+                        type="button"
+                        onClick={() => router.push(`/login?redirect=/html-to-url`)}
                         className="h-16 flex-1 bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
                       >
                         <LogIn className="w-6 h-6 text-primary" />
@@ -418,6 +418,7 @@ export default function HtmlToUrlPage() {
                       </Button>
                     ) : (
                       <Button 
+                        type="button"
                         onClick={handleMakeLink}
                         disabled={!html.trim() || isProcessing || html.length > 150000}
                         className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
@@ -528,7 +529,6 @@ export default function HtmlToUrlPage() {
                     </div>
                  )}
 
-                 {/* Diagnostics Overlay */}
                  {runtimeError && (
                    <div className="p-4 bg-red-500/10 border-t border-red-500/20 text-red-500 flex items-start gap-3 animate-in slide-in-from-bottom-2">
                       <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
