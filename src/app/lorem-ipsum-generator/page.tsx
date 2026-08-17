@@ -1,24 +1,32 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
-  Type, 
+  AlignLeft, 
   Copy, 
   Trash2, 
-  Sparkles, 
+  RefreshCcw, 
   Download, 
   Info,
   CheckCircle2,
-  RefreshCcw,
-  AlignLeft,
-  List,
-  WholeWord,
+  Settings2,
   Zap,
   Activity,
   Maximize2,
   FileText,
-  Settings2,
-  ShieldCheck
+  Type,
+  List,
+  Braces,
+  User,
+  Mail,
+  WholeWord,
+  Code2,
+  FileCode,
+  ShieldCheck,
+  WrapText,
+  Scaling,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +37,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-const WORDS = [
+// --- Linguistic Constants ---
+const LOREM_WORDS = [
   'lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do', 'eiusmod', 
   'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'enim', 'ad', 'minim', 
   'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris', 'nisi', 'aliquip', 'ex', 'ea', 
@@ -38,86 +47,139 @@ const WORDS = [
   'non', 'proident', 'sunt', 'culpa', 'qui', 'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum'
 ];
 
-type GenerationType = 'paragraphs' | 'sentences' | 'words' | 'list';
+const FIRST_NAMES = ['Aria', 'Caleb', 'Elena', 'Dante', 'Isla', 'Julian', 'Kai', 'Lila', 'Milo', 'Nora', 'Orion', 'Sloane', 'Zane', 'Yara', 'Silas', 'Ivy'];
+const LAST_NAMES = ['Vance', 'Sterling', ' Thorne', 'Blackwood', 'Frost', 'Mercer', 'Vale', 'Sinclair', 'Hayes', 'Lennox', 'Quinn', 'Brooks'];
+const DOMAINS = ['studio.ai', 'digital.io', 'brand.co', 'identity.net', 'tech.org', 'matrix.dev'];
+const JOB_TITLES = ['Lead Architect', 'Product Visionary', 'Interface Designer', 'Fullstack Engineer', 'Brand Strategist', 'Growth Director'];
+
+type GenerationMode = 'paragraphs' | 'sentences' | 'words' | 'list' | 'html';
+type DataMode = 'names' | 'emails' | 'titles';
 
 export default function LoremIpsumGeneratorPage() {
   const { toast } = useToast();
   
-  // Generation State
-  const [type, setType] = useState<GenerationType>('paragraphs');
+  // Studio State
+  const [activeTab, setActiveTab] = useState('standard');
+  const [mode, setMode] = useState<GenerationMode>('paragraphs');
+  const [dataMode, setDataMode] = useState<DataMode>('names');
   const [count, setCount] = useState(3);
   const [startWithLorem, setStartWithLorem] = useState(true);
+  const [useHardWrap, setUseHardWrap] = useState(false);
+  const [wrapLength, setWrapLength] = useState(60);
   const [output, setOutput] = useState('');
   const [isCopied, setIsCopied] = useState(false);
 
+  // --- Generation Engines ---
+  const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
+
   const generateWords = (num: number) => {
-    return Array.from({ length: num }, () => WORDS[Math.floor(Math.random() * WORDS.length)]).join(' ');
+    return Array.from({ length: num }, () => getRandom(LOREM_WORDS)).join(' ');
   };
 
   const generateSentence = () => {
-    const len = Math.floor(Math.random() * 10) + 5;
+    const len = Math.floor(Math.random() * 8) + 6;
     const sentence = generateWords(len);
     return sentence.charAt(0).toUpperCase() + sentence.slice(1) + '.';
   };
 
   const generateParagraph = () => {
-    const len = Math.floor(Math.random() * 4) + 3;
+    const len = Math.floor(Math.random() * 3) + 4;
     return Array.from({ length: len }, generateSentence).join(' ');
   };
 
-  const synthesizeText = useCallback(() => {
+  const applyHardWrap = (text: string, length: number) => {
+    const words = text.split(' ');
+    let currentLine = '';
     let result = '';
     
-    if (type === 'paragraphs') {
-      result = Array.from({ length: count }, generateParagraph).join('\n\n');
-    } else if (type === 'sentences') {
-      result = Array.from({ length: count }, generateSentence).join(' ');
-    } else if (type === 'words') {
-      result = generateWords(count);
-    } else if (type === 'list') {
-      result = Array.from({ length: count }, () => `• ${generateSentence()}`).join('\n');
+    words.forEach(word => {
+      if ((currentLine + word).length > length) {
+        result += currentLine.trim() + '\n';
+        currentLine = word + ' ';
+      } else {
+        currentLine += word + ' ';
+      }
+    });
+    return result + currentLine.trim();
+  };
+
+  const synthesize = useCallback(() => {
+    let result = '';
+
+    if (activeTab === 'standard') {
+      if (mode === 'paragraphs') {
+        result = Array.from({ length: count }, generateParagraph).join('\n\n');
+      } else if (mode === 'sentences') {
+        result = Array.from({ length: count }, generateSentence).join(' ');
+      } else if (mode === 'words') {
+        result = generateWords(count);
+      } else if (mode === 'list') {
+        result = Array.from({ length: count }, () => `• ${generateSentence()}`).join('\n');
+      } else if (mode === 'html') {
+        result = Array.from({ length: count }, () => `<p>${generateParagraph()}</p>`).join('\n');
+      }
+
+      if (startWithLorem && mode !== 'html' && mode !== 'list') {
+        const standardStart = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ";
+        if (!result.toLowerCase().startsWith('lorem')) {
+          result = standardStart + result;
+        }
+      }
+    } else {
+      // Dummy Data Matrix
+      const dataResults = [];
+      for (let i = 0; i < count; i++) {
+        if (dataMode === 'names') {
+          dataResults.push(`${getRandom(FIRST_NAMES)} ${getRandom(LAST_NAMES)}`);
+        } else if (dataMode === 'emails') {
+          const first = getRandom(FIRST_NAMES).toLowerCase();
+          const last = getRandom(LAST_NAMES).toLowerCase().trim();
+          dataResults.push(`${first}.${last}@${getRandom(DOMAINS)}`);
+        } else if (dataMode === 'titles') {
+          dataResults.push(getRandom(JOB_TITLES));
+        }
+      }
+      result = dataResults.join('\n');
     }
 
-    if (startWithLorem) {
-      const standardStart = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ";
-      if (type === 'words' && count > 5) {
-        result = "lorem ipsum dolor sit amet " + result.split(' ').slice(5).join(' ');
-      } else if (type === 'paragraphs' || type === 'sentences') {
-        result = standardStart + result;
-      }
+    if (useHardWrap && (mode === 'paragraphs' || mode === 'sentences' || mode === 'words')) {
+      result = applyHardWrap(result, wrapLength);
     }
 
     setOutput(result);
-  }, [type, count, startWithLorem]);
+  }, [activeTab, mode, dataMode, count, startWithLorem, useHardWrap, wrapLength]);
 
-  // Initial Load
+  // Live generation trigger
   useEffect(() => {
-    synthesizeText();
-  }, [synthesizeText]);
+    synthesize();
+  }, [synthesize]);
+
+  // Analytics Matrix
+  const stats = useMemo(() => {
+    const trimmed = output.trim();
+    const words = trimmed ? trimmed.split(/\s+/).filter(w => w.length > 0).length : 0;
+    const chars = output.length;
+    return { words, chars };
+  }, [output]);
 
   const handleCopy = () => {
     if (output) {
       navigator.clipboard.writeText(output);
       setIsCopied(true);
-      toast({ title: "Matrix Copied", description: "Placeholder text saved to clipboard." });
+      toast({ title: "Matrix Copied", description: "Linguistic payload saved to clipboard." });
       setTimeout(() => setIsCopied(false), 2000);
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = (ext: 'txt' | 'html') => {
     if (!output) return;
-    const blob = new Blob([output], { type: 'text/plain' });
+    const blob = new Blob([output], { type: ext === 'html' ? 'text/html' : 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `lorem_ipsum_export_${Date.now()}.txt`;
+    a.download = `mykit_lorem_export.${ext}`;
     a.click();
-    toast({ title: "Export Complete" });
-  };
-
-  const handleClear = () => {
-    setOutput('');
-    toast({ title: "Studio Reset" });
+    toast({ title: "Master Exported" });
   };
 
   return (
@@ -129,11 +191,19 @@ export default function LoremIpsumGeneratorPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
            <div>
               <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
-                Lorem Ipsum <span className="text-primary italic">Generator Studio</span>
+                Lorem Ipsum <span className="text-primary">Generator Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional-grade placeholder text synthesis. Generate high-quality paragraphs, sentences, and lists for design prototypes with absolute hardware-native privacy.
+                Professional-grade placeholder text synthesis. Generate high-quality paragraphs, markup tags, and dummy identity data with absolute hardware-native privacy.
               </p>
+           </div>
+           <div className="flex flex-wrap gap-3 shrink-0">
+              <Button variant="outline" onClick={synthesize} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all shadow-lg">
+                 <RefreshCcw className="w-4 h-4 mr-2" /> Regenerate
+              </Button>
+              <Button variant="outline" onClick={() => { setOutput(''); }} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                 <Trash2 className="w-4 h-4 mr-2" /> Clear
+              </Button>
            </div>
         </div>
       </div>
@@ -144,72 +214,132 @@ export default function LoremIpsumGeneratorPage() {
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
-              <CardTitle className="text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                <Settings2 className="w-5 h-5 text-primary" /> Matrix Config
-              </CardTitle>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid grid-cols-2 bg-background/50 border border-white/5 p-1 rounded-2xl h-12">
+                   <TabsTrigger value="standard" className="rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">Standard Matrix</TabsTrigger>
+                   <TabsTrigger value="dummy" className="rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">Identity Matrix</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
-              {/* Type Selection */}
-              <div className="space-y-4">
-                <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Linguistic Structure</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { id: 'paragraphs', label: 'Paragraphs', icon: AlignLeft },
-                    { id: 'sentences', label: 'Sentences', icon: Type },
-                    { id: 'words', label: 'Words', icon: WholeWord },
-                    { id: 'list', label: 'Bulleted List', icon: List },
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => setType(t.id as GenerationType)}
-                      className={cn(
-                        "flex flex-col items-center justify-center gap-3 py-6 rounded-2xl border transition-all",
-                        type === t.id ? "bg-primary text-white border-primary shadow-lg scale-105" : "bg-background border-border text-foreground/40 hover:border-primary/20"
-                      )}
-                    >
-                      <t.icon className="w-5 h-5" />
-                      <span className="text-[10px] font-black uppercase tracking-widest leading-none">{t.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              
+              <Tabs value={activeTab} className="w-full">
+                <TabsContent value="standard" className="space-y-10 m-0">
+                   {/* Mode Selection */}
+                   <div className="space-y-4">
+                      <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Linguistic Mode</Label>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                        {[
+                          { id: 'paragraphs', label: 'Paragraph', icon: AlignLeft },
+                          { id: 'sentences', label: 'Sentence', icon: Type },
+                          { id: 'words', label: 'Words', icon: WholeWord },
+                          { id: 'list', label: 'List', icon: List },
+                          { id: 'html', label: 'HTML', icon: Code2 },
+                        ].map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => setMode(t.id as GenerationMode)}
+                            className={cn(
+                              "flex flex-col items-center justify-center gap-2 py-4 rounded-xl border transition-all",
+                              mode === t.id ? "bg-primary text-white border-primary shadow-lg" : "bg-background border-border text-foreground/40 hover:border-primary/20"
+                            )}
+                          >
+                            <t.icon className="w-4 h-4" />
+                            <span className="text-[8px] font-black uppercase tracking-widest leading-none">{t.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                   </div>
 
-              {/* Quantity Slider */}
-              <div className="space-y-6 pt-4">
+                   {/* Protocol Options */}
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
+                      <div className="p-4 rounded-2xl bg-secondary/50 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] font-black uppercase text-foreground/60 leading-none">Standard Start</p>
+                          <p className="text-[7px] font-bold text-foreground/20 uppercase">Lorem ipsum...</p>
+                        </div>
+                        <Switch checked={startWithLorem} onCheckedChange={setStartWithLorem} className="scale-75" />
+                      </div>
+                      <div className="p-4 rounded-2xl bg-secondary/50 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] font-black uppercase text-foreground/60 leading-none">Hard Wrap</p>
+                          <p className="text-[7px] font-bold text-foreground/20 uppercase">Force Newlines</p>
+                        </div>
+                        <Switch checked={useHardWrap} onCheckedChange={setUseHardWrap} className="scale-75" />
+                      </div>
+                   </div>
+                </TabsContent>
+
+                <TabsContent value="dummy" className="space-y-10 m-0">
+                   <div className="space-y-4">
+                      <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Identity Protocol</Label>
+                      <div className="grid grid-cols-3 gap-3">
+                         {[
+                           { id: 'names', label: 'Full Names', icon: User },
+                           { id: 'emails', label: 'Email Alias', icon: Mail },
+                           { id: 'titles', label: 'Pro Titles', icon: Zap },
+                         ].map((t) => (
+                           <button
+                            key={t.id}
+                            onClick={() => setDataMode(t.id as DataMode)}
+                            className={cn(
+                              "flex flex-col items-center justify-center gap-3 py-6 rounded-2xl border transition-all",
+                              dataMode === t.id ? "bg-primary text-white border-primary shadow-lg" : "bg-background border-border text-foreground/40 hover:border-primary/20"
+                            )}
+                           >
+                              <t.icon className="w-5 h-5" />
+                              <span className="text-[9px] font-black uppercase tracking-widest">{t.label}</span>
+                           </button>
+                         ))}
+                      </div>
+                   </div>
+                </TabsContent>
+              </Tabs>
+
+              {/* Volume Slider */}
+              <div className="space-y-6 pt-4 border-t border-border">
                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-foreground/50">
-                  <Label>Volume Intensity</Label>
+                  <Label>Production Volume</Label>
                   <span className="text-primary font-mono text-lg">{count}</span>
                 </div>
-                <Slider value={[count]} min={1} max={50} step={1} onValueChange={(v) => setCount(v[0])} />
+                <Slider value={[count]} min={1} max={100} step={1} onValueChange={(v) => setCount(v[0])} />
               </div>
 
-              {/* Protocol Toggles */}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Generation Protocol</Label>
-                <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
-                   <div className="space-y-1">
-                      <p className="text-[11px] font-black text-foreground uppercase tracking-widest">Standard Ignition</p>
-                      <p className="text-[9px] text-foreground/30 font-medium uppercase">Start with "Lorem Ipsum..."</p>
-                   </div>
-                   <Switch checked={startWithLorem} onCheckedChange={setStartWithLorem} />
+              {useHardWrap && (
+                 <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-foreground/50">
+                      <Label className="flex items-center gap-2"><WrapText className="w-3 h-3" /> Wrap Width</Label>
+                      <span className="text-primary font-mono text-lg">{wrapLength}</span>
+                    </div>
+                    <Slider value={[wrapLength]} min={20} max={120} step={1} onValueChange={(v) => setWrapLength(v[0])} />
+                 </div>
+              )}
+
+              <div className="flex gap-4 pt-6">
+                <Button 
+                  onClick={handleCopy}
+                  disabled={!output}
+                  className="flex-[2] h-16 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                >
+                  {isCopied ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                  Copy Master
+                </Button>
+                <div className="flex flex-col gap-2 flex-1">
+                   <Button 
+                    variant="outline"
+                    onClick={() => handleDownload('txt')}
+                    className="h-8 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all"
+                   >
+                     .TXT
+                   </Button>
+                   <Button 
+                    variant="outline"
+                    onClick={() => handleDownload('html')}
+                    className="h-8 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all"
+                   >
+                     .HTML
+                   </Button>
                 </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <Button 
-                  onClick={synthesizeText}
-                  className="h-16 flex-[2] bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-sm shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
-                >
-                  <RefreshCcw className="w-5 h-5 group-hover/btn:rotate-180 transition-transform duration-700" />
-                  Synthesize Text
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={handleClear}
-                  className="h-16 flex-1 rounded-2xl border-border bg-secondary hover:text-destructive text-[10px] font-black uppercase tracking-widest"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -217,9 +347,9 @@ export default function LoremIpsumGeneratorPage() {
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Studio Tip</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Protocol Intelligence</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our engine uses high-frequency word mapping from original Latin text. For peak UI realism, use the **Paragraphs** mode at **3-5 units**.
+                Our engine uses high-frequency syllable mapping for peak linguistic realism. For markup prototypes, use **HTML mode** to automatically wrap blocks in validated paragraph containers.
               </p>
             </div>
           </div>
@@ -236,15 +366,11 @@ export default function LoremIpsumGeneratorPage() {
                 </div>
                 <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Active Matrix Output</CardTitle>
               </div>
-              
-              {output && (
-                <div className="flex gap-2">
-                   <Button variant="outline" size="sm" onClick={handleCopy} className="h-9 px-4 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all">
-                      {isCopied ? <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
-                      Copy Master
-                   </Button>
-                </div>
-              )}
+              <div className="px-3 py-1.5 rounded-lg bg-background border border-border text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+                  <span>Words: {stats.words.toLocaleString()}</span>
+                  <span className="opacity-20 text-foreground">|</span>
+                  <span>Chars: {stats.chars.toLocaleString()}</span>
+              </div>
             </CardHeader>
             <CardContent className="flex-1 p-0 flex flex-col overflow-hidden">
                <div className="flex-1 overflow-auto custom-scrollbar p-10 bg-black/10">
@@ -254,7 +380,7 @@ export default function LoremIpsumGeneratorPage() {
                        <p className="text-xs font-black uppercase tracking-[0.3em]">Awaiting Linguistic Protocol</p>
                     </div>
                   ) : (
-                    <div className="text-foreground/80 font-body text-lg leading-loose whitespace-pre-wrap select-all selection:bg-primary/20">
+                    <div className="text-foreground/80 font-mono text-base leading-relaxed whitespace-pre-wrap select-all selection:bg-primary/20">
                        {output}
                     </div>
                   )}
@@ -262,32 +388,15 @@ export default function LoremIpsumGeneratorPage() {
 
                {/* Stats Footer */}
                <div className="p-8 border-t border-border bg-[#0a0a0c]">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <Button 
-                       onClick={handleDownload}
-                       disabled={!output}
-                       className="h-14 bg-white text-black font-black uppercase tracking-widest text-[10px] shadow-2xl active:scale-95"
-                     >
-                       <Download className="w-4 h-4 mr-3" /> Export Summary (.TXT)
-                     </Button>
-                     <div className="p-4 rounded-2xl bg-secondary border border-border flex items-center justify-between px-6">
-                        <div className="space-y-0.5">
-                           <p className="text-[8px] font-black uppercase text-foreground/30">Linguistic Volume</p>
-                           <p className="text-xs font-mono font-bold text-primary uppercase">{output.split(/\s+/).filter(w => w.length > 0).length} Words</p>
-                        </div>
-                        <ShieldCheck className="w-5 h-5 text-primary/20" />
-                     </div>
-                  </div>
-                  
-                  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group transition-all hover:bg-secondary/80">
                         <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                         <div className="space-y-1">
                            <p className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Instant Synthesis</p>
                            <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">Hardware-native linguistic generation for zero-latency design workflows.</p>
                         </div>
                      </div>
-                     <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
+                     <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group transition-all hover:bg-secondary/80">
                         <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                         <div className="space-y-1">
                            <p className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Zero Tracking</p>
