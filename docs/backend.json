@@ -87,7 +87,7 @@
         },
         "uid": {
           "type": "string",
-          "description": "The owner's unique identity token."
+          "description": "The owner's unique identity token (optional for anonymous)."
         },
         "createdAt": {
           "type": "object",
@@ -96,7 +96,6 @@
       },
       "required": [
         "html",
-        "uid",
         "createdAt"
       ]
     }

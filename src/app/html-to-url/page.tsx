@@ -21,12 +21,12 @@ import {
   RefreshCcw,
   Maximize2,
   Layout,
-  LogOut,
-  LogIn,
   Terminal,
   Play,
   ShieldAlert,
-  X
+  X,
+  History,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,13 +37,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { doc, setDoc, serverTimestamp, collection, query, where, orderBy, deleteDoc } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
-import { useFirestore, useUser, useCollection, useAuth } from '@/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
-import { useRouter } from 'next/navigation';
 
 const ID_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
+const HISTORY_KEY = 'htmlToUrlHistory';
+
+interface HistoryItem {
+  id: string;
+  title: string;
+  url: string;
+  date: number;
+  language: string;
+}
 
 const LANGUAGES = [
   { id: 'auto', label: 'Auto Detect' },
@@ -57,10 +64,7 @@ const LANGUAGES = [
 
 export default function HtmlToUrlPage() {
   const { toast } = useToast();
-  const router = useRouter();
   const firestore = useFirestore();
-  const auth = useAuth();
-  const { user, loading: authLoading } = useUser();
   
   const [html, setHtml] = useState('');
   const [title, setTitle] = useState('');
@@ -69,6 +73,7 @@ export default function HtmlToUrlPage() {
   const [generatedId, setGeneratedId] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
+  const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
 
   // Preview / Execution State
   const [previewSrcDoc, setPreviewSrcDoc] = useState('');
@@ -77,6 +82,31 @@ export default function HtmlToUrlPage() {
   const [isPyodideLoading, setIsPyodideLoading] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const pyodideRef = useRef<any>(null);
+
+  // Load History on Mount
+  useEffect(() => {
+    const saved = localStorage.getItem(HISTORY_KEY);
+    if (saved) {
+      try {
+        setLocalHistory(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  // Sync History to Storage
+  const updateLocalHistory = (item: HistoryItem) => {
+    const next = [item, ...localHistory.filter(h => h.id !== item.id)].slice(0, 50);
+    setLocalHistory(next);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  };
+
+  const purgeLocalItem = (id: string) => {
+    if (!confirm("Remove this link from your local history?")) return;
+    const next = localHistory.filter(h => h.id !== id);
+    setLocalHistory(next);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+    toast({ title: "History Updated", description: "Link removed from your device registry." });
+  };
 
   // Logic: Identify effective language
   const effectiveLanguage = useMemo(() => {
@@ -98,14 +128,6 @@ export default function HtmlToUrlPage() {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
-
-  // Debounced Auto-Preview Protocol
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      syncPreview();
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [html, effectiveLanguage]);
 
   const syncPreview = useCallback(() => {
     setRuntimeError(null);
@@ -144,6 +166,14 @@ export default function HtmlToUrlPage() {
       setPreviewSrcDoc(''); 
     }
   }, [html, effectiveLanguage]);
+
+  // Debounced Auto-Preview Protocol
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      syncPreview();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [html, effectiveLanguage, syncPreview]);
 
   // Load Pyodide on Demand
   useEffect(() => {
@@ -200,18 +230,6 @@ export default function HtmlToUrlPage() {
     setIsExecuting(false);
   };
 
-  // Fetch User Pages
-  const pagesQuery = useMemo(() => {
-    if (!firestore || !user) return null;
-    return query(
-      collection(firestore, "pages"),
-      where("uid", "==", user.uid),
-      orderBy("createdAt", "desc")
-    );
-  }, [firestore, user]);
-
-  const { data: myPages, loading: loadingPages } = useCollection(pagesQuery);
-
   const generateId = () => {
     return Array.from({ length: 5 }, () => ID_CHARS[Math.floor(Math.random() * ID_CHARS.length)]).join('');
   };
@@ -220,18 +238,13 @@ export default function HtmlToUrlPage() {
 
   const handleMakeLink = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!user) {
-      router.push(`/login?redirect=/html-to-url`);
-      return;
-    }
-
     if (!html.trim()) {
       toast({ variant: "destructive", title: "Payload Empty" });
       return;
     }
 
     if (!firestore) {
-      toast({ variant: "destructive", title: "Firebase Not Connected", description: "Firestore matrix is unavailable." });
+      toast({ variant: "destructive", title: "Signaling Inactive", description: "Could not connect to Firestore matrix." });
       return;
     }
 
@@ -250,26 +263,26 @@ export default function HtmlToUrlPage() {
         html: html.trim(),
         title: title.trim() || 'Untitled Studio Page',
         language: language === 'auto' ? effectiveLanguage : language,
-        uid: user.uid,
         createdAt: serverTimestamp()
       });
+      
+      const newUrl = fullUrl(id);
       setGeneratedId(id);
-      toast({ title: "Published", description: "Identity link generated." });
+      
+      updateLocalHistory({
+        id,
+        title: title.trim() || 'Untitled Studio Page',
+        url: newUrl,
+        date: Date.now(),
+        language: effectiveLanguage
+      });
+
+      toast({ title: "Published", description: "Identity link generated and saved to history." });
     } catch (err: any) {
       console.error("Firestore Publish Error:", err);
       toast({ variant: "destructive", title: "Publish Error", description: "Could not write to document matrix." });
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const handleDeletePage = async (id: string) => {
-    if (!firestore || !confirm("Confirm definitive deletion of this page protocol?")) return;
-    try {
-      await deleteDoc(doc(firestore, "pages", id));
-      toast({ title: "Purged", description: "Page definitively removed from registry." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Deletion Blocked" });
     }
   };
 
@@ -292,16 +305,6 @@ export default function HtmlToUrlPage() {
     }
   };
 
-  if (!auth) {
-    return (
-      <div className="container mx-auto px-6 py-20 text-center">
-         <ShieldAlert className="w-16 h-16 text-destructive mx-auto mb-6" />
-         <h2 className="text-2xl font-headline font-black uppercase text-foreground">Auth Protocol Inactive</h2>
-         <p className="text-foreground/40 mt-2">Firebase environment variables are missing from the matrix.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
       <div className="mb-12 animate-reveal">
@@ -314,16 +317,11 @@ export default function HtmlToUrlPage() {
               Code & <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Synthesize code strings into hosted visual pages or shareable blocks. Secure sandboxed previews and instant publishing.
+              Synthesize code strings into hosted visual pages or shareable blocks. Secure sandboxed previews and instant anonymous publishing.
             </p>
           </div>
           <div className="flex items-center gap-3">
              <GetHelp toolId="html-to-url" />
-             {user && (
-               <Button variant="outline" size="sm" onClick={() => auth && signOut(auth)} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                 <LogOut className="w-3.5 h-3.5 mr-2" /> Logout
-               </Button>
-             )}
           </div>
         </div>
       </div>
@@ -407,84 +405,66 @@ export default function HtmlToUrlPage() {
                        </Button>
                     )}
                     
-                    {!user ? (
-                      <Button 
-                        type="button"
-                        onClick={() => router.push(`/login?redirect=/html-to-url`)}
-                        className="h-16 flex-1 bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
-                      >
-                        <LogIn className="w-6 h-6 text-primary" />
-                        Log in to Publish
-                      </Button>
-                    ) : (
-                      <Button 
-                        type="button"
-                        onClick={handleMakeLink}
-                        disabled={!html.trim() || isProcessing || html.length > 150000}
-                        className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
-                      >
-                        {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <LinkIcon className="w-6 h-6" />}
-                        Publish Link
-                      </Button>
-                    )}
+                    <Button 
+                      type="button"
+                      onClick={handleMakeLink}
+                      disabled={!html.trim() || isProcessing || html.length > 150000}
+                      className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
+                    >
+                      {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <LinkIcon className="w-6 h-6" />}
+                      Publish Link
+                    </Button>
                  </div>
               </CardContent>
             </Card>
 
-            {/* My Links Dashboard */}
-            {user && (
-              <Card className="glass-card border-border shadow-xl overflow-hidden animate-in slide-in-from-bottom-6 duration-700">
-                <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
-                   <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground/60">
-                      <Layout className="w-4 h-4" /> My Studio Pages
-                   </CardTitle>
-                   <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{myPages?.length || 0} Pages</span>
-                </CardHeader>
-                <CardContent className="p-0">
-                   {loadingPages ? (
-                     <div className="py-20 flex flex-col items-center justify-center gap-4">
-                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/20">Querying Matrix...</p>
-                     </div>
-                   ) : !myPages?.length ? (
-                     <div className="py-20 text-center space-y-4 opacity-20">
-                        <Globe className="w-12 h-12 mx-auto" />
-                        <p className="text-[10px] font-black uppercase tracking-widest px-12">No active hosting protocols found in your registry.</p>
-                     </div>
-                   ) : (
-                     <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
-                        {myPages.map((page: any) => (
-                           <div key={page.id} className="p-5 flex items-center justify-between gap-4 hover:bg-white/5 transition-all group">
-                              <div className="min-w-0 flex-1 space-y-1">
-                                 <div className="flex items-center gap-3">
-                                    <span className="text-[9px] font-black text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded leading-none shrink-0">{page.language || 'text'}</span>
-                                    <h4 className="text-xs font-bold text-foreground truncate uppercase">{page.title}</h4>
-                                 </div>
-                                 <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">{new Date(page.createdAt?.seconds * 1000).toLocaleDateString()}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                 <Button 
-                                  size="icon" 
-                                  variant="ghost" 
-                                  onClick={() => handleCopy(fullUrl(page.id), `list-${page.id}`)}
-                                  className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary"
-                                 >
-                                    {isCopied === `list-${page.id}` ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                 </Button>
-                                 <Button asChild size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
-                                    <a href={`/p/${page.id}`} target="_blank"><ExternalLink className="w-4 h-4" /></a>
-                                 </Button>
-                                 <Button size="icon" variant="ghost" onClick={() => handleDeletePage(page.id)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-destructive">
-                                    <Trash2 className="w-4 h-4" />
-                                 </Button>
-                              </div>
-                           </div>
-                        ))}
-                     </div>
-                   )}
-                </CardContent>
-              </Card>
-            )}
+            {/* Local History Dashboard */}
+            <Card className="glass-card border-border shadow-xl overflow-hidden animate-in slide-in-from-bottom-6 duration-700">
+              <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground/60">
+                    <History className="w-4 h-4" /> My Local Links
+                  </CardTitle>
+                  <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Recorded</span>
+              </CardHeader>
+              <CardContent className="p-0">
+                  {!localHistory.length ? (
+                    <div className="py-20 text-center space-y-4 opacity-20">
+                      <Globe className="w-12 h-12 mx-auto" />
+                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No active hosting protocols found on this device.</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
+                      {localHistory.map((page) => (
+                          <div key={page.id} className="p-5 flex items-center justify-between gap-4 hover:bg-white/5 transition-all group">
+                            <div className="min-w-0 flex-1 space-y-1">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[9px] font-black text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded leading-none shrink-0">{page.language || 'text'}</span>
+                                  <h4 className="text-xs font-bold text-foreground truncate uppercase">{page.title}</h4>
+                                </div>
+                                <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">{new Date(page.date).toLocaleDateString()}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                onClick={() => handleCopy(page.url, `list-${page.id}`)}
+                                className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary"
+                                >
+                                  {isCopied === `list-${page.id}` ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                                <Button asChild size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
+                                  <a href={`/p/${page.id}`} target="_blank"><ExternalLink className="w-4 h-4" /></a>
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={() => purgeLocalItem(page.id)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-destructive">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                            </div>
+                          </div>
+                      ))}
+                    </div>
+                  )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -570,9 +550,9 @@ export default function HtmlToUrlPage() {
                      <ShieldCheck className="w-7 h-7" />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">WASM Sandbox</h4>
+                    <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Anonymous Persistence</h4>
                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                      Visual languages are served via isolated sub-frames. Complex logic (Python) is executed via hardware-native WebAssembly with zero server persistence.
+                      No account required. Your generated links are tracked locally on your device using browser storage. Documents remain live in the cloud matrix via high-readability 5-char tokens.
                     </p>
                   </div>
                </div>
