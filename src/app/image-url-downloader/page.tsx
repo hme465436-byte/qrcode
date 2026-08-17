@@ -119,9 +119,7 @@ function ImageResultCard({
 export default function ImageUrlDownloaderPage() {
   const { toast } = useToast();
   const [url, setUrl] = useState('');
-  const [videoId, setVideoId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isZipping, setIsZipping] = useState(false);
   const [foundImages, setFoundImages] = useState<ImageAsset[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -313,16 +311,16 @@ export default function ImageUrlDownloaderPage() {
                 <Button 
                   onClick={handleDiscovery} 
                   disabled={isProcessing || !url.trim()} 
-                  className="h-14 flex-1 bg-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                  className="h-11 flex-1 bg-primary text-white font-black rounded-xl text-[9px] uppercase tracking-widest shadow-xl shadow-primary/30 active:scale-95 transition-all"
                 >
-                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Go'}
+                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Go'}
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => { setUrl(''); setFoundImages([]); setError(null); }} 
-                  className="h-14 w-14 rounded-2xl border-border bg-secondary text-foreground/40 hover:text-destructive"
+                  className="h-11 w-11 rounded-xl border-border bg-secondary text-foreground/40 hover:text-destructive flex items-center justify-center p-0"
                 >
-                  <Trash2 className="w-5 h-5" />
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </CardContent>
