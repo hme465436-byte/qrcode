@@ -21,7 +21,8 @@ import {
   ArrowRight,
   Shield,
   SmartphoneIcon,
-  MessageSquare
+  MessageSquare,
+  Sword
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -44,6 +45,7 @@ const PROJECTS: Project[] = [
   { name: 'WhatsQuality', url: 'https://whatsquality-pearl.vercel.app/', desc: 'High-fidelity WhatsApp DP optimization.', icon: Smartphone, color: 'text-cyan-500 bg-cyan-500/10' },
   { name: 'APK Vault', url: 'https://apkvault.vercel.app/', desc: 'Secure Android application library.', icon: Box, color: 'text-orange-500 bg-orange-500/10' },
   { name: 'LootPro', url: 'https://lootpro.vercel.app/', desc: 'Curated deals and loot project.', icon: Gamepad2, color: 'text-rose-500 bg-rose-500/10' },
+  { name: 'Stylish Game Name', url: 'https://stylishgamename.vercel.app/', desc: 'Free stylish names for Free Fire, PUBG, BGMI, CODM, Roblox & Minecraft. Fonts + symbols, copy ready.', icon: Sword, color: 'text-yellow-500 bg-yellow-500/10' },
 ];
 
 export default function AboutPage() {
@@ -119,7 +121,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { label: 'Studio Units', val: '60+', icon: LayoutGrid },
-            { label: 'Other Projects', val: '6', icon: Zap },
+            { label: 'Other Projects', val: '7', icon: Zap },
             { label: 'Hardware Logic', val: '100%', icon: ShieldCheck },
             { label: 'Access', val: 'Free', icon: Heart },
           ].map((stat, i) => (
