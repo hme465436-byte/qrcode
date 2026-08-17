@@ -372,5 +372,21 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Format the number without dashes or spaces for 100% accuracy.'
     ],
     privacy: 'Search payloads are volatile and processed locally. No identity data is transmitted or stored on our servers.'
+  },
+  'html-to-url': {
+    title: 'HTML to URL Studio',
+    description: 'Convert raw HTML code into a shareable web link hosted on our platform.',
+    steps: [
+      'Paste your HTML code (including CSS/JS) into the workspace.',
+      'Optionally provide a title for the identity matrix.',
+      'Execute the "Make Link" protocol.',
+      'Copy the generated URL or open it in a new tab to see your live page.'
+    ],
+    tips: [
+      'Keep the payload under 150KB for optimal performance.',
+      'Ensure all CSS and JS are embedded directly within the HTML file.',
+      'Ideal for quick demos, landing page previews, or code sharing.'
+    ],
+    privacy: 'Code is stored securely in our Firestore matrix. It is publicly accessible to anyone with the link.'
   }
 };

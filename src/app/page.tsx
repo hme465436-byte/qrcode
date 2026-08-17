@@ -79,7 +79,8 @@ import {
   Share2,
   MoveHorizontal,
   Eye,
-  ClipboardType
+  ClipboardType,
+  Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -112,6 +113,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/html-to-url', 
+    icon: Globe, 
+    title: 'HTML to URL', 
+    desc: 'Convert raw HTML code into a hosted shareable link.', 
+    label: 'WEB', 
+    color: 'text-sky-500 bg-sky-500/10 border-sky-500/20',
+    glowClass: 'bg-sky-500/10',
+    keywords: ['html to url', 'host html', 'share html', 'paste html link', 'web host'],
     category: 'generators'
   },
   { 
@@ -153,7 +165,7 @@ const TOOLS: Tool[] = [
     title: 'Direct File Share', 
     desc: 'Send large files directly to any device via secret link.', 
     label: 'LINK SHARE', 
-    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-400/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['share file', 'send file', 'toffee', 'p2p', 'direct share', 'transfer', 'file send', 'no upload'],
     category: 'utilities'
@@ -879,7 +891,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -991,7 +1003,7 @@ export default function Home() {
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
-      'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 'Join code', 'Sim Data'
+      'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

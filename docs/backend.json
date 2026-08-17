@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "SignalingRoom": {
@@ -6,15 +5,28 @@
       "description": "A temporary room for WebRTC signaling exchange.",
       "type": "object",
       "properties": {
-        "offer": { "type": "string" },
-        "answer": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
+        "offer": {
+          "type": "string"
+        },
+        "answer": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
         "fileMeta": {
           "type": "object",
           "properties": {
-            "name": { "type": "string" },
-            "size": { "type": "number" },
-            "type": { "type": "string" }
+            "name": {
+              "type": "string"
+            },
+            "size": {
+              "type": "number"
+            },
+            "type": {
+              "type": "string"
+            }
           }
         }
       }
@@ -24,9 +36,15 @@
       "description": "An ICE candidate for WebRTC connection.",
       "type": "object",
       "properties": {
-        "candidate": { "type": "string" },
-        "sdpMLineIndex": { "type": "number" },
-        "sdpMid": { "type": "string" }
+        "candidate": {
+          "type": "string"
+        },
+        "sdpMLineIndex": {
+          "type": "number"
+        },
+        "sdpMid": {
+          "type": "string"
+        }
       }
     },
     "TempRoom": {
@@ -34,10 +52,43 @@
       "description": "A temporary room for live text synchronization.",
       "type": "object",
       "properties": {
-        "peerId": { "type": "string" },
-        "status": { "type": "string", "enum": ["waiting", "connected"] },
-        "createdAt": { "type": "number" }
+        "peerId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "waiting",
+            "connected"
+          ]
+        },
+        "createdAt": {
+          "type": "number"
+        }
       }
+    },
+    "HostedPage": {
+      "title": "Hosted Page",
+      "description": "A static HTML page hosted via URL.",
+      "type": "object",
+      "properties": {
+        "html": {
+          "type": "string",
+          "description": "The HTML content of the page."
+        },
+        "title": {
+          "type": "string",
+          "description": "Optional title for the page."
+        },
+        "createdAt": {
+          "type": "object",
+          "description": "Firestore server timestamp."
+        }
+      },
+      "required": [
+        "html",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -61,6 +112,10 @@
     "/temp_rooms/{code}": {
       "schema": "#/entities/TempRoom",
       "description": "Ephemeral pairing data for live clipboard sharing."
+    },
+    "/pages/{id}": {
+      "schema": "#/entities/HostedPage",
+      "description": "User generated static HTML pages."
     }
   }
 }
