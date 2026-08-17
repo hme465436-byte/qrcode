@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -307,18 +308,18 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
   },
   'direct-file-share': {
     title: 'Direct File Share',
-    description: 'Upload and share files via secure cloud transit.',
+    description: 'High-speed Peer-to-Peer file sharing directly between devices.',
     steps: [
-      'Select or drop your file (max 50MB).',
-      'Wait for the cloud upload to reach 100%.',
-      'Copy the unique shareable link generated.',
-      'Send the link to your recipient.',
-      'The file is automatically deleted after 1 hour.'
+      'Select your file (max 100MB).',
+      'Wait for the studio to generate your unique P2P link.',
+      'Send the link to the recipient.',
+      'Keep the sender page open while the recipient downloads.',
+      'The file streams directly between devices—nothing is stored in the cloud.'
     ],
     tips: [
-      'Keep the browser tab open until the upload is finished.',
-      'Use the generated link immediately as it expires for security.'
+      'For best results, both devices should be on a stable network.',
+      'Large files may take a moment to assemble in the recipient\'s browser memory.'
     ],
-    privacy: 'Files are stored on a temporary cloud and are definitively purged after 1 hour or following recipient intake.'
+    privacy: 'This tool uses WebRTC for direct device-to-device streaming. Your files are never uploaded to any server or cloud storage.'
   }
 };

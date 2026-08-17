@@ -1,7 +1,8 @@
+
 "use client"
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { 
   Download, 
   File, 
@@ -12,63 +13,114 @@ import {
   ArrowLeft,
   Smartphone,
   Globe,
-  Clock
+  Clock,
+  CheckCircle2,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useFirestore } from '@/firebase';
-import { 
-  doc, 
-  getDoc,
-} from 'firebase/firestore';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
+interface MetaData {
+  name: string;
+  size: number;
+  mime: string;
+}
+
 export default function SharePage() {
   const { id } = useParams();
   const { toast } = useToast();
-  const firestore = useFirestore();
   
   // State
-  const [fileMeta, setFileMeta] = useState<{name: string, size: number, url: string} | null>(null);
-  const [status, setStatus] = useState<'fetching' | 'ready' | 'not-found' | 'error'>('fetching');
+  const [meta, setMeta] = useState<MetaData | null>(null);
+  const [status, setStatus] = useState<'connecting' | 'ready' | 'receiving' | 'complete' | 'error' | 'not-found'>('connecting');
+  const [progress, setProgress] = useState(0);
+  const [receivedChunks, setReceivedChunks] = useState<ArrayBuffer[]>([]);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const peerRef = useRef<any>(null);
+  const connRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!firestore || !id) return;
-
-    const fetchMeta = async () => {
-      try {
-        const roomRef = doc(firestore, 'shares', id as string);
-        const snap = await getDoc(roomRef);
-        
-        if (!snap.exists()) {
-          setStatus('not-found');
-          return;
-        }
-
-        const data = snap.data();
-        setFileMeta({
-          name: data.name,
-          size: data.size,
-          url: data.url
-        });
-        setStatus('ready');
-      } catch (err) {
-        console.error("Fetch error", err);
-        setStatus('error');
-      }
-    };
+    let p: any;
     
-    fetchMeta();
-  }, [firestore, id]);
+    const init = async () => {
+      const { default: Peer } = await import('peerjs');
+      p = new Peer();
+      peerRef.current = p;
+
+      p.on('open', () => {
+        const conn = p.connect(id as string);
+        connRef.current = conn;
+
+        conn.on('open', () => {
+          setStatus('ready');
+          toast({ title: "Connected to sender" });
+        });
+
+        let incomingMeta: MetaData | null = null;
+        let bytesReceived = 0;
+        const chunks: ArrayBuffer[] = [];
+
+        conn.on('data', (data: any) => {
+          if (data.type === 'meta') {
+            incomingMeta = data;
+            setMeta(data);
+            setStatus('receiving');
+          } else if (data.type === 'chunk') {
+            chunks.push(data.data);
+            bytesReceived += data.data.byteLength;
+            if (incomingMeta) {
+              setProgress(Math.round((bytesReceived / incomingMeta.size) * 100));
+            }
+          } else if (data.type === 'end') {
+            const blob = new Blob(chunks, { type: incomingMeta?.mime || 'application/octet-stream' });
+            setDownloadUrl(URL.createObjectURL(blob));
+            setStatus('complete');
+            toast({ title: "Ready to save" });
+          }
+        });
+
+        conn.on('close', () => {
+          if (status !== 'complete') {
+            setStatus('error');
+            setErrorMessage("Connection closed by sender.");
+          }
+        });
+
+        conn.on('error', (err: any) => {
+          setStatus('error');
+          setErrorMessage("Failed to establish peer tunnel.");
+        });
+      });
+
+      p.on('error', (err: any) => {
+        if (err.type === 'peer-unavailable') {
+          setStatus('not-found');
+        } else {
+          setStatus('error');
+          setErrorMessage("Could not connect. Ensure sender is still online.");
+        }
+      });
+    };
+
+    init();
+
+    return () => {
+      if (p) p.destroy();
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+    };
+  }, [id]);
 
   const handleDownload = () => {
-    if (!fileMeta?.url) return;
+    if (!downloadUrl) return;
     const a = document.createElement('a');
-    a.href = fileMeta.url;
-    a.download = fileMeta.name;
-    a.target = "_blank";
+    a.href = downloadUrl;
+    a.download = meta?.name || 'received-file';
     a.click();
     toast({ title: "Download started" });
   };
@@ -96,19 +148,40 @@ export default function SharePage() {
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         <CardContent className="p-8 sm:p-16 flex flex-col items-center gap-12">
           
-          {status === 'fetching' && (
+          {(status === 'connecting' || status === 'ready') && (
             <div className="flex flex-col items-center gap-6 py-10">
                <Loader2 className="w-12 h-12 text-primary animate-spin" />
-               <p className="text-[10px] font-black uppercase text-white/30 tracking-[0.2em]">Locating file in cloud...</p>
+               <p className="text-[10px] font-black uppercase text-white/30 tracking-[0.2em]">Searching for sender...</p>
+               <p className="text-[9px] text-white/10 uppercase text-center max-w-xs">Keep this page and the sender's page open.</p>
             </div>
+          )}
+
+          {status === 'receiving' && meta && (
+             <div className="w-full space-y-10 py-6 animate-in fade-in">
+                <div className="flex items-center gap-6 p-6 rounded-3xl bg-black/40 border border-white/5">
+                   <File className="w-8 h-8 text-primary/40" />
+                   <div className="text-left overflow-hidden">
+                      <p className="text-sm font-bold text-white truncate">{meta.name}</p>
+                      <p className="text-[9px] text-white/20 font-black uppercase">{formatSize(meta.size)}</p>
+                   </div>
+                </div>
+                <div className="space-y-4">
+                   <div className="flex justify-between text-[10px] font-black uppercase text-white/40">
+                      <span>Downloading directly</span>
+                      <span>{progress}%</span>
+                   </div>
+                   <Progress value={progress} className="h-1.5" />
+                   <p className="text-center text-[9px] font-bold text-white/20 uppercase tracking-widest animate-pulse">Streaming data tunnel active</p>
+                </div>
+             </div>
           )}
 
           {status === 'not-found' && (
             <div className="text-center space-y-6 animate-in zoom-in">
                <AlertCircle className="w-20 h-20 text-red-500 mx-auto" />
                <div className="space-y-2">
-                  <h3 className="text-xl font-headline font-black text-white">Link Expired</h3>
-                  <p className="text-xs text-white/20 font-bold uppercase">This file was deleted or the link is incorrect.</p>
+                  <h3 className="text-xl font-headline font-black text-white">Sender Offline</h3>
+                  <p className="text-xs text-white/20 font-bold uppercase">The sender closed the page or the link is incorrect.</p>
                </div>
                <Button asChild variant="outline" className="h-12 px-8 border-white/10 bg-white/5 rounded-xl">
                   <Link href="/"><ArrowLeft className="w-4 h-4 mr-2" /> Back to Studio</Link>
@@ -121,7 +194,7 @@ export default function SharePage() {
                <AlertCircle className="w-20 h-20 text-orange-500 mx-auto" />
                <div className="space-y-2">
                   <h3 className="text-xl font-headline font-black text-white">System Error</h3>
-                  <p className="text-xs text-white/20 font-bold uppercase">Could not connect to the cloud. Try again.</p>
+                  <p className="text-xs text-white/20 font-bold uppercase">{errorMessage}</p>
                </div>
                <Button onClick={() => window.location.reload()} variant="outline" className="h-12 px-8 border-white/10 bg-white/5 rounded-xl">
                   <Activity className="w-4 h-4 mr-2" /> Retry Connection
@@ -129,7 +202,7 @@ export default function SharePage() {
             </div>
           )}
 
-          {status === 'ready' && fileMeta && (
+          {status === 'complete' && meta && (
             <div className="w-full flex flex-col items-center gap-10 animate-in fade-in zoom-in duration-500">
               <div className="flex flex-col items-center gap-8 w-full">
                  <div className="relative w-32 h-32 flex items-center justify-center">
@@ -140,9 +213,9 @@ export default function SharePage() {
                  </div>
                  
                  <div className="text-center space-y-2 w-full min-w-0">
-                    <h3 className="text-lg font-bold text-white truncate px-4">{fileMeta.name}</h3>
+                    <h3 className="text-lg font-bold text-white truncate px-4">{meta.name}</h3>
                     <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">
-                       {formatSize(fileMeta.size)}
+                       {formatSize(meta.size)}
                     </p>
                  </div>
               </div>
@@ -158,9 +231,9 @@ export default function SharePage() {
               <div className="w-full p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-4 text-left">
                  <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                  <div className="space-y-1">
-                    <p className="text-[11px] font-black uppercase text-white/60">Verified Link</p>
+                    <p className="text-[11px] font-black uppercase text-white/60">Verified P2P Link</p>
                     <p className="text-[10px] text-white/20 font-bold uppercase leading-relaxed">
-                       Secure cloud retrieval active. File identity has been verified against the original hash.
+                       File was streamed directly from the sender's browser memory to yours.
                     </p>
                  </div>
               </div>
@@ -173,22 +246,22 @@ export default function SharePage() {
          <div className="p-6 rounded-[2rem] bg-secondary/30 border border-white/5 flex items-start gap-4">
             <Globe className="w-5 h-5 text-primary/40" />
             <div className="space-y-1">
-               <h4 className="text-[10px] font-black uppercase text-white/40">Cloud Enabled</h4>
-               <p className="text-[10px] text-white/10 font-bold uppercase">Universal access anywhere</p>
+               <h4 className="text-[10px] font-black uppercase text-white/40">Direct Tunnel</h4>
+               <p className="text-[10px] text-white/10 font-bold uppercase">No server in between</p>
             </div>
          </div>
          <div className="p-6 rounded-[2rem] bg-secondary/30 border border-white/5 flex items-start gap-4">
             <Clock className="w-5 h-5 text-primary/40" />
             <div className="space-y-1">
-               <h4 className="text-[10px] font-black uppercase text-white/40">Auto Purge</h4>
-               <p className="text-[10px] text-white/10 font-bold uppercase">Files deleted after 1 hour</p>
+               <h4 className="text-[10px] font-black uppercase text-white/40">Zero Storage</h4>
+               <p className="text-[10px] text-white/10 font-bold uppercase">Files never saved online</p>
             </div>
          </div>
          <div className="p-6 rounded-[2rem] bg-secondary/30 border border-white/5 flex items-start gap-4">
             <Smartphone className="w-5 h-5 text-primary/40" />
             <div className="space-y-1">
                <h4 className="text-[10px] font-black uppercase text-white/40">Any Device</h4>
-               <p className="text-[10px] text-white/10 font-bold uppercase">iOS, Android, PC compatible</p>
+               <p className="text-[10px] text-white/10 font-bold uppercase">Cross-platform P2P</p>
             </div>
          </div>
       </div>
