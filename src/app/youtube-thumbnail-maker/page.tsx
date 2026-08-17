@@ -218,13 +218,13 @@ export default function YoutubeThumbnailPage() {
                 >
                   {image ? (
                     <div className="text-center p-4">
-                       <CheckCircle2 className="w-6 h-6 text-primary mx-auto mb-1" />
+                       <CheckCircle2 className="w-8 h-8 text-primary mx-auto mb-1" />
                        <p className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Image Integrated</p>
                     </div>
                   ) : (
                     <>
                        {isProcessing ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Upload className="w-5 h-5 text-foreground/10 mb-2" />}
-                       <span className="text-[9px] font-black uppercase text-foreground/30">Import Image</span>
+                       <span className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Import Image</span>
                     </>
                   )}
                 </div>
@@ -271,10 +271,10 @@ export default function YoutubeThumbnailPage() {
                 <Button 
                   onClick={() => handleDownload('png')}
                   disabled={!image}
-                  className="h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                  className="h-12 w-fit px-10 mx-auto bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl flex items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
-                  <Download className="w-6 h-6" />
-                  Download PNG
+                  <Download className="w-4 h-4" />
+                  Export PNG
                 </Button>
                 <div className="grid grid-cols-2 gap-3">
                   <Button 
@@ -387,6 +387,10 @@ export default function YoutubeThumbnailPage() {
                             linear-gradient(45deg, transparent 75%, #1a1a1a 75%), 
                             linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
         }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
