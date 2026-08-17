@@ -156,7 +156,7 @@ export default function PdfToImagePage() {
         
         // Convert to Blob for ZIP
         const blob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((b) => resolve(blob!), format, 0.95);
+          canvas.toBlob((b) => resolve(b!), format, 0.95);
         });
 
         currentResults.push({
@@ -419,7 +419,7 @@ export default function PdfToImagePage() {
                    <Maximize2 className="w-5 h-5" />
                 </div>
                 <div className="space-y-1">
-                   <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Master Density</p>
+                   <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Master Density</h4>
                    <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">300 DPI support ensures peak fidelity for document archiving and large-format print.</p>
                 </div>
              </div>

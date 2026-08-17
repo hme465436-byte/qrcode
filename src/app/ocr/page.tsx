@@ -148,7 +148,7 @@ export default function OCRPage() {
 
               <div className="flex flex-col gap-3">
                 <Button onClick={extractText} disabled={isProcessing || !image} className="h-14 w-full bg-primary text-white font-black rounded-xl text-[10px] uppercase tracking-widest shadow-xl active:scale-95">
-                  {isProcessing ? `Decoding ${progress}%` : 'Download'}
+                  {isProcessing ? `Decoding ${progress}%` : 'Extract Text'}
                 </Button>
                 {result && (
                    <Textarea readOnly value={result} className="min-h-[150px] bg-secondary/50 text-xs font-mono p-4" />

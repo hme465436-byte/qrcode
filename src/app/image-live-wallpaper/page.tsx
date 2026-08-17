@@ -467,10 +467,10 @@ export default function AdvancedImageLiveWallpaperPage() {
                 <Button 
                   onClick={executeExport}
                   disabled={!image || isProcessing}
-                  className="h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                  className="h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl flex items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
-                  {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Synthesize Master
+                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 group-hover:rotate-12 transition-transform" />}
+                  Export
                 </Button>
                 {image && (
                    <Button variant="outline" onClick={handleClear} disabled={isProcessing} className="h-12 rounded-xl border-border bg-secondary hover:text-destructive transition-all">
@@ -587,7 +587,7 @@ export default function AdvancedImageLiveWallpaperPage() {
                                <p className="text-[11px] font-black uppercase text-foreground tracking-widest">Protocol implementation</p>
                                <p className="text-[10px] text-foreground/50 leading-relaxed font-medium uppercase">
                                   Import this master file into "Lively Wallpaper" or a "Video to Live Wallpaper" application. Native looping and high-DPI scaling are hard-coded into the bitstream.
-                               </p>
+                                </p>
                             </div>
                          </div>
                       </div>

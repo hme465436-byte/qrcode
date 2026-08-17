@@ -144,10 +144,15 @@ export default function ImageToPdfPage() {
           pdfHeight = (img.height / img.width) * 600;
         }
 
-        if (i > 0) pdf.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'l' : 'p');
-        else pdf.setPage(1).deletePage(1).addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'l' : 'p');
-
+        // Add the correct page size and content
+        pdf.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'l' : 'p');
         pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        
+        // Remove the initial default blank page upon adding the first actual image page
+        if (i === 0) {
+          pdf.deletePage(1);
+        }
+
         setProgress(Math.round(((i + 1) / images.length) * 100));
       }
 
@@ -205,7 +210,7 @@ export default function ImageToPdfPage() {
                   isProcessing && "cursor-not-allowed opacity-80"
                 )}
               >
-                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4 shadow-xl">
                   <Upload className="w-6 h-6" />
                 </div>
                 <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors">Select or Drop Images</p>
