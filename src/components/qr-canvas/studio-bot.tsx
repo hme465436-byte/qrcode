@@ -42,7 +42,31 @@ import {
   MonitorPlay,
   DownloadCloud,
   Mic,
-  Activity
+  Activity,
+  Target,
+  ShieldCheck,
+  Smartphone,
+  Monitor,
+  Terminal,
+  ShieldAlert,
+  Save,
+  ImageIcon,
+  FileImage,
+  Film,
+  Volume2,
+  LayoutGrid,
+  Grid2X2,
+  Youtube,
+  KeyRound,
+  Compass,
+  Languages,
+  BadgeCheck,
+  CheckCircle2,
+  RotateCcw,
+  Clock,
+  History,
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
@@ -56,7 +80,7 @@ interface Tool {
 }
 
 const TOOLS: Tool[] = [
-  { href: '/single', title: 'Single QR', icon: QrCode, keywords: ['qr', 'generator', 'code', 'brand'], desc: 'Branded QR codes.' },
+  { href: '/single', title: 'Single Studio', icon: QrCode, keywords: ['qr', 'generator', 'code', 'brand'], desc: 'Branded QR codes.' },
   { href: '/bulk', title: 'Bulk Mode', icon: Layers, keywords: ['bulk', 'batch', 'many'], desc: 'Mass QR production.' },
   { href: '/json-formatter', title: 'JSON Formatter', icon: Braces, keywords: ['json', 'format', 'pretty'], desc: 'Clean JSON data.' },
   { href: '/regex-tester', title: 'Regex Test', icon: Search, keywords: ['regex', 'test', 'pattern'], desc: 'Regex evaluator.' },
@@ -82,6 +106,7 @@ const TOOLS: Tool[] = [
   { href: '/image-resizer', title: 'Img Resizer', icon: Maximize, keywords: ['resize', 'size', 'px'], desc: 'Change dimensions.' },
   { href: '/vocal-separator', title: 'Vocal Remover', icon: MicOff, keywords: ['vocal', 'karaoke', 'music'], desc: 'Isolate or remove voice.' },
   { href: '/audio-joiner', title: 'Audio Joiner', icon: ListMusic, keywords: ['audio', 'merge', 'join'], desc: 'Combine MP3 tracks.' },
+  { href: '/audio-booster', title: 'Volume Booster', icon: Volume2, keywords: ['louder', 'gain', 'amplify'], desc: 'Boost audio volume.' },
   { href: '/letter-art', title: 'Letter Art', icon: CaseSensitive, keywords: ['ascii', 'text art', 'letter'], desc: 'Img to text art.' },
   { href: '/dot-art', title: 'Dot Art', icon: Grid3X3, keywords: ['braille', 'dots', 'art'], desc: 'Img to dots.' },
   { href: '/repeater', title: 'Text Repeater', icon: Repeat, keywords: ['repeat', 'multiply', 'spam'], desc: 'Multiply text.' },
@@ -100,33 +125,48 @@ interface Message {
   id: string;
   role: 'assistant' | 'user';
   content: string;
-  tools?: Tool[];
+  toolHrefs?: string[];
 }
 
-const STORAGE_KEY = 'mykit_chat_history_v2';
+const STORAGE_KEY = 'mykit_chat_history_v3';
 
 function RobotSVG({ className }: { className?: string }) {
   return (
     <div className={cn("relative pointer-events-none select-none drop-shadow-xl", className)}>
       <svg viewBox="0 0 64 64" className="w-full h-full overflow-visible">
-        <ellipse cx="32" cy="55" rx="16" ry="4" fill="black" opacity="0.1" />
-        <line x1="32" y1="16" x2="32" y2="8" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx="32" cy="8" r="4.5" fill="#22D3EE" opacity="0.2" className="animate-pulse" />
-        <circle cx="32" cy="8" r="2.5" fill="#22D3EE" className="animate-pulse" />
-        <rect x="7" y="28" width="5" height="10" rx="1.5" fill="#9CA3AF" />
-        <rect x="52" y="28" width="5" height="10" rx="1.5" fill="#9CA3AF" />
-        <rect x="12" y="16" width="40" height="38" rx="10" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="1.2" />
-        <circle cx="32" cy="34" r="14.5" fill="#1F2937" />
-        <path d="M22 28 Q32 20 42 28" stroke="white" strokeWidth="1.5" opacity="0.15" fill="none" strokeLinecap="round" />
-        <circle cx="23" cy="41" r="2" fill="#FDA4AF" opacity="0.7" />
-        <circle cx="41" cy="41" r="2" fill="#FDA4AF" opacity="0.7" />
+        {/* Shadow */}
+        <ellipse cx="32" cy="55" rx="12" ry="3" fill="black" opacity="0.1" />
+        
+        {/* Head Box */}
+        <rect x="14" y="16" width="36" height="32" rx="10" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="1.2" />
+        
+        {/* Ears/Side Bolts */}
+        <rect x="9" y="26" width="5" height="12" rx="1.5" fill="#9CA3AF" />
+        <rect x="50" y="26" width="5" height="12" rx="1.5" fill="#9CA3AF" />
+        
+        {/* Visor Circle */}
+        <circle cx="32" cy="32" r="13" fill="#1F2937" />
+        <path d="M22 28 Q32 24 42 28" stroke="white" strokeWidth="1" opacity="0.1" fill="none" strokeLinecap="round" />
+        
+        {/* Cheeks */}
+        <circle cx="25" cy="38" r="1.5" fill="#FDA4AF" opacity="0.6" />
+        <circle cx="39" cy="38" r="1.5" fill="#FDA4AF" opacity="0.6" />
+        
+        {/* Eyes */}
         <g>
-          <circle cx="26.5" cy="33" r="3.5" fill="#22D3EE" />
-          <circle cx="28" cy="31.5" r="1" fill="white" opacity="0.9" />
-          <circle cx="37.5" cy="33" r="3.5" fill="#22D3EE" />
-          <circle cx="39" cy="31.5" r="1" fill="white" opacity="0.9" />
+          <circle cx="28" cy="32" r="3.5" fill="#22D3EE" />
+          <circle cx="29" cy="30.5" r="0.8" fill="white" opacity="0.8" />
+          <circle cx="36" cy="32" r="3.5" fill="#22D3EE" />
+          <circle cx="37" cy="30.5" r="0.8" fill="white" opacity="0.8" />
         </g>
-        <path d="M28 42 Q32 45 36 42" stroke="#22D3EE" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.9" />
+        
+        {/* Smile */}
+        <path d="M29 39 Q32 41 35 39" stroke="#22D3EE" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.8" />
+        
+        {/* Antenna */}
+        <line x1="32" y1="16" x2="32" y2="8" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="32" cy="8" r="2.5" fill="#22D3EE" opacity="0.2" className="animate-pulse" />
+        <circle cx="32" cy="8" r="1.5" fill="#22D3EE" className="animate-pulse" />
       </svg>
     </div>
   );
@@ -179,7 +219,8 @@ export function StudioBot() {
     }
   }, [messages, isTyping]);
 
-  if (pathname !== '/') return null;
+  // Mandatory: Check pathname in the return statement to ensure hook consistency
+  const isHome = pathname === '/';
 
   const processQuery = async (query: string) => {
     setIsTyping(true);
@@ -187,24 +228,25 @@ export function StudioBot() {
 
     const lowQuery = query.toLowerCase();
     let response = "";
-    let foundTools: Tool[] = [];
+    let foundHrefs: string[] = [];
 
     if (lowQuery.includes('pdf')) {
       response = "I have several PDF tools: Merge, Split, Compressor, Unlock, and Protect. Which do you need?";
-      foundTools = TOOLS.filter(t => t.href.includes('pdf'));
+      foundHrefs = TOOLS.filter(t => t.href.includes('pdf')).map(t => t.href);
     } else if (lowQuery.includes('image') || lowQuery.includes('photo')) {
       response = "For images, I can Enhance, Resize, Compress, or Convert formats. Check these out:";
-      foundTools = TOOLS.filter(t => t.href.includes('image') || t.href.includes('photo') || t.keywords.includes('image'));
+      foundHrefs = TOOLS.filter(t => t.href.includes('image') || t.href.includes('photo') || t.keywords.includes('image')).map(t => t.href);
     } else if (lowQuery.includes('how to') || lowQuery.includes('use')) {
       response = "Click any tool card on the Home page to open its studio. Everything works locally in your browser.";
     } else {
-      foundTools = TOOLS.filter(t => 
+      const match = TOOLS.filter(t => 
         t.keywords.some(k => lowQuery.includes(k)) || 
         t.title.toLowerCase().includes(lowQuery)
       );
 
-      if (foundTools.length > 0) {
-        response = `I found ${foundTools.length} tool${foundTools.length > 1 ? 's' : ''} for you:`;
+      if (match.length > 0) {
+        response = `I found ${match.length} tool${match.length > 1 ? 's' : ''} for you:`;
+        foundHrefs = match.map(t => t.href);
       } else {
         response = "I only help with tools on this website. Try searching for 'QR', 'PDF', or 'Image'.";
       }
@@ -214,7 +256,7 @@ export function StudioBot() {
       id: Math.random().toString(36).substr(2, 9),
       role: 'assistant',
       content: response,
-      tools: foundTools.length > 0 ? foundTools : undefined,
+      toolHrefs: foundHrefs.length > 0 ? foundHrefs : undefined,
     }]);
     setIsTyping(false);
   };
@@ -234,6 +276,8 @@ export function StudioBot() {
     processQuery(chip);
   };
 
+  if (!isHome) return null;
+
   return (
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end pointer-events-none">
       {!isOpen ? (
@@ -246,24 +290,24 @@ export function StudioBot() {
         </button>
       ) : (
         <div ref={chatRef} className="pointer-events-auto flex flex-col items-end animate-in slide-in-from-bottom-4 zoom-in-95 duration-300 w-[320px]">
-          <Card className="w-full border-[rgba(107,155,209,0.35)] shadow-[0_12px_40px_rgba(43,75,120,0.18)] overflow-hidden flex flex-col bg-[rgba(255,249,240,0.92)] backdrop-blur-xl rounded-[18px] border">
+          <Card className="w-full border-[rgba(107,155,209,0.35)] dark:border-white/5 shadow-[0_12px_40px_rgba(43,75,120,0.18)] overflow-hidden flex flex-col bg-[rgba(255,249,240,0.92)] dark:bg-card/90 backdrop-blur-2xl rounded-[18px] border">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-black/5 flex items-center justify-between bg-white/40 shrink-0">
+            <div className="px-5 py-4 border-b border-black/5 dark:border-white/5 flex items-center justify-between bg-white/40 dark:bg-white/2 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                    <RobotSVG className="w-6 h-6" />
                 </div>
                 <div className="space-y-0.5">
-                  <h4 className="text-[11px] font-black uppercase tracking-widest text-[#0f172a]">Kit</h4>
+                  <h4 className="text-[11px] font-black uppercase tracking-widest text-[#0f172a] dark:text-white">Kit</h4>
                   <div className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    <p className="text-[9px] font-bold text-green-600 uppercase tracking-widest">Online</p>
+                    <p className="text-[9px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest">Online</p>
                   </div>
                 </div>
               </div>
               <button 
                 onClick={() => setIsOpen(false)} 
-                className="w-8 h-8 rounded-lg text-black/20 hover:text-black hover:bg-black/5 transition-all flex items-center justify-center"
+                className="w-8 h-8 rounded-lg text-black/20 dark:text-white/20 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -279,8 +323,8 @@ export function StudioBot() {
                   <div className={cn(
                     "max-w-[90%] px-4 py-3 rounded-2xl text-[11px] font-medium leading-relaxed shadow-sm",
                     msg.role === 'user' 
-                      ? "bg-[#6B9BD1] text-white rounded-tr-none" 
-                      : "bg-white text-[#0f172a] rounded-tl-none border border-black/5"
+                      ? "bg-[#6B9BD1] dark:bg-primary text-white rounded-tr-none" 
+                      : "bg-white dark:bg-white/5 text-[#0f172a] dark:text-white rounded-tl-none border border-black/5 dark:border-white/5"
                   )}>
                     {msg.content}
                   </div>
@@ -291,7 +335,7 @@ export function StudioBot() {
                         <button 
                           key={chip}
                           onClick={() => handleChipClick(chip)}
-                          className="px-3 py-1.5 rounded-full bg-white border border-black/5 text-[9px] font-black uppercase text-[#6B9BD1] hover:border-[#6B9BD1]/40 transition-all shadow-sm active:scale-95"
+                          className="px-3 py-1.5 rounded-full bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 text-[9px] font-black uppercase text-[#6B9BD1] dark:text-primary hover:border-[#6B9BD1]/40 dark:hover:border-primary/40 transition-all shadow-sm active:scale-95"
                         >
                           {chip}
                         </button>
@@ -299,27 +343,26 @@ export function StudioBot() {
                     </div>
                   )}
 
-                  {msg.tools && (
+                  {msg.toolHrefs && (
                     <div className="w-full flex flex-col gap-2 mt-1 animate-in zoom-in-95 duration-300">
-                      {msg.tools.map((t) => {
-                        // Critical Fix: Component references are lost during JSON serialization (sessionStorage)
-                        // We must resolve the actual Icon component from the static TOOLS registry using href
-                        const tool = TOOLS.find(master => master.href === t.href) || t;
-                        const ToolIcon = (typeof tool.icon === 'function' || typeof tool.icon === 'object') ? tool.icon : Search;
+                      {msg.toolHrefs.map((href) => {
+                        const tool = TOOLS.find(t => t.href === href);
+                        if (!tool) return null;
+                        const ToolIcon = tool.icon;
                         
                         return (
                           <button 
                             key={tool.href}
                             onClick={() => { setIsOpen(false); router.push(tool.href); }}
-                            className="w-full flex items-center justify-between p-3 rounded-xl bg-white border border-black/5 hover:border-[#6B9BD1]/40 transition-all group shadow-sm text-left"
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 hover:border-[#6B9BD1]/40 dark:hover:border-primary/40 transition-all group shadow-sm text-left"
                           >
                             <div className="flex items-center gap-3 overflow-hidden">
-                              <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-[#6B9BD1] shrink-0">
+                              <div className="w-7 h-7 rounded-lg bg-secondary dark:bg-white/5 flex items-center justify-center text-[#6B9BD1] dark:text-primary shrink-0">
                                 <ToolIcon className="w-3.5 h-3.5" />
                               </div>
-                              <span className="text-[10px] font-black uppercase text-black/60 group-hover:text-[#6B9BD1] transition-colors truncate">{tool.title}</span>
+                              <span className="text-[10px] font-black uppercase text-black/60 dark:text-white/60 group-hover:text-[#6B9BD1] dark:group-hover:text-primary transition-colors truncate">{tool.title}</span>
                             </div>
-                            <ArrowRight className="w-3 h-3 text-[#6B9BD1]/40 group-hover:text-[#6B9BD1] transition-all group-hover:translate-x-0.5 shrink-0" />
+                            <ArrowRight className="w-3 h-3 text-[#6B9BD1]/40 dark:text-primary/40 group-hover:text-[#6B9BD1] dark:group-hover:text-primary transition-all group-hover:translate-x-0.5 shrink-0" />
                           </button>
                         );
                       })}
@@ -329,29 +372,29 @@ export function StudioBot() {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-white px-4 py-2 rounded-2xl rounded-tl-none border border-black/5 flex gap-1 items-center shadow-sm">
-                    <div className="w-1.5 h-1.5 bg-[#6B9BD1]/40 rounded-full animate-bounce" />
-                    <div className="w-1.5 h-1.5 bg-[#6B9BD1]/40 rounded-full animate-bounce [animation-delay:0.2s]" />
-                    <div className="w-1.5 h-1.5 bg-[#6B9BD1]/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+                  <div className="bg-white dark:bg-white/5 px-4 py-2 rounded-2xl rounded-tl-none border border-black/5 dark:border-white/5 flex gap-1 items-center shadow-sm">
+                    <div className="w-1.5 h-1.5 bg-[#6B9BD1]/40 dark:bg-primary/40 rounded-full animate-bounce" />
+                    <div className="w-1.5 h-1.5 bg-[#6B9BD1]/40 dark:bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                    <div className="w-1.5 h-1.5 bg-[#6B9BD1]/40 dark:bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
                   </div>
                 </div>
               )}
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white/40 border-t border-black/5">
+            <div className="p-4 bg-white/40 dark:bg-white/2 border-t border-black/5 dark:border-white/5">
               <form onSubmit={handleSubmit} className="flex gap-2">
                 <input 
                   type="text"
                   placeholder="Which tool?"
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  className="flex-1 h-9 px-4 bg-white border border-black/10 rounded-xl text-[11px] font-medium focus:ring-1 focus:ring-[#6B9BD1] outline-none transition-all placeholder:text-black/20 text-black"
+                  className="flex-1 h-9 px-4 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl text-[11px] font-medium focus:ring-1 focus:ring-[#6B9BD1] dark:focus:ring-primary outline-none transition-all placeholder:text-black/20 dark:placeholder:text-white/20 text-black dark:text-white"
                 />
                 <button 
                   type="submit"
                   disabled={!input.trim() || isTyping}
-                  className="w-9 h-9 rounded-xl bg-[#6B9BD1] text-white flex items-center justify-center shadow-lg active:scale-90 disabled:opacity-30 transition-all shrink-0"
+                  className="w-9 h-9 rounded-xl bg-[#6B9BD1] dark:bg-primary text-white flex items-center justify-center shadow-lg active:scale-90 disabled:opacity-30 transition-all shrink-0"
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>
