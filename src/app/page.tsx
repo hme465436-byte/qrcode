@@ -64,7 +64,9 @@ import {
   Shapes,
   FileSignature,
   Monitor,
-  Braces
+  Braces,
+  Fingerprint,
+  Hash
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -109,6 +111,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
     category: 'generators'
+  },
+  { 
+    href: '/hash-generator', 
+    icon: Fingerprint, 
+    title: 'Hash Generator', 
+    desc: 'Generate MD5, SHA-1, SHA-256 and SHA-512 hashes locally.', 
+    label: 'SECURITY', 
+    color: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
+    glowClass: 'bg-cyan-400/10',
+    keywords: ['hash', 'md5', 'sha256', 'sha512', 'checksum', 'fingerprint', 'encryption', 'security'],
+    category: 'utilities'
   },
   { 
     href: '/json-formatter', 
@@ -699,7 +712,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -808,7 +821,7 @@ export default function Home() {
       'Word to PDF', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter',
-      'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester'
+      'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -905,14 +918,14 @@ export default function Home() {
           <div className="max-w-4xl mx-auto space-y-6 px-4">
              {/* Search Input */}
              <div className="max-w-2xl mx-auto group relative">
-                <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none" />
-                <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
+                <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+                <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within/search:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
 
-                <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/30 group-focus-within:from-primary/60 group-focus-within:to-primary/30">
+                <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/30 group-focus-within/search:from-primary/60 group-focus-within/search:to-primary/30">
                   <div className="moving-border-matrix" />
-                  <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
+                  <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within/search:border-primary/50 group-focus-within/search:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
                     <div className="absolute inset-y-0 left-5 flex items-center pointer-none">
-                      <Search className="w-5 h-5 text-foreground/20 group-focus-within:text-primary transition-colors icon-3d" />
+                      <Search className="w-5 h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d" />
                     </div>
                     <Input 
                       type="text"
