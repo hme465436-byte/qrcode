@@ -56,49 +56,50 @@ interface Message {
 }
 
 /**
- * Simple Cute Box Robot SVG with detailed hardware overlays
+ * Premium Box-Bot Mascot
  */
 function RobotSVG({ className }: { className?: string }) {
   return (
-    <div className={cn("relative pointer-events-none select-none", className)}>
+    <div className={cn("relative pointer-events-none select-none drop-shadow-xl", className)}>
       <svg viewBox="0 0 64 64" className="w-full h-full overflow-visible">
         {/* Ground Shadow */}
-        <ellipse cx="32" cy="55" rx="16" ry="4" fill="black" opacity="0.08" />
+        <ellipse cx="32" cy="55" rx="16" ry="4" fill="black" opacity="0.1" />
 
-        {/* Antenna */}
-        <line x1="32" y1="16" x2="32" y2="6" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
-        <circle cx="32" cy="6" r="4.5" fill="#22D3EE" opacity="0.15" className="animate-pulse" />
-        <circle cx="32" cy="6" r="2.5" fill="#22D3EE" className="animate-pulse" />
+        {/* Antenna - Short & Glowing */}
+        <line x1="32" y1="16" x2="32" y2="8" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="32" cy="8" r="4.5" fill="#22D3EE" opacity="0.2" className="animate-pulse" />
+        <circle cx="32" cy="8" r="2.5" fill="#22D3EE" className="animate-pulse" />
 
-        {/* Side Bolts / Ears */}
-        <rect x="8" y="28" width="4" height="10" rx="1" fill="#9CA3AF" />
-        <rect x="52" y="28" width="4" height="10" rx="1" fill="#9CA3AF" />
+        {/* Side Hardware (Ears) */}
+        <rect x="7" y="28" width="5" height="10" rx="1.5" fill="#9CA3AF" />
+        <rect x="52" y="28" width="5" height="10" rx="1.5" fill="#9CA3AF" />
 
-        {/* Box Head */}
-        <rect x="12" y="16" width="40" height="38" rx="8" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="1" />
+        {/* Box Head - Premium Rounded */}
+        <rect x="12" y="16" width="40" height="38" rx="10" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="1.2" />
 
-        {/* Circle Visor */}
-        <circle cx="32" cy="34" r="14" fill="#1F2937" />
+        {/* Circle Visor - Deep Matrix */}
+        <circle cx="32" cy="34" r="14.5" fill="#1F2937" />
         
-        {/* Visor Gloss */}
-        <path d="M22 28 Q32 21 42 28" stroke="white" strokeWidth="1.2" opacity="0.1" fill="none" strokeLinecap="round" />
+        {/* Visor Specular Reflection */}
+        <path d="M22 28 Q32 20 42 28" stroke="white" strokeWidth="1.5" opacity="0.15" fill="none" strokeLinecap="round" />
 
-        {/* Cheeks */}
-        <circle cx="23" cy="40" r="1.5" fill="#FDA4AF" opacity="0.6" />
-        <circle cx="41" cy="40" r="1.5" fill="#FDA4AF" opacity="0.6" />
+        {/* Cheeks - Soft Pink */}
+        <circle cx="23" cy="41" r="2" fill="#FDA4AF" opacity="0.7" />
+        <circle cx="41" cy="41" r="2" fill="#FDA4AF" opacity="0.7" />
 
-        {/* Eyes */}
+        {/* Optics - Large & Glowing */}
         <g>
-          <circle cx="27" cy="33" r="2.8" fill="#22D3EE" />
-          <circle cx="28.2" cy="31.8" r="0.8" fill="white" opacity="0.8" />
-        </g>
-        <g>
-          <circle cx="37" cy="33" r="2.8" fill="#22D3EE" />
-          <circle cx="38.2" cy="31.8" r="0.8" fill="white" opacity="0.8" />
+          {/* Left Eye */}
+          <circle cx="26.5" cy="33" r="3.5" fill="#22D3EE" />
+          <circle cx="28" cy="31.5" r="1" fill="white" opacity="0.9" />
+          
+          {/* Right Eye */}
+          <circle cx="37.5" cy="33" r="3.5" fill="#22D3EE" />
+          <circle cx="39" cy="31.5" r="1" fill="white" opacity="0.9" />
         </g>
 
-        {/* Smile */}
-        <path d="M29 41 Q32 43 35 41" stroke="#22D3EE" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.8" />
+        {/* Linguistic Interface (Smile) */}
+        <path d="M28 42 Q32 45 36 42" stroke="#22D3EE" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.9" />
       </svg>
     </div>
   );
@@ -167,7 +168,7 @@ export function StudioBot() {
       {!isOpen ? (
         <button 
           onClick={() => setIsOpen(true)}
-          className="pointer-events-auto group w-14 h-14 bg-transparent border-none flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all active:scale-95 duration-500 drop-shadow-xl"
+          className="pointer-events-auto group w-14 h-14 bg-transparent border-none flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all active:scale-95 duration-500"
           aria-label="Open Studio Assistant"
         >
           <RobotSVG className="w-full h-full" />
