@@ -731,7 +731,7 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
     <Link 
       href={item.href} 
       className={cn(
-        "group relative flex transition-all duration-300",
+        "group relative flex transition-all duration-300 min-w-0",
         isGrid ? "flex-col h-full" : "w-full"
       )}
     >
@@ -764,7 +764,7 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
             </h3>
           </div>
           <p className={cn(
-            "text-sm text-foreground/40 leading-relaxed font-medium",
+            "text-sm text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere",
             isGrid ? "line-clamp-2" : "truncate"
           )}>
             {item.desc}
@@ -830,7 +830,6 @@ export default function Home() {
           setTypingSpeed(70);
         }
       } else {
-        // Range Guard: ensure we don't pass negative length to slice/substring
         const nextLength = Math.max(0, placeholder.length - 1);
         setPlaceholder(currentPhrase.slice(0, nextLength));
         setTypingSpeed(35);
@@ -894,10 +893,10 @@ export default function Home() {
             </div>
           </div>
           
-          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto">
+          <h1 className="text-4xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere">
             The World's Most <span className="text-primary italic">Advanced</span> Studio
           </h1>
-          <p className="text-base sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4">
+          <p className="text-base sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
             Professional high-fidelity asset generation and technical data translation. 100% private, client-side, and engineered for high-performance workflows.
           </p>
 
@@ -1010,8 +1009,8 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
                 Privacy Sovereign
               </div>
-              <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight leading-[0.95]">Definitive <span className="text-primary italic">Security</span> Mandate</h2>
-              <p className="text-lg text-foreground/40 font-medium leading-relaxed">
+              <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight leading-[0.95] overflow-wrap-anywhere">Definitive <span className="text-primary italic">Security</span> Mandate</h2>
+              <p className="text-lg text-foreground/40 font-medium leading-relaxed overflow-wrap-anywhere">
                 Our studio operates entirely within your browser's memory sandbox. We have eliminated server-side storage to ensure your branding and technical data remain strictly private and permanent.
               </p>
               <div className="grid grid-cols-1 gap-6 pt-4">
@@ -1024,9 +1023,9 @@ export default function Home() {
                     <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center text-primary shrink-0 mt-1 icon-container-3d group-hover/feat:scale-110 transition-transform">
                       <f.icon className="w-4 h-4 icon-3d" />
                     </div>
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-black uppercase tracking-widest text-foreground">{f.title}</h4>
-                      <p className="text-xs text-foreground/40 font-medium">{f.desc}</p>
+                    <div className="space-y-1 min-w-0">
+                      <h4 className="text-sm font-black uppercase tracking-widest text-foreground truncate">{f.title}</h4>
+                      <p className="text-xs text-foreground/40 font-medium overflow-wrap-anywhere">{f.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -1052,8 +1051,8 @@ export default function Home() {
       {/* CTAs */}
       <section className="w-full px-6 py-40 text-center">
         <div className="max-w-4xl mx-auto space-y-12">
-           <h2 className="text-5xl sm:text-8xl font-headline font-black uppercase tracking-tight leading-none">Ready for <span className="text-primary italic">Production?</span></h2>
-           <p className="text-lg text-foreground/40 font-medium max-w-xl mx-auto uppercase tracking-tighter">
+           <h2 className="text-5xl sm:text-8xl font-headline font-black uppercase tracking-tight leading-none overflow-wrap-anywhere">Ready for <span className="text-primary italic">Production?</span></h2>
+           <p className="text-lg text-foreground/40 font-medium max-w-xl mx-auto uppercase tracking-tighter overflow-wrap-anywhere">
              Join thousands of designers and engineers using the world's premier local utility matrix.
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -1072,16 +1071,16 @@ export default function Home() {
 
 function EmptyState({ onReset }: { onReset: () => void }) {
   return (
-    <div className="col-span-full py-24 glass-card rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-8">
+    <div className="col-span-full py-24 glass-card rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-8 px-6">
       <Search className="w-12 h-12 text-foreground/5 animate-pulse icon-3d" />
-      <div className="space-y-2">
+      <div className="space-y-2 text-center">
         <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">Coming Soon</h3>
         <p className="text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
       </div>
       <ShadButton 
         onClick={onReset}
         variant="outline"
-        className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10"
+        className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10 w-full sm:w-auto"
       >
         <RotateCcw className="w-4 h-4 mr-2 icon-3d" />
         Reset Studio Registry

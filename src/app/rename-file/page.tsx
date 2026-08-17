@@ -69,9 +69,6 @@ export default function RenameFilePage() {
   const finalName = useMemo(() => {
     if (!fileInfo) return '';
     if (!newName.trim()) return file.name;
-    
-    // If user typed an extension and we are not auto-appending, use theirs
-    // Otherwise append the original extension
     return newName.trim() + (keepExtension ? fileInfo.ext : '');
   }, [newName, fileInfo, keepExtension, file]);
 
@@ -89,9 +86,6 @@ export default function RenameFilePage() {
     if (!file || !finalName) return;
     
     setIsProcessing(true);
-    
-    // We create a new file reference with the same content but different name
-    // This happens entirely on the client
     const blob = file.slice(0, file.size, file.type);
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -99,7 +93,6 @@ export default function RenameFilePage() {
     link.download = finalName;
     link.click();
     
-    // Clean up
     setTimeout(() => {
       URL.revokeObjectURL(url);
       setIsProcessing(false);
@@ -125,20 +118,20 @@ export default function RenameFilePage() {
   };
 
   return (
-    <div className="container mx-auto px-6 py-12 md:py-20 max-w-7xl">
+    <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <FileSignature className="w-3.5 h-3.5" /> Identity Suite
         </div>
-        <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
+        <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight overflow-wrap-anywhere">
           Rename <span className="text-primary italic">File Studio</span>
         </h1>
-        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed overflow-wrap-anywhere">
           Professional browser-side file re-labeling. Modify filenames and extensions with zero quality loss and absolute privacy. 100% local synthesis.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10 items-start">
         {/* Input & Controls */}
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
@@ -146,7 +139,7 @@ export default function RenameFilePage() {
             
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
               <CardTitle className="text-xl font-headline flex items-center gap-4 text-foreground">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner group-hover:scale-110 transition-transform shrink-0">
                   <Upload className="w-6 h-6" />
                 </div>
                 Asset Intake
@@ -159,17 +152,17 @@ export default function RenameFilePage() {
                 <div 
                   onClick={() => !isProcessing && fileInputRef.current?.click()}
                   className={cn(
-                    "relative group/upload h-48 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer",
+                    "relative group/upload min-h-[12rem] rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer",
                     file && "border-solid border-primary/20"
                   )}
                 >
                   {file ? (
-                    <div className="text-center p-8 space-y-4">
+                    <div className="text-center p-8 space-y-4 min-w-0 w-full">
                        <div className="text-primary/40 group-hover:text-primary transition-colors flex justify-center">
                           {getIcon(file.type)}
                        </div>
-                       <div className="space-y-1">
-                          <p className="text-xs font-black uppercase text-foreground truncate max-w-[300px]">{file.name}</p>
+                       <div className="space-y-1 min-w-0">
+                          <p className="text-xs font-black uppercase text-foreground truncate max-w-full px-4">{file.name}</p>
                           <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest">{fileInfo?.size} detected</p>
                        </div>
                     </div>
@@ -199,33 +192,33 @@ export default function RenameFilePage() {
                         placeholder="Enter new name..."
                         className="h-16 bg-secondary border-border rounded-2xl text-lg font-bold px-6 focus:ring-primary/40"
                        />
-                       <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/name:opacity-100 transition-opacity">
+                       <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/name:opacity-100 transition-opacity pointer-events-none">
                          <Type className="w-6 h-6 text-primary" />
                        </div>
                     </div>
 
                     <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
-                       <div className="space-y-1">
+                       <div className="space-y-1 min-w-0 pr-4">
                           <p className="text-[11px] font-black text-foreground uppercase tracking-widest">Extension Locking</p>
-                          <p className="text-[9px] text-foreground/30 font-medium uppercase">Auto-append original <span className="text-primary font-mono">{fileInfo?.ext}</span></p>
+                          <p className="text-[9px] text-foreground/30 font-medium uppercase truncate">Auto-append original <span className="text-primary font-mono">{fileInfo?.ext}</span></p>
                        </div>
-                       <Switch checked={keepExtension} onCheckedChange={setKeepExtension} />
+                       <Switch checked={keepExtension} onCheckedChange={setKeepExtension} className="shrink-0" />
                     </div>
                   </div>
 
-                  <div className="flex gap-4 pt-2">
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
                     <Button 
                       onClick={handleDownload}
                       disabled={isProcessing || !file || !finalName}
-                      className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                      className="flex-[2] h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                     >
                       {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Download className="w-6 h-6 group-hover:translate-y-1 transition-transform" />}
-                      Download Renamed Master
+                      <span className="truncate">Download Renamed Master</span>
                     </Button>
                     <Button 
                       variant="outline"
                       onClick={handleClear}
-                      className="w-16 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
+                      className="flex-1 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
                     >
                       <Trash2 className="w-6 h-6" />
                     </Button>
@@ -237,9 +230,9 @@ export default function RenameFilePage() {
 
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Absolute</h4>
-              <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+              <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase overflow-wrap-anywhere">
                 The studio performs re-labeling entirely within your browser session. Binary data is never transmitted to our servers, maintaining a 100% secure local workflow.
               </p>
             </div>
@@ -255,40 +248,42 @@ export default function RenameFilePage() {
                 <CheckCircle2 className="w-3.5 h-3.5" /> Identity Preview
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-8 flex flex-col justify-center gap-10">
+            <CardContent className="flex-1 p-6 md:p-8 flex flex-col justify-center gap-10 min-w-0">
               {!file ? (
                 <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6">
                   <Activity className="w-20 h-20 text-primary mx-auto" />
                   <p className="text-xs font-black uppercase tracking-[0.3em]">Studio Standby</p>
                 </div>
               ) : (
-                <div className="space-y-10 animate-in zoom-in duration-500">
-                  <div className="p-10 rounded-[3rem] bg-secondary/50 border border-border flex flex-col items-center justify-center gap-8 shadow-inner relative overflow-hidden group/final">
+                <div className="space-y-10 animate-in zoom-in duration-500 min-w-0">
+                  <div className="p-6 sm:p-10 rounded-[3rem] bg-secondary/50 border border-border flex flex-col items-center justify-center gap-8 shadow-inner relative overflow-hidden group/final">
                      <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover/final:opacity-100 transition-opacity" />
-                     <div className="w-24 h-24 rounded-[2.5rem] bg-background border border-border flex items-center justify-center text-primary shadow-xl group-hover/final:scale-110 transition-transform">
+                     <div className="w-24 h-24 rounded-[2.5rem] bg-background border border-border flex items-center justify-center text-primary shadow-xl group-hover/final:scale-110 transition-transform shrink-0">
                         {getIcon(file.type)}
                      </div>
-                     <div className="text-center space-y-4 px-4 w-full">
+                     <div className="text-center space-y-4 w-full min-w-0">
                         <p className="text-[10px] font-black uppercase text-foreground/30 tracking-widest">Final Registry Mapping</p>
-                        <h3 className="text-xl font-mono font-bold text-foreground break-all bg-white dark:bg-black/40 p-6 rounded-2xl border border-border shadow-inner">
-                           {finalName}
-                        </h3>
+                        <div className="bg-white dark:bg-black/40 p-4 sm:p-6 rounded-2xl border border-border shadow-inner min-w-0">
+                          <h3 className="text-sm sm:text-xl font-mono font-bold text-foreground break-all leading-relaxed">
+                             {finalName}
+                          </h3>
+                        </div>
                      </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4">
                      <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group transition-all hover:bg-secondary/80">
                         <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-0">
                            <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Instant Binary Link</p>
-                           <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">System creates a direct memory pointer to the original bytes with the new label.</p>
+                           <p className="text-[10px] text-foreground/40 font-medium leading-relaxed overflow-wrap-anywhere">System creates a direct memory pointer to the original bytes with the new label.</p>
                         </div>
                      </div>
                      <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group transition-all hover:bg-secondary/80">
                         <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-0">
                            <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Metadata Integrity</p>
-                           <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">Original file creation dates and internal headers are preserved by default.</p>
+                           <p className="text-[10px] text-foreground/40 font-medium leading-relaxed overflow-wrap-anywhere">Original file creation dates and internal headers are preserved by default.</p>
                         </div>
                      </div>
                   </div>
@@ -301,9 +296,9 @@ export default function RenameFilePage() {
             <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                <Settings2 className="w-7 h-7" />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">WASM Master Logic</h4>
-              <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+              <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase overflow-wrap-anywhere">
                 Our re-labeling engine bypasses the operating system's standard file dialog constraints, allowing for clinical precision in filename production before local storage commitment.
               </p>
             </div>
@@ -328,6 +323,7 @@ export default function RenameFilePage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );

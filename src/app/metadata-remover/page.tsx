@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useCallback, useMemo } from 'react';
@@ -174,8 +173,6 @@ export default function MetadataRemoverPage() {
   const cleanFile = async (item: FileItem): Promise<Blob | null> => {
     try {
       if (item.type === 'image') {
-        // DEFINITIVE STRIP: Pixel Re-matricing
-        // Create a new image from scratch using only raw pixel data
         return new Promise((resolve) => {
           const img = new Image();
           const objUrl = URL.createObjectURL(item.file);
@@ -186,16 +183,12 @@ export default function MetadataRemoverPage() {
             canvas.height = img.height;
             const ctx = canvas.getContext('2d', { alpha: true });
             if (!ctx) return resolve(null);
-            
-            // Draw original pixels to new context (this strips all metadata inherently)
             ctx.drawImage(img, 0, 0);
-            
-            // Re-encode to clean Blob
             const outputType = item.file.type === 'image/png' ? 'image/png' : 'image/jpeg';
             canvas.toBlob((blob) => {
               URL.revokeObjectURL(objUrl);
               resolve(blob);
-            }, outputType, 1.0); // Maximum quality, zero metadata
+            }, outputType, 1.0);
           };
           img.onerror = () => {
             URL.revokeObjectURL(objUrl);
@@ -203,23 +196,18 @@ export default function MetadataRemoverPage() {
           };
         });
       } else if (item.type === 'pdf') {
-        // Deep Document Scrubbing
         const arrayBuffer = await item.file.arrayBuffer();
         const pdf = await PDFDocument.load(arrayBuffer);
-        
-        // Wipe metadata dictionary
         pdf.setTitle('');
         pdf.setAuthor('');
         pdf.setSubject('');
         pdf.setCreator('');
         pdf.setProducer('');
-        pdf.setCreationDate(new Date(0)); // Reset to Unix Epoch
+        pdf.setCreationDate(new Date(0));
         pdf.setModificationDate(new Date(0));
-        
         const bytes = await pdf.save();
         return new Blob([bytes], { type: 'application/pdf' });
       } else if (item.type === 'audio' || item.type === 'video') {
-        // Bitstream Stream Stripping using FFmpeg
         const ready = await loadFFmpeg();
         if (!ready || !ffmpegRef.current) return null;
         const ffmpeg = ffmpegRef.current;
@@ -229,14 +217,11 @@ export default function MetadataRemoverPage() {
         try {
           const data = new Uint8Array(await item.file.arrayBuffer());
           await ffmpeg.writeFile(inputName, data);
-          // -map_metadata -1 removes all global and stream metadata
           await ffmpeg.exec(['-i', inputName, '-map_metadata', '-1', '-c', 'copy', outputName]);
           const result = await ffmpeg.readFile(outputName);
           const blob = new Blob([(result as any).buffer], { type: item.file.type });
-          
           await ffmpeg.deleteFile(inputName);
           await ffmpeg.deleteFile(outputName);
-          
           return blob;
         } catch (e) {
           return null;
@@ -323,26 +308,26 @@ export default function MetadataRemoverPage() {
   }), [files]);
 
   return (
-    <div className="container mx-auto px-6 py-12 md:py-20">
+    <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <EyeOff className="w-3.5 h-3.5" /> High-Security Mode
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-           <div>
-              <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tight">
+           <div className="min-w-0">
+              <h1 className="text-3xl sm:text-5xl lg:text-7xl font-headline font-black text-foreground uppercase tracking-tight overflow-wrap-anywhere">
                 Metadata <span className="text-primary italic">Sanitizer V2</span>
               </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed overflow-wrap-anywhere">
                 Advanced anonymity via pixel re-matricing and bitstream copy protocols. Definitive removal of EXIF, GPS, author fingerprints, and hidden software markers.
               </p>
            </div>
            {files.length > 0 && (
-             <div className="flex gap-3">
-                <Button variant="outline" onClick={clearAll} className="h-12 px-6 rounded-xl border-border bg-secondary text-[10px] font-black uppercase tracking-widest hover:text-destructive">
+             <div className="flex flex-wrap gap-3 shrink-0">
+                <Button variant="outline" onClick={clearAll} className="h-12 px-6 rounded-xl border-border bg-secondary text-[10px] font-black uppercase tracking-widest hover:text-destructive w-full sm:w-auto">
                    <Trash2 className="w-4 h-4 mr-2" /> Reset
                 </Button>
-                <Button onClick={processAll} disabled={isProcessing} className="h-12 px-8 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30">
+                <Button onClick={processAll} disabled={isProcessing} className="h-12 px-8 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30 w-full sm:w-auto">
                    {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldAlert className="w-4 h-4 mr-2" />}
                    Deep Purge All
                 </Button>
@@ -351,23 +336,23 @@ export default function MetadataRemoverPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10 items-start">
         {/* Main List Section */}
-        <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+        <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700 min-w-0">
           {stats.hasGps && (
              <div className="p-6 rounded-[2rem] bg-red-500/10 border border-red-500/20 flex items-center gap-6 animate-in zoom-in duration-500">
-                <div className="w-12 h-12 rounded-2xl bg-red-500 text-white flex items-center justify-center shadow-xl shadow-red-500/20">
+                <div className="w-12 h-12 rounded-2xl bg-red-500 text-white flex items-center justify-center shadow-xl shadow-red-500/20 shrink-0">
                    <Globe className="w-6 h-6 animate-pulse" />
                 </div>
-                <div className="space-y-1">
-                   <h4 className="text-[11px] font-black uppercase tracking-widest text-red-600">Location Alert Detected</h4>
-                   <p className="text-[11px] text-red-600/60 font-medium">GPS coordinates identified in one or more assets. Pixel re-mapping is highly recommended.</p>
+                <div className="space-y-1 min-w-0">
+                   <h4 className="text-[11px] font-black uppercase tracking-widest text-red-600 truncate">Location Alert Detected</h4>
+                   <p className="text-[11px] text-red-600/60 font-medium leading-tight overflow-wrap-anywhere">GPS coordinates identified in one or more assets. Pixel re-mapping is highly recommended.</p>
                 </div>
              </div>
           )}
 
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[450px]">
-            <CardHeader className="pb-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+            <CardHeader className="pb-8 border-b border-border bg-secondary/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
                 <ListFilter className="w-5 h-5 text-primary" /> Active Production Pipeline
               </CardTitle>
@@ -376,13 +361,13 @@ export default function MetadataRemoverPage() {
             <CardContent className="p-0">
               {!files.length ? (
                 <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-[450px] flex flex-col items-center justify-center cursor-pointer group hover:bg-primary/5 transition-all"
+                  onClick={() => !isProcessing && fileInputRef.current?.click()}
+                  className="h-[450px] flex flex-col items-center justify-center cursor-pointer group hover:bg-primary/5 transition-all p-10 text-center"
                 >
                   <div className="w-20 h-20 rounded-[2.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover:text-primary group-hover:scale-110 transition-all mb-6 shadow-xl">
                     <Upload className="w-10 h-10" />
                   </div>
-                  <p className="text-[10px] font-black uppercase text-foreground/30 tracking-[0.2em] group-hover:text-primary transition-colors text-center px-10">
+                  <p className="text-[10px] font-black uppercase text-foreground/30 tracking-[0.2em] group-hover:text-primary transition-colors leading-relaxed">
                     Drop visuals or documents for re-matricing<br />
                     <span className="text-[8px] opacity-40 uppercase font-bold">(Maximum Privacy Guaranteed)</span>
                   </p>
@@ -391,60 +376,60 @@ export default function MetadataRemoverPage() {
               ) : (
                 <div className="divide-y divide-border max-h-[650px] overflow-auto custom-scrollbar">
                   {files.map((item) => (
-                    <div key={item.id} className="group/item flex flex-col bg-secondary/10 hover:bg-secondary/30 transition-all">
-                      <div className="flex items-center gap-4 p-5">
+                    <div key={item.id} className="group/item flex flex-col bg-secondary/10 hover:bg-secondary/30 transition-all min-w-0">
+                      <div className="flex items-center gap-4 p-5 min-w-0">
                         <div className={cn(
-                          "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border border-border shadow-inner transition-all",
+                          "w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 border border-border shadow-inner transition-all",
                           item.status === 'completed' ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-background text-primary/40"
                         )}>
-                          {item.type === 'image' ? <FileImage className="w-7 h-7" /> : 
-                           item.type === 'pdf' ? <FileText className="w-7 h-7" /> : 
-                           item.type === 'audio' ? <FileAudio className="w-7 h-7" /> : 
-                           <FileVideo className="w-7 h-7" />}
+                          {item.type === 'image' ? <FileImage className="w-6 h-6 sm:w-7 sm:h-7" /> : 
+                           item.type === 'pdf' ? <FileText className="w-6 h-6 sm:w-7 sm:h-7" /> : 
+                           item.type === 'audio' ? <FileAudio className="w-6 h-6 sm:w-7 sm:h-7" /> : 
+                           <FileVideo className="w-6 h-6 sm:w-7 sm:h-7" />}
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-black uppercase text-foreground truncate">{item.file.name}</p>
-                          <div className="flex items-center gap-3 mt-1">
+                          <p className="text-[11px] font-black uppercase text-foreground truncate">{item.file.name}</p>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                              <span className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest">{formatSize(item.file.size)}</span>
                              <span className={cn(
-                               "text-[9px] font-black uppercase tracking-widest",
+                               "text-[9px] font-black uppercase tracking-widest truncate",
                                item.status === 'completed' ? "text-green-500" : "text-primary/60"
                              )}>
-                               {item.status === 'idle' ? `${item.metadata.length} Identifiers Identified` : 
+                               {item.status === 'idle' ? `${item.metadata.length} Headers Identified` : 
                                 item.status === 'cleaning' ? 'Executing Pixel Purge...' : 
-                                item.status === 'completed' ? 'Verification Success: 0 Headers Remaining' : item.status}
+                                item.status === 'completed' ? 'Verified Clean' : item.status}
                              </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                            {item.status === 'completed' && item.cleanedUrl && (
-                             <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-green-500 bg-green-500/10 hover:bg-green-500/20 shadow-lg">
+                             <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-green-500 bg-green-500/10 hover:bg-green-500/20 shadow-lg">
                                <a href={item.cleanedUrl} download={`sanitized_${item.file.name}`}>
                                  <Download className="w-4 h-4" />
                                </a>
                              </Button>
                            )}
-                           <Button variant="ghost" size="icon" onClick={() => toggleExpand(item.id)} className="h-10 w-10 rounded-xl text-foreground/20 hover:text-primary">
+                           <Button variant="ghost" size="icon" onClick={() => toggleExpand(item.id)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
                              {item.expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                            </Button>
-                           <Button variant="ghost" size="icon" onClick={() => removeFile(item.id)} className="h-10 w-10 rounded-xl text-foreground/20 hover:text-destructive">
+                           <Button variant="ghost" size="icon" onClick={() => removeFile(item.id)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-destructive">
                              <X className="w-4 h-4" />
                            </Button>
                         </div>
                       </div>
 
                       {item.expanded && (
-                        <div className="px-5 pb-8 pt-2 animate-in slide-in-from-top-2 duration-300">
-                           <div className="bg-background/50 rounded-[2rem] border border-border p-8 space-y-8">
-                              <div className="flex items-center justify-between border-b border-border pb-6">
+                        <div className="px-5 pb-8 pt-2 animate-in slide-in-from-top-2 duration-300 min-w-0">
+                           <div className="bg-background/50 rounded-[2rem] border border-border p-6 sm:p-8 space-y-8 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-6 gap-4">
                                  <div className="flex items-center gap-3">
-                                    <Fingerprint className="w-4 h-4 text-primary" />
+                                    <Fingerprint className="w-4 h-4 text-primary shrink-0" />
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Identity Inspection</h4>
                                  </div>
                                  {item.status === 'completed' ? (
-                                   <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 text-[8px] font-black uppercase tracking-widest shadow-xl shadow-green-500/5">
+                                   <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 text-[8px] font-black uppercase tracking-widest shadow-xl shadow-green-500/5 w-fit">
                                       <ShieldCheck className="w-3.5 h-3.5" /> Bitstream Verified Clean
                                    </div>
                                  ) : (
@@ -452,11 +437,11 @@ export default function MetadataRemoverPage() {
                                  )}
                               </div>
                               
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-56 overflow-y-auto pr-4 custom-scrollbar">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
                                  {item.metadata.length > 0 ? item.metadata.map((tag, idx) => (
-                                   <div key={idx} className="flex gap-4 p-4 rounded-2xl bg-secondary/50 border border-border group/tag hover:border-primary/20 transition-all">
+                                   <div key={idx} className="flex gap-4 p-4 rounded-2xl bg-secondary/50 border border-border group/tag hover:border-primary/20 transition-all min-w-0">
                                       <div className={cn(
-                                        "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner border border-border",
+                                        "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-inner border border-border",
                                         tag.category === 'gps' ? "bg-red-500/10 text-red-500" : "bg-background text-primary/40"
                                       )}>
                                          {tag.category === 'gps' ? <Globe className="w-4 h-4" /> :
@@ -470,7 +455,7 @@ export default function MetadataRemoverPage() {
                                       </div>
                                    </div>
                                  )) : (
-                                   <div className="col-span-full py-12 text-center opacity-20 border-2 border-dashed border-border rounded-[2.5rem]">
+                                   <div className="col-span-full py-12 text-center opacity-20 border-2 border-dashed border-border rounded-[2.5rem] px-6">
                                       <CheckCircle2 className="w-12 h-12 mx-auto mb-3" />
                                       <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Zero Detectable Fingerprints</p>
                                    </div>
@@ -528,7 +513,7 @@ export default function MetadataRemoverPage() {
         </div>
 
         {/* Sidebar Analytics */}
-        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2 min-w-0">
           {files.length > 0 && (
             <Card className="glass-card border-border shadow-xl overflow-hidden group">
                <CardHeader className="py-6 border-b border-border bg-secondary/30">
@@ -559,10 +544,10 @@ export default function MetadataRemoverPage() {
 
                   <div className="p-6 rounded-[2rem] bg-secondary border border-border space-y-4">
                      <div className="flex items-center gap-3 text-primary">
-                        <Cpu className="w-4 h-4" />
+                        <Cpu className="w-4 h-4 shrink-0" />
                         <h4 className="text-[10px] font-black uppercase tracking-widest">Sanitize Protocol</h4>
                      </div>
-                     <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase">
+                     <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase overflow-wrap-anywhere">
                         Visuals are processed using 1:1 hardware re-matricing. Documents use binary object mutation to nullify XMP and info dictionaries.
                      </p>
                   </div>
@@ -579,18 +564,18 @@ export default function MetadataRemoverPage() {
             <CardContent className="pt-10 space-y-10">
                <div className="space-y-8">
                   {[
-                    { icon: Camera, title: "EXIF/GPS DESTRUCTION", desc: "Pixel re-mapping protocol creates a brand new image file, inherently excluding all camera history." },
+                    { icon: Camera, title: "EXIF DESTRUCTION", desc: "Pixel re-mapping protocol creates a brand new image file, inherently excluding all camera history." },
                     { icon: Smartphone, title: "SOFTWARE PURGE", desc: "Forced bitstream sanitization removes Adobe, Apple, and social media fingerprints from binary headers." },
                     { icon: RefreshCcw, title: "1:1 REMATRICING", desc: "Visual assets are reconstructed from raw pixel buffers, nullifying all potential metadata dictionaries." },
                     { icon: Lock, title: "WASM ISOLATION", desc: "Sanitization occurs entirely within a secure browser sandbox. Zero data leaves your device memory." },
                   ].map((item, i) => (
-                    <div key={i} className="flex gap-5 group/item">
-                       <div className="w-12 h-12 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shrink-0 transition-all group-hover/item:scale-110 shadow-lg group-hover/item:border-primary/30">
+                    <div key={i} className="flex gap-5 group/item min-w-0">
+                       <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shrink-0 transition-all group-hover/item:scale-110 shadow-lg group-hover/item:border-primary/30">
                           <item.icon className="w-5 h-5" />
                        </div>
-                       <div className="space-y-1">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-foreground">{item.title}</p>
-                          <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">{item.desc}</p>
+                       <div className="space-y-1 min-w-0">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-foreground truncate">{item.title}</p>
+                          <p className="text-[11px] text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere">{item.desc}</p>
                        </div>
                     </div>
                   ))}
@@ -605,16 +590,6 @@ export default function MetadataRemoverPage() {
                </div>
             </CardContent>
           </Card>
-
-          <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
-            <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
-            <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Deep Purge Note</h4>
-              <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our V2 engine creates unique binary clones of your files. Unlike standard "tag editors," we manipulate the core bitstream to ensure 0% data leakage across all supported formats.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
       
@@ -628,4 +603,3 @@ export default function MetadataRemoverPage() {
     </div>
   );
 }
-

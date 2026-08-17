@@ -151,9 +151,9 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
       </div>
     </div>
     {!iconOnly && (
-      <div className="font-headline font-black text-xl tracking-tighter leading-none flex items-center">
-        <span className="text-[#0f172a] dark:text-white uppercase">MY KIT</span>
-        <span className="text-[#2563eb] ml-1.5 italic">TOOL</span>
+      <div className="font-headline font-black text-xl tracking-tighter leading-none flex items-center min-w-0">
+        <span className="text-[#0f172a] dark:text-white uppercase truncate">MY KIT</span>
+        <span className="text-[#2563eb] ml-1.5 italic shrink-0">TOOL</span>
       </div>
     )}
   </div>
@@ -205,7 +205,6 @@ export function Navbar() {
           setTypingSpeed(70);
         }
       } else {
-        // Range Guard for string manipulation
         const nextLen = Math.max(0, placeholder.length - 1);
         setPlaceholder(currentPhrase.slice(0, nextLen));
         setTypingSpeed(35);
@@ -243,7 +242,6 @@ export function Navbar() {
 
   const filteredTools = useMemo(() => {
     if (!searchQuery.trim()) {
-      // Popular tools when empty
       return SEARCHABLE_TOOLS.slice(0, 6);
     }
     const words = searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 0);
@@ -259,15 +257,20 @@ export function Navbar() {
     router.push(href);
   };
 
+  const handleClose = () => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+  };
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-[100] w-full border-b border-white/5 bg-background/80 backdrop-blur-xl h-16 transition-all duration-300">
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group transition-transform active:scale-95">
+          <Link href="/" className="flex items-center gap-2 group transition-transform active:scale-95 min-w-0">
             <Logo />
           </Link>
           
-          <nav className="hidden xl:flex items-center gap-8">
+          <nav className="hidden xl:flex items-center gap-8 shrink-0">
             {NAV_ITEMS.map((item) => (
               <Link 
                 key={item.label} 
@@ -282,7 +285,7 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
              <button 
                 onClick={() => setIsSearchOpen(true)}
                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all group icon-container-3d"
@@ -299,7 +302,7 @@ export function Navbar() {
 
              <button 
                 onClick={() => setIsScannerOpen(true)}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-4 md:px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
              >
               <Scan className="w-4 h-4 icon-3d" />
               <span className="hidden sm:inline">Scanner</span>
@@ -341,8 +344,8 @@ export function Navbar() {
       </header>
 
       <Dialog open={isSearchOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-visible outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
-          <DialogHeader className="p-6 border-b border-white/5 bg-white/2 relative overflow-visible">
+        <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] flex flex-col">
+          <DialogHeader className="p-6 border-b border-white/10 bg-white/2 relative overflow-visible shrink-0">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>
             <div className="relative group/search z-20">
                <div className="absolute -inset-10 bg-primary/10 blur-[40px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000 pointer-events-none" />
@@ -361,39 +364,39 @@ export function Navbar() {
               <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/80 to-transparent scale-x-0 group-focus-within/search:scale-x-100 transition-transform duration-700" />
             </div>
           </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
+          <div className="flex-1 max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
             {filteredTools.length > 0 ? (
               <div className="grid grid-cols-1 gap-1">
                 {filteredTools.map((tool) => (
                   <button 
                     key={tool.href}
                     onClick={() => handleToolClick(tool.href)}
-                    className="w-full flex items-center justify-between p-5 rounded-2xl hover:bg-primary/5 group transition-all duration-300 text-left"
+                    className="w-full flex items-center justify-between p-5 rounded-2xl hover:bg-primary/5 group transition-all duration-300 text-left min-w-0"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-transparent group-hover:border-primary/20 icon-container-3d">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-transparent group-hover:border-primary/20 icon-container-3d shrink-0">
                         <tool.icon className="w-5 h-5 icon-3d" />
                       </div>
-                      <div className="space-y-0.5">
-                        <p className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{tool.label}</p>
-                        <p className="text-sm font-black uppercase tracking-widest text-foreground/60 group-hover:text-foreground">{tool.title}</p>
+                      <div className="space-y-0.5 min-w-0">
+                        <p className="text-[10px] font-black text-primary/40 uppercase tracking-widest truncate">{tool.label}</p>
+                        <p className="text-sm font-black uppercase tracking-widest text-foreground/60 group-hover:text-foreground truncate">{tool.title}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">
-                       <span className="text-[9px] font-black uppercase tracking-widest text-primary">Execute</span>
+                    <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1 shrink-0">
+                       <span className="text-[9px] font-black uppercase tracking-widest text-primary hidden sm:inline">Execute</span>
                        <ArrowRight className="w-4 h-4 text-primary icon-3d" />
                     </div>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="py-20 text-center space-y-4">
+              <div className="py-20 text-center space-y-4 px-6">
                 <Search className="w-12 h-12 text-foreground/5 mx-auto icon-3d" />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/20">Zero Identifiers Found</p>
               </div>
             )}
           </div>
-          <div className="p-4 bg-secondary/30 border-t border-white/5 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20">
+          <div className="p-4 bg-secondary/30 border-t border-white/5 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20 shrink-0">
             <span>{searchQuery ? 'SEARCH RESULTS' : 'POPULAR TOOLS'}</span>
             <span>ESC TO EXIT</span>
           </div>

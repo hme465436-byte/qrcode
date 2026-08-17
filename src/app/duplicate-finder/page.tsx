@@ -128,7 +128,6 @@ export default function DuplicateFinderPage() {
     if (files.length === 0) return;
     setIsScanning(true);
 
-    // Heuristic Matching
     const groupsMap = new Map<string, VirtualFile[]>();
     
     files.forEach(f => {
@@ -164,14 +163,12 @@ export default function DuplicateFinderPage() {
 
   const selectDuplicatesInGroup = (group: DuplicateGroup) => {
     const newSet = new Set(selectedIds);
-    // Keep the first one, select the rest
     group.files.slice(1).forEach(f => newSet.add(f.id));
     setSelectedIds(newSet);
   };
 
   const purgeSelected = () => {
     if (selectedIds.size === 0) return;
-    
     const remaining = files.filter(f => !selectedIds.has(f.id));
     setFiles(remaining);
     setDuplicateGroups([]);
@@ -216,26 +213,26 @@ export default function DuplicateFinderPage() {
   }, [files, duplicateGroups]);
 
   return (
-    <div className="container mx-auto px-6 py-12 md:py-20 max-w-7xl">
+    <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Copy className="w-3.5 h-3.5" /> Maintenance Suite
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-           <div>
-              <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tight">
+           <div className="min-w-0">
+              <h1 className="text-3xl sm:text-5xl lg:text-7xl font-headline font-black text-foreground uppercase tracking-tight overflow-wrap-anywhere">
                 Duplicate <span className="text-primary italic">Purge Studio</span>
               </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed overflow-wrap-anywhere">
                 Professional-grade file redundancy analysis. Identify identical assets by bitstream size and identity, then execute deep purges for clean production bundles.
               </p>
            </div>
            {files.length > 0 && (
-             <div className="flex gap-3">
-                <Button variant="outline" onClick={clearStudio} className="h-12 px-6 rounded-xl border-border bg-secondary text-[10px] font-black uppercase tracking-widest hover:text-destructive">
+             <div className="flex flex-wrap gap-3 shrink-0">
+                <Button variant="outline" onClick={clearStudio} className="h-12 px-6 rounded-xl border-border bg-secondary text-[10px] font-black uppercase tracking-widest hover:text-destructive w-full sm:w-auto">
                    <Trash2 className="w-4 h-4 mr-2" /> Reset
                 </Button>
-                <Button onClick={downloadCleanBundle} disabled={isProcessing} className="h-12 px-8 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30">
+                <Button onClick={downloadCleanBundle} disabled={isProcessing} className="h-12 px-8 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30 w-full sm:w-auto">
                    {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
                    Export Clean ZIP
                 </Button>
@@ -244,16 +241,16 @@ export default function DuplicateFinderPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10 items-start">
         {/* Controls & List */}
-        <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+        <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700 min-w-0">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[450px]">
-            <CardHeader className="pb-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+            <CardHeader className="pb-8 border-b border-border bg-secondary/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
                 <Files className="w-5 h-5 text-primary" /> Active Payload Pipeline
               </CardTitle>
               {files.length > 0 && (
-                <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
+                <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest w-fit">
                    {files.length} Assets Registered
                 </div>
               )}
@@ -263,12 +260,12 @@ export default function DuplicateFinderPage() {
               {!files.length ? (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-[450px] flex flex-col items-center justify-center cursor-pointer group hover:bg-primary/5 transition-all"
+                  className="h-[450px] flex flex-col items-center justify-center cursor-pointer group hover:bg-primary/5 transition-all p-10 text-center"
                 >
                   <div className="w-20 h-20 rounded-[2.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover:text-primary group-hover:scale-110 transition-all mb-6 shadow-xl">
                     <Upload className="w-10 h-10" />
                   </div>
-                  <p className="text-[10px] font-black uppercase text-foreground/30 tracking-[0.2em] group-hover:text-primary transition-colors text-center px-10 leading-relaxed">
+                  <p className="text-[10px] font-black uppercase text-foreground/30 tracking-[0.2em] group-hover:text-primary transition-colors leading-relaxed">
                     Drop folder visuals or ZIP archives for analysis<br />
                     <span className="text-[8px] opacity-40 uppercase font-bold">(Bitstream Scanning Active)</span>
                   </p>
@@ -278,7 +275,7 @@ export default function DuplicateFinderPage() {
                 <div className="divide-y divide-border max-h-[600px] overflow-auto custom-scrollbar">
                   {files.map((f) => (
                     <div key={f.id} className={cn(
-                      "flex items-center gap-4 p-5 transition-all",
+                      "flex items-center gap-4 p-5 transition-all min-w-0",
                       selectedIds.has(f.id) ? "bg-red-500/5 opacity-60" : "hover:bg-secondary/20"
                     )}>
                       <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 shrink-0">
@@ -286,13 +283,13 @@ export default function DuplicateFinderPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                          <p className="text-[11px] font-bold text-foreground truncate uppercase">{f.name}</p>
-                         <div className="flex items-center gap-3 mt-0.5">
+                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                             <span className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest">{formatSize(f.size)}</span>
-                            <span className="text-foreground/10 text-[8px]">•</span>
-                            <span className="text-[9px] text-foreground/20 font-medium uppercase truncate">{f.type}</span>
+                            <span className="text-foreground/10 text-[8px] hidden sm:inline">•</span>
+                            <span className="text-[9px] text-foreground/20 font-medium uppercase truncate max-w-[150px]">{f.type}</span>
                          </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 shrink-0">
                          <button 
                           onClick={() => toggleSelect(f.id)}
                           className={cn(
@@ -306,7 +303,7 @@ export default function DuplicateFinderPage() {
                     </div>
                   ))}
                   <div className="p-6 bg-secondary/30 flex justify-center">
-                     <Button variant="ghost" onClick={() => fileInputRef.current?.click()} className="text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10">
+                     <Button variant="ghost" onClick={() => fileInputRef.current?.click()} className="text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 h-auto py-2">
                         <Plus className="w-3.5 h-3.5 mr-2" /> Inject More Assets
                      </Button>
                   </div>
@@ -317,7 +314,7 @@ export default function DuplicateFinderPage() {
         </div>
 
         {/* Sidebar Controls */}
-        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2 min-w-0">
           <Card className="glass-card border-border shadow-xl overflow-hidden relative group">
              <CardHeader className="py-6 border-b border-border bg-secondary/30">
                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-primary">
@@ -341,7 +338,7 @@ export default function DuplicateFinderPage() {
                           )}
                         >
                            <mode.icon className="w-4 h-4 shrink-0" />
-                           <span className="text-[10px] font-black uppercase tracking-widest">{mode.label}</span>
+                           <span className="text-[10px] font-black uppercase tracking-widest leading-tight">{mode.label}</span>
                         </button>
                       ))}
                    </div>
@@ -361,9 +358,9 @@ export default function DuplicateFinderPage() {
           {duplicateGroups.length > 0 && (
             <Card className="glass-card border-border shadow-2xl overflow-hidden animate-in zoom-in duration-500">
                <CardHeader className="py-6 border-b border-border bg-red-500/5">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-red-500">
-                      <AlertCircle className="w-4 h-4" /> Detected Redundancy
+                      <AlertCircle className="w-4 h-4" /> Redundancy
                     </CardTitle>
                     <button 
                       onClick={() => {
@@ -372,7 +369,7 @@ export default function DuplicateFinderPage() {
                         setSelectedIds(newSet);
                         toast({ title: "Auto-Selection Complete", description: "Ready for deep purge." });
                       }}
-                      className="text-[9px] font-black uppercase text-primary hover:underline underline-offset-4"
+                      className="text-[9px] font-black uppercase text-primary hover:underline underline-offset-4 text-left"
                     >
                       Select All Excess
                     </button>
@@ -381,22 +378,22 @@ export default function DuplicateFinderPage() {
                <CardContent className="p-0">
                   <div className="divide-y divide-border max-h-[400px] overflow-auto custom-scrollbar">
                      {duplicateGroups.map((group, idx) => (
-                       <div key={idx} className="p-5 space-y-4 bg-red-500/[0.02]">
-                          <div className="flex items-center justify-between">
-                             <div className="flex items-center gap-2 text-[10px] font-bold text-foreground truncate uppercase">
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                {group.files[0].name}
+                       <div key={idx} className="p-5 space-y-4 bg-red-500/[0.02] min-w-0">
+                          <div className="flex items-center justify-between gap-4">
+                             <div className="flex items-center gap-2 text-[10px] font-bold text-foreground truncate uppercase min-w-0 flex-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                                <span className="truncate">{group.files[0].name}</span>
                              </div>
-                             <button onClick={() => selectDuplicatesInGroup(group)} className="text-[8px] font-black uppercase text-red-500/60 hover:text-red-500">Purge Candidates</button>
+                             <button onClick={() => selectDuplicatesInGroup(group)} className="text-[8px] font-black uppercase text-red-500/60 hover:text-red-500 shrink-0">Purge Candidates</button>
                           </div>
                           <div className="space-y-1">
                              {group.files.map(f => (
-                               <div key={f.id} className="flex items-center justify-between p-3 rounded-xl bg-background border border-border group/sub">
-                                  <div className="flex items-center gap-3 min-w-0">
-                                     <div className={cn("w-2 h-2 rounded-full", selectedIds.has(f.id) ? "bg-red-500" : "bg-green-500")} />
+                               <div key={f.id} className="flex items-center justify-between p-3 rounded-xl bg-background border border-border group/sub gap-3">
+                                  <div className="flex items-center gap-3 min-w-0 truncate">
+                                     <div className={cn("w-2 h-2 rounded-full shrink-0", selectedIds.has(f.id) ? "bg-red-500" : "bg-green-500")} />
                                      <span className="text-[10px] font-mono text-foreground/40 truncate">UID: {f.id}</span>
                                   </div>
-                                  <Checkbox checked={selectedIds.has(f.id)} onCheckedChange={() => toggleSelect(f.id)} className="border-red-500/20 data-[state=checked]:bg-red-500" />
+                                  <Checkbox checked={selectedIds.has(f.id)} onCheckedChange={() => toggleSelect(f.id)} className="border-red-500/20 data-[state=checked]:bg-red-500 shrink-0" />
                                </div>
                              ))}
                           </div>
@@ -419,21 +416,21 @@ export default function DuplicateFinderPage() {
 
           <div className="grid grid-cols-1 gap-6">
              <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all">
+                <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all shrink-0">
                    <ShieldCheck className="w-5 h-5" />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                    <p className="text-[10px] font-black text-foreground uppercase tracking-widest">WASM Sandbox</p>
-                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">Scanning occurs strictly in browser memory. Hardware identifiers are never transmitted.</p>
+                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere">Scanning occurs strictly in browser memory. Hardware identifiers are never transmitted.</p>
                 </div>
              </div>
              <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all">
+                <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all shrink-0">
                    <Maximize className="w-5 h-5" />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                    <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Master Bundle Logic</p>
-                   <p className="text-[11px] text-foreground/40 font-medium leading-relaxed">Unified project architectures allow for efficient large-scale redundancy cleaning.</p>
+                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere">Unified project architectures allow for efficient large-scale redundancy cleaning.</p>
                 </div>
              </div>
           </div>

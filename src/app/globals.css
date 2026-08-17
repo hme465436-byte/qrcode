@@ -58,6 +58,8 @@
   * {
     @apply border-border;
     box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
   
   body {
@@ -65,13 +67,18 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline tracking-tighter overflow-wrap-anywhere uppercase;
+    @apply font-headline tracking-tighter uppercase;
+    overflow-wrap: anywhere;
+  }
+
+  img {
+    @apply max-w-full h-auto;
   }
 }
 
 @layer utilities {
   .glass-card {
-    @apply bg-white/40 dark:bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-2xl transition-all duration-500;
+    @apply bg-white/40 dark:bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-2xl transition-all duration-500 overflow-hidden;
   }
 
   .glass-card:hover {
@@ -250,7 +257,7 @@
 }
 
 input, textarea, select {
-  @apply focus:ring-2 focus:ring-primary/20 transition-all duration-300;
+  @apply focus:ring-2 focus:ring-primary/20 transition-all duration-300 max-w-full;
 }
 
 button {
@@ -259,7 +266,7 @@ button {
 
 /* SaaS Style Table Styles */
 .markdown-preview table {
-  @apply border-separate border-spacing-0;
+  @apply border-separate border-spacing-0 w-full;
 }
 
 .markdown-preview th {
@@ -268,4 +275,12 @@ button {
 
 .markdown-preview td {
   @apply border-b border-t-0 border-x-0;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
