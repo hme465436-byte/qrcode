@@ -275,17 +275,6 @@ const TOOLS: Tool[] = [
     category: 'pdf'
   },
   { 
-    href: '/pdf-to-word', 
-    icon: FileEdit, 
-    title: 'PDF to Word', 
-    desc: 'Convert PDF documents into editable Word (.docx) masters.', 
-    label: 'DOCUMENT', 
-    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-    glowClass: 'bg-blue-500/10',
-    keywords: ['pdf to word', 'convert pdf', 'editable word', 'pdf to docx', 'extract text'],
-    category: 'pdf'
-  },
-  { 
     href: '/word-to-pdf', 
     icon: FileText, 
     title: 'Word to PDF', 
@@ -793,7 +782,7 @@ export default function Home() {
   const phrases = useMemo(() => {
     const list = [
       'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
-      'PDF to Word', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
+      'Word to PDF', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Unit Converter',
       'Letter Art', 'Favicon Studio'

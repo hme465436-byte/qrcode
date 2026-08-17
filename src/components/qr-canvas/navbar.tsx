@@ -91,7 +91,6 @@ const SEARCHABLE_TOOLS = [
   { href: '/pdf-password-protect', title: 'PDF Password', icon: ShieldAlert, label: 'SECURITY', keywords: ['encrypt', 'lock', 'secure'] },
   { href: '/text-to-pdf', title: 'Text to PDF', icon: FileText, label: 'DOCUMENT', keywords: ['convert', 'txt', 'write'] },
   { href: '/pdf-rotator', title: 'PDF Rotator', icon: RotateCw, label: 'DOCUMENT', keywords: ['orientation', 'fix', 'pages'] },
-  { href: '/pdf-to-word', title: 'PDF to Word', icon: FileEdit, label: 'DOCUMENT', keywords: ['convert', 'docx', 'editable'] },
   { href: '/word-to-pdf', title: 'Word to PDF', icon: FileText, label: 'DOCUMENT', keywords: ['docx', 'convert', 'doc'] },
   { href: '/pdf-to-image', title: 'PDF to Image', icon: FileImage, label: 'CONVERT', keywords: ['png', 'jpg', 'extract'] },
   { href: '/pdf-splitter', title: 'PDF Splitter', icon: Split, label: 'DOCUMENT', keywords: ['extract', 'pages', 'divide'] },

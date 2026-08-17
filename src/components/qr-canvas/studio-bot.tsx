@@ -27,7 +27,55 @@ import {
   Smile,
   Circle,
   Command,
-  Monitor
+  Monitor,
+  QrCode,
+  Layers,
+  Wand2,
+  SquareUser,
+  MonitorPlay,
+  FileSignature,
+  Table,
+  FileJson,
+  DownloadCloud,
+  Activity,
+  Mic,
+  Unlock,
+  ShieldAlert,
+  FileText,
+  RotateCw,
+  FileImage,
+  Split,
+  FileArchive,
+  Files,
+  ListFilter,
+  User,
+  FileStack,
+  ArrowRightLeft,
+  Clock,
+  Lock,
+  Youtube,
+  Grid2X2,
+  LayoutGrid,
+  EyeOff,
+  AlignLeft,
+  Pipette,
+  Palette,
+  FileEdit,
+  ImageIcon,
+  Music,
+  Film,
+  ListMusic,
+  Volume2,
+  CaseSensitive,
+  Grid3X3,
+  Repeat,
+  FileCode,
+  Binary,
+  Book,
+  Shapes,
+  Maximize,
+  RefreshCcw,
+  Type
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -44,11 +92,13 @@ interface Tool {
   tip: string;
   mistake: string;
   output: string;
+  icon?: any;
 }
 
 const TOOLS: Tool[] = [
   { 
     href: '/single', 
+    icon: QrCode,
     title: 'Single Studio', 
     desc: 'Design a premium, branded QR code with custom logos and AI backgrounds.', 
     useCase: 'Branding for business cards, social media, or high-end marketing.',
@@ -61,6 +111,7 @@ const TOOLS: Tool[] = [
   },
   { 
     href: '/bulk', 
+    icon: Layers,
     title: 'Bulk Production', 
     desc: 'Generate hundreds of high-res assets in a single batch.', 
     useCase: 'Inventory labels, mass ticketing, or large-scale retail campaigns.',
@@ -73,6 +124,7 @@ const TOOLS: Tool[] = [
   },
   { 
     href: '/photo-enhance-fix', 
+    icon: Wand2, 
     title: 'Photo Enhance / Pixel Fix', 
     desc: 'Hardware-accelerated restoration and resolution upscaling.', 
     useCase: 'Restoring old photos, sharpening blurry captures, or upscaling small icons.',
@@ -85,6 +137,7 @@ const TOOLS: Tool[] = [
   },
   { 
     href: '/passport-photo-maker', 
+    icon: SquareUser,
     title: 'Passport Photo Maker', 
     desc: 'Official ID photo production with A4 sheet synthesis.', 
     useCase: 'Creating visa, passport, or identity photos for government forms.',
@@ -97,6 +150,7 @@ const TOOLS: Tool[] = [
   },
   { 
     href: '/ocr', 
+    icon: FileText,
     title: 'OCR Extraction', 
     desc: 'Optical analysis for converting images into editable text.', 
     useCase: 'Copying notes from photos, extracting info from receipts or signs.',
@@ -109,6 +163,7 @@ const TOOLS: Tool[] = [
   },
   { 
     href: '/pdf-merger', 
+    icon: FileStack,
     title: 'PDF Merger', 
     desc: 'Unify multiple PDF documents into a single master file.', 
     useCase: 'Combining separate reports, invoices, or project documents.',
@@ -121,6 +176,7 @@ const TOOLS: Tool[] = [
   },
   { 
     href: '/pdf-compressor', 
+    icon: FileArchive,
     title: 'PDF Compressor', 
     desc: 'Optimize and shrink heavy PDF documents locally.', 
     useCase: 'Meeting upload limits for job applications or email attachments.',
@@ -133,6 +189,7 @@ const TOOLS: Tool[] = [
   },
   {
     href: '/video-to-audio',
+    icon: Music,
     title: 'Video to MP3',
     desc: 'Extract high-fidelity audio tracks from video files.',
     useCase: 'Converting music videos to songs or extracting speech from clips.',
@@ -145,6 +202,7 @@ const TOOLS: Tool[] = [
   },
   {
     href: '/whatsapp-dp-maker',
+    icon: User,
     title: 'WhatsApp DP Maker',
     desc: 'Create high-resolution profile pictures without cropping.',
     useCase: 'Making rectangular photos fit perfectly in WhatsApp circles.',
@@ -157,6 +215,7 @@ const TOOLS: Tool[] = [
   },
   {
     href: '/csv-to-json',
+    icon: Table,
     title: 'CSV to JSON',
     desc: 'Professional data translation for developers.',
     useCase: 'Converting Excel data for web app integration.',
@@ -382,7 +441,7 @@ export function StudioBot() {
     }
   }, [messages, isTyping]);
 
-  const handleSearch = async (input: string) => {
+  const handleSearch = useCallback(async (input: string) => {
     if (!input.trim() || isTyping) return;
 
     const userMsg = input.trim();
@@ -443,7 +502,7 @@ export function StudioBot() {
     }
     
     setIsTyping(false);
-  };
+  }, [isTyping, lastTool]);
 
   const copySteps = (tool: Tool) => {
     const text = `PRO Protocol: ${tool.title}\n\nSteps:\n${tool.steps.map((s, i) => `${i+1}. ${s}`).join('\n')}\n\nTip: ${tool.tip}`;
@@ -457,13 +516,13 @@ export function StudioBot() {
     toast({ title: "Memory Purged", description: "Studio session buffer cleared." });
   };
 
-  const handleMascotClick = () => {
+  const handleMascotClick = useCallback(() => {
     setIsPetting(true);
     setTimeout(() => {
       setIsPetting(false);
       setIsOpen(true);
     }, 400);
-  };
+  }, []);
 
   if (pathname !== '/') return null;
 
@@ -638,7 +697,7 @@ export function StudioBot() {
                              <p className="text-[11px] font-black uppercase text-foreground truncate">{link.title}</p>
                              <p className="text-[10px] text-foreground/40 truncate">{link.desc}</p>
                            </div>
-                           <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-primary transition-all group-hover:translate-x-1" />
+                           <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-primary transition-all group-hover:translate-x-1 shrink-0" />
                         </button>
                       ))}
                     </div>
