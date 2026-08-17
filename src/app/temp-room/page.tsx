@@ -109,6 +109,7 @@ export default function TempRoomPage() {
 
   // UI
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [showQr, setShowQr] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
@@ -320,6 +321,7 @@ export default function TempRoomPage() {
       return;
     }
 
+    setIsProcessing(true);
     setOutboundProgress(0);
     conn.send({ type: 'file-meta', name: outboundFile.name, size: outboundFile.size, mime: outboundFile.type });
 
@@ -337,6 +339,7 @@ export default function TempRoomPage() {
         toast({ title: "Sent", description: "File successfully transmitted." });
         setOutboundFile(null);
         setOutboundProgress(0);
+        setIsProcessing(false);
       }
     };
 
