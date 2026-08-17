@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { CopyrightYear } from './copyright-year';
-import { Shield, Lock, Zap, ArrowUpRight, Heart } from 'lucide-react';
+import { Shield, Lock, Zap, ArrowUpRight, Heart, Coffee } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 const Logo = ({ className = "h-8" }: { className?: string }) => (
   <div className={cn("flex items-center gap-3", className)}>
@@ -59,9 +60,9 @@ export function Footer() {
                   { label: 'Logo Maker', href: '/logo-maker' },
                   { label: 'OCR Extraction', href: '/ocr' },
                 ].map((link) => (
-                  <a key={link.label} href={link.href} className="text-xs font-bold text-foreground/40 hover:text-foreground transition-all uppercase tracking-widest">
+                  <Link key={link.label} href={link.href} className="text-xs font-bold text-foreground/40 hover:text-foreground transition-all uppercase tracking-widest">
                     {link.label}
-                  </a>
+                  </Link>
                 ))}
               </nav>
             </div>
@@ -71,13 +72,17 @@ export function Footer() {
               <nav className="flex flex-col gap-4">
                 {[
                   { label: 'Help Center', href: '/faq' },
+                  { label: 'Buy me a coffee', href: '/donate' },
                   { label: 'About', href: '/about' },
                   { label: 'Privacy', href: '/privacy' },
                   { label: 'Terms', href: '/terms' },
                 ].map((link) => (
-                  <a key={link.label} href={link.href} className="text-xs font-bold text-foreground/40 hover:text-foreground transition-all uppercase tracking-widest">
+                  <Link key={link.label} href={link.href} className={cn(
+                    "text-xs font-bold transition-all uppercase tracking-widest",
+                    link.href === '/donate' ? "text-primary hover:text-primary/80" : "text-foreground/40 hover:text-foreground"
+                  )}>
                     {link.label}
-                  </a>
+                  </Link>
                 ))}
               </nav>
             </div>
@@ -88,11 +93,12 @@ export function Footer() {
                 <p className="text-[10px] text-foreground/40 font-bold uppercase leading-relaxed tracking-wider">
                   Engineered with ❤️ by <span className="text-foreground">Umar Farooq</span>. Built for precision.
                 </p>
-                <div className="flex items-center gap-3 pt-2">
-                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <Heart className="w-4 h-4 fill-current" />
+                <Link href="/donate" className="flex items-center gap-3 pt-2 group/btn">
+                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/btn:bg-primary group-hover/btn:text-white transition-all">
+                      <Coffee className="w-4 h-4" />
                    </div>
-                </div>
+                   <span className="text-[9px] font-black uppercase tracking-widest text-primary">Support Dev</span>
+                </Link>
               </div>
             </div>
           </div>

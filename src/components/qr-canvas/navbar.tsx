@@ -70,7 +70,8 @@ import {
   Fingerprint,
   Hash,
   WholeWord,
-  List
+  List,
+  Coffee
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -288,6 +289,15 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
+            <Link 
+              href="/donate"
+              className={cn(
+                "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 hover:text-primary relative py-1",
+                pathname === '/donate' ? "text-primary" : "text-foreground/40"
+              )}
+            >
+              <Coffee className="w-3 h-3 icon-3d" /> Support
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4 shrink-0">

@@ -44,6 +44,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     ],
     privacy: 'Mass rendering is performed locally via WebAssembly. Your data list is never transmitted.'
   },
+  'donate': {
+    title: 'Donation Protocol',
+    description: 'Support the continued operation and development of MY KIT TOOL through manual contributions.',
+    steps: [
+      'Select your preferred transfer region (Pakistan or International).',
+      'Copy the required account number, IBAN, or USDT address.',
+      'Open your respective banking or exchange application.',
+      'Perform a manual transfer using the copied details.',
+      'The studio will automatically receive the "fuel" via standard banking/blockchain protocols.'
+    ],
+    tips: [
+      'There is no minimum amount; every contribution fuels server costs.',
+      'Verify the USDT network is TRC20 before confirming crypto transfers.'
+    ],
+    privacy: 'Financial transactions are handled entirely by your own banking software. The studio never sees your banking credentials.'
+  },
   'ocr': {
     title: 'OCR Extraction',
     description: 'Extract raw text from images, documents, and screenshots using Optical Character Recognition.',
