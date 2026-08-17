@@ -4,6 +4,7 @@ import { Navbar } from '@/components/qr-canvas/navbar';
 import { Footer } from '@/components/qr-canvas/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { StudioBot } from '@/components/qr-canvas/studio-bot';
+import { FeedbackRow } from '@/components/qr-canvas/feedback-row';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -57,6 +58,7 @@ export default function RootLayout({
         <Navbar />
         <main className="min-h-screen pt-16 w-full max-w-full">
           {children}
+          <FeedbackRow />
         </main>
         <StudioBot />
         <Footer />
