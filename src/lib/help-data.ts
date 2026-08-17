@@ -307,18 +307,18 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
   },
   'direct-file-share': {
     title: 'Direct File Share',
-    description: 'Transfer files directly between devices using P2P WebRTC technology.',
+    description: 'Upload and share files via secure cloud transit.',
     steps: [
-      'To SEND: Select a file. Share the code with the recipient.',
-      'To RECEIVE: Enter the code on the other device.',
-      'Keep both tabs open until finished.',
-      'Once complete, download the file locally.'
+      'Select or drop your file (max 50MB).',
+      'Wait for the cloud upload to reach 100%.',
+      'Copy the unique shareable link generated.',
+      'Send the link to your recipient.',
+      'The file is automatically deleted after 1 hour.'
     ],
     tips: [
-      'Both devices should be on the same WiFi for best speeds.',
-      'Large files are supported as long as your device has memory.',
-      'If it fails, refresh and try a new code.'
+      'Keep the browser tab open until the upload is finished.',
+      'Use the generated link immediately as it expires for security.'
     ],
-    privacy: 'Files never touch our servers. 100% private streaming.'
+    privacy: 'Files are stored on a temporary cloud and are definitively purged after 1 hour or following recipient intake.'
   }
 };
