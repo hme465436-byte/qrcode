@@ -14,12 +14,12 @@ import {
   Activity, 
   X, 
   QrCode, 
-  Share2, 
-  Smartphone, 
-  Globe, 
   ShieldCheck, 
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  CornerDownLeft,
+  RefreshCcw,
+  LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,161 +28,149 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useFirestore } from '@/firebase';
-import { doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, onSnapshot, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Production Constants ---
 const ROOMS_COLLECTION = "temp_rooms";
-const MAX_TEXT_SIZE = 100 * 1024; // 100KB Limit
+const MAX_TEXT_SIZE = 50 * 1024; // 50KB Limit for stability
+
+/**
+ * SECURITY RULES ADVISORY (Add to firestore.rules):
+ * match /temp_rooms/{code} {
+ *   allow read, write: if true;
+ * }
+ */
 
 export default function TempRoomPage() {
   const { toast } = useToast();
   const db = useFirestore();
   
   // App State
-  const [view, setView] = useState<'start' | 'waiting' | 'chat' | 'closed'>('start');
+  const [view, setView] = useState<'start' | 'waiting' | 'active' | 'closed'>('start');
   const [roomCode, setCode] = useState('');
   const [sharedText, setSharedText] = useState('');
   const [isCopied, setIsCopied] = useState(false);
-  const [peerId, setPeerId] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
   
-  // Refs
-  const peerRef = useRef<any>(null);
-  const connRef = useRef<any>(null);
+  // Refs for debouncing and local sync
+  const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastRemoteTextRef = useRef<string>('');
   const qrRef = useRef<HTMLDivElement>(null);
   const qrInstance = useRef<any>(null);
 
   // Generate 6-char room code
   const generateCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-  };
-
-  // --- Signaling Cleanup ---
-  const destroyRoom = useCallback(async (code: string) => {
-    if (db && code) {
-      await deleteDoc(doc(db, ROOMS_COLLECTION, code)).catch(() => {});
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing 0, O, I, 1
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-  }, [db]);
-
-  // --- Peer Initialization ---
-  const initPeer = async () => {
-    const { default: Peer } = await import('peerjs');
-    const p = new Peer();
-    peerRef.current = p;
-    
-    return new Promise<string>((resolve) => {
-      p.on('open', (id) => {
-        setPeerId(id);
-        resolve(id);
-      });
-      
-      p.on('connection', (conn) => {
-        connRef.current = conn;
-        setupConnection(conn);
-      });
-
-      p.on('error', (err) => {
-        console.error('Peer Error:', err);
-        setView('closed');
-      });
-    });
-  };
-
-  const setupConnection = (conn: any) => {
-    conn.on('open', () => {
-      setView('chat');
-      toast({ title: "Device Connected", description: "Shared clipboard active." });
-    });
-
-    conn.on('data', (data: any) => {
-      if (data.type === 'text') {
-        setSharedText(data.content);
-      } else if (data.type === 'close') {
-        setView('closed');
-      }
-    });
-
-    conn.on('close', () => {
-      setView('closed');
-    });
+    return result;
   };
 
   // --- Actions ---
   const handleCreate = async () => {
     if (!db) return;
+    setIsConnecting(true);
     const code = generateCode();
-    setCode(code);
-    setView('waiting');
     
-    const id = await initPeer();
-    
-    // Write pairing data to Firestore
-    await setDoc(doc(db, ROOMS_COLLECTION, code), {
-      peerId: id,
-      status: 'waiting',
-      createdAt: Date.now()
-    });
-
-    // Listen for join
-    const unsubscribe = onSnapshot(doc(db, ROOMS_COLLECTION, code), (snapshot) => {
-      if (!snapshot.exists()) {
-        if (view === 'chat' || view === 'waiting') setView('closed');
-      }
-    });
-
-    // Handle Unload
-    const cleanup = () => {
-      destroyRoom(code);
-      if (connRef.current) connRef.current.send({ type: 'close' });
-    };
-    window.addEventListener('beforeunload', cleanup);
-    
-    return () => {
-      unsubscribe();
-      window.removeEventListener('beforeunload', cleanup);
-    };
+    try {
+      await setDoc(doc(db, ROOMS_COLLECTION, code), {
+        text: '',
+        updatedAt: serverTimestamp(),
+        status: 'waiting'
+      });
+      
+      setCode(code);
+      setView('waiting');
+      startListener(code);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Creation Failed", description: "Could not initialize room matrix." });
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const handleJoin = async () => {
     if (!db || !roomCode.trim()) return;
     const code = roomCode.trim().toUpperCase();
+    setIsConnecting(true);
     
-    setIsCopied(true); // Re-use state for loader animation
+    try {
+      const docRef = doc(db, ROOMS_COLLECTION, code);
+      const snap = await getDoc(docRef);
+      
+      if (!snap.exists()) {
+        toast({ variant: "destructive", title: "Room Not Found", description: "Wrong or expired code." });
+        setIsConnecting(false);
+        return;
+      }
+
+      await updateDoc(docRef, { status: 'connected' });
+      setView('active');
+      startListener(code);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Join Failed", description: "Check your network uplink." });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const startListener = (code: string) => {
+    if (!db) return;
     
-    const snapshot = await new Promise<any>((resolve) => {
-      const unsub = onSnapshot(doc(db, ROOMS_COLLECTION, code), (s) => {
-        unsub();
-        resolve(s);
-      });
+    const unsubscribe = onSnapshot(doc(db, ROOMS_COLLECTION, code), (snapshot) => {
+      if (!snapshot.exists()) {
+        setView('closed');
+        return;
+      }
+      
+      const data = snapshot.data();
+      if (data.status === 'connected' && view === 'waiting') {
+        setView('active');
+      }
+      
+      // Update local text only if it's different from what we last sent
+      if (data.text !== undefined && data.text !== sharedText) {
+        lastRemoteTextRef.current = data.text;
+        setSharedText(data.text);
+      }
     });
 
-    if (!snapshot.exists()) {
-      toast({ variant: "destructive", title: "Invalid Code", description: "Room not found or expired." });
-      setIsCopied(false);
-      return;
-    }
+    // Cleanup on leave
+    const cleanup = async () => {
+      unsubscribe();
+      await deleteDoc(doc(db, ROOMS_COLLECTION, code)).catch(() => {});
+    };
 
-    const { peerId: targetId } = snapshot.data();
-    await initPeer();
-    
-    const conn = peerRef.current.connect(targetId);
-    connRef.current = conn;
-    setupConnection(conn);
-    setIsCopied(false);
+    window.addEventListener('beforeunload', cleanup);
+    return cleanup;
   };
 
   const handleTextChange = (val: string) => {
     if (val.length > MAX_TEXT_SIZE) return;
     setSharedText(val);
-    if (connRef.current && connRef.current.open) {
-      connRef.current.send({ type: 'text', content: val });
-    }
+
+    // Debounce Firestore Update
+    if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
+    updateTimerRef.current = setTimeout(async () => {
+      if (!db || !roomCode) return;
+      try {
+        await updateDoc(doc(db, ROOMS_COLLECTION, roomCode), {
+          text: val,
+          updatedAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.warn("Sync failed");
+      }
+    }, 150);
   };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(sharedText);
     setIsCopied(true);
-    toast({ title: "Copied to clipboard" });
+    toast({ title: "Content Copied" });
     setTimeout(() => setIsCopied(false), 2000);
   };
 
@@ -192,7 +180,7 @@ export default function TempRoomPage() {
       handleTextChange(text);
       toast({ title: "Pasted from clipboard" });
     } catch (e) {
-      toast({ variant: "destructive", title: "Paste blocked", description: "Allow clipboard access in browser." });
+      toast({ variant: "destructive", title: "Paste blocked" });
     }
   };
 
@@ -229,7 +217,7 @@ export default function TempRoomPage() {
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-full overflow-x-hidden">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Zap className="w-3.5 h-3.5" /> Direct Transfer
+          <Zap className="w-3.5 h-3.5" /> Live Sync
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
@@ -237,14 +225,14 @@ export default function TempRoomPage() {
               Temp <span className="text-primary italic">Room</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Shared live clipboard. Type on one device, see on the other. Data never touches the cloud—100% private P2P synchronization.
+              Real-time shared clipboard. Type on one device, see it on the other instantly. Data is ephemeral and purged when the session ends.
             </p>
           </div>
           <div className="flex items-center gap-3">
              <GetHelp toolId="temp-room" />
-             {(view === 'chat' || view === 'waiting') && (
+             {(view === 'active' || view === 'waiting') && (
                <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
-                 Leave Room
+                 <LogOut className="w-3.5 h-3.5 mr-2" /> Leave
                </Button>
              )}
           </div>
@@ -260,16 +248,16 @@ export default function TempRoomPage() {
             <CardHeader className="py-4 border-b border-white/5 bg-black/20 flex flex-row items-center justify-between shrink-0">
                <div className="flex items-center gap-3">
                   <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    view === 'chat' ? "bg-green-500 animate-pulse" : "bg-white/10"
+                    "w-2.5 h-2.5 rounded-full transition-all duration-500",
+                    view === 'active' ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse" : "bg-white/10"
                   )} />
-                  <CardTitle className="text-[9px] font-black text-primary uppercase tracking-[0.4em]">
-                    {view === 'chat' ? 'Connected Sync' : 'Handshake Standby'}
+                  <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">
+                    {view === 'active' ? 'Room Active' : view === 'waiting' ? 'Waiting for Join' : 'Standby'}
                   </CardTitle>
                </div>
-               {view === 'chat' && (
+               {view === 'active' && (
                  <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">
-                    {formatSize(sharedText.length)} / 100KB
+                    {sharedText.length.toLocaleString()} Chars / 50KB
                  </span>
                )}
             </CardHeader>
@@ -280,17 +268,18 @@ export default function TempRoomPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-lg">
                        <button 
                         onClick={handleCreate}
-                        className="group flex flex-col items-center gap-6 p-10 rounded-[3rem] bg-primary text-white shadow-2xl shadow-primary/20 hover:scale-105 transition-all"
+                        disabled={isConnecting}
+                        className="group flex flex-col items-center gap-6 p-10 rounded-[3rem] bg-primary text-white shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                        >
                           <div className="w-16 h-16 rounded-[1.5rem] bg-white/20 flex items-center justify-center border border-white/20">
-                             <Plus className="w-8 h-8" />
+                             {isConnecting ? <Loader2 className="w-8 h-8 animate-spin" /> : <Plus className="w-8 h-8" />}
                           </div>
                           <span className="text-sm font-headline font-black uppercase tracking-widest">Create Room</span>
                        </button>
                        
                        <div className="p-10 rounded-[3rem] bg-black/40 border border-white/5 flex flex-col items-center gap-6 group/join">
                           <div className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center border border-white/5 group-hover/join:border-primary/40 transition-colors">
-                             <ArrowRight className="w-8 h-8 text-white/20 group-hover/join:text-primary transition-colors" />
+                             <CornerDownLeft className="w-8 h-8 text-white/20 group-hover/join:text-primary transition-colors" />
                           </div>
                           <div className="w-full space-y-4">
                              <Input 
@@ -299,8 +288,8 @@ export default function TempRoomPage() {
                               placeholder="CODE"
                               className="h-12 bg-white/5 border-white/10 text-center text-lg font-bold tracking-[0.3em] uppercase rounded-xl"
                              />
-                             <Button onClick={handleJoin} disabled={isCopied || !roomCode.trim()} className="w-full h-12 bg-white text-black font-black uppercase tracking-widest text-[9px] rounded-xl">
-                                {isCopied ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Join Room'}
+                             <Button onClick={handleJoin} disabled={isConnecting || !roomCode.trim()} className="w-full h-12 bg-white text-black font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-white/90">
+                                {isConnecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Join Room'}
                              </Button>
                           </div>
                        </div>
@@ -311,7 +300,7 @@ export default function TempRoomPage() {
                {view === 'waiting' && (
                  <div className="flex-1 flex flex-col items-center justify-center gap-10 animate-in fade-in duration-700">
                     <div className="space-y-4 text-center">
-                       <p className="text-[10px] font-black uppercase text-primary tracking-[0.4em]">Room Protocol Initiated</p>
+                       <p className="text-[10px] font-black uppercase text-primary tracking-[0.4em]">Room Ready</p>
                        <h3 className="text-5xl sm:text-7xl font-headline font-black text-white tracking-[0.1em]">{roomCode}</h3>
                     </div>
 
@@ -322,20 +311,20 @@ export default function TempRoomPage() {
                     <div className="flex flex-col items-center gap-4 text-center px-10">
                        <div className="flex items-center gap-3">
                           <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Waiting for other device to join...</p>
+                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Waiting for join...</p>
                        </div>
-                       <p className="text-[9px] text-white/10 uppercase max-w-[240px] leading-relaxed">Share the 6-character code or scan the visual matrix on the receiving hardware.</p>
+                       <p className="text-[9px] text-white/10 uppercase max-w-[240px] leading-relaxed">Share this code with your other device. Once they join, the clipboard will sync instantly.</p>
                     </div>
                  </div>
                )}
 
-               {view === 'chat' && (
+               {view === 'active' && (
                  <div className="flex-1 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-500 h-full">
                     <Textarea 
                       value={sharedText}
                       onChange={e => handleTextChange(e.target.value)}
-                      placeholder="Start typing or paste from clipboard..."
-                      className="flex-1 bg-black/20 border-white/10 rounded-[2.5rem] p-10 text-xl font-medium leading-relaxed resize-none focus:ring-primary/40 text-white min-h-[300px] lg:min-h-0"
+                      placeholder="Start typing on either device..."
+                      className="flex-1 bg-black/20 border-white/10 rounded-[2.5rem] p-10 text-xl font-medium leading-relaxed resize-none focus:ring-primary/40 text-white min-h-[300px] lg:min-h-0 custom-scrollbar"
                     />
                     
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -359,13 +348,13 @@ export default function TempRoomPage() {
                        <X className="w-10 h-10" />
                     </div>
                     <div className="text-center space-y-2">
-                       <h3 className="text-2xl font-headline font-black uppercase text-white">Room Destroyed</h3>
+                       <h3 className="text-2xl font-headline font-black uppercase text-white">Room Closed</h3>
                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest max-w-[240px] mx-auto">
-                          The other participant has left the session. All ephemeral data has been definitively purged.
+                          The room has been destroyed. Ephemeral data is purged.
                        </p>
                     </div>
                     <Button onClick={() => window.location.reload()} className="h-14 px-10 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-[10px]">
-                       Initialize New Room
+                       Start New Session
                     </Button>
                  </div>
                )}
@@ -375,9 +364,9 @@ export default function TempRoomPage() {
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-1">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Zero Persistence</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Absolute</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                Content sync is memory-to-memory. No textual payloads are stored on Firebase. Leave the page or refresh to immediately neutralize the room.
+                Content sync is highly volatile. Data is immediately neutralized when you close the tab or refresh. No historical logs are maintained.
               </p>
             </div>
           </div>
@@ -388,14 +377,14 @@ export default function TempRoomPage() {
            <Card className="glass-card border-border shadow-xl">
               <CardHeader className="py-6 border-b border-white/5 bg-white/2">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Activity className="w-5 h-5 text-primary" /> Network Intelligence
+                    <Activity className="w-5 h-5 text-primary" /> Matrix Intelligence
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-6">
                  {[
-                   { icon: Smartphone, title: 'Multi-Hardware', desc: 'Sync text between iOS, Android, Mac, and Windows hardware instantly.' },
-                   { icon: Globe, title: 'Pairing Matrix', desc: '6-character identity codes facilitate rapid device discovery across any network.' },
-                   { icon: ShieldCheck, title: 'End-to-End', desc: 'WebRTC DataChannels ensure your clipboard data never touches a server.' },
+                   { icon: Smartphone, title: 'Multi-Device', desc: 'Sync text between mobile and desktop without needing an account.' },
+                   { icon: Globe, title: 'Network Native', desc: 'Works across different networks using real-time signaling.' },
+                   { icon: ShieldCheck, title: 'Zero Storage', desc: 'Data exists only for the duration of the room session.' },
                  ].map((tip, i) => (
                    <div key={i} className="flex gap-5 group">
                       <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary shrink-0 border border-border group-hover:scale-110 transition-transform">
@@ -403,7 +392,7 @@ export default function TempRoomPage() {
                       </div>
                       <div className="space-y-1 min-w-0">
                          <h4 className="text-[11px] font-black uppercase text-foreground">{tip.title}</h4>
-                         <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">{tip.desc}</p>
+                         <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase">{tip.desc}</p>
                       </div>
                    </div>
                  ))}
@@ -415,9 +404,9 @@ export default function TempRoomPage() {
                  <MessageSquare className="w-7 h-7" />
               </div>
               <div className="space-y-2">
-                <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Instructional Protocol</h4>
+                <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Protocol Tip</h4>
                 <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                  Keep both browser tabs active. If any participant navigates away, the P2P tunnel will collapse and the room will be definitively destroyed.
+                  Perfect for moving long URLs, Wi-Fi keys, or code snippets between your phone and laptop without sending emails to yourself.
                 </p>
               </div>
            </div>
@@ -432,12 +421,4 @@ export default function TempRoomPage() {
       `}</style>
     </div>
   );
-}
-
-function formatSize(bytes: number) {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
