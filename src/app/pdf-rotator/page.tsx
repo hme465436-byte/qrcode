@@ -33,10 +33,10 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { PDFDocument, degrees } from 'pdf-lib';
 
-// Load PDF.js worker from CDN
+// Load PDF.js worker from CDN with correct .mjs extension for v4.x
 import * as pdfjsLib from 'pdfjs-dist';
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 }
 
 interface PageData {
@@ -224,7 +224,7 @@ export default function PdfRotatorPage() {
                 <div 
                   onClick={() => !isRendering && fileInputRef.current?.click()}
                   className={cn(
-                    "relative h-48 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 flex flex-col items-center justify-center bg-secondary/30 transition-all cursor-pointer overflow-hidden group/upload",
+                    "relative h-48 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all cursor-pointer overflow-hidden group/upload",
                     isRendering && "cursor-not-allowed opacity-80"
                   )}
                 >

@@ -38,10 +38,10 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import JSZip from 'jszip';
 
-// Load PDF.js worker from CDN
+// Load PDF.js worker from CDN with correct .mjs extension for v4.x
 import * as pdfjsLib from 'pdfjs-dist';
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 }
 
 interface PageResult {
@@ -391,7 +391,7 @@ export default function PdfToImagePage() {
                    {results.map((res) => (
                      <div key={res.index} className="group relative aspect-[3/4] bg-white rounded-2xl overflow-hidden shadow-xl ring-1 ring-border animate-in zoom-in duration-300">
                         <img src={res.dataUrl} alt={`Page ${res.index}`} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
                            <p className="text-[10px] font-black text-white uppercase tracking-widest">Page {res.index}</p>
                            <Button asChild size="sm" variant="outline" className="h-8 bg-white/20 border-white/40 text-white hover:bg-primary hover:border-primary text-[9px] font-black uppercase">
                              <a href={res.dataUrl} download={`page_${res.index}.${format.split('/')[1]}`}>
