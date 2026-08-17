@@ -119,16 +119,26 @@ export function StudioBot() {
   };
 
   const KitHead = () => (
-    <div className="relative w-14 h-12 bg-white rounded-full border-2 border-[#1a1a1a] flex flex-col items-center justify-center pt-1 shadow-inner">
-      <div className="flex gap-2 mb-1">
-        <div className="w-2.5 h-3 bg-[#1a1a1a] rounded-full flex items-center justify-center overflow-hidden">
-          <div className="w-1 h-1 bg-white rounded-full mt-[-2px] animate-kit-blink" />
+    <div className="relative w-16 h-14 bg-white rounded-[2rem] border-2 border-[#1a1a1a] flex flex-col items-center justify-center shadow-inner overflow-visible">
+      {/* Eyes Area */}
+      <div className="flex gap-3 mb-1 relative z-10">
+        <div className="w-4 h-4.5 bg-[#1a1a1a] rounded-full flex items-center justify-center overflow-hidden">
+          <div className="w-1.5 h-1.5 bg-white rounded-full mt-[-2px] ml-[-1px] animate-kit-blink" />
         </div>
-        <div className="w-2.5 h-3 bg-[#1a1a1a] rounded-full flex items-center justify-center overflow-hidden">
-          <div className="w-1 h-1 bg-white rounded-full mt-[-2px] animate-kit-blink" />
+        <div className="w-4 h-4.5 bg-[#1a1a1a] rounded-full flex items-center justify-center overflow-hidden">
+          <div className="w-1.5 h-1.5 bg-white rounded-full mt-[-2px] ml-[-1px] animate-kit-blink" />
         </div>
       </div>
-      <div className="w-1 h-1 bg-[#1a1a1a] rounded-full mb-1" />
+      
+      {/* Pink Cheeks */}
+      <div className="absolute top-1/2 left-2 w-3 h-2 bg-pink-200/60 rounded-full blur-[1px]" />
+      <div className="absolute top-1/2 right-2 w-3 h-2 bg-pink-200/60 rounded-full blur-[1px]" />
+      
+      {/* Nose and Smile */}
+      <div className="flex flex-col items-center -mt-1 relative z-10">
+        <div className="w-1.5 h-1 bg-[#1a1a1a] rounded-full" />
+        <div className="w-3 h-1.5 border-b-2 border-[#1a1a1a] rounded-full mt-[-1px]" />
+      </div>
     </div>
   );
 
@@ -155,8 +165,8 @@ export function StudioBot() {
         <div className="p-4 border-b border-white/5 flex items-center justify-between bg-secondary/30 shrink-0">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="absolute -top-3 left-0 w-4 h-4 bg-[#1a1a1a] rounded-full animate-kit-ear-twitch" />
-              <div className="absolute -top-3 right-0 w-4 h-4 bg-[#1a1a1a] rounded-full animate-kit-ear-twitch" />
+              <div className="absolute -top-3 -left-1 w-4.5 h-4.5 bg-[#1a1a1a] rounded-full animate-kit-ear-twitch" />
+              <div className="absolute -top-3 -right-1 w-4.5 h-4.5 bg-[#1a1a1a] rounded-full animate-kit-ear-twitch" />
               <KitHead />
             </div>
             <div className="space-y-0.5">
