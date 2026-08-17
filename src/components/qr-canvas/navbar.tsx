@@ -4,56 +4,17 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  Menu, 
   Scan, 
   Sun, 
   Moon,
   Home,
   QrCode,
   Layers,
-  Info,
-  HelpCircle,
-  Repeat,
-  Binary,
-  Grid3X3,
   FileText,
-  ImageIcon,
-  FileCode,
-  Music,
   Search,
   ArrowRight,
   X,
-  Maximize,
-  FileStack,
-  CaseSensitive,
-  RefreshCcw,
-  Pipette,
-  Palette,
-  EyeOff,
-  ListMusic,
-  Film,
-  Volume2,
-  LayoutGrid,
-  Grid2X2,
-  MicOff,
-  FileEdit,
-  AlignLeft,
-  Youtube,
-  Lock,
-  Clock,
-  MonitorPlay,
-  Type,
-  FileArchive,
-  ArrowRightLeft,
-  User,
-  DownloadCloud,
-  Files,
-  ListFilter,
-  Split,
-  FileImage,
   RotateCw,
-  ShieldAlert,
-  Command,
   Unlock,
   Activity,
   Mic,
@@ -62,19 +23,53 @@ import {
   Wand2,
   SquareUser,
   FileSignature,
-  Shapes,
-  AlignRight,
-  Monitor,
+  Type,
+  MonitorPlay,
+  DownloadCloud,
+  Split,
+  FileArchive,
+  Files,
+  ListFilter,
+  User,
+  FileStack,
+  ArrowRightLeft,
+  Clock,
+  Youtube,
+  Lock,
+  LayoutGrid,
+  Grid2X2,
+  EyeOff,
+  AlignLeft,
+  Palette,
+  Pipette,
+  FileEdit,
+  ImageIcon,
+  FileImage,
+  MicOff,
+  Film,
+  Volume2,
+  ListMusic,
+  CaseSensitive,
+  Grid3X3,
+  Repeat,
+  FileCode,
+  Binary,
+  Info,
   Zap,
   CheckCircle2,
   AlertCircle,
+  ShieldCheck,
+  Smartphone,
+  Monitor,
   Terminal,
-  ShieldCheck
+  ShieldAlert,
+  Maximize,
+  RefreshCcw,
+  Music
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
 // Full Studio Tool Registry
@@ -174,7 +169,6 @@ export function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Placeholder Animation State
   const [placeholder, setPlaceholder] = useState('');
@@ -306,38 +300,6 @@ export function Navbar() {
               <Scan className="w-4 h-4 icon-3d" />
               <span className="hidden sm:inline">Scanner</span>
              </button>
-
-             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <button className="xl:hidden w-10 h-10 rounded-xl bg-secondary/50 border border-white/5 flex items-center justify-center text-foreground/40 icon-container-3d">
-                    <Menu className="w-5 h-5 icon-3d" />
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full max-w-[320px] bg-card p-0 overflow-hidden text-foreground border-l border-white/5 top-0 h-full z-[100]">
-                  <div className="h-full flex flex-col">
-                    <SheetHeader className="p-8 border-b border-white/5 text-left">
-                      <SheetTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Navigation Matrix</SheetTitle>
-                      <Logo iconOnly={false} className="mt-6" />
-                    </SheetHeader>
-                    <nav className="flex-1 p-4 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
-                      {NAV_ITEMS.map((item) => (
-                        <Link 
-                          key={item.label} 
-                          href={item.href}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className={cn(
-                            "flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.15em] transition-all p-4 rounded-xl",
-                            pathname === item.href ? "bg-primary/10 text-primary" : "text-foreground/40 hover:bg-white/5"
-                          )}
-                        >
-                          <item.icon className="w-4 h-4 icon-3d" />
-                          {item.label}
-                        </Link>
-                      ))}
-                    </nav>
-                  </div>
-                </SheetContent>
-             </Sheet>
           </div>
         </div>
       </header>
@@ -382,7 +344,7 @@ export function Navbar() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1 shrink-0">
-                       <span className="text-[9px] font-black uppercase tracking-widest text-primary hidden sm:inline">Execute</span>
+                       <span className="text-[9px] font-black uppercase tracking-widest text-primary hidden sm:inline">Open</span>
                        <ArrowRight className="w-4 h-4 text-primary icon-3d" />
                     </div>
                   </button>

@@ -542,7 +542,7 @@ const TOOLS: Tool[] = [
     href: '/image-compressor', 
     icon: Maximize, 
     title: 'Image Compressor', 
-    desc: 'Reduce file size locally with quality control.', 
+    desc: 'Shrink file size locally with quality control.', 
     label: 'OPTIMIZE', 
     color: 'text-lime-500 bg-lime-500/10 border-lime-500/20',
     glowClass: 'bg-lime-500/10',
@@ -760,7 +760,7 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
           </p>
           {isGrid && (
             <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-              Initialize <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
+              Open <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
             </div>
           )}
         </div>
@@ -1046,7 +1046,7 @@ export default function Home() {
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
              <Link href="/single" className="w-full sm:w-auto px-12 py-5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
-               Initialize Studio
+               Open Studio
              </Link>
              <Link href="/about" className="w-full sm:w-auto px-12 py-5 bg-white/5 border border-white/10 text-foreground/40 font-black text-xs uppercase tracking-[0.3em] rounded-xl hover:bg-white/10 transition-all">
                Documentation
@@ -1072,7 +1072,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
         className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10 w-full sm:w-auto"
       >
         <RotateCcw className="w-4 h-4 mr-2 icon-3d" />
-        Reset Studio Registry
+        Reset
       </ShadButton>
     </div>
   );
