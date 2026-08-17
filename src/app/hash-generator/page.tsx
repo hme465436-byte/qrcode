@@ -27,6 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -79,7 +80,7 @@ export default function HashGeneratorPage() {
   const [inputText, setInputText] = useState('');
   const [isUppercase, setIsUppercase] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedAlgos, setSelectedAlgos] = useState<Set<string>>(new Set(['md5', 'sha256']));
+  const [selectedAlgos, setSelectedAlgos] = useState<Set<string>>(new Set(['md5', 'sha-256']));
   const [outputs, setOutput] = useState<Record<string, string>>({});
 
   const algos = [
@@ -103,8 +104,6 @@ export default function HashGeneratorPage() {
 
     for (const algo of selectedAlgos) {
       if (algo === 'md5') {
-        // Local MD5 only supports strings in this simple version
-        // Files use a placeholder or simplified logic
         results[algo] = typeof data === 'string' ? md5(data) : 'N/A (Text Only)';
       } else {
         try {
@@ -149,8 +148,8 @@ export default function HashGeneratorPage() {
   };
 
   const handleCopy = (text: string, label: string) => {
-    const output = isUppercase ? text.toUpperCase() : text.toLowerCase();
-    navigator.clipboard.writeText(output);
+    const out = isUppercase ? text.toUpperCase() : text.toLowerCase();
+    navigator.clipboard.writeText(out);
     toast({ title: "Hash Copied", description: `${label} saved to clipboard.` });
   };
 
@@ -170,12 +169,6 @@ export default function HashGeneratorPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
-      {/* SEO & Headers */}
-      <head>
-        <title>Hash Generator MD5 SHA-256 Free Online | MY KIT TOOL</title>
-        <meta name="description" content="Securely generate MD5, SHA-1, SHA-256, SHA-384, and SHA-512 hashes for text and files locally in your browser. 100% private cryptographic studio." />
-      </head>
-
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <ShieldCheck className="w-3.5 h-3.5" /> Security Suite
@@ -388,16 +381,6 @@ export default function HashGeneratorPage() {
             </div>
          </div>
       </section>
-
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Hash Generator",
-        "operatingSystem": "Web",
-        "applicationCategory": "SecurityApplication",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "description": "Professional MD5 and SHA hash generator for text and files. 100% private browser-side hashing."
-      })}} />
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
