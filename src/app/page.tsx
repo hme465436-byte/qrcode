@@ -70,7 +70,8 @@ import {
   Hash,
   WholeWord,
   Frame,
-  Stamp
+  Stamp,
+  Scan
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -115,6 +116,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
     category: 'generators'
+  },
+  { 
+    href: '/barcode-reader', 
+    icon: Scan, 
+    title: 'Barcode Reader', 
+    desc: 'Scan industrial barcodes and QR patterns via camera or image.', 
+    label: 'HARDWARE', 
+    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
+    glowClass: 'bg-rose-500/10',
+    keywords: ['barcode', 'scanner', 'ean', 'upc', 'read barcode', 'scan qr', 'decoder'],
+    category: 'utilities'
   },
   { 
     href: '/custom-watermark', 
@@ -881,7 +893,7 @@ export default function Home() {
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
-      'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark'
+      'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

@@ -45,6 +45,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     ],
     privacy: 'Mass rendering is performed locally via WebAssembly. Your data list is never transmitted.'
   },
+  'barcode-reader': {
+    title: 'Barcode & QR Reader',
+    description: 'Advanced optical decoding for industrial and commercial matrix patterns.',
+    steps: [
+      'Select your preferred input protocol: Live Camera or Asset Upload.',
+      'Point your lens at the barcode or upload a high-contrast image (JPG/PNG).',
+      'The system will automatically isolate the matrix and decode the payload.',
+      'Copy the result to your clipboard or launch the URL protocol if identified.',
+      'Review your last 10 successful identifications in the Log Matrix.'
+    ],
+    tips: [
+      'For small codes, use the manual zoom or move your hardware closer to the target.',
+      'Ensure the barcode is oriented horizontally within the viewfinder guides.'
+    ],
+    privacy: 'Decoding occurs strictly in browser memory. No visual data or decoded strings are ever transmitted to external servers.'
+  },
   'donate': {
     title: 'Donation Protocol',
     description: 'Support the continued operation and development of MY KIT TOOL through manual contributions.',
