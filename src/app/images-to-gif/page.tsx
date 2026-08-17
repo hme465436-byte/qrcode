@@ -25,7 +25,8 @@ import {
   Scaling,
   Image as ImageIcon,
   Play,
-  Monitor
+  Monitor,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -415,14 +416,14 @@ export default function ImagesToGifPage() {
                        <div className="pt-4 flex flex-col gap-3">
                           <Button onClick={generateGif} disabled={frames.length < 2 || isProcessing} className="h-14 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 active:scale-95 transition-all">
                              {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                             Synthesize Master
+                             Download
                           </Button>
                           {gifUrl && (
                              <Button asChild variant="outline" className="h-12 rounded-2xl border-white/10 bg-secondary text-foreground font-black uppercase tracking-widest text-[10px] shadow-xl">
                                 <a href={gifUrl} download={`animation-master-${Date.now()}.gif`}>
                                    <Download className="w-4 h-4 mr-2" /> Download GIF
                                 </a>
-                             </Button>
+                          </Button>
                           )}
                        </div>
                     </div>
@@ -446,17 +447,6 @@ export default function ImagesToGifPage() {
         </div>
       </div>
       
-      {/* MOBILE STICKY ACTIONS */}
-      {gifUrl && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#0a0a0c]/80 backdrop-blur-3xl border-t border-white/10 z-[100] lg:hidden flex gap-3 animate-in slide-in-from-bottom-full duration-500">
-          <Button asChild className="flex-1 h-14 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-2xl">
-             <a href={gifUrl} download={`animation-master-${Date.now()}.gif`}>
-                <Download className="w-4 h-4" /> Download GIF
-             </a>
-          </Button>
-        </div>
-      )}
-
       <style jsx global>{`
         .bg-checkered {
           background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
