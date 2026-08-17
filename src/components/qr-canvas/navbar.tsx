@@ -84,7 +84,6 @@ const SEARCHABLE_TOOLS = [
   { href: '/photo-enhance-fix', title: 'Photo Enhance', icon: Wand2, label: 'IMAGE', keywords: ['upscale', 'sharpen', 'clarity', 'fix'] },
   { href: '/passport-photo-maker', title: 'Passport Photo', icon: SquareUser, label: 'IDENTITY', keywords: ['visa', 'id', 'print', 'sheet'] },
   { href: '/live-wallpaper', title: 'Live Wallpaper', icon: MonitorPlay, label: 'MEDIA', keywords: ['video', 'loop', 'pc', 'phone'] },
-  { href: '/image-live-wallpaper', title: 'Image Live Wallpaper', icon: ImageIcon, label: 'MEDIA', keywords: ['photo wallpaper', 'ken burns', 'pan', 'zoom'] },
   { href: '/rename-file', title: 'Rename File', icon: FileSignature, label: 'UTIL', keywords: ['change name', 'extension', 'relabel'] },
   { href: '/csv-to-json', title: 'CSV to JSON', icon: Table, label: 'DATA', keywords: ['convert', 'excel', 'parse'] },
   { href: '/json-to-csv', title: 'JSON to CSV', icon: FileJson, label: 'DATA', keywords: ['convert', 'flatten', 'excel'] },
@@ -344,7 +343,7 @@ export function Navbar() {
       </header>
 
       <Dialog open={isSearchOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none text-foreground top-[10%] translate-y-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] flex flex-col">
+        <DialogContent className="glass-card max-w-2xl border-white/10 p-0 overflow-hidden outline-none text-foreground flex flex-col">
           <DialogHeader className="p-6 border-b border-white/10 bg-white/2 relative overflow-visible shrink-0">
             <DialogTitle className="sr-only">Search Tools</DialogTitle>
             <div className="relative group/search z-20">

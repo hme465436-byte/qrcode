@@ -143,17 +143,6 @@ const TOOLS: Tool[] = [
     category: 'utilities'
   },
   { 
-    href: '/image-live-wallpaper', 
-    icon: ImageIcon, 
-    title: 'Image Live Wallpaper', 
-    desc: 'Turn a photo into a looping live wallpaper (slow zoom / pan).', 
-    label: 'MEDIA', 
-    color: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
-    glowClass: 'bg-cyan-400/10',
-    keywords: ['image live wallpaper', 'photo wallpaper', 'ken burns', 'pan', 'zoom', 'looping photo'],
-    category: 'image'
-  },
-  { 
     href: '/rename-file', 
     icon: FileSignature, 
     title: 'Rename File', 
