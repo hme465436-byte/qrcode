@@ -66,6 +66,7 @@ export default function ImageBorderFramePage() {
   const [pattern, setPattern] = useState<PatternType>('none');
   const [aspect, setAspect] = useState<AspectPreset>('original');
   const [zoom, setZoom] = useState(1);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
   
   // Polaroid Text
   const [caption, setCaption] = useState('');
@@ -74,6 +75,8 @@ export default function ImageBorderFramePage() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isDragging = useRef(false);
+  const lastMousePos = useRef({ x: 0, y: 0 });
 
   const drawPattern = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
     if (pattern === 'none') return;
@@ -117,7 +120,6 @@ export default function ImageBorderFramePage() {
     const b = borderWidth;
     const p = padding;
     const r = cornerRadius;
-    const dpiValue = 72; // Standard base DPI for scaling
 
     // Calculate base dimensions
     let targetW = img.width;
@@ -194,13 +196,13 @@ export default function ImageBorderFramePage() {
     ctx.save();
     const imgDrawW = img.width * zoom;
     const imgDrawH = img.height * zoom;
-    const imgX = (totalW - imgDrawW) / 2;
-    const imgY = b + p + (targetH - imgDrawH) / 2;
+    const imgX = (totalW - imgDrawW) / 2 + pos.x;
+    const imgY = b + p + (targetH - imgDrawH) / 2 + pos.y;
     
     // Clipping for image corners
     if (r > 0) {
       ctx.beginPath();
-      ctx.roundRect(imgX, imgY, imgDrawW, imgDrawH, Math.max(0, r - b - p));
+      ctx.roundRect((totalW - targetW) / 2, b + p, targetW, targetH, Math.max(0, r - b - p));
       ctx.clip();
     }
 
@@ -219,7 +221,7 @@ export default function ImageBorderFramePage() {
       ctx.restore();
     }
 
-  }, [loadedImage, borderWidth, borderColor, borderOpacity, canvasColor, frameStyle, padding, cornerRadius, pattern, aspect, zoom, caption, captionColor, captionSize]);
+  }, [loadedImage, borderWidth, borderColor, borderOpacity, canvasColor, frameStyle, padding, cornerRadius, pattern, aspect, zoom, caption, captionColor, captionSize, pos]);
 
   useEffect(() => {
     if (loadedImage) renderCanvas();
@@ -260,6 +262,7 @@ export default function ImageBorderFramePage() {
 
   const applyAspect = (val: AspectPreset) => {
     setAspect(val);
+    setPos({ x: 0, y: 0 });
     toast({ title: "Aspect Calibrated", description: `Active profile: ${val.toUpperCase()}` });
   };
 
@@ -271,6 +274,7 @@ export default function ImageBorderFramePage() {
     setCornerRadius(0);
     setCaption('');
     setZoom(1);
+    setPos({ x: 0, y: 0 });
     if (fileInputRef.current) fileInputRef.current.value = '';
     toast({ title: "Studio Reset", description: "Buffers cleared." });
   };
@@ -305,7 +309,7 @@ export default function ImageBorderFramePage() {
       <div className="flex-1 container mx-auto px-4 pb-24 lg:pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
           
-          {/* Workspace - Fixed Height on Mobile, Sticky on Desktop */}
+          {/* Workspace */}
           <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-6 lg:sticky lg:top-24">
             <Card className="glass-card border-white/5 shadow-2xl overflow-hidden relative flex flex-col min-h-[300px] max-h-[45vh] lg:max-h-none lg:min-h-[650px] bg-black/60">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -341,10 +345,12 @@ export default function ImageBorderFramePage() {
                           lastMousePos.current = { x: e.clientX, y: e.clientY };
                         }}
                         onMouseMove={(e) => {
-                          if (!isDragging.current || !image) return;
+                          if (!isDragging.current || !image || !canvasRef.current) return;
                           const dx = e.clientX - lastMousePos.current.x;
                           const dy = e.clientY - lastMousePos.current.y;
-                          setPos(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                          const rect = canvasRef.current.getBoundingClientRect();
+                          const scale = canvasRef.current.width / rect.width;
+                          setPos(prev => ({ x: prev.x + dx * scale, y: prev.y + dy * scale }));
                           lastMousePos.current = { x: e.clientX, y: e.clientY };
                         }}
                         onMouseUp={() => { isDragging.current = false; }}
@@ -355,7 +361,6 @@ export default function ImageBorderFramePage() {
               </CardContent>
             </Card>
 
-            {/* Desktop-only secondary stats */}
             <div className="hidden lg:grid grid-cols-2 gap-6 animate-in fade-in duration-1000">
                <div className="p-6 rounded-[2rem] bg-secondary border border-white/5 flex items-start gap-4 group hover:border-primary/20 transition-all">
                   <ShieldCheck className="w-5 h-5 text-primary/40 group-hover:text-primary" />
@@ -374,9 +379,9 @@ export default function ImageBorderFramePage() {
             </div>
           </div>
 
-          {/* Controls - Scrollable */}
+          {/* Controls */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-            {/* Aspect Presets - Refined Horizontal Scroll */}
+            {/* Aspect Presets */}
             <Card className="glass-card border-white/5 shadow-xl">
                <CardHeader className="py-3 px-4 border-b border-white/5 bg-white/2">
                   <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Aspect Profiles</Label>
@@ -403,7 +408,6 @@ export default function ImageBorderFramePage() {
                         <span className="text-[9px] font-black uppercase whitespace-nowrap tracking-wider">{p.label}</span>
                       </button>
                     ))}
-                    {/* Ghost spacer to allow peeking at end */}
                     <div className="w-4 shrink-0" />
                   </div>
                </CardContent>
@@ -433,7 +437,7 @@ export default function ImageBorderFramePage() {
 
                 {image && (
                   <div className="space-y-10 animate-in zoom-in duration-500 pb-4">
-                    {/* Style Row - Horizontal Scroll Consistency */}
+                    {/* Style Row */}
                     <div className="space-y-4">
                       <Label className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Style Profile</Label>
                       <div className="overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-6">
@@ -558,7 +562,7 @@ export default function ImageBorderFramePage() {
                   </div>
                 )}
                 
-                {/* Desktop-only download cluster */}
+                {/* Download cluster */}
                 <div className="hidden lg:flex flex-col gap-3">
                   <Button onClick={() => handleDownload('png')} className="h-14 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 active:scale-95 transition-all">
                      <Download className="w-6 h-6" /> Export Master
