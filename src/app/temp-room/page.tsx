@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -17,7 +16,8 @@ import {
   ShieldCheck,
   Activity,
   CornerDownLeft,
-  AlertCircle
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +38,6 @@ export default function TempRoomPage() {
   // UI State
   const [view, setView] = useState<'start' | 'room' | 'closed'>('start');
   const [status, setStatus] = useState<'idle' | 'waiting' | 'connected'>('idle');
-  const [inputText, setInputText] = useState('');
   const [sharedText, setSharedText] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -77,8 +76,14 @@ export default function TempRoomPage() {
       }
     });
 
-    connection.on('close', () => setView('closed'));
-    connection.on('error', () => setView('closed'));
+    connection.on('close', () => {
+      setStatus('idle');
+      setView('closed');
+    });
+    connection.on('error', () => {
+      setStatus('idle');
+      setView('closed');
+    });
   };
 
   const handleCreate = async () => {
@@ -94,7 +99,7 @@ export default function TempRoomPage() {
         setupConnection(incomingConn);
       });
       
-      toast({ title: "Room Created" });
+      toast({ title: "Room Created", description: "Share the code with a peer." });
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -113,6 +118,11 @@ export default function TempRoomPage() {
       connection.on('open', () => {
         setupConnection(connection);
       });
+
+      connection.on('error', (err) => {
+        setError("Connection failed. Check code.");
+        setIsConnecting(false);
+      });
     } catch (e: any) {
       setError(e.message);
       setIsConnecting(false);
@@ -126,8 +136,8 @@ export default function TempRoomPage() {
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(sharedText);
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
     setIsCopied(true);
     toast({ title: "Copied" });
     setTimeout(() => setIsCopied(false), 2000);
@@ -235,7 +245,7 @@ export default function TempRoomPage() {
                        <p className="text-[10px] font-black uppercase text-primary tracking-[0.4em]">Room Code</p>
                        <div className="p-6 bg-black/40 rounded-[2.5rem] border border-primary/20 flex items-center justify-center gap-4 group/code">
                           <h3 className="text-2xl sm:text-4xl font-mono font-bold text-white tracking-widest truncate">{roomCode}</h3>
-                          <button onClick={() => handleCopy(roomCode, 'Code')} className="p-3 rounded-xl bg-white/5 hover:bg-primary transition-all text-white/40 hover:text-white">
+                          <button onClick={() => handleCopy(roomCode)} className="p-3 rounded-xl bg-white/5 hover:bg-primary transition-all text-white/40 hover:text-white">
                              <Copy className="w-5 h-5" />
                           </button>
                        </div>
@@ -261,7 +271,7 @@ export default function TempRoomPage() {
                     />
                     
                     <div className="flex gap-4">
-                       <Button onClick={handleCopy} className="h-16 flex-1 bg-primary text-white font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                       <Button onClick={() => handleCopy(sharedText)} className="h-16 flex-1 bg-primary text-white font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
                           {isCopied ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
                           Copy Text
                        </Button>
@@ -330,4 +340,3 @@ export default function TempRoomPage() {
     </div>
   );
 }
-
