@@ -158,18 +158,19 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
   },
   'nickname-generator': {
     title: 'Nickname Studio PRO',
-    description: 'Advanced identity synthesis for gaming and branding. Generate stylized, unique nicknames and gamertags.',
+    description: 'Advanced identity synthesis for gaming and branding. Generate stylized, unique nicknames and gamertags with clinical font mapping and artistic symbol matrixing.',
     steps: [
-      'Enter a name and optionally select a game tag (FF, PUBG, COD).',
-      'Select a linguistic style (Cool, Fire, Aesthetic, etc.).',
-      'Choose a preferred length (Short, Medium, Long).',
-      'Toggle "Max 16 Chars" for game engine compatibility.',
-      'Save your favorite variations by marking them with a star.'
+      'Enter your base identifier in the input field.',
+      'Select a typographic font style from the Fonts tab (Bold, Monospace, etc.).',
+      'Apply left and right symbols from the library to frame your identity.',
+      'Toggle filters like "No Spaces" or "Max 16 Chars" for specific game engine compatibility.',
+      'Synthesize a batch of 20 variations and star your favorite identity strings.'
     ],
     tips: [
-      'Use "Minimal" style for clean professional aliases.',
-      'The "No Spaces" toggle is recommended for competitive gaming IDs.'
+      'Use "Fullwidth" font for a distinctive wide-letter aesthetic.',
+      'The "Small-Caps" font is highly recommended for professional gaming aliases.',
+      'Frame your name with "Weapons" or "Royalty" symbols for high-impact profiles.'
     ],
-    privacy: 'All generation occurs locally using random sampling. No names are logged or stored.'
+    privacy: 'All generation occurs locally using random sampling. No identifiers are logged or stored.'
   }
 };
