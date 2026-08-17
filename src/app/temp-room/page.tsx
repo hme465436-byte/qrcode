@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ClipboardType, 
   Plus, 
@@ -10,16 +10,14 @@ import {
   CheckCircle2, 
   Loader2, 
   Zap, 
-  Activity, 
   X, 
-  QrCode, 
-  ShieldCheck, 
-  MessageSquare,
-  AlertCircle,
-  CornerDownLeft,
   LogOut,
   Smartphone,
-  Globe
+  Globe,
+  ShieldCheck,
+  Activity,
+  CornerDownLeft,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,197 +25,146 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useFirestore } from '@/firebase';
-import { doc, setDoc, onSnapshot, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { GetHelp } from '@/components/qr-canvas/get-help';
-
-const ROOMS_COLLECTION = "tempRooms";
-const MAX_TEXT_SIZE = 50 * 1024; // 50KB Limit
 
 export default function TempRoomPage() {
   const { toast } = useToast();
-  const db = useFirestore();
   
-  // App State
-  const [view, setView] = useState<'start' | 'waiting' | 'active' | 'closed'>('start');
-  const [roomCode, setCode] = useState('');
+  // Peer State
+  const [peer, setPeer] = useState<any>(null);
+  const [conn, setConn] = useState<any>(null);
+  const [roomCode, setRoomCode] = useState('');
+  
+  // UI State
+  const [view, setView] = useState<'start' | 'room' | 'closed'>('start');
+  const [status, setStatus] = useState<'idle' | 'waiting' | 'connected'>('idle');
+  const [inputText, setInputText] = useState('');
   const [sharedText, setSharedText] = useState('');
-  const [isCopied, setIsCopied] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  
-  // Refs
-  const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const qrRef = useRef<HTMLDivElement>(null);
-  const qrInstance = useRef<any>(null);
+  const [isCopied, setIsCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // High Readability Character Set
-  const generateCode = () => {
-    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; 
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+  // --- Core P2P Logic ---
+
+  const initPeer = async (): Promise<any> => {
+    const { default: Peer } = await import('peerjs');
+    const p = new Peer();
+    
+    return new Promise((resolve, reject) => {
+      p.on('open', (id) => {
+        setPeer(p);
+        resolve(p);
+      });
+      p.on('error', (err) => {
+        setError(err.message);
+        setIsConnecting(false);
+        reject(err);
+      });
+      p.on('disconnected', () => setView('closed'));
+      p.on('close', () => setView('closed'));
+    });
   };
 
-  // --- Core Listener Protocol ---
-  useEffect(() => {
-    if (!db || !roomCode || view === 'start' || view === 'closed') return;
+  const setupConnection = (connection: any) => {
+    setConn(connection);
+    setStatus('connected');
+    setView('room');
+    toast({ title: "Connected", description: "Live text sync active." });
 
-    const unsubscribe = onSnapshot(doc(db, ROOMS_COLLECTION, roomCode), (snapshot) => {
-      if (!snapshot.exists()) {
-        if (view === 'active') setView('closed');
-        return;
+    connection.on('data', (data: any) => {
+      if (data.type === 'text') {
+        setSharedText(data.value);
       }
-      
-      const data = snapshot.data();
-      
-      // Auto-transition when peer connects
-      if (data.status === 'connected' && view === 'waiting') {
-        setView('active');
-        toast({ title: "Peer Connected", description: "Linguistic sync active." });
-      }
-      
-      // Sync text matrix
-      if (data.text !== undefined && data.text !== sharedText) {
-        setSharedText(data.text);
-      }
-    }, (err) => {
-      console.warn("Snapshot Protocol Error:", err.message);
     });
 
-    return () => unsubscribe();
-  }, [db, roomCode, view, sharedText, toast]);
+    connection.on('close', () => setView('closed'));
+    connection.on('error', () => setView('closed'));
+  };
 
-  // --- Actions ---
   const handleCreate = async () => {
-    if (!db) {
-      alert("Firestore missing. The signaling service is not initialized. Check your Firebase configuration.");
-      return;
-    }
-    
     setIsConnecting(true);
-    const code = generateCode();
-    
+    setError(null);
     try {
-      const docRef = doc(db, ROOMS_COLLECTION, code);
-      await setDoc(docRef, {
-        text: '',
-        createdAt: serverTimestamp(),
-        status: 'waiting'
+      const p = await initPeer();
+      setRoomCode(p.id);
+      setStatus('waiting');
+      setView('room');
+      
+      p.on('connection', (incomingConn: any) => {
+        setupConnection(incomingConn);
       });
       
-      setCode(code);
-      setView('waiting');
-      toast({ title: "Room Created", description: `Code ${code} is now broadcast.` });
+      toast({ title: "Room Created" });
     } catch (e: any) {
-      alert("Creation Failed: " + (e.message || "Unknown hardware error"));
+      setError(e.message);
     } finally {
       setIsConnecting(false);
     }
   };
 
   const handleJoin = async () => {
-    if (!db || !roomCode.trim()) return;
-    const code = roomCode.trim().toUpperCase();
+    if (!roomCode.trim()) return;
     setIsConnecting(true);
-    
+    setError(null);
     try {
-      const docRef = doc(db, ROOMS_COLLECTION, code);
-      const snap = await getDoc(docRef);
+      const p = await initPeer();
+      const connection = p.connect(roomCode.trim());
       
-      if (!snap.exists()) {
-        alert("Room Not Found: The code is incorrect or the matrix has expired.");
-        setIsConnecting(false);
-        return;
-      }
-
-      await updateDoc(docRef, { status: 'connected' });
-      setCode(code);
-      setView('active');
-      toast({ title: "Connected", description: "Joined existing sync room." });
+      connection.on('open', () => {
+        setupConnection(connection);
+      });
     } catch (e: any) {
-      alert("Join Failed: " + e.message);
-    } finally {
+      setError(e.message);
       setIsConnecting(false);
     }
   };
 
   const handleTextChange = (val: string) => {
-    if (val.length > MAX_TEXT_SIZE) return;
     setSharedText(val);
-
-    // Debounced Sync Protocol
-    if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
-    updateTimerRef.current = setTimeout(async () => {
-      if (!db || !roomCode || view !== 'active') return;
-      try {
-        await updateDoc(doc(db, ROOMS_COLLECTION, roomCode), {
-          text: val,
-          updatedAt: serverTimestamp()
-        });
-      } catch (e) {
-        // Silent background fail to prevent interrupt
-      }
-    }, 150);
+    if (conn && conn.open) {
+      conn.send({ type: 'text', value: val });
+    }
   };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(sharedText);
     setIsCopied(true);
-    toast({ title: "Content Copied" });
+    toast({ title: "Copied" });
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // --- QR Synthesis ---
-  useEffect(() => {
-    if (view === 'waiting' && qrRef.current && roomCode) {
-      const render = async () => {
-        if (!(window as any).QRCodeStyling) return;
-        qrRef.current!.innerHTML = '';
-        qrInstance.current = new (window as any).QRCodeStyling({
-          width: 240,
-          height: 240,
-          data: `${window.location.origin}/temp-room?join=${roomCode}`,
-          dotsOptions: { color: "#3b82f6", type: "extra-rounded" },
-          backgroundOptions: { color: "transparent" },
-          cornersSquareOptions: { type: "extra-rounded", color: "#3b82f6" },
-        });
-        qrInstance.current.append(qrRef.current);
-      };
-      render();
-    }
-  }, [view, roomCode]);
+  const handleLeave = () => {
+    if (peer) peer.destroy();
+    window.location.reload();
+  };
 
-  // URL Parameter Detection
+  // Cleanup on unmount
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const joinCode = params.get('join');
-    if (joinCode) {
-      setCode(joinCode.toUpperCase());
-    }
-  }, []);
+    return () => {
+      if (peer) peer.destroy();
+    };
+  }, [peer]);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-full overflow-x-hidden">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Zap className="w-3.5 h-3.5" /> Live Sync
+          <Zap className="w-3.5 h-3.5" /> Direct P2P
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+            <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
               Temp <span className="text-primary italic">Room</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Real-time ephemeral clipboard. Type on one device, see it on the other instantly. Data is volatile and purged upon session termination.
+              Shared live clipboard. Send text directly between devices using a secure P2P tunnel. No cloud storage used.
             </p>
           </div>
           <div className="flex items-center gap-3">
              <GetHelp toolId="temp-room" />
-             {(view === 'active' || view === 'waiting') && (
-               <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
-                 <LogOut className="w-3.5 h-3.5 mr-2" /> Abort
+             {view !== 'start' && (
+               <Button variant="outline" size="sm" onClick={handleLeave} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
+                 <LogOut className="w-3.5 h-3.5 mr-2" /> Leave
                </Button>
              )}
           </div>
@@ -233,10 +180,10 @@ export default function TempRoomPage() {
                <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-2.5 h-2.5 rounded-full transition-all duration-500",
-                    view === 'active' ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse" : "bg-white/10"
+                    status === 'connected' ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse" : "bg-white/10"
                   )} />
                   <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">
-                    {view === 'active' ? 'Link Synchronized' : view === 'waiting' ? 'Broadcasting Code' : 'Hardware Standby'}
+                    {status === 'connected' ? 'P2P Tunnel Active' : status === 'waiting' ? 'Waiting for peer' : 'Ready'}
                   </CardTitle>
                </div>
             </CardHeader>
@@ -263,9 +210,9 @@ export default function TempRoomPage() {
                           <div className="w-full space-y-4">
                              <Input 
                               value={roomCode}
-                              onChange={e => setCode(e.target.value.substring(0, 6).toUpperCase())}
-                              placeholder="CODE"
-                              className="h-12 bg-white/5 border-white/10 text-center text-lg font-bold tracking-[0.3em] uppercase rounded-xl"
+                              onChange={e => setRoomCode(e.target.value)}
+                              placeholder="Enter Code"
+                              className="h-12 bg-white/5 border-white/10 text-center text-xs font-bold uppercase rounded-xl"
                              />
                              <Button onClick={handleJoin} disabled={isConnecting || !roomCode.trim()} className="w-full h-12 bg-white text-black font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-white/90">
                                 {isConnecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Join Room'}
@@ -273,94 +220,91 @@ export default function TempRoomPage() {
                           </div>
                        </div>
                     </div>
+                    {error && (
+                      <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-500">
+                         <AlertCircle className="w-4 h-4" />
+                         <span className="text-[10px] font-black uppercase">{error}</span>
+                      </div>
+                    )}
                  </div>
                )}
 
-               {view === 'waiting' && (
+               {view === 'room' && status === 'waiting' && (
                  <div className="flex-1 flex flex-col items-center justify-center gap-10 animate-in fade-in duration-700">
-                    <div className="space-y-4 text-center">
-                       <p className="text-[10px] font-black uppercase text-primary tracking-[0.4em]">Unique Handshake Code</p>
-                       <h3 className="text-5xl sm:text-7xl font-headline font-black text-white tracking-[0.1em]">{roomCode}</h3>
-                    </div>
-
-                    <div className="relative group/qr p-6 bg-white rounded-[3rem] shadow-2xl transition-transform hover:scale-105">
-                       <div ref={qrRef} className="w-[240px] h-[240px]" />
+                    <div className="space-y-4 text-center w-full px-6">
+                       <p className="text-[10px] font-black uppercase text-primary tracking-[0.4em]">Room Code</p>
+                       <div className="p-6 bg-black/40 rounded-[2.5rem] border border-primary/20 flex items-center justify-center gap-4 group/code">
+                          <h3 className="text-2xl sm:text-4xl font-mono font-bold text-white tracking-widest truncate">{roomCode}</h3>
+                          <button onClick={() => handleCopy(roomCode, 'Code')} className="p-3 rounded-xl bg-white/5 hover:bg-primary transition-all text-white/40 hover:text-white">
+                             <Copy className="w-5 h-5" />
+                          </button>
+                       </div>
                     </div>
 
                     <div className="flex flex-col items-center gap-4 text-center px-10">
                        <div className="flex items-center gap-3">
                           <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Awaiting Peer Intake</p>
+                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Waiting for other device...</p>
                        </div>
-                       <p className="text-[9px] text-white/10 uppercase max-w-[240px] leading-relaxed">Broadcast this code to the secondary device. Sync will activate immediately upon join.</p>
+                       <p className="text-[9px] text-white/10 uppercase max-w-[240px] leading-relaxed">Share this code with the recipient. Keep this page open.</p>
                     </div>
                  </div>
                )}
 
-               {view === 'active' && (
+               {view === 'room' && status === 'connected' && (
                  <div className="flex-1 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-500 h-full">
                     <Textarea 
                       value={sharedText}
                       onChange={e => handleTextChange(e.target.value)}
-                      placeholder="Start typing... content replicates instantly on connected hardware."
+                      placeholder="Type here..."
                       className="flex-1 bg-black/20 border-white/10 rounded-[2.5rem] p-10 text-xl font-medium leading-relaxed resize-none focus:ring-primary/40 text-white min-h-[300px] lg:min-h-0 custom-scrollbar shadow-inner"
                     />
                     
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                       <Button onClick={handleCopy} className="h-16 bg-primary text-white font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                    <div className="flex gap-4">
+                       <Button onClick={handleCopy} className="h-16 flex-1 bg-primary text-white font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
                           {isCopied ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
-                          Copy Matrix
+                          Copy Text
                        </Button>
-                       <Button variant="outline" onClick={() => handleTextChange('')} className="h-16 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:text-destructive">
-                          Purge All
+                       <Button variant="outline" onClick={() => handleTextChange('')} className="h-16 px-8 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:text-destructive">
+                          Clear
                        </Button>
                     </div>
                  </div>
                )}
 
                {view === 'closed' && (
-                 <div className="flex-1 flex flex-col items-center justify-center gap-8 animate-in zoom-in duration-500">
+                 <div className="flex-1 flex flex-col items-center justify-center gap-8 animate-in zoom-in duration-500 text-center">
                     <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 shadow-xl border border-red-500/20">
                        <X className="w-10 h-10" />
                     </div>
-                    <div className="text-center space-y-2">
-                       <h3 className="text-2xl font-headline font-black uppercase text-white">Registry Purged</h3>
+                    <div className="space-y-2">
+                       <h3 className="text-2xl font-headline font-black uppercase text-white">Room Closed</h3>
                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest max-w-[240px] mx-auto">
-                          Room has been destroyed. All ephemeral sync data was immediately neutralized.
+                          The session has ended. All data has been purged.
                        </p>
                     </div>
                     <Button onClick={() => window.location.reload()} className="h-14 px-10 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-[10px]">
-                       Initialize New Studio
+                       New Studio
                     </Button>
                  </div>
                )}
             </CardContent>
           </Card>
-
-          <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
-            <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
-            <div className="space-y-1">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Sovereignty</h4>
-              <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                Hardware sync is highly volatile. Data is immediately neutralized upon session closure. No persistent logs are maintained.
-              </p>
-            </div>
-          </div>
         </div>
 
-        {/* Sidebar - Right */}
+        {/* Sidebar */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
            <Card className="glass-card border-border shadow-xl">
               <CardHeader className="py-6 border-b border-white/5 bg-white/2">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Activity className="w-5 h-5 text-primary" /> Matrix Intel
+                    <Activity className="w-5 h-5 text-primary" /> Matrix Info
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-6">
                  {[
-                   { icon: Smartphone, title: 'Identity Agnostic', desc: 'Sync text between hardware units without account registry.' },
-                   { icon: Globe, title: 'Network Unified', desc: 'Works across diverse network architectures using real-time signaling.' },
-                   { icon: ShieldCheck, title: 'Volatile Memory', desc: 'Linguistic data exists only for the duration of the active handshake.' },
+                   { icon: Smartphone, title: 'No Account', desc: 'Sync text between devices without logging in.' },
+                   { icon: Globe, title: 'Peer-to-Peer', desc: 'Direct browser-to-browser tunnel via WebRTC.' },
+                   { icon: ShieldCheck, title: 'Private', desc: 'Text is never stored on any server or database.' },
                  ].map((tip, i) => (
                    <div key={i} className="flex gap-5 group">
                       <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary shrink-0 border border-border group-hover:scale-110 transition-transform">
@@ -374,20 +318,16 @@ export default function TempRoomPage() {
                  ))}
               </CardContent>
            </Card>
-
-           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
-              <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                 <MessageSquare className="w-7 h-7" />
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Clinical Protocol</h4>
-                <p className="text-[11px] text-foreground/40 font-medium uppercase leading-relaxed">
-                  Ideal for rapid deployment of complex strings, Wi-Fi keys, or code blocks between mobile and desktop hardware.
-                </p>
-              </div>
+           
+           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-4">
+              <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <p className="text-[10px] text-foreground/40 font-bold uppercase leading-relaxed">
+                Both browser tabs must remain open to maintain the P2P connection. If either person leaves, the room is destroyed.
+              </p>
            </div>
         </div>
       </div>
     </div>
   );
 }
+
