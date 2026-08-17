@@ -56,6 +56,13 @@ type NicknameStyle = 'cool' | 'fire' | 'cute' | 'pro' | 'funny' | 'aesthetic' | 
 type LengthMode = 'short' | 'medium' | 'long';
 type GameTag = 'None' | 'FF' | 'PUBG' | 'COD' | 'Roblox' | 'Free';
 
+interface BatchHistory {
+  id: string;
+  timestamp: number;
+  style: NicknameStyle;
+  nicknames: string[];
+}
+
 // --- Unicode Font Mappings ---
 const FONT_MAPS: Record<string, (text: string) => string> = {
   none: (t) => t,
@@ -103,7 +110,7 @@ const SYMBOLS = [
   '★', '☆', '✦', '✧', '✪', '✫', '✬', '✭', '✮', '✯', '✰', '✵', '❂', '✴', '✷', 
   '🔥', '⚡', '☄', '🌩', '🌪', '🌀', '❄', '❅', '❆', '🌋', '🌊',
   '⚔', '🏹', '🛡', '🗡', '🔫', '💣', '🧨', '⛓', '⚔️', '⚔︎', '🛡️',
-  '❤️', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❦', '❧', '💘', '💝',
+  '❤️', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❣', '💘', '💝',
   '🐉', '🦅', '🦊', '🐍', '🐺', '🦁', '🐯', '🦄', '🐾', '☘', '❀', '🌻', '🍃', '🍁', '🌵',
   '👑', '♕', '♔', '♛', '♚', '💎', '⚜', '🔱', '🏅', '🏆', '🎖',
   '➔', '➜', '➛', '➞', '➡', '➢', '➣', '➤', '➥', '➦', '➲', '📡', '⚛', '☣', '☢',
@@ -142,6 +149,7 @@ export default function AdvancedNicknameGeneratorPage() {
   
   const [nicknames, setNicknames] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [history, setHistory] = useState<BatchHistory[]>([]);
   const [isCopied, setIsCopied] = useState<string | null>(null);
 
   const applyLeet = (text: string) => {
@@ -161,7 +169,7 @@ export default function AdvancedNicknameGeneratorPage() {
     return `${leftSym}${getStyledName(name.trim())}${rightSym}`;
   }, [name, fontStyle, leftSym, rightSym]);
 
-  const generate = useCallback(() => {
+  const generate = useCallback((addToHistory = false) => {
     if (!name.trim()) return;
 
     const baseName = name.trim();
@@ -200,11 +208,22 @@ export default function AdvancedNicknameGeneratorPage() {
       results.push(variant);
     }
 
-    setNicknames(results.sort(() => Math.random() - 0.5));
+    const finalResults = results.sort(() => Math.random() - 0.5);
+    setNicknames(finalResults);
+
+    if (addToHistory) {
+      const entry: BatchHistory = {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: Date.now(),
+        style: style,
+        nicknames: finalResults
+      };
+      setHistory(prev => [entry, ...prev].slice(0, 10));
+    }
   }, [name, gameTag, style, lengthMode, useSymbols, noSpaces, max16, fontStyle, leftSym, rightSym]);
 
   useEffect(() => {
-    generate();
+    generate(false);
   }, [generate]);
 
   const toggleFavorite = (nick: string) => {
@@ -234,6 +253,12 @@ export default function AdvancedNicknameGeneratorPage() {
     a.href = url;
     a.download = `mykit-nicknames-${Date.now()}.txt`;
     a.click();
+    toast({ title: "Master Exported" });
+  };
+
+  const handleRestore = (batch: BatchHistory) => {
+    setNicknames(batch.nicknames);
+    toast({ title: "Batch Restored", description: "Identity matrix re-aligned." });
   };
 
   return (
@@ -252,7 +277,7 @@ export default function AdvancedNicknameGeneratorPage() {
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="nickname-generator" />
-           <Button variant="outline" onClick={generate} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all shadow-lg group">
+           <Button variant="outline" onClick={() => generate(true)} className="h-11 px-6 rounded-xl border-border bg-secondary/50 text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all shadow-lg group">
               <RefreshCcw className="w-4 h-4 mr-2 group-hover:rotate-180 transition-transform duration-500" /> Refresh Batch
            </Button>
         </div>
@@ -535,11 +560,11 @@ export default function AdvancedNicknameGeneratorPage() {
                              <History className="w-5 h-5" />
                           </div>
                           <div>
-                             <p className="text-[10px] font-black uppercase text-foreground truncate">{batch.ids.length} Identifiers • {batch.type.toUpperCase()}</p>
+                             <p className="text-[10px] font-black uppercase text-foreground truncate">{batch.nicknames.length} Identifiers • {batch.style.toUpperCase()}</p>
                              <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest mt-0.5">{new Date(batch.timestamp).toLocaleTimeString()}</p>
                           </div>
                        </div>
-                       <Button variant="ghost" size="sm" onClick={() => { setIds(batch.ids); toast({ title: "Batch Restored" }); }} className="text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-lg">
+                       <Button variant="ghost" size="sm" onClick={() => handleRestore(batch)} className="text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-lg">
                           Restore
                        </Button>
                     </div>
