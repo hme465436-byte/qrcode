@@ -200,17 +200,17 @@ export default function TextToPdfPage() {
                 <Button 
                   onClick={generatePdf}
                   disabled={isProcessing || !text.trim()}
-                  className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                  className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl flex items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 group/btn"
                 >
-                  {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Synthesize PDF Master
+                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 group-hover:rotate-12 transition-transform" />}
+                  Export
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={handleClear}
-                  className="w-16 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
+                  className="w-16 h-12 rounded-xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
                 >
-                  <Trash2 className="w-6 h-6" />
+                  <Trash2 className="w-5 h-5" />
                 </Button>
               </div>
             </CardContent>
