@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -74,7 +73,8 @@ import {
   Scan,
   TrendingDown,
   Eraser,
-  Ghost
+  Ghost,
+  Wifi
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -108,6 +108,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/wifi-qr-decoder', 
+    icon: Wifi, 
+    title: 'WiFi QR Finder', 
+    desc: 'Extract hidden network passwords from any WiFi QR code.', 
+    label: 'SECURITY', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['wifi qr', 'qr password', 'wifi finder', 'wifi decoder', 'network password', 'scan wifi', 'recover wifi'],
+    category: 'utilities'
   },
   { 
     href: '/bulk', 
@@ -930,7 +941,7 @@ export default function Home() {
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
-      'Images to GIF', 'Image to WebP', 'Blur Face'
+      'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

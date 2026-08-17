@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -28,6 +27,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Keep AI background opacity below 30% to ensure scannability.'
     ],
     privacy: 'All rendering occurs on your device. Your URLs and brand logos never leave your browser.'
+  },
+  'wifi-qr-decoder': {
+    title: 'WiFi QR Finder',
+    description: 'Recover and decode credentials from WiFi-configured QR codes.',
+    steps: [
+      'Import an image of a WiFi QR code (screenshot or photo).',
+      'The engine will automatically deconstruct the matrix.',
+      'View the decrypted SSID, password, and security type.',
+      'Use the reveal eye to verify the password string.',
+      'Copy specific fields or the entire network configuration.'
+    ],
+    tips: [
+      'Works with standard Android/iOS "Share WiFi" QR patterns.',
+      'If the password field is empty, the network is likely Open (No Security).'
+    ],
+    privacy: 'Linguistic parsing occurs 100% locally. Your network passwords never leave your hardware.'
   },
   'bulk': {
     title: 'Bulk Production',
