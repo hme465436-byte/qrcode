@@ -256,7 +256,7 @@ export default function YoutubeBannerPage() {
                 >
                   {image ? (
                     <div className="text-center p-4">
-                       <CheckCircle2 className="w-6 h-6 text-primary mx-auto mb-1" />
+                       <CheckCircle2 className="w-8 h-8 text-primary mx-auto mb-1" />
                        <p className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Image Integrated</p>
                     </div>
                   ) : (
@@ -321,23 +321,24 @@ export default function YoutubeBannerPage() {
                 </div>
               )}
 
-              <div className="pt-4 flex gap-4">
+              <div className="pt-4 flex flex-col gap-3">
                 <Button 
                   onClick={handleDownload}
                   disabled={!image}
-                  className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                  className="h-12 w-fit px-10 mx-auto bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl flex items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
-                  <Download className="w-6 h-6" />
-                  Download Banner
+                  <Download className="w-4 h-4" />
+                  Export
                 </Button>
-                <Button 
-                  variant="outline"
-                  onClick={handleClear}
-                  disabled={!image}
-                  className="w-16 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
-                >
-                  <Trash2 className="w-6 h-6" />
-                </Button>
+                {image && (
+                  <Button 
+                    variant="ghost"
+                    onClick={handleClear}
+                    className="h-12 text-foreground/30 hover:text-destructive text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    Reset Studio
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
