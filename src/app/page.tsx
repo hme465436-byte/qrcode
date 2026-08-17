@@ -124,6 +124,17 @@ const TOOLS: Tool[] = [
     category: 'utilities'
   },
   { 
+    href: '/uuid-generator', 
+    icon: Fingerprint, 
+    title: 'UUID Generator', 
+    desc: 'Generate cryptographically-secure UUID v4 identifiers.', 
+    label: 'IDENTITY', 
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    glowClass: 'bg-indigo-400/10',
+    keywords: ['uuid', 'guid', 'unique id', 'id generator', 'v4 uuid', 'random id'],
+    category: 'utilities'
+  },
+  { 
     href: '/json-formatter', 
     icon: Braces, 
     title: 'JSON Formatter', 
@@ -413,7 +424,7 @@ const TOOLS: Tool[] = [
     href: '/file-compressor', 
     icon: FileArchive, 
     title: 'File Compressor', 
-    desc: 'Professional size reduction for visual and digital assets.', 
+    desc: 'Professional browser-side size reduction for visual and digital assets.', 
     label: 'OPTIMIZE', 
     color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
@@ -821,7 +832,8 @@ export default function Home() {
       'Word to PDF', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter',
-      'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator'
+      'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
+      'UUID Generator'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -893,6 +905,24 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
+      {/* JSON-LD for Organization & ItemList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "MY KIT TOOL",
+            "url": "https://mykittool.app",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://mykittool.app/?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          })
+        }}
+      />
+
       {/* HERO SECTION - RECALIBRATED COSMIC PROTOCOL */}
       <section className="w-full px-4 sm:px-6 pt-20 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-visible flex flex-col justify-center">
         <SpaceBackground />
@@ -908,10 +938,10 @@ export default function Home() {
           </div>
           
           <h1 className="text-4xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere">
-            The World's Most <span className="text-primary italic">Advanced</span> Studio
+            MY KIT TOOL: <span className="text-primary italic">Free Online</span> Tools
           </h1>
           <p className="text-base sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
-            Professional high-fidelity asset generation and technical data translation. 100% private, client-side, and engineered for high-performance workflows.
+            Professional high-fidelity asset generation and technical data translation. Engineered for high-performance workflows with 100% hardware-native privacy.
           </p>
 
           {/* Search & Category Bar */}
@@ -1070,7 +1100,7 @@ export default function Home() {
              Join thousands of designers and engineers using the world's premier local utility matrix.
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-             <Link href="/single" className="w-full sm:w-auto px-12 py-5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+             <Link href="/single" className="w-full sm:w-auto px-12 py-5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
                Open Studio
              </Link>
              <Link href="/about" className="w-full sm:w-auto px-12 py-5 bg-white/5 border border-white/10 text-foreground/40 font-black text-xs uppercase tracking-[0.3em] rounded-xl hover:bg-white/10 transition-all">
