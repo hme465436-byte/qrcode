@@ -56,32 +56,49 @@ interface Message {
 }
 
 /**
- * Simple Cute Box Robot SVG
+ * Simple Cute Box Robot SVG with detailed hardware overlays
  */
 function RobotSVG({ className }: { className?: string }) {
   return (
     <div className={cn("relative pointer-events-none select-none", className)}>
       <svg viewBox="0 0 64 64" className="w-full h-full overflow-visible">
+        {/* Ground Shadow */}
+        <ellipse cx="32" cy="55" rx="16" ry="4" fill="black" opacity="0.08" />
+
         {/* Antenna */}
-        <line x1="32" y1="16" x2="32" y2="8" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
-        <circle cx="32" cy="6" r="3" fill="#22D3EE" className="animate-pulse" />
+        <line x1="32" y1="16" x2="32" y2="6" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="32" cy="6" r="4.5" fill="#22D3EE" opacity="0.15" className="animate-pulse" />
+        <circle cx="32" cy="6" r="2.5" fill="#22D3EE" className="animate-pulse" />
 
         {/* Side Bolts / Ears */}
         <rect x="8" y="28" width="4" height="10" rx="1" fill="#9CA3AF" />
         <rect x="52" y="28" width="4" height="10" rx="1" fill="#9CA3AF" />
 
         {/* Box Head */}
-        <rect x="12" y="16" width="40" height="36" rx="6" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="1" />
+        <rect x="12" y="16" width="40" height="38" rx="8" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="1" />
 
         {/* Circle Visor */}
-        <circle cx="32" cy="34" r="13" fill="#1F2937" />
+        <circle cx="32" cy="34" r="14" fill="#1F2937" />
+        
+        {/* Visor Gloss */}
+        <path d="M22 28 Q32 21 42 28" stroke="white" strokeWidth="1.2" opacity="0.1" fill="none" strokeLinecap="round" />
+
+        {/* Cheeks */}
+        <circle cx="23" cy="40" r="1.5" fill="#FDA4AF" opacity="0.6" />
+        <circle cx="41" cy="40" r="1.5" fill="#FDA4AF" opacity="0.6" />
 
         {/* Eyes */}
-        <circle cx="27" cy="32" r="2.5" fill="#22D3EE" />
-        <circle cx="37" cy="32" r="2.5" fill="#22D3EE" />
+        <g>
+          <circle cx="27" cy="33" r="2.8" fill="#22D3EE" />
+          <circle cx="28.2" cy="31.8" r="0.8" fill="white" opacity="0.8" />
+        </g>
+        <g>
+          <circle cx="37" cy="33" r="2.8" fill="#22D3EE" />
+          <circle cx="38.2" cy="31.8" r="0.8" fill="white" opacity="0.8" />
+        </g>
 
         {/* Smile */}
-        <path d="M28 38 Q32 41 36 38" stroke="#22D3EE" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M29 41 Q32 43 35 41" stroke="#22D3EE" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.8" />
       </svg>
     </div>
   );
