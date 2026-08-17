@@ -11,6 +11,7 @@ import {
   Undo2, 
   CheckCircle2, 
   Eye, 
+  EyeOff,
   Loader2, 
   ScanFace,
   Square,
@@ -19,7 +20,8 @@ import {
   ShieldCheck,
   Zap,
   Activity,
-  Maximize2
+  Maximize2,
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,7 +60,6 @@ export default function BlurFacePlatePage() {
 
   // Interaction Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDrawing = useRef(false);
   const currentRegion = useRef<BlurRegion | null>(null);
@@ -101,7 +102,7 @@ export default function BlurFacePlatePage() {
           setHistory([[]]);
           setHistoryIndex(0);
           setIsProcessing(false);
-          toast({ title: "Visual Imported", description: "Identity matrix initialized for redaction." });
+          toast({ title: "Visual Imported", description: "Ready for redaction." });
         };
         img.src = event.target?.result as string;
       };
@@ -208,14 +209,14 @@ export default function BlurFacePlatePage() {
     link.download = `redacted_${Date.now()}.png`;
     link.href = canvasRef.current.toDataURL('image/png', 1.0);
     link.click();
-    toast({ title: "Master Exported", description: "Sanitized visual saved to local storage." });
+    toast({ title: "Master Exported", description: "Sanitized photo saved." });
   };
 
   const handleClear = () => {
     setRegions([]);
     setHistory([[]]);
     setHistoryIndex(0);
-    toast({ title: "Studio Reset" });
+    toast({ title: "Cleared" });
   };
 
   return (
@@ -265,7 +266,7 @@ export default function BlurFacePlatePage() {
                      <div className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center text-white/10 group-hover:text-primary group-hover:scale-110 transition-all shadow-xl">
                         <Upload className="w-8 h-8" />
                      </div>
-                     <span className="text-[10px] font-black uppercase text-white/30 tracking-widest">Inject Visual Payload</span>
+                     <span className="text-[10px] font-black uppercase text-white/30 tracking-widest">Select Photo</span>
                      <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileUpload} className="hidden" />
                   </div>
                 ) : (
@@ -294,15 +295,15 @@ export default function BlurFacePlatePage() {
              <div className="p-6 rounded-[2rem] bg-secondary border border-white/5 flex items-start gap-4 group hover:border-primary/20 transition-all">
                 <ShieldCheck className="w-5 h-5 text-primary/40 group-hover:text-primary" />
                 <div className="space-y-1">
-                  <h4 className="text-[10px] font-black uppercase text-foreground tracking-widest">Local Sanitization</h4>
-                  <p className="text-[10px] text-foreground/40 leading-relaxed font-medium">100% browser-side logic. Your original imagery never leaves your hardware.</p>
+                  <h4 className="text-[10px] font-black uppercase text-foreground tracking-widest">Privacy Absolute</h4>
+                  <p className="text-[10px] text-foreground/40 leading-relaxed font-medium">100% local processing. Your photo never leaves your hardware.</p>
                 </div>
              </div>
              <div className="p-6 rounded-[2rem] bg-secondary border border-white/5 flex items-start gap-4 group hover:border-primary/20 transition-all">
                 <Zap className="w-5 h-5 text-primary/40 group-hover:text-primary" />
                 <div className="space-y-1">
-                  <h4 className="text-[10px] font-black uppercase text-foreground tracking-widest">Hardware Synthesis</h4>
-                  <p className="text-[10px] text-foreground/40 leading-relaxed font-medium">Utilizing GPU-accelerated canvas filters for definitive spatial redaction.</p>
+                  <h4 className="text-[10px] font-black uppercase text-foreground tracking-widest">High Fidelity</h4>
+                  <p className="text-[10px] text-foreground/40 leading-relaxed font-medium">Utilizing GPU-accelerated filters for definitive spatial redaction.</p>
                 </div>
              </div>
           </div>
@@ -318,7 +319,7 @@ export default function BlurFacePlatePage() {
               </CardHeader>
               <CardContent className="pt-8 space-y-10">
                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Masking Mode</Label>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Mode</Label>
                     <div className="grid grid-cols-2 bg-secondary/50 p-1.5 rounded-2xl border border-white/5 h-14">
                        <button onClick={() => setMode('box')} className={cn("flex-1 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase transition-all", mode === 'box' ? "bg-primary text-white" : "text-foreground/40 hover:text-foreground")}>
                           <Square className="w-4 h-4" /> Box
@@ -332,7 +333,7 @@ export default function BlurFacePlatePage() {
                  <div className="space-y-8">
                     <div className="space-y-4">
                        <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-foreground/30">
-                          <Label>Blur Intensity</Label>
+                          <Label>Blur Strength</Label>
                           <span className="text-primary font-mono">{blurStrength}%</span>
                        </div>
                        <Slider value={[blurStrength]} min={5} max={100} step={1} onValueChange={v => setBlurStrength(v[0])} />
@@ -341,7 +342,7 @@ export default function BlurFacePlatePage() {
                     {mode === 'brush' && (
                       <div className="space-y-4 animate-in slide-in-from-top-2">
                          <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-foreground/30">
-                            <Label>Brush Scale</Label>
+                            <Label>Brush Size</Label>
                             <span className="text-primary font-mono">{brushSize}px</span>
                          </div>
                          <Slider value={[brushSize]} min={10} max={150} step={1} onValueChange={v => setBrushSize(v[0])} />
@@ -351,16 +352,16 @@ export default function BlurFacePlatePage() {
 
                  <div className="grid grid-cols-2 gap-4">
                     <Button variant="outline" onClick={undo} disabled={historyIndex <= 0} className="h-12 border-border bg-secondary text-[9px] font-black uppercase tracking-widest hover:text-primary gap-3">
-                       <Undo2 className="w-4 h-4" /> Undo Last
+                       <Undo2 className="w-4 h-4" /> Undo
                     </Button>
                     <Button variant="outline" onClick={handleClear} className="h-12 border-border bg-secondary text-[9px] font-black uppercase tracking-widest hover:text-destructive gap-3">
-                       <RotateCcw className="w-4 h-4" /> Clear All
+                       <RotateCcw className="w-4 h-4" /> Clear
                     </Button>
                  </div>
 
                  <div className="pt-4 border-t border-white/5">
                     <Button onClick={handleDownload} disabled={!image} className="w-full h-16 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                       <Download className="w-6 h-6" /> Download Master
+                       <Download className="w-6 h-6" /> Download
                     </Button>
                  </div>
               </CardContent>
@@ -374,7 +375,7 @@ export default function BlurFacePlatePage() {
                 <div className="space-y-2">
                   <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    100% local production. Visual masks are synthesized in your browser memory and never touch remote servers.
+                    Redaction occurs entirely in your browser memory. Visual masks are synthesized and never touch remote servers.
                   </p>
                 </div>
              </div>
@@ -386,7 +387,7 @@ export default function BlurFacePlatePage() {
       {image && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#0a0a0c]/80 backdrop-blur-3xl border-t border-white/10 z-[100] lg:hidden flex gap-3 animate-in slide-in-from-bottom-full duration-500">
           <Button onClick={handleDownload} className="flex-1 h-14 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-2xl">
-             <Download className="w-4 h-4" /> Save Photo
+             <Download className="w-4 h-4" /> Download
           </Button>
         </div>
       )}
