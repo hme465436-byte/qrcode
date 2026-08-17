@@ -119,7 +119,7 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Copy or download the sanitized .json file.'
     ],
     tips: [
-      'Use the "Sort Keys" feature for easier data comparison.',
+      'Use "Sort Keys" feature for easier data comparison.',
       'The "Minify" protocol is perfect for reducing production payload sizes.'
     ],
     privacy: 'Processing is performed via local JSON.parse and stringify cycles.'
@@ -190,20 +190,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     privacy: 'All generation occurs locally using random sampling. No identifiers are logged or stored.'
   },
   'image-border-frame': {
-    title: 'Image Border & Frame',
-    description: 'Add professional borders and artistic frames to your visual assets with precision control.',
+    title: 'Image Border & Frame Pro',
+    description: 'Advanced cinematic framing engine. Add professional borders, archival polaroid frames, and custom captions to any visual asset.',
     steps: [
-      'Import a photograph (JPG, PNG, or WebP up to 10MB).',
-      'Select a frame style from the profile list (Solid, Polaroid, Double).',
-      'Adjust border width, corner radius, and inner padding sliders.',
-      'Choose a chromatic background color for the frame matrix.',
-      'Enable the shadow protocol for a professional floating depth effect.',
-      'Export your framed master as a high-fidelity PNG or JPG.'
+      'Import your photo (JPG, PNG, or WebP up to 10MB).',
+      'Select a platform preset (Instagram, Story, 16:9) to auto-calibrate the aspect ratio.',
+      'Apply a stylistic profile: Polaroid, Neon Glow, Film, or Vintage Gold.',
+      'Refine the geometry using width, corner radius, and inner padding sliders.',
+      'Choose a background color and apply procedural patterns like Dots or Checker.',
+      'Download your framed master as a high-fidelity PNG (supports transparency) or JPG.'
     ],
     tips: [
-      'Use the Polaroid style for classic archival or social media posts.',
-      'The "Extra Rounded" geometry is perfect for high-impact profile avatars.'
+      'The Polaroid and Film styles support typographic captions on the bottom border.',
+      'Use high "Corner Radius" values to create rounded avatars or unique social media badges.',
+      'Adjust "Optical Zoom" to center your subject precisely within the new frame matrix.'
     ],
     privacy: 'All visual re-matricing occurs locally in your browser memory. No data is logged or transmitted.'
   }
 };
+
