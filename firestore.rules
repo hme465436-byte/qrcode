@@ -1,12 +1,17 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /tempRooms/{id} {
+    match /temp_rooms/{id} {
       allow read, write: if true;
     }
     match /pages/{id} {
+      // Pages are publicly readable by anyone with the link
       allow read: if true;
-      allow write: if true;
+      // Only authenticated users can publish pages
+      allow create: if request.auth != null;
+      // Only the owner can delete their own page
+      allow delete: if request.auth != null && request.auth.uid == resource.data.uid;
     }
     match /{document=**} {
       allow read, write: if false;

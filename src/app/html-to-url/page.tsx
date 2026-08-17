@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -32,7 +33,8 @@ import {
   FileText,
   Play,
   Cpu,
-  ShieldAlert
+  ShieldAlert,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,10 +45,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { doc, setDoc, serverTimestamp, collection, query, where, orderBy } from 'firebase/firestore';
-import { signInAnonymously } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp, collection, query, where, orderBy, deleteDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import { useFirestore, useUser, useCollection, useAuth } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import { useRouter } from 'next/navigation';
 
 const ID_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
 
@@ -66,6 +69,7 @@ const LANGUAGES = [
 
 export default function HtmlToUrlPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const firestore = useFirestore();
   const auth = useAuth();
   const { user } = useUser();
@@ -74,9 +78,8 @@ export default function HtmlToUrlPage() {
   const [title, setTitle] = useState('');
   const [language, setLanguage] = useState('auto');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [generatedId, setGeneratedId] = useState<string | null>(null);
-  const [isCopied, setIsCopied] = useState(false);
+  const [isCopied, setIsCopied] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
 
   // Preview / Execution State
@@ -153,7 +156,7 @@ export default function HtmlToUrlPage() {
       }
       setPreviewSrcDoc(content);
     } else {
-      setPreviewSrcDoc(''); // Non-visual languages use console output (Python)
+      setPreviewSrcDoc(''); 
     }
   }, [html, effectiveLanguage]);
 
@@ -222,30 +225,17 @@ export default function HtmlToUrlPage() {
     );
   }, [firestore, user]);
 
-  const { data: myPages } = useCollection(pagesQuery);
+  const { data: myPages, loading: loadingPages } = useCollection(pagesQuery);
 
   const generateId = () => {
     return Array.from({ length: 5 }, () => ID_CHARS[Math.floor(Math.random() * ID_CHARS.length)]).join('');
   };
 
-  const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${generatedId}` : '';
-
-  const handleLogin = async () => {
-    if (!auth) return;
-    setIsLoggingIn(true);
-    try {
-      await signInAnonymously(auth);
-      toast({ title: "Verified", description: "Identity synced." });
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Login Failed" });
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
+  const fullUrl = (id: string) => typeof window !== 'undefined' ? `${window.location.origin}/p/${id}` : '';
 
   const handleMakeLink = async () => {
     if (!user) {
-      handleLogin();
+      router.push(`/login?redirect=/html-to-url`);
       return;
     }
 
@@ -286,11 +276,21 @@ export default function HtmlToUrlPage() {
     }
   };
 
-  const handleCopy = (text: string) => {
+  const handleDeletePage = async (id: string) => {
+    if (!firestore || !confirm("Confirm definitive deletion of this page protocol?")) return;
+    try {
+      await deleteDoc(doc(firestore, "pages", id));
+      toast({ title: "Purged", description: "Page definitively removed from registry." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Deletion Blocked" });
+    }
+  };
+
+  const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    setIsCopied(true);
+    setIsCopied(label);
     toast({ title: "Copied" });
-    setTimeout(() => setIsCopied(false), 2000);
+    setTimeout(() => setIsCopied(null), 2000);
   };
 
   const openFullscreenPreview = () => {
@@ -322,6 +322,11 @@ export default function HtmlToUrlPage() {
           </div>
           <div className="flex items-center gap-3">
              <GetHelp toolId="html-to-url" />
+             {user && (
+               <Button variant="outline" size="sm" onClick={() => auth && signOut(auth)} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                 <LogOut className="w-3.5 h-3.5 mr-2" /> Logout
+               </Button>
+             )}
           </div>
         </div>
       </div>
@@ -405,11 +410,10 @@ export default function HtmlToUrlPage() {
                     
                     {!user ? (
                       <Button 
-                        onClick={handleLogin}
-                        disabled={isLoggingIn}
+                        onClick={handleMakeLink}
                         className="h-16 flex-1 bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
                       >
-                        {isLoggingIn ? <Loader2 className="w-6 h-6 animate-spin" /> : <LogIn className="w-6 h-6 text-primary" />}
+                        <LogIn className="w-6 h-6 text-primary" />
                         Log in to Publish
                       </Button>
                     ) : (
@@ -425,6 +429,61 @@ export default function HtmlToUrlPage() {
                  </div>
               </CardContent>
             </Card>
+
+            {/* My Links Dashboard */}
+            {user && (
+              <Card className="glass-card border-border shadow-xl overflow-hidden animate-in slide-in-from-bottom-6 duration-700">
+                <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+                   <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground/60">
+                      <Layout className="w-4 h-4" /> My Studio Pages
+                   </CardTitle>
+                   <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{myPages?.length || 0} Pages</span>
+                </CardHeader>
+                <CardContent className="p-0">
+                   {loadingPages ? (
+                     <div className="py-20 flex flex-col items-center justify-center gap-4">
+                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/20">Querying Matrix...</p>
+                     </div>
+                   ) : !myPages?.length ? (
+                     <div className="py-20 text-center space-y-4 opacity-20">
+                        <Globe className="w-12 h-12 mx-auto" />
+                        <p className="text-[10px] font-black uppercase tracking-widest px-12">No active hosting protocols found in your registry.</p>
+                     </div>
+                   ) : (
+                     <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
+                        {myPages.map((page: any) => (
+                           <div key={page.id} className="p-5 flex items-center justify-between gap-4 hover:bg-white/5 transition-all group">
+                              <div className="min-w-0 flex-1 space-y-1">
+                                 <div className="flex items-center gap-3">
+                                    <span className="text-[9px] font-black text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded leading-none shrink-0">{page.language || 'text'}</span>
+                                    <h4 className="text-xs font-bold text-foreground truncate uppercase">{page.title}</h4>
+                                 </div>
+                                 <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">{new Date(page.createdAt?.seconds * 1000).toLocaleDateString()}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                 <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  onClick={() => handleCopy(fullUrl(page.id), `list-${page.id}`)}
+                                  className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary"
+                                 >
+                                    {isCopied === `list-${page.id}` ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                 </Button>
+                                 <Button asChild size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
+                                    <a href={`/p/${page.id}`} target="_blank"><ExternalLink className="w-4 h-4" /></a>
+                                 </Button>
+                                 <Button size="icon" variant="ghost" onClick={() => handleDeletePage(page.id)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-destructive">
+                                    <Trash2 className="w-4 h-4" />
+                                 </Button>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                   )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
@@ -491,11 +550,11 @@ export default function HtmlToUrlPage() {
                  </CardHeader>
                  <CardContent className="pt-10 space-y-8 text-center">
                     <div className="p-6 bg-background border border-primary/20 rounded-[2.5rem] shadow-inner">
-                       <p className="text-lg font-bold text-foreground break-all leading-tight">{fullUrl}</p>
+                       <p className="text-lg font-bold text-foreground break-all leading-tight">{fullUrl(generatedId)}</p>
                     </div>
                     <div className="flex gap-4">
-                       <Button onClick={() => handleCopy(fullUrl)} className="h-14 flex-1 bg-primary text-white font-black uppercase text-[10px] rounded-2xl shadow-xl">
-                          {isCopied ? 'Identity Copied' : 'Copy Link'}
+                       <Button onClick={() => handleCopy(fullUrl(generatedId), 'link')} className="h-14 flex-1 bg-primary text-white font-black uppercase text-[10px] rounded-2xl shadow-xl">
+                          {isCopied === 'link' ? 'Identity Copied' : 'Copy Link'}
                        </Button>
                        <Button asChild variant="outline" className="h-14 px-8 rounded-2xl border-white/10 bg-white/5 text-white">
                           <a href={`/p/${generatedId}`} target="_blank"><ExternalLink className="w-4 h-4 mr-2" /> Open</a>

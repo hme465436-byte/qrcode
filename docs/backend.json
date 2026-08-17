@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "SignalingRoom": {
@@ -69,16 +70,24 @@
     },
     "HostedPage": {
       "title": "Hosted Page",
-      "description": "A static HTML page hosted via URL.",
+      "description": "A static HTML page or code block hosted via URL.",
       "type": "object",
       "properties": {
         "html": {
           "type": "string",
-          "description": "The HTML content of the page."
+          "description": "The code content of the page."
         },
         "title": {
           "type": "string",
-          "description": "Optional title for the page."
+          "description": "Title for the page."
+        },
+        "language": {
+          "type": "string",
+          "description": "The language protocol (html, python, etc)."
+        },
+        "uid": {
+          "type": "string",
+          "description": "The owner's unique identity token."
         },
         "createdAt": {
           "type": "object",
@@ -87,13 +96,15 @@
       },
       "required": [
         "html",
+        "uid",
         "createdAt"
       ]
     }
   },
   "auth": {
     "providers": [
-      "anonymous"
+      "anonymous",
+      "email"
     ]
   },
   "firestore": {
@@ -115,7 +126,7 @@
     },
     "/pages/{id}": {
       "schema": "#/entities/HostedPage",
-      "description": "User generated static HTML pages."
+      "description": "User generated static HTML pages and code blocks."
     }
   }
 }
