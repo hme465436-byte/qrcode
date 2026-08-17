@@ -57,7 +57,11 @@ export function Navbar() {
   useEffect(() => {
     setMounted(true);
     const savedTheme = localStorage.getItem('mykit_theme') as 'light' | 'dark' | null;
-    if (savedTheme) setTheme(savedTheme);
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      setTheme('light');
+    }
   }, []);
 
   useEffect(() => {
@@ -66,8 +70,10 @@ export function Navbar() {
     } else {
       document.documentElement.classList.remove('dark');
     }
-    localStorage.setItem('mykit_theme', theme);
-  }, [theme]);
+    if (mounted) {
+      localStorage.setItem('mykit_theme', theme);
+    }
+  }, [theme, mounted]);
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
@@ -104,32 +110,46 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
-             {/* Identity & Support Cluster */}
+             {/* About Unit */}
              <Link 
                 href="/about"
                 title="About My Kit Tool"
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all group icon-container-3d"
+                className={cn(
+                  "w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
+                  pathname === '/about' ? "text-primary border-primary/20" : "text-foreground/40 hover:text-primary"
+                )}
              >
                <User className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
+             {/* Donate Unit */}
              <Link 
                 href="/donate"
                 title="Support Studio"
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all group icon-container-3d"
+                className={cn(
+                  "w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
+                  pathname === '/donate' ? "text-primary border-primary/20" : "text-foreground/40 hover:text-primary"
+                )}
              >
                <Coffee className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
-             {mounted && (
-               <button 
-                  onClick={toggleTheme}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all icon-container-3d"
-               >
-                 {theme === 'light' ? <Moon className="w-4 h-4 icon-3d" /> : <Sun className="w-4 h-4 icon-3d" />}
-               </button>
-             )}
+             {/* Theme Toggle Unit - Static Button Shell */}
+             <button 
+                onClick={toggleTheme}
+                title="Toggle Theme"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all icon-container-3d"
+             >
+               {!mounted ? (
+                 <div className="w-4 h-4" /> 
+               ) : theme === 'light' ? (
+                 <Moon className="w-4 h-4 icon-3d animate-in zoom-in duration-300" />
+               ) : (
+                 <Sun className="w-4 h-4 icon-3d animate-in zoom-in duration-300" />
+               )}
+             </button>
 
+             {/* Scanner Unit */}
              <button 
                 onClick={() => setIsScannerOpen(true)}
                 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-4 md:px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
