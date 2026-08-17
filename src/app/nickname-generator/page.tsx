@@ -106,7 +106,7 @@ const SYMBOLS = [
   '❤️', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❦', '❧', '💘', '💝',
   '🐉', '🦅', '🦊', '🐍', '🐺', '🦁', '🐯', '🦄', '🐾', '☘', '❀', '🌻', '🍃', '🍁', '🌵',
   '👑', '♕', '♔', '♛', '♚', '💎', '⚜', '🔱', '🏅', '🏆', '🎖',
-  '➔', '➜', '➛', '➞', '➡', '➢', '➣', ➤, '➥', '➦', '➲', '📡', '⚛', '☣', '☢',
+  '➔', '➜', '➛', '➞', '➡', '➢', '➣', '➤', '➥', '➦', '➲', '📡', '⚛', '☣', '☢',
   '๏', '々', '×', '•', '◈', '💠', '⚓', '🛸', '🛰', '🚀',
   '꧁', '꧂', 'ঔ', '𖤍', '᚛', '᚜', '〠', '〄', '⚚', '☯', '☸', '☪', '☮',
   '亗', '⚡︎', '♆', 'ϟ', '⚔︎', '⚖︎', '⛏︎', '⚒︎', '⚓︎', '⚙︎'
@@ -282,7 +282,7 @@ export default function AdvancedNicknameGeneratorPage() {
                     disabled={!currentDecoratedName}
                     className="flex-1 h-12 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[9px]"
                    >
-                     {isCopied === 'preview' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                     {isCopied === 'preview' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                      Copy Identity
                    </Button>
                    <Button 
@@ -457,7 +457,7 @@ export default function AdvancedNicknameGeneratorPage() {
                     <Download className="w-3.5 h-3.5 mr-2" /> .txt
                  </Button>
                  <Button onClick={() => handleCopy(nicknames.join('\n'), 'all')} size="sm" className="h-9 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg">
-                    {isCopied === 'all' ? <Check className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
+                    {isCopied === 'all' ? <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
                     Copy All
                  </Button>
               </div>
@@ -519,6 +519,34 @@ export default function AdvancedNicknameGeneratorPage() {
                </div>
             </CardContent>
           </Card>
+
+          {/* History Tracker */}
+          {history.length > 0 && (
+            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+               <div className="flex items-center justify-between px-2">
+                  <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60">Batch History</h3>
+                  <button onClick={() => setHistory([])} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors">Purge History</button>
+               </div>
+               <div className="grid grid-cols-1 gap-3">
+                  {history.map((batch) => (
+                    <div key={batch.id} className="p-5 rounded-3xl bg-secondary/50 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
+                       <div className="flex items-center gap-5">
+                          <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all">
+                             <History className="w-5 h-5" />
+                          </div>
+                          <div>
+                             <p className="text-[10px] font-black uppercase text-foreground truncate">{batch.ids.length} Identifiers • {batch.type.toUpperCase()}</p>
+                             <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest mt-0.5">{new Date(batch.timestamp).toLocaleTimeString()}</p>
+                          </div>
+                       </div>
+                       <Button variant="ghost" size="sm" onClick={() => { setIds(batch.ids); toast({ title: "Batch Restored" }); }} className="text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-lg">
+                          Restore
+                       </Button>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          )}
         </div>
       </div>
       
