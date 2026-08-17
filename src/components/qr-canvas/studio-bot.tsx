@@ -58,6 +58,55 @@ interface Message {
   tools?: Tool[];
 }
 
+/**
+ * High-Fidelity Vector Panda Character
+ */
+function KitCharacter({ className }: { className?: string }) {
+  return (
+    <div className={cn("relative select-none pointer-events-none", className)}>
+      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
+        {/* Ears */}
+        <circle cx="25" cy="25" r="12" fill="#1a1a1a" />
+        <circle cx="75" cy="25" r="12" fill="#1a1a1a" />
+        
+        {/* Face Base */}
+        <circle cx="50" cy="50" r="40" fill="white" stroke="#f0f0f0" strokeWidth="1" />
+        
+        {/* Eyes Matrix */}
+        <circle cx="35" cy="45" r="8" fill="#1a1a1a" />
+        <circle cx="37" cy="42" r="3" fill="white" /> {/* Reflection */}
+        
+        <circle cx="65" cy="45" r="8" fill="#1a1a1a" />
+        <circle cx="67" cy="42" r="3" fill="white" /> {/* Reflection */}
+        
+        {/* Blush Matrix */}
+        <ellipse cx="25" cy="55" rx="6" ry="4" fill="#ffb7ce" opacity="0.6" />
+        <ellipse cx="75" cy="55" rx="6" ry="4" fill="#ffb7ce" opacity="0.6" />
+        
+        {/* Nose and Smile */}
+        <circle cx="50" cy="55" r="3" fill="#1a1a1a" />
+        <path d="M45 62 Q 50 66 55 62" fill="none" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Kit's Waving Paw Protocol
+ */
+function KitPaw({ className }: { className?: string }) {
+  return (
+    <div className={cn("relative w-12 h-12", className)}>
+      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+        <path d="M20 80 Q 20 40 50 40 Q 80 40 80 80 L 80 100 L 20 100 Z" fill="white" />
+        <circle cx="35" cy="55" r="5" fill="#f0f0f0" />
+        <circle cx="50" cy="55" r="5" fill="#f0f0f0" />
+        <circle cx="65" cy="55" r="5" fill="#f0f0f0" />
+      </svg>
+    </div>
+  );
+}
+
 export function StudioBot() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -65,14 +114,14 @@ export function StudioBot() {
     {
       id: 'init',
       role: 'assistant',
-      content: "Hi! I'm Kit. I can help you find tools or answer questions about the studio. What are we making today?"
+      content: "Need a tool? Ask me."
     }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // KIT MANDATE: Only render on Home (/)
+  // KIT MANDATE: Strictly only render on Home (/)
   if (pathname !== '/') return null;
 
   useEffect(() => {
@@ -93,11 +142,9 @@ export function StudioBot() {
 
     let response = "";
     if (foundTools.length > 0) {
-      response = `I found ${foundTools.length} tools for that! Click one to start:`;
-    } else if (lowQuery.includes('hello') || lowQuery.includes('hi')) {
-      response = "Hello! I'm Kit. Need help with QR codes, PDFs, or image tools?";
+      response = `Found some tools for you:`;
     } else {
-      response = "I'm not sure about that one. I can help with QR, PDF, images, or data tools on this site.";
+      response = "I couldn't find that specific tool. Try searching for 'QR', 'PDF', or 'Image'.";
     }
 
     setMessages(prev => [...prev, {
@@ -118,141 +165,118 @@ export function StudioBot() {
     processQuery(userMsg);
   };
 
-  const KitHead = () => (
-    <div className="relative w-16 h-14 bg-white rounded-[2rem] border-2 border-[#1a1a1a] flex flex-col items-center justify-center shadow-inner overflow-visible">
-      {/* Eyes Area */}
-      <div className="flex gap-3 mb-1 relative z-10">
-        <div className="w-4 h-4.5 bg-[#1a1a1a] rounded-full flex items-center justify-center overflow-hidden">
-          <div className="w-1.5 h-1.5 bg-white rounded-full mt-[-2px] ml-[-1px] animate-kit-blink" />
-        </div>
-        <div className="w-4 h-4.5 bg-[#1a1a1a] rounded-full flex items-center justify-center overflow-hidden">
-          <div className="w-1.5 h-1.5 bg-white rounded-full mt-[-2px] ml-[-1px] animate-kit-blink" />
-        </div>
-      </div>
-      
-      {/* Pink Cheeks */}
-      <div className="absolute top-1/2 left-2 w-3 h-2 bg-pink-200/60 rounded-full blur-[1px]" />
-      <div className="absolute top-1/2 right-2 w-3 h-2 bg-pink-200/60 rounded-full blur-[1px]" />
-      
-      {/* Nose and Smile */}
-      <div className="flex flex-col items-center -mt-1 relative z-10">
-        <div className="w-1.5 h-1 bg-[#1a1a1a] rounded-full" />
-        <div className="w-3 h-1.5 border-b-2 border-[#1a1a1a] rounded-full mt-[-1px]" />
-      </div>
-    </div>
-  );
-
-  const PawPeek = () => (
-    <button 
-      onClick={() => setIsOpen(true)}
-      className="fixed bottom-0 right-10 z-[100] w-14 h-10 bg-white rounded-t-full border-2 border-b-0 border-[#1a1a1a] flex flex-col items-center justify-start pt-2 shadow-2xl transition-all hover:h-12 active:scale-95 group animate-kit-sway"
-    >
-      <div className="flex gap-1">
-        <div className="w-1.5 h-2 bg-[#1a1a1a] rounded-full" />
-        <div className="w-1.5 h-2 bg-[#1a1a1a] rounded-full" />
-        <div className="w-1.5 h-2 bg-[#1a1a1a] rounded-full" />
-      </div>
-      <div className="w-5 h-3 bg-[#1a1a1a]/5 rounded-full mt-1" />
-    </button>
-  );
-
-  if (!isOpen) return <PawPeek />;
-
   return (
-    <div className="fixed right-6 bottom-6 z-[100] h-[500px] w-[90vw] sm:w-[350px] animate-in slide-in-from-bottom-4 duration-300">
-      <Card className="h-full border-white/10 shadow-2xl overflow-hidden flex flex-col bg-[#0a0a0c]/95 backdrop-blur-2xl">
-        {/* Header */}
-        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-secondary/30 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute -top-3 -left-1 w-4.5 h-4.5 bg-[#1a1a1a] rounded-full animate-kit-ear-twitch" />
-              <div className="absolute -top-3 -right-1 w-4.5 h-4.5 bg-[#1a1a1a] rounded-full animate-kit-ear-twitch" />
-              <KitHead />
-            </div>
-            <div className="space-y-0.5">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Kit Assistant</h4>
-              <span className="text-[8px] font-bold text-green-500 uppercase tracking-tighter flex items-center gap-1">
-                <div className="w-1 h-1 rounded-full bg-current animate-pulse" /> Online
-              </span>
-            </div>
+    <>
+      {/* PEEK STATE: Small paw and head waving from corner */}
+      {!isOpen && (
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-0 right-6 z-[100] flex flex-col items-center group animate-kit-sway transition-transform hover:-translate-y-2 active:scale-95"
+        >
+          <KitCharacter className="w-16 h-16 sm:w-20 sm:h-20 translate-y-8 group-hover:translate-y-6 transition-transform duration-500" />
+          <KitPaw className="w-10 h-10 animate-bounce transition-all duration-[3000ms]" />
+        </button>
+      )}
+
+      {/* OPEN STATE: Full card with Kit sitting on top */}
+      {isOpen && (
+        <div className="fixed right-6 bottom-6 z-[100] h-[520px] w-[90vw] sm:w-[380px] flex flex-col items-center animate-in slide-in-from-bottom-8 zoom-in-95 duration-500">
+          <div className="relative z-10 -mb-8 transition-transform duration-1000 hover:scale-105">
+            <KitCharacter className="w-24 h-24 sm:w-28 sm:h-28" />
           </div>
-          <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-lg text-white/20 hover:text-destructive transition-all flex items-center justify-center">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
 
-        {/* Chat Area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-          {messages.map((msg) => (
-            <div key={msg.id} className={cn(
-              "flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-300",
-              msg.role === 'user' ? "items-end" : "items-start"
-            )}>
-              <div className={cn(
-                "max-w-[85%] p-3 rounded-2xl text-[11px] font-medium leading-relaxed shadow-sm",
-                msg.role === 'user' 
-                  ? "bg-primary text-white rounded-tr-none" 
-                  : "bg-secondary border border-white/5 text-foreground/80 rounded-tl-none"
-              )}>
-                {msg.content}
+          <Card className="flex-1 w-full border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col bg-[#0a0a0c]/95 backdrop-blur-2xl rounded-[3rem]">
+            {/* Header Protocol */}
+            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0 pt-10">
+              <div className="space-y-0.5">
+                <h4 className="text-xl font-headline font-black uppercase tracking-tighter text-foreground">Kit</h4>
+                <span className="text-[8px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Studio Intel Active
+                </span>
               </div>
+              <button 
+                onClick={() => setIsOpen(false)} 
+                className="w-10 h-10 rounded-2xl bg-white/5 text-white/20 hover:text-destructive hover:bg-destructive/10 transition-all flex items-center justify-center border border-white/5"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              {msg.tools && (
-                <div className="w-full space-y-1.5">
-                  {msg.tools.map((tool) => (
-                    <button 
-                      key={tool.href}
-                      onClick={() => { setIsOpen(false); window.location.href = tool.href; }}
-                      className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-primary/10 transition-all text-left"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-primary border border-white/5">
-                          <tool.icon className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="text-[9px] font-black uppercase text-foreground/60">{tool.title}</span>
-                      </div>
-                      <ArrowRight className="w-3 h-3 text-white/10" />
-                    </button>
-                  ))}
+            {/* Linguistic Matrix (Chat) */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-gradient-to-b from-transparent to-primary/[0.02]">
+              {messages.map((msg) => (
+                <div key={msg.id} className={cn(
+                  "flex flex-col gap-3 animate-in slide-in-from-bottom-4 duration-500",
+                  msg.role === 'user' ? "items-end" : "items-start"
+                )}>
+                  <div className={cn(
+                    "max-w-[85%] p-4 rounded-3xl text-sm font-medium leading-relaxed shadow-2xl",
+                    msg.role === 'user' 
+                      ? "bg-primary text-white rounded-tr-none shadow-primary/20" 
+                      : "bg-[#1a1a1e] border border-white/5 text-foreground/80 rounded-tl-none"
+                  )}>
+                    {msg.content}
+                  </div>
+
+                  {msg.tools && (
+                    <div className="w-full grid grid-cols-1 gap-2 animate-in zoom-in-95 duration-500">
+                      {msg.tools.map((tool) => (
+                        <button 
+                          key={tool.href}
+                          onClick={() => { setIsOpen(false); window.location.href = tool.href; }}
+                          className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-primary/10 hover:border-primary/20 transition-all group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-primary border border-white/5 group-hover:scale-110 transition-transform">
+                              <tool.icon className="w-4 h-4" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase text-foreground/60 group-hover:text-foreground transition-colors">{tool.title}</span>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-white/10 group-hover:text-primary transition-all group-hover:translate-x-1" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-[#1a1a1e] px-4 py-3 rounded-2xl rounded-tl-none border border-white/5 flex gap-1.5 items-center">
+                    <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" />
+                    <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                    <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+                  </div>
                 </div>
               )}
             </div>
-          ))}
-          {isTyping && (
-            <div className="flex justify-start">
-              <div className="bg-secondary p-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
-                <div className="w-1 h-1 bg-primary/40 rounded-full animate-bounce" />
-                <div className="w-1 h-1 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
-                <div className="w-1 h-1 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+
+            {/* Input Architecture */}
+            <div className="p-6 bg-white/[0.02] border-t border-white/5">
+              <form onSubmit={handleSubmit} className="relative group/input">
+                <div className="absolute -inset-1 bg-primary/10 rounded-2xl blur-lg opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-1000" />
+                <input 
+                  type="text"
+                  placeholder="Ask me anything about tools..."
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  className="relative w-full h-14 pl-5 pr-14 bg-background border border-white/10 rounded-2xl text-[13px] font-medium focus:ring-2 focus:ring-primary/40 outline-none transition-all placeholder:text-white/10"
+                />
+                <button 
+                  type="submit"
+                  disabled={!input.trim()}
+                  className="absolute right-2 top-2 w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-xl active:scale-90 disabled:opacity-20 transition-all z-10"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+              <div className="mt-4 flex items-center justify-center gap-3">
+                <Heart className="w-3 h-3 text-primary/20 fill-current" />
+                <p className="text-[8px] font-black text-foreground/10 uppercase tracking-[0.4em]">Hardware Handshake Native</p>
               </div>
             </div>
-          )}
+          </Card>
         </div>
-
-        {/* Input */}
-        <div className="p-4 bg-secondary/30 border-t border-white/5">
-          <form onSubmit={handleSubmit} className="relative">
-            <input 
-              type="text"
-              placeholder="Ask Kit..."
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              className="w-full h-11 pl-4 pr-10 bg-background border border-white/10 rounded-xl text-[11px] focus:ring-1 focus:ring-primary/40 outline-none"
-            />
-            <button 
-              type="submit"
-              disabled={!input.trim()}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-lg active:scale-90 disabled:opacity-20 transition-all"
-            >
-              <Send className="w-3.5 h-3.5" />
-            </button>
-          </form>
-          <div className="mt-3 flex items-center justify-center gap-2">
-            <Heart className="w-2.5 h-2.5 text-primary/10 fill-current" />
-            <p className="text-[7px] font-black text-foreground/10 uppercase tracking-[0.4em]">Home Assistant Active</p>
-          </div>
-        </div>
-      </Card>
-    </div>
+      )}
+    </>
   );
 }
