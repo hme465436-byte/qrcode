@@ -61,7 +61,7 @@ interface Message {
 function RobotSVG({ className }: { className?: string }) {
   return (
     <div className={cn("relative pointer-events-none select-none", className)}>
-      <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-xl overflow-visible">
+      <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-2xl overflow-visible">
         {/* Antenna */}
         <line x1="32" y1="14" x2="32" y2="4" stroke="#9AA4B2" strokeWidth="3" strokeLinecap="round" />
         <circle cx="32" cy="4" r="2.5" fill="#22D3EE" className="animate-pulse" />
@@ -150,10 +150,10 @@ export function StudioBot() {
       {!isOpen ? (
         <button 
           onClick={() => setIsOpen(true)}
-          className="pointer-events-auto group w-14 h-14 bg-white dark:bg-[#0f172a] rounded-full border border-border shadow-2xl flex items-center justify-center hover:scale-105 transition-all active:scale-95 shadow-primary/10"
+          className="pointer-events-auto group w-14 h-14 bg-transparent border-none flex items-center justify-center hover:scale-105 transition-all active:scale-95"
           aria-label="Open Assistant"
         >
-          <RobotSVG className="w-10 h-10" />
+          <RobotSVG className="w-14 h-14" />
         </button>
       ) : (
         <div className="pointer-events-auto flex flex-col items-end animate-in slide-in-from-bottom-4 zoom-in-95 duration-300 w-[280px] sm:w-[320px]">
