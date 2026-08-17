@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -98,19 +97,10 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <Link 
-              href="/donate"
-              className={cn(
-                "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 hover:text-primary relative py-1",
-                pathname === '/donate' ? "text-primary" : "text-foreground/40"
-              )}
-            >
-              <Coffee className="w-3 h-3 icon-3d" /> Support
-            </Link>
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
-             {/* About Unit */}
+             {/* STATIC LINK 1: About / Portfolio */}
              <Link 
                 href="/about"
                 title="About My Kit Tool"
@@ -122,10 +112,10 @@ export function Navbar() {
                <User className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
-             {/* Donate Unit */}
+             {/* STATIC LINK 2: Donate / Coffee */}
              <Link 
                 href="/donate"
-                title="Support Studio"
+                title="Buy me a coffee"
                 className={cn(
                   "w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
                   pathname === '/donate' ? "text-primary border-primary/20" : "text-foreground/40 hover:text-primary"
@@ -134,7 +124,7 @@ export function Navbar() {
                <Coffee className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
-             {/* Theme Toggle Unit - Static Button Shell */}
+             {/* Theme Toggle Unit */}
              <button 
                 onClick={toggleTheme}
                 title="Toggle Theme"
