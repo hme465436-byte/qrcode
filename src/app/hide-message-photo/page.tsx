@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { 
   Eye, 
   EyeOff, 
@@ -47,6 +47,7 @@ export default function HideMessagePhotoPage() {
   const [message, setMessage] = useState('');
   const [password, setPassword] = useState('');
   const [revealedMessage, setRevealedMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -57,9 +58,8 @@ export default function HideMessagePhotoPage() {
     if (!loadedImage) return 0;
     // Total bits = Width * Height * 3 (R, G, B channels)
     // We use 1 bit per channel (LSB)
-    // Subtract header (Magic + Length)
     const totalBits = loadedImage.width * loadedImage.height * 3;
-    const headerBits = (MAGIC.length + 8) * 8; // Magic string + 8 bytes for length
+    const headerBits = (MAGIC.length + 10) * 8; // Magic string + separators
     const availBits = totalBits - headerBits;
     return Math.floor(availBits / 8);
   }, [loadedImage]);
@@ -86,6 +86,7 @@ export default function HideMessagePhotoPage() {
     const file = e.target.files?.[0];
     if (file) {
       setIsProcessing(true);
+      setError(null);
       const reader = new FileReader();
       reader.onload = (event) => {
         const img = new Image();
@@ -116,7 +117,7 @@ export default function HideMessagePhotoPage() {
   };
 
   const bitsToText = (bits: number[]) => {
-    const bytes = new Uint8Array(bits.length / 8);
+    const bytes = new Uint8Array(Math.floor(bits.length / 8));
     for (let i = 0; i < bytes.length; i++) {
       let byte = 0;
       for (let j = 0; j < 8; j++) {
@@ -183,6 +184,9 @@ export default function HideMessagePhotoPage() {
     if (!loadedImage || !canvasRef.current) return;
 
     setIsProcessing(true);
+    setError(null);
+    setRevealedMessage(null);
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -194,7 +198,7 @@ export default function HideMessagePhotoPage() {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
 
-    // Extract all bits (limited to a reasonable scan range or full)
+    // Extract all bits
     const bits: number[] = [];
     for (let i = 0; i < data.length; i++) {
       if ((i + 1) % 4 === 0) continue;
@@ -213,17 +217,12 @@ export default function HideMessagePhotoPage() {
       if (fullText.includes(MAGIC)) {
         const parts = fullText.split('|');
         const msg = parts.slice(1).join('|');
-        // Clean trailing null chars or garbage
-        const cleanMsg = msg.replace(/\0+$/, '');
+        // Clean trailing null chars or garbage (limit to logical length)
+        const cleanMsg = msg.replace(/\0+$/, '').split('\0')[0];
         setRevealedMessage(cleanMsg);
         toast({ title: "Message Decoded" });
       } else {
-        // Try without password check (maybe user forgot)
-        if (password) {
-           setError("Incorrect password or no message found.");
-        } else {
-           setError("No message found in this photo.");
-        }
+        setError(password ? "Incorrect password or no message found." : "No message found in this photo.");
       }
     } catch (e) {
       setError("Data corruption detected or no message exists.");
@@ -247,6 +246,7 @@ export default function HideMessagePhotoPage() {
     setMessage('');
     setRevealedMessage(null);
     setPassword('');
+    setError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -344,7 +344,7 @@ export default function HideMessagePhotoPage() {
 
         {/* Controls Column */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-           <Tabs value={activeMode} onValueChange={(v) => { setActiveTab(v); setRevealedMessage(null); }} className="w-full">
+           <Tabs value={activeMode} onValueChange={(v) => { setActiveTab(v); setRevealedMessage(null); setError(null); }} className="w-full">
               <TabsList className="grid grid-cols-2 bg-secondary p-1.5 rounded-2xl h-14 mb-8 border border-white/5 shadow-2xl">
                  <TabsTrigger value="hide" className="rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-background">Hide Message</TabsTrigger>
                  <TabsTrigger value="reveal" className="rounded-xl text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-background">Reveal Message</TabsTrigger>
@@ -435,6 +435,13 @@ export default function HideMessagePhotoPage() {
                             </Button>
                          </div>
 
+                         {error && (
+                            <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
+                               <AlertCircle className="w-4 h-4 text-destructive" />
+                               <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">{error}</p>
+                            </div>
+                         )}
+
                          {revealedMessage !== null && (
                             <div className="space-y-4 animate-in slide-in-from-top-2 duration-500">
                                <Label className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Decoded Payload</Label>
@@ -474,4 +481,3 @@ export default function HideMessagePhotoPage() {
     </div>
   );
 }
-
