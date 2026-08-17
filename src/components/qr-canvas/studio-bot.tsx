@@ -56,32 +56,40 @@ interface Message {
 }
 
 /**
- * Clinical Robot Assistant - High Fidelity Vector Face
+ * Premium Clinical Robot Assistant - High Fidelity Vector Matrix
  */
 function RobotSVG({ className }: { className?: string }) {
   return (
     <div className={cn("relative pointer-events-none select-none", className)}>
       <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-2xl overflow-visible">
-        {/* Antenna */}
-        <line x1="32" y1="14" x2="32" y2="4" stroke="#9AA4B2" strokeWidth="3" strokeLinecap="round" />
-        <circle cx="32" cy="4" r="2.5" fill="#22D3EE" className="animate-pulse" />
+        {/* Antenna System */}
+        <line x1="32" y1="12" x2="32" y2="4" stroke="#4B5563" strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="32" cy="4" r="3" fill="#22D3EE" className="animate-pulse">
+          <title>Signal Active</title>
+        </circle>
         
-        {/* Square/Round Metallic Head */}
-        <rect x="12" y="14" width="40" height="38" rx="8" fill="#9AA4B2" stroke="#4B5563" strokeWidth="1" />
+        {/* Hardware Head - Metallic depth via stroke and base color */}
+        <rect x="12" y="14" width="40" height="38" rx="10" fill="#9AA4B2" stroke="#4B5563" strokeWidth="2" />
         
-        {/* Dark Visor Layer */}
-        <rect x="18" y="22" width="28" height="14" rx="4" fill="#1E293B" />
+        {/* High-Fidelity Visor */}
+        <rect x="16" y="20" width="32" height="16" rx="6" fill="#1E293B" />
         
-        {/* Glowing Cyan Optical Sensors */}
-        <circle cx="26" cy="29" r="2.5" fill="#22D3EE" className="animate-pulse" />
-        <circle cx="38" cy="29" r="2.5" fill="#22D3EE" className="animate-pulse" />
+        {/* Cyan Optical Sensors with Glow */}
+        <g filter="url(#eye-glow)">
+          <circle cx="26" cy="28" r="3" fill="#22D3EE" className="animate-pulse" />
+          <circle cx="38" cy="28" r="3" fill="#22D3EE" className="animate-pulse" />
+        </g>
         
-        {/* Tiny Line Mouth */}
-        <line x1="28" y1="44" x2="36" y2="44" stroke="#1E293B" strokeWidth="1.5" strokeLinecap="round" />
-        
-        {/* Hardware Detail Bolts */}
-        <circle cx="17" cy="46" r="1.2" fill="#4B5563" />
-        <circle cx="47" cy="46" r="1.2" fill="#4B5563" />
+        {/* Thin Linguistic Slit (Mouth) */}
+        <rect x="26" y="44" width="12" height="1.5" rx="0.75" fill="#4B5563" opacity="0.8" />
+
+        {/* Shadow Filters */}
+        <defs>
+          <filter id="eye-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
       </svg>
     </div>
   );
@@ -94,14 +102,14 @@ export function StudioBot() {
     {
       id: 'init',
       role: 'assistant',
-      content: "Need a tool? Ask me."
+      content: "Protocol initialized. Need a production tool? Ask me."
     }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // ROBOT RULE: ONLY ON HOME (/)
+  // VISIBILITY PROTOCOL: ONLY ON HOME (/)
   if (pathname !== '/') return null;
 
   useEffect(() => {
@@ -122,9 +130,9 @@ export function StudioBot() {
 
     let response = "";
     if (foundTools.length > 0) {
-      response = `I found these production units:`;
+      response = `I identified these production studios:`;
     } else {
-      response = "I couldn't locate that studio. Try searching for 'QR', 'PDF', or 'Image'.";
+      response = "Matrix scan yielded no results. Try searching for 'QR', 'PDF', or 'Image' protocols.";
     }
 
     setMessages(prev => [...prev, {
@@ -150,23 +158,23 @@ export function StudioBot() {
       {!isOpen ? (
         <button 
           onClick={() => setIsOpen(true)}
-          className="pointer-events-auto group w-14 h-14 bg-transparent border-none flex items-center justify-center hover:scale-105 transition-all active:scale-95"
+          className="pointer-events-auto group w-14 h-14 bg-transparent border-none flex items-center justify-center hover:scale-110 transition-all active:scale-95"
           aria-label="Open Assistant"
         >
-          <RobotSVG className="w-14 h-14" />
+          <RobotSVG className="w-14 h-14 drop-shadow-2xl" />
         </button>
       ) : (
         <div className="pointer-events-auto flex flex-col items-end animate-in slide-in-from-bottom-4 zoom-in-95 duration-300 w-[280px] sm:w-[320px]">
-          <Card className="w-full border-white/10 shadow-2xl overflow-hidden flex flex-col bg-background/95 backdrop-blur-2xl rounded-[1.5rem] border">
+          <Card className="w-full border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col bg-[#0a0a0c]/95 backdrop-blur-2xl rounded-[1.5rem] border">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-secondary/30 shrink-0">
+            <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-secondary/30 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                   <Bot className="w-4 h-4" />
                 </div>
                 <div className="space-y-0.5">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Robot Assistant</h4>
-                  <p className="text-[7px] font-bold text-primary uppercase tracking-[0.2em]">Online</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Hardware Assistant</h4>
+                  <p className="text-[7px] font-bold text-primary uppercase tracking-[0.2em]">Signal Stable</p>
                 </div>
               </div>
               <button 
@@ -185,10 +193,10 @@ export function StudioBot() {
                   msg.role === 'user' ? "items-end" : "items-start"
                 )}>
                   <div className={cn(
-                    "max-w-[85%] px-4 py-3 rounded-2xl text-[11px] font-medium leading-relaxed shadow-sm",
+                    "max-w-[85%] px-4 py-3 rounded-2xl text-[11px] font-medium leading-relaxed shadow-lg",
                     msg.role === 'user' 
                       ? "bg-primary text-primary-foreground rounded-tr-none" 
-                      : "bg-secondary text-foreground rounded-tl-none border border-border"
+                      : "bg-white/5 text-foreground/80 rounded-tl-none border border-white/5"
                   )}>
                     {msg.content}
                   </div>
@@ -199,7 +207,7 @@ export function StudioBot() {
                         <button 
                           key={tool.href}
                           onClick={() => { setIsOpen(false); window.location.href = tool.href; }}
-                          className="w-full flex items-center justify-between p-2.5 rounded-xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                          className="w-full flex items-center justify-between p-2.5 rounded-xl bg-background/50 border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all group"
                         >
                           <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
@@ -216,7 +224,7 @@ export function StudioBot() {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-secondary px-3 py-2 rounded-2xl rounded-tl-none border border-border flex gap-1 items-center">
+                  <div className="bg-white/5 px-3 py-2 rounded-2xl rounded-tl-none border border-white/5 flex gap-1 items-center">
                     <div className="w-1 h-1 bg-primary/40 rounded-full animate-bounce" />
                     <div className="w-1 h-1 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
                     <div className="w-1 h-1 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
@@ -226,14 +234,14 @@ export function StudioBot() {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-secondary/30 border-t border-border">
+            <div className="p-4 bg-secondary/30 border-t border-white/5">
               <form onSubmit={handleSubmit} className="flex gap-2">
                 <input 
                   type="text"
-                  placeholder="Need a tool?"
+                  placeholder="Need a studio tool?"
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  className="flex-1 h-9 px-4 bg-background border border-border rounded-xl text-[11px] font-medium focus:ring-1 focus:ring-primary outline-none transition-all"
+                  className="flex-1 h-9 px-4 bg-background border border-white/10 rounded-xl text-[11px] font-medium focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-foreground/10"
                 />
                 <button 
                   type="submit"
