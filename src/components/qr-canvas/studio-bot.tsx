@@ -109,14 +109,15 @@ export function StudioBot() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // VISIBILITY PROTOCOL: ONLY ON HOME (/)
-  if (pathname !== '/') return null;
-
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
+
+  // VISIBILITY PROTOCOL: ONLY ON HOME (/)
+  // Moved after all hooks to prevent "Rendered fewer hooks than expected" error
+  if (pathname !== '/') return null;
 
   const processQuery = async (query: string) => {
     setIsTyping(true);
