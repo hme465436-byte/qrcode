@@ -104,10 +104,7 @@ export default function DirectFileSharePage() {
   }, []);
 
   const startSending = async (selectedFile: File) => {
-    if (!firestore) {
-      toast({ variant: "destructive", title: "Signaling Offline", description: "Firebase configuration is missing or invalid." });
-      return;
-    }
+    if (!firestore) return;
     setMode('send');
     setFile(selectedFile);
     setStatus('searching');
@@ -218,11 +215,7 @@ export default function DirectFileSharePage() {
   };
 
   const startReceiving = async () => {
-    if (!firestore) {
-      toast({ variant: "destructive", title: "Signaling Offline", description: "Firebase configuration is missing or invalid." });
-      return;
-    }
-    if (!inputRoomId.trim()) return;
+    if (!firestore || !inputRoomId.trim()) return;
     
     const code = inputRoomId.trim().toUpperCase();
     setMode('receive');
@@ -234,7 +227,7 @@ export default function DirectFileSharePage() {
       const roomSnap = await getDoc(roomRef);
 
       if (!roomSnap.exists()) {
-        throw new Error("Room not found. Check the code.");
+        throw new Error("Invalid code. Please check and try again.");
       }
 
       const roomData = roomSnap.data();
@@ -277,7 +270,7 @@ export default function DirectFileSharePage() {
       });
 
     } catch (err: any) {
-      setErrorMessage(err.message || "Connection failed.");
+      setErrorMessage("Could not connect. Keep both pages open and try again.");
       setStatus('error');
     }
   };
@@ -337,7 +330,7 @@ export default function DirectFileSharePage() {
   const handleCopyCode = () => {
     navigator.clipboard.writeText(roomId);
     setIsCopied(true);
-    toast({ title: "Code Copied" });
+    toast({ title: "Copied" });
     setTimeout(() => setIsCopied(false), 2000);
   };
 
@@ -390,7 +383,7 @@ export default function DirectFileSharePage() {
                 Direct <span className="text-primary italic">File Share</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
-                Device-to-device file transfer without cloud storage. Secure, fast, and 100% private.
+                Send files directly to another device. No cloud storage, total privacy.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -398,18 +391,6 @@ export default function DirectFileSharePage() {
            </div>
         </div>
       </div>
-
-      {!firestore && (
-        <div className="mb-10 p-6 rounded-[2rem] bg-amber-500/10 border border-amber-500/20 flex items-center gap-6 animate-in zoom-in">
-           <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-xl shadow-amber-500/20 shrink-0">
-              <CloudOff className="w-6 h-6" />
-           </div>
-           <div className="space-y-1">
-              <h4 className="text-[11px] font-black uppercase tracking-widest text-amber-600">Signaling Matrix Inactive</h4>
-              <p className="text-[11px] text-amber-600/60 font-medium leading-tight">Firebase credentials are missing. P2P handshakes cannot be established.</p>
-           </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
         {/* Workspace Pane */}
@@ -421,10 +402,9 @@ export default function DirectFileSharePage() {
                 {mode === 'idle' ? (
                   <div className="w-full max-w-lg space-y-12">
                     <div 
-                      onClick={() => firestore && fileInputRef.current?.click()}
+                      onClick={() => fileInputRef.current?.click()}
                       className={cn(
-                        "group/send relative h-56 rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-6 transition-all duration-500 shadow-xl",
-                        firestore ? "border-white/10 hover:border-primary/40 cursor-pointer bg-black/40" : "border-white/5 opacity-50 cursor-not-allowed bg-black/10"
+                        "group/send relative h-56 rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-6 transition-all duration-500 shadow-xl border-white/10 hover:border-primary/40 cursor-pointer bg-black/40"
                       )}
                     >
                       <div className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center text-white/10 group-hover/send:text-primary group-hover/send:scale-110 transition-all">
@@ -432,7 +412,7 @@ export default function DirectFileSharePage() {
                       </div>
                       <div className="text-center space-y-1">
                         <span className="text-sm font-headline font-black uppercase text-white/40 group-hover/send:text-white transition-colors">Send a file</span>
-                        <p className="text-[9px] text-white/10 font-bold uppercase tracking-widest">Direct tunnel sharing</p>
+                        <p className="text-[9px] text-white/10 font-bold uppercase tracking-widest">Direct transfer</p>
                       </div>
                       <input type="file" ref={fileInputRef} onChange={(e) => e.target.files?.[0] && startSending(e.target.files[0])} className="hidden" />
                     </div>
@@ -443,16 +423,15 @@ export default function DirectFileSharePage() {
                     </div>
 
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Receive Protocol</Label>
+                      <Label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Receive file</Label>
                       <div className="flex gap-2">
                          <Input 
                           value={inputRoomId} 
-                          disabled={!firestore}
                           onChange={(e) => setInputRoomId(e.target.value.toUpperCase())}
-                          placeholder="ENTER 6-DIGIT CODE" 
+                          placeholder="ENTER CODE" 
                           className="h-14 bg-black/40 border-white/10 rounded-2xl text-center text-lg font-black tracking-widest placeholder:text-white/5" 
                          />
-                         <Button onClick={startReceiving} disabled={!firestore} className="h-14 px-8 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30">
+                         <Button onClick={startReceiving} className="h-14 px-8 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30">
                             Join
                          </Button>
                       </div>
@@ -481,14 +460,14 @@ export default function DirectFileSharePage() {
                         <div className="text-center space-y-2">
                            <h3 className="text-xl font-headline font-black uppercase text-white tracking-tight">
                               {status === 'searching' ? 'Waiting for peer...' : 
-                               status === 'connecting' ? 'Establishing link...' :
-                               status === 'transferring' ? (mode === 'send' ? 'Sending Data...' : 'Receiving Data...') :
-                               status === 'complete' ? 'Transfer Finished' : 'Protocol Error'}
+                               status === 'connecting' ? 'Connecting...' :
+                               status === 'transferring' ? (mode === 'send' ? 'Sending...' : 'Receiving...') :
+                               status === 'complete' ? 'Finished' : 'Error'}
                            </h3>
                            <div className="flex items-center justify-center gap-3">
                               <File className="w-4 h-4 text-primary/40" />
                               <span className="text-xs font-bold text-white/40 uppercase tracking-widest truncate max-w-[240px]">
-                                 {file?.name || fileMeta?.name || 'Unknown asset'}
+                                 {file?.name || fileMeta?.name || 'File'}
                               </span>
                               <span className="text-[10px] font-mono text-white/20">
                                  {file ? (file.size / (1024 * 1024)).toFixed(1) : (fileMeta?.size || 0) / (1024 * 1024).toFixed(1)} MB
@@ -498,13 +477,14 @@ export default function DirectFileSharePage() {
 
                         {status === 'searching' && (
                            <div className="flex flex-col items-center gap-6 w-full animate-in slide-in-from-bottom-4">
+                              <div className="text-[10px] font-black uppercase text-white/20 tracking-widest">Your Code</div>
                               <div className="bg-primary text-white text-3xl font-black tracking-[0.5em] px-10 py-5 rounded-3xl shadow-2xl ring-4 ring-primary/10">
                                  {roomId}
                               </div>
                               <div className="flex gap-3">
                                  <Button onClick={handleCopyCode} variant="outline" className="h-10 px-6 rounded-xl border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-widest">
                                     {isCopied ? <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
-                                    Copy Code
+                                    Copy
                                  </Button>
                                  <Button onClick={() => setShowQr(!showQr)} variant="outline" className="h-10 px-6 rounded-xl border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-widest">
                                     <QrCode className="w-3.5 h-3.5 mr-2" />
@@ -527,14 +507,13 @@ export default function DirectFileSharePage() {
 
                         {status === 'error' && (
                            <div className="flex flex-col items-center gap-4 text-center animate-in shake duration-500">
-                              <WifiOff className="w-12 h-12 text-red-500" />
+                              <AlertCircle className="w-12 h-12 text-red-500" />
                               <p className="text-xs font-bold text-red-400 uppercase max-w-sm">{errorMessage}</p>
-                              <p className="text-[10px] text-white/20 uppercase">Keep both pages open on same WiFi and try again.</p>
                            </div>
                         )}
 
                         <Button variant="ghost" onClick={stopAll} className="text-white/20 hover:text-red-500 transition-all text-[9px] font-black uppercase tracking-widest">
-                           Cancel Protocol
+                           Cancel
                         </Button>
                      </div>
                   </div>
@@ -548,9 +527,9 @@ export default function DirectFileSharePage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-white uppercase tracking-widest">Zero Cloud storage</h4>
+                  <h4 className="text-[13px] font-black text-white uppercase tracking-widest">Direct Send</h4>
                   <p className="text-[11px] text-white/40 leading-relaxed font-medium uppercase">
-                    Your file is never uploaded. It streams directly through a secure data channel between devices.
+                    Files stream directly between devices. We never upload or store your data.
                   </p>
                 </div>
              </div>
@@ -559,9 +538,9 @@ export default function DirectFileSharePage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-white uppercase tracking-widest">Unlimited potential</h4>
+                  <h4 className="text-[13px] font-black text-white uppercase tracking-widest">Private</h4>
                   <p className="text-[11px] text-white/40 leading-relaxed font-medium uppercase">
-                    Transfer files as large as your device can handle. The only limit is your browser's local memory.
+                    Your files are handled as large as your device can handle. Keep this page open while sending.
                   </p>
                 </div>
              </div>
@@ -572,15 +551,15 @@ export default function DirectFileSharePage() {
            <Card className="glass-card border-border shadow-2xl">
               <CardHeader className="py-6 border-b border-white/5 bg-white/2">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Info className="w-5 h-5 text-primary" /> How it works
+                    <Info className="w-5 h-5 text-primary" /> How to use
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-8">
                  <div className="space-y-6">
                     {[
-                      { icon: Smartphone, title: 'Keep page open', desc: 'The sender must stay on this page until the transfer hits 100%.' },
-                      { icon: Wifi, title: 'Better on WiFi', desc: 'Transfers are fastest and most stable when both devices are on the same network.' },
-                      { icon: Lock, title: 'Handshake Only', desc: 'We only use our server to help the devices find each other. The data is private.' },
+                      { icon: Smartphone, title: 'Keep page open', desc: 'Stay on this page until the transfer is finished.' },
+                      { icon: Wifi, title: 'Same WiFi', desc: 'Best for speed. Keep both devices active.' },
+                      { icon: Lock, title: 'Secure', desc: 'We only help find the other device. Data is direct and private.' },
                     ].map((step, i) => (
                       <div key={i} className="flex gap-5">
                          <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary shrink-0 border border-border">
@@ -592,13 +571,6 @@ export default function DirectFileSharePage() {
                          </div>
                       </div>
                     ))}
-                 </div>
-
-                 <div className="p-6 rounded-[2.5rem] bg-yellow-500/5 border border-yellow-500/10 flex items-start gap-4">
-                    <AlertCircle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
-                    <p className="text-[9px] text-yellow-600/70 font-black uppercase leading-relaxed">
-                      If the connection stalls, try refreshing both pages and ensuring both devices are active.
-                    </p>
                  </div>
               </CardContent>
            </Card>
