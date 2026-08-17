@@ -157,18 +157,18 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     privacy: 'Linguistic synthesis is 100% local and randomized.'
   },
   'nickname-generator': {
-    title: 'Nickname Studio',
-    description: 'Generate stylized, unique nicknames and gamertags with artistic matrixing.',
+    title: 'Nickname Studio PRO',
+    description: 'Advanced identity synthesis for gaming and branding. Generate stylized, unique nicknames and gamertags.',
     steps: [
-      'Enter a primary name or keyword in the Input Matrix.',
-      'Select a linguistic style (Cool, Fire, Pro, etc.).',
-      'Optionally enable the Symbol Matrix for ASCII framing.',
-      'Review the 12 generated variations in the preview grid.',
-      'Copy your favorites or download the entire master set.'
+      'Enter a name and optionally select a game tag (FF, PUBG, COD).',
+      'Select a linguistic style (Cool, Fire, Aesthetic, etc.).',
+      'Choose a preferred length (Short, Medium, Long).',
+      'Toggle "Max 16 Chars" for game engine compatibility.',
+      'Save your favorite variations by marking them with a star.'
     ],
     tips: [
-      'Use "Symbol Matrix" for professional Discord or gaming profiles.',
-      'Regenerate multiple times to discover unique high-entropy combinations.'
+      'Use "Minimal" style for clean professional aliases.',
+      'The "No Spaces" toggle is recommended for competitive gaming IDs.'
     ],
     privacy: 'All generation occurs locally using random sampling. No names are logged or stored.'
   }
