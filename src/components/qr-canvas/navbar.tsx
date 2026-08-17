@@ -12,12 +12,15 @@ import {
   Layers,
   Type,
   Coffee,
-  X,
-  User
+  User,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
 
+/**
+ * Static Logo Component
+ */
 const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, iconOnly?: boolean }) => (
   <div className={cn("flex items-center gap-3", className)}>
     <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
@@ -39,12 +42,15 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
   </div>
 );
 
+/**
+ * STATIC NAV ITEMS REGISTRY
+ * Hardcoded to ensure 100% parity between server and client.
+ */
 const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Single QR', href: '/single', icon: QrCode },
   { label: 'Bulk Mode', href: '/bulk', icon: Layers },
   { label: 'Logo Maker', href: '/logo-maker', icon: Type },
-  { label: 'About', href: '/about', icon: User },
 ];
 
 export function Navbar() {
@@ -100,7 +106,7 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
-             {/* STATIC LINK 1: About / Portfolio */}
+             {/* STATIC IDENTITY UNIT: About / Portfolio */}
              <Link 
                 href="/about"
                 title="About My Kit Tool"
@@ -112,7 +118,7 @@ export function Navbar() {
                <User className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
-             {/* STATIC LINK 2: Donate / Coffee */}
+             {/* STATIC SUPPORT UNIT: Donate / Coffee */}
              <Link 
                 href="/donate"
                 title="Buy me a coffee"
@@ -124,7 +130,7 @@ export function Navbar() {
                <Coffee className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
-             {/* Theme Toggle Unit */}
+             {/* THEME TOGGLE UNIT: Stable container to prevent hydration shift */}
              <button 
                 onClick={toggleTheme}
                 title="Toggle Theme"
@@ -139,7 +145,7 @@ export function Navbar() {
                )}
              </button>
 
-             {/* Scanner Unit */}
+             {/* SCANNER UNIT */}
              <button 
                 onClick={() => setIsScannerOpen(true)}
                 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-4 md:px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
