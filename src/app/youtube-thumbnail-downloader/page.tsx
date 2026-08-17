@@ -197,21 +197,21 @@ export default function YoutubeThumbnailDownloaderPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-2">
+              <div className="flex items-center gap-4 justify-center">
                 <Button 
                   onClick={handleGetThumbnails}
                   disabled={isProcessing || !url.trim()}
-                  className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                  className="w-fit px-10 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl flex items-center justify-center gap-3 text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
-                  {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
+                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />}
                   Download
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={handleClear}
-                  className="w-16 h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95"
+                  className="w-12 h-12 rounded-xl border-border bg-secondary hover:bg-secondary/80 text-foreground/40 hover:text-destructive transition-all active:scale-95 flex items-center justify-center p-0"
                 >
-                  <Trash2 className="w-6 h-6" />
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
 
@@ -231,7 +231,7 @@ export default function YoutubeThumbnailDownloaderPage() {
                       className="w-full h-12 rounded-xl bg-background border-border text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
                     >
                       {isZipping ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> : <FileArchive className="w-3.5 h-3.5 mr-2" />}
-                      Download
+                      Download All (.ZIP)
                     </Button>
                  </div>
               )}
@@ -350,7 +350,7 @@ export default function YoutubeThumbnailDownloaderPage() {
                   className="h-14 px-8 rounded-2xl bg-white text-black font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-all"
                  >
                     {isZipping ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileArchive className="w-4 h-4 mr-2" />}
-                    Download
+                    Download ZIP Archive
                  </Button>
               </div>
             </div>
