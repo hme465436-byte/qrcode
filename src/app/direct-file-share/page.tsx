@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useMemo } from 'react';
@@ -57,6 +56,9 @@ export default function DirectFileSharePage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Derived State
+  const isProcessing = status === 'uploading';
+
   const generateShareId = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
@@ -72,7 +74,7 @@ export default function DirectFileSharePage() {
   }, [shareId]);
 
   const handleFileUpload = async (selectedFile: File) => {
-    // Show file info immediately as requested
+    // Show file info immediately
     setFile(selectedFile);
     setErrorMessage('');
     
