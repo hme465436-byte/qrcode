@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -71,7 +72,9 @@ import {
   Frame,
   Stamp,
   Scan,
-  TrendingDown
+  TrendingDown,
+  Eraser,
+  Ghost
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -116,6 +119,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
     category: 'generators'
+  },
+  { 
+    href: '/blur-face-plate', 
+    icon: Eraser, 
+    title: 'Blur Face / Plate', 
+    desc: 'Quickly hide faces and number plates in your photos locally.', 
+    label: 'PRIVACY', 
+    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
+    keywords: ['blur face', 'blur plate', 'hide number', 'redact', 'censor', 'anonymous'],
+    category: 'image'
   },
   { 
     href: '/image-to-webp', 
@@ -916,7 +930,7 @@ export default function Home() {
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
-      'Images to GIF', 'Image to WebP'
+      'Images to GIF', 'Image to WebP', 'Blur Face'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

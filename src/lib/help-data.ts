@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -91,6 +92,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Ensure the barcode is oriented horizontally within the viewfinder guides.'
     ],
     privacy: 'Decoding occurs strictly in browser memory. No visual data or decoded strings are ever transmitted to external servers.'
+  },
+  'blur-face-plate': {
+    title: 'Blur Face & Plate',
+    description: 'Privacy preservation tool to hide sensitive information in photos.',
+    steps: [
+      'Upload your photo (max 10MB).',
+      'Select "Box" to draw rectangles or "Brush" for freehand blurring.',
+      'Drag or paint on the areas you wish to hide.',
+      'Adjust the Blur Intensity slider to control the level of redaction.',
+      'Download your sanitized photo.'
+    ],
+    tips: [
+      'Use the Box tool for number plates and the Brush tool for faces.',
+      'High blur intensity (80%+) is recommended for definitive anonymity.'
+    ],
+    privacy: 'Redaction occurs 100% locally in your browser memory. Your un-redacted photo never leaves your device.'
   },
   'donate': {
     title: 'Donation Protocol',
