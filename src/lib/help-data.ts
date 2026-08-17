@@ -31,20 +31,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     privacy: 'All rendering occurs on your device. Your URLs and brand logos never leave your browser.'
   },
   'hide-message-photo': {
-    title: 'Hide Message in Photo',
-    description: 'Advanced steganography tool to embed private text data within image pixels.',
+    title: 'Hide Message in Photo Pro',
+    description: 'Advanced steganography tool to embed private text data or small files within image pixels.',
     steps: [
-      'Upload a photo (PNG is highly recommended for best results).',
-      'In "Hide" mode, type your secret message in the text area.',
+      'Upload a photo (PNG is highly recommended).',
+      'Choose "Text" or "Small File" mode for your secret payload.',
       'Optionally set a password to encrypt the bitstream.',
-      'Click "Download PNG" to save the encoded image.',
-      'To retrieve, switch to "Reveal" mode, upload the PNG, and enter the password if applicable.'
+      'Toggle "Strong" mode for bit-redundancy (better for low-quality carriers).',
+      'Use the Compare Slider to verify that the pixels remain visually identical.',
+      'To retrieve, switch to "Reveal" mode, upload the PNG, and enter the password.'
     ],
     tips: [
-      'Do not share the encoded image via WhatsApp or platforms that compress photos, as compression destroys the LSB data.',
-      'Larger images can store significantly more text data.'
+      'Avoid sharing via WhatsApp/Facebook as they compress images and destroy the hidden bits.',
+      'The "Strong" mode is slower but more robust against accidental pixel noise.',
+      "Visible 'Decoy Captions' can be used to misdirect observers."
     ],
-    privacy: 'Encoding and decoding happen 100% locally in your browser memory. Your messages and photos are never uploaded.'
+    privacy: 'All processing occurs 100% locally in your browser memory. Your secrets and photos are never uploaded or logged.'
   },
   'wifi-qr-decoder': {
     title: 'WiFi QR Finder',
@@ -340,4 +342,5 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     privacy: 'This tool uses WebRTC for direct device-to-device streaming. Your files are never uploaded to any server or cloud storage.'
   }
 };
+
 
