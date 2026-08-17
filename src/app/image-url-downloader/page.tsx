@@ -317,7 +317,7 @@ export default function ImageUrlDownloaderPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Extract Matrix
+                  Download
                 </Button>
                 <Button 
                   variant="outline"
@@ -379,7 +379,7 @@ export default function ImageUrlDownloaderPage() {
                   className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg"
                 >
                   {isZipping ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <FileArchive className="w-3.5 h-3.5 mr-2" />}
-                  ZIP Bundle All
+                  Download
                 </Button>
               )}
             </CardHeader>

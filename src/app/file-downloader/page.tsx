@@ -161,7 +161,7 @@ export default function FileDownloaderPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <FileDown className="w-6 h-6 group-hover:translate-y-1 transition-transform" />}
-                  Download Asset
+                  Download
                 </Button>
                 <Button 
                   variant="outline"

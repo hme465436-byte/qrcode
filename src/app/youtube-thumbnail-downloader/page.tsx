@@ -204,7 +204,7 @@ export default function YoutubeThumbnailDownloaderPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Extract Matrix
+                  Download
                 </Button>
                 <Button 
                   variant="outline"
@@ -231,7 +231,7 @@ export default function YoutubeThumbnailDownloaderPage() {
                       className="w-full h-12 rounded-xl bg-background border-border text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
                     >
                       {isZipping ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> : <FileArchive className="w-3.5 h-3.5 mr-2" />}
-                      Bundle All to ZIP
+                      Download
                     </Button>
                  </div>
               )}
@@ -324,7 +324,7 @@ export default function YoutubeThumbnailDownloaderPage() {
                               className="h-10 px-4 bg-primary text-primary-foreground font-black text-[9px] uppercase tracking-widest rounded-xl shadow-lg"
                              >
                                <Download className="w-3.5 h-3.5 mr-2" />
-                               Save Master
+                               Download
                              </Button>
                           </div>
                        </div>
@@ -350,7 +350,7 @@ export default function YoutubeThumbnailDownloaderPage() {
                   className="h-14 px-8 rounded-2xl bg-white text-black font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-all"
                  >
                     {isZipping ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileArchive className="w-4 h-4 mr-2" />}
-                    Download All Qualities (.ZIP)
+                    Download
                  </Button>
               </div>
             </div>
