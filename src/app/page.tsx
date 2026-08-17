@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -68,7 +69,8 @@ import {
   Fingerprint,
   Hash,
   WholeWord,
-  Frame
+  Frame,
+  Stamp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -113,6 +115,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
     category: 'generators'
+  },
+  { 
+    href: '/custom-watermark', 
+    icon: Stamp, 
+    title: 'Custom Watermark', 
+    desc: 'Protect photos and videos with custom text or logos locally.', 
+    label: 'IP PROTECT', 
+    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
+    keywords: ['watermark', 'logo on photo', 'logo on video', 'protect image', 'copyright', 'text on video'],
+    category: 'image'
   },
   { 
     href: '/image-border-frame', 
@@ -868,7 +881,7 @@ export default function Home() {
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
-      'UUID Generator', 'Lorem Ipsum', 'Image Border'
+      'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -206,6 +207,23 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Adjust "Optical Zoom" to center your subject precisely within the new frame matrix.'
     ],
     privacy: 'All visual re-matricing occurs locally in your browser memory. No data is logged or transmitted.'
+  },
+  'watermark': {
+    title: 'Custom Watermark Studio',
+    description: 'Professional visual protection for photos and videos. Add custom text or brand logos with precision positioning and tiling support.',
+    steps: [
+      'Import your image (max 10MB) or video (max 50MB) asset.',
+      'Select "Text" to type a custom label or "Logo" to upload a transparent PNG icon.',
+      'Choose a snap-position from the 9-point grid or drag the watermark directly on the preview.',
+      'Configure stylistic parameters: Opacity, Scale, Color, and Rotation.',
+      'For batch protection, enable "Tiled Pattern" to repeat the watermark across the entire frame.',
+      'Download the final protected master as a PNG or WebM (video) file.'
+    ],
+    tips: [
+      'Use a 45° rotation on tiled text for high-security asset protection.',
+      'For videos, keep the duration short to ensure rapid browser-side synthesis.',
+      'Draggable positioning works best on a desktop mouse, but touch snapping is optimized for mobile.'
+    ],
+    privacy: 'Hardware-native synthesis ensures your assets and brand logos never leave your hardware. No data is logged.'
   }
 };
-
