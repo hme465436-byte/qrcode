@@ -11,7 +11,7 @@ export default function AboutPage() {
           <Info className="w-3.5 h-3.5" /> Our Mission
         </div>
         <h1 className="text-4xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight mb-8">
-          About <span className="text-primary italic">MY KIT TOOL</span>
+          About <span className="text-primary">MY KIT TOOL</span>
         </h1>
         <p className="text-lg text-foreground/50 leading-relaxed font-medium">
           The world's most advanced professional digital studio. We believe premium utilities and branded assets should be high-quality, free, and secure.

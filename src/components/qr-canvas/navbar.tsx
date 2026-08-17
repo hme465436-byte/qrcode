@@ -114,13 +114,13 @@ const SEARCHABLE_TOOLS = [
   { href: '/word-counter', title: 'Word Counter', icon: AlignLeft, label: 'TEXT', keywords: ['count', 'stats', 'chars'] },
   { href: '/color-picker', title: 'Color Picker', icon: Pipette, label: 'DESIGN', keywords: ['hex', 'pick', 'eye dropper'] },
   { href: '/rgb-picker', title: 'RGB Studio', icon: Palette, label: 'ENGINE', keywords: ['convert', 'cmyk', 'hsl'] },
-  { href: '/markdown-preview', title: 'Markdown Preview', icon: FileEdit, label: 'MARKUP', keywords: ['md', 'html', 'live'] },
+  { href: '/markdown-preview', title: 'Markdown Preview', icon: FileEdit, label: 'MARKUP', keywords: ['md', 'markdown', 'html'] },
   { href: '/image-converter', title: 'Image Converter', icon: RefreshCcw, label: 'FORMAT', keywords: ['png to jpg', 'convert'] },
   { href: '/image-resizer', title: 'Image Resizer', icon: Maximize, label: 'SCALE', keywords: ['dimension', 'size', 'resize'] },
   { href: '/image-compressor', title: 'Image Compressor', icon: Maximize, label: 'OPTIMIZE', keywords: ['shrink', 'kb', 'smaller'] },
   { href: '/image-to-pdf', title: 'Image to PDF', icon: FileStack, label: 'DOCUMENT', keywords: ['convert', 'photo to pdf'] },
   { href: '/photo-editor', title: 'Photo Studio', icon: ImageIcon, label: 'EDITOR', keywords: ['edit', 'crop', 'filter'] },
-  { href: '/vocal-separator', title: 'Vocal Remover', icon: MicOff, label: 'KARAOKE', keywords: ['karaoke', 'music', 'instrumental'] },
+  { href: '/vocal-separator', title: 'Vocal Remover', icon: MicOff, label: 'KARAOKE', keywords: ['vocal', 'karaoke', 'music'] },
   { href: '/video-to-audio', title: 'Video to MP3', icon: Music, label: 'MEDIA', keywords: ['extract', 'audio', 'mp4'] },
   { href: '/video-to-gif', title: 'Video to GIF', icon: Film, label: 'ANIMATION', keywords: ['make gif', 'mp4 to gif'] },
   { href: '/audio-joiner', title: 'Audio Joiner', icon: ListMusic, label: 'PRODUCTION', keywords: ['merge', 'combine', 'mp3'] },
@@ -149,7 +149,7 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
     {!iconOnly && (
       <div className="font-headline font-black text-xl tracking-tighter leading-none flex items-center min-w-0">
         <span className="text-[#0f172a] dark:text-white uppercase truncate">MY KIT</span>
-        <span className="text-[#2563eb] ml-1.5 italic shrink-0">TOOL</span>
+        <span className="text-[#2563eb] ml-1.5 shrink-0 uppercase">TOOL</span>
       </div>
     )}
   </div>

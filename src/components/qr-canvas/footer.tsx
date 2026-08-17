@@ -20,7 +20,7 @@ const Logo = ({ className = "h-8" }: { className?: string }) => (
     
     <div className="font-headline font-black text-xl tracking-tighter leading-none flex items-center">
       <span className="text-[#0f172a] dark:text-white uppercase">MY KIT</span>
-      <span className="text-primary ml-1.5 italic">TOOL</span>
+      <span className="text-primary ml-1.5 uppercase">TOOL</span>
     </div>
   </div>
 );

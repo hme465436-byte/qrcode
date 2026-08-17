@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'QR Canvas Apple Icon';
+export const alt = 'MY KIT TOOL Apple Icon';
 export const size = {
   width: 180,
   height: 180,
@@ -58,13 +58,13 @@ export default function AppleIcon() {
           
           {/* Label Below */}
           <span style={{ 
-            fontSize: '32px', 
+            fontSize: '18px', 
             fontWeight: 900, 
             color: '#2563eb', 
-            letterSpacing: '-2px',
+            letterSpacing: '0px',
             marginTop: '8px',
             textTransform: 'uppercase'
-          }}>QR</span>
+          }}>MY KIT TOOL</span>
         </div>
       </div>
     ),

@@ -69,13 +69,13 @@ export default function Icon() {
           
           {/* Label Below Icon */}
           <span style={{ 
-            fontSize: '90px', 
+            fontSize: '64px', 
             fontWeight: 900, 
             color: '#2563eb', 
-            letterSpacing: '-5px',
+            letterSpacing: '-2px',
             marginTop: '20px',
             textTransform: 'uppercase'
-          }}>MY KIT</span>
+          }}>MY KIT TOOL</span>
         </div>
       </div>
     ),
