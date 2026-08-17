@@ -938,7 +938,7 @@ export default function Home() {
           </div>
           
           <h1 className="text-4xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere">
-            MY KIT TOOL: <span className="text-primary italic">Free Online</span> Tools
+            The World’s Most Advanced Tool Studio
           </h1>
           <p className="text-base sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
             Professional high-fidelity asset generation and technical data translation. Engineered for high-performance workflows with 100% hardware-native privacy.
