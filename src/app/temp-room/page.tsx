@@ -43,6 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -68,7 +69,8 @@ interface IncomingFile {
   url?: string;
 }
 
-const CHUNK_SIZE = 16384; // 16KB
+const CHUNK_SIZE = 16384; 
+const CODE_CHARS = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; // No 0, O, 1, I
 
 export default function TempRoomPage() {
   const { toast } = useToast();
@@ -104,18 +106,22 @@ export default function TempRoomPage() {
   const [outboundFile, setOutboundFile] = useState<File | null>(null);
   const [outboundProgress, setOutboundProgress] = useState(0);
   const [inboundFile, setInboundFile] = useState<IncomingFile | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const receivedChunksRef = useRef<ArrayBuffer[]>([]);
 
   // UI
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [showQr, setShowQr] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // --- Logic Matrix ---
+
+  const generateShortCode = () => {
+    return Array.from({ length: 5 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
+  };
 
   // Random Name Generator
   useEffect(() => {
@@ -143,20 +149,27 @@ export default function TempRoomPage() {
     }
   }, [chatMessages]);
 
-  const initPeer = async (): Promise<any> => {
+  const initPeer = async (id?: string): Promise<any> => {
     const { default: Peer } = await import('peerjs');
-    const p = new Peer();
+    const p = id ? new Peer(id, { debug: 0 }) : new Peer();
     
     return new Promise((resolve, reject) => {
-      p.on('open', (id) => {
+      p.on('open', (assignedId) => {
         setPeer(p);
         resolve(p);
       });
-      p.on('error', (err) => {
-        toast({ variant: "destructive", title: "Peer Error", description: err.message });
-        setIsConnecting(false);
-        reject(err);
+      
+      p.on('error', (err: any) => {
+        if (err.type === 'unavailable-id') {
+           // Handled in handleCreate with retries
+           reject(err);
+        } else {
+           toast({ variant: "destructive", title: "Peer Error", description: err.message });
+           setIsConnecting(false);
+           reject(err);
+        }
       });
+
       p.on('disconnected', () => setStatus('closed'));
       p.on('close', () => setStatus('closed'));
     });
@@ -166,7 +179,6 @@ export default function TempRoomPage() {
     setConn(connection);
     
     connection.on('open', () => {
-      // Handshake identity
       connection.send({ type: 'name-sync', value: myName });
       
       if (isHost && pin.trim()) {
@@ -249,25 +261,43 @@ export default function TempRoomPage() {
   const handleCreate = async () => {
     setIsConnecting(true);
     setIsHost(true);
-    try {
-      const p = await initPeer();
-      setRoomCode(p.id);
-      setStatus('waiting');
-      p.on('connection', (incoming) => {
-        setupDataListeners(incoming);
-      });
-    } catch (e) {} finally {
-      setIsConnecting(false);
-    }
+    
+    let retryCount = 0;
+    const maxRetries = 8;
+
+    const attemptCreate = async () => {
+      const code = generateShortCode();
+      try {
+        const p = await initPeer(code);
+        setRoomCode(code);
+        setStatus('waiting');
+        p.on('connection', (incoming) => {
+          setupDataListeners(incoming);
+        });
+        setIsConnecting(false);
+      } catch (err: any) {
+        if (err.type === 'unavailable-id' && retryCount < maxRetries) {
+          retryCount++;
+          attemptCreate();
+        } else {
+          toast({ variant: "destructive", title: "Signaling Error", description: err.message });
+          setIsConnecting(false);
+        }
+      }
+    };
+
+    attemptCreate();
   };
 
   const handleJoin = async () => {
-    if (!peerIdInput.trim()) return;
+    const targetCode = peerIdInput.trim().toUpperCase();
+    if (targetCode.length < 5) return;
+    
     setIsConnecting(true);
     setIsHost(false);
     try {
       const p = await initPeer();
-      const connection = p.connect(peerIdInput.trim());
+      const connection = p.connect(targetCode);
       setupDataListeners(connection);
     } catch (e) {} finally {
       setIsConnecting(false);
@@ -313,7 +343,6 @@ export default function TempRoomPage() {
     typingTimerRef.current = setTimeout(() => sendTypingIndicator(false), 2000);
   };
 
-  // File Transfer Logic
   const sendFile = async () => {
     if (!outboundFile || !conn?.open) return;
     if (outboundFile.size > 10 * 1024 * 1024) {
@@ -461,7 +490,7 @@ export default function TempRoomPage() {
                           </div>
                           <div className="text-center space-y-2">
                              <span className="text-sm font-headline font-black uppercase tracking-widest">Create Private Room</span>
-                             <p className="text-[9px] text-white/40 font-bold uppercase tracking-tighter">Initialize P2P Signaling</p>
+                             <p className="text-[9px] text-white/40 font-bold uppercase tracking-tighter">Generate 5-Char Matrix</p>
                           </div>
                        </button>
                        
@@ -472,11 +501,11 @@ export default function TempRoomPage() {
                           <div className="w-full space-y-4">
                              <Input 
                               value={peerIdInput}
-                              onChange={e => setPeerIdInput(e.target.value)}
-                              placeholder="PASTE 6-CHAR CODE"
-                              className="h-14 bg-white/5 border-white/10 text-center text-xs font-bold tracking-[0.2em] uppercase rounded-2xl"
+                              onChange={e => setPeerIdInput(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, '').substring(0, 5))}
+                              placeholder="5-CHAR CODE"
+                              className="h-14 bg-white/5 border-white/10 text-center text-xs font-bold tracking-[0.4em] uppercase rounded-2xl"
                              />
-                             <Button onClick={handleJoin} disabled={isConnecting || !peerIdInput.trim()} className="w-full h-14 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-white/90 shadow-xl">
+                             <Button onClick={handleJoin} disabled={isConnecting || peerIdInput.length < 5} className="w-full h-14 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-white/90 shadow-xl">
                                 {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Access Room Protocol'}
                              </Button>
                           </div>
@@ -502,7 +531,7 @@ export default function TempRoomPage() {
                        <div className="relative group/code">
                           <div className="absolute -inset-4 bg-primary/10 blur-3xl opacity-0 group-hover/code:opacity-100 transition-opacity" />
                           <div className="relative p-8 bg-black/40 rounded-[3rem] border-2 border-primary/20 flex flex-col sm:flex-row items-center justify-center gap-6 shadow-2xl">
-                             <h3 className="text-3xl sm:text-5xl font-mono font-bold text-white tracking-[0.1em] select-all">{roomCode}</h3>
+                             <h3 className="text-4xl sm:text-6xl font-mono font-bold text-white tracking-[0.2em] select-all">{roomCode}</h3>
                              <div className="flex gap-2">
                                 <Button onClick={() => handleCopy(roomCode, 'code')} variant="outline" className="h-14 w-14 rounded-2xl bg-white/5 border-white/10 text-white">
                                    {isCopied === 'code' ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
@@ -847,7 +876,7 @@ export default function TempRoomPage() {
               </div>
 
               <div className="flex flex-col items-center gap-6">
-                 <p className="text-xl font-mono font-bold text-white tracking-[0.2em]">{roomCode}</p>
+                 <p className="text-2xl font-mono font-bold text-white tracking-[0.4em]">{roomCode}</p>
                  <Button onClick={() => setShowQr(false)} className="h-16 px-12 bg-primary text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-primary/30">
                     Exit Preview
                  </Button>
