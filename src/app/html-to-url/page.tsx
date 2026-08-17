@@ -32,7 +32,8 @@ import {
   FileJson,
   FileText,
   Play,
-  Cpu
+  Cpu,
+  ShieldAlert
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,7 +69,7 @@ export default function HtmlToUrlPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user, loading: authLoading } = useUser();
+  const { user } = useUser();
   
   const [html, setHtml] = useState('');
   const [title, setTitle] = useState('');
@@ -81,6 +82,7 @@ export default function HtmlToUrlPage() {
 
   // Preview / Execution State
   const [previewSrcDoc, setPreviewSrcDoc] = useState('');
+  const [runtimeError, setRuntimeError] = useState<string | null>(null);
   const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
   const [isPyodideLoading, setIsPyodideLoading] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -96,6 +98,66 @@ export default function HtmlToUrlPage() {
     return 'text';
   }, [language, html]);
 
+  // Error Listening Protocol
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'RUNTIME_ERROR') {
+        setRuntimeError(event.data.message);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Debounced Auto-Preview Protocol
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      syncPreview();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [html, effectiveLanguage]);
+
+  const syncPreview = useCallback(() => {
+    setRuntimeError(null);
+    if (!html.trim()) {
+      setPreviewSrcDoc("<html><body style='background:#f1f5f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#64748b;'><p>PREVIEW WILL SHOW HERE</p></body></html>");
+      return;
+    }
+
+    if (['html', 'css', 'javascript'].includes(effectiveLanguage)) {
+      let content = html;
+      
+      // Inject Error Capture Proxy
+      const errorCaptureScript = `
+        <script>
+          window.onerror = function(msg, url, line, col, error) {
+            window.parent.postMessage({ type: 'RUNTIME_ERROR', message: msg + ' (Line: ' + line + ')' }, '*');
+            return false;
+          };
+          console.error = function(...args) {
+            window.parent.postMessage({ type: 'RUNTIME_ERROR', message: args.join(' ') }, '*');
+          };
+        </script>
+      `;
+
+      if (effectiveLanguage === 'css') {
+        content = `<html><head>${errorCaptureScript}<style>${html}</style></head><body style="background:#f8fafc;padding:40px;font-family:sans-serif;"><div style="max-width:600px;margin:0 auto;background:white;padding:40px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.05);"><h1 class="preview-heading">CSS Visual Master</h1><p class="preview-text">Styles applied to canvas environment.</p><button style="padding:10px 20px;border-radius:8px;cursor:pointer;">Action Component</button></div></body></html>`;
+      } else if (effectiveLanguage === 'javascript') {
+        content = `<html><body style="background:#0f172a;color:#22d3ee;padding:20px;font-family:monospace;">${errorCaptureScript}<div id="root">Executing JS Matrix...</div><script>try{ ${html} }catch(e){ console.error(e.message); }</script></body></html>`;
+      } else {
+        // Standard HTML: Inject script into head or start of body
+        if (content.includes('<head>')) {
+          content = content.replace('<head>', '<head>' + errorCaptureScript);
+        } else {
+          content = errorCaptureScript + content;
+        }
+      }
+      setPreviewSrcDoc(content);
+    } else {
+      setPreviewSrcDoc(''); // Non-visual languages use console output (Python)
+    }
+  }, [html, effectiveLanguage]);
+
   // Load Pyodide on Demand
   useEffect(() => {
     if (effectiveLanguage === 'python' && !pyodideRef.current && !isPyodideLoading) {
@@ -109,9 +171,9 @@ export default function HtmlToUrlPage() {
             await new Promise((resolve) => (script.onload = resolve));
           }
           pyodideRef.current = await (window as any).loadPyodide();
-          toast({ title: "Python Engine Ready", description: "WASM Runtime initialized." });
+          toast({ title: "Python Engine Ready" });
         } catch (e) {
-          toast({ variant: "destructive", title: "Engine Failure", description: "Python runtime could not be loaded." });
+          setRuntimeError("Python WASM runtime could not be loaded.");
         } finally {
           setIsPyodideLoading(false);
         }
@@ -120,79 +182,35 @@ export default function HtmlToUrlPage() {
     }
   }, [effectiveLanguage, isPyodideLoading, toast]);
 
-  const handleRun = async () => {
-    if (!html.trim()) return;
+  const handleRunPython = async () => {
+    if (!html.trim() || effectiveLanguage !== 'python') return;
     setConsoleOutput([]);
     setIsExecuting(true);
+    setRuntimeError(null);
 
-    if (effectiveLanguage === 'html') {
-      setPreviewSrcDoc(html);
-    } else if (effectiveLanguage === 'css') {
-      const cssDoc = `
-        <html>
-          <head><style>${html}</style></head>
-          <body style="background: #f8fafc; padding: 40px; font-family: sans-serif;">
-            <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-              <h1 class="preview-heading">CSS Visual Master</h1>
-              <p class="preview-text">This content serves as a canvas for your style protocol. Your CSS is applied globally to this frame.</p>
-              <button style="padding: 10px 20px; border-radius: 8px; cursor: pointer;">Action Component</button>
-            </div>
-          </body>
-        </html>
-      `;
-      setPreviewSrcDoc(cssDoc);
-    } else if (effectiveLanguage === 'javascript') {
-      const jsDoc = `
-        <html>
-          <body style="background: #0f172a; color: #22d3ee; padding: 20px; font-family: monospace;">
-            <div id="root">Executing JS Matrix...</div>
-            <script>
-              const root = document.getElementById('root');
-              const console = {
-                log: (...args) => {
-                  const p = document.createElement('div');
-                  p.textContent = '> ' + args.join(' ');
-                  root.appendChild(p);
-                }
-              };
-              try {
-                ${html}
-              } catch (e) {
-                root.textContent = 'ERROR: ' + e.message;
-              }
-            </script>
-          </body>
-        </html>
-      `;
-      setPreviewSrcDoc(jsDoc);
-    } else if (effectiveLanguage === 'python') {
-      if (!pyodideRef.current) {
-        setConsoleOutput(['[SYSTEM] Waiting for Python WASM Engine...']);
-        setIsExecuting(false);
-        return;
-      }
-      
-      const logs: string[] = [];
-      pyodideRef.current.setStdout({
-        batched: (str: string) => { logs.push(str); setConsoleOutput([...logs]); }
-      });
-      pyodideRef.current.setStderr({
-        batched: (str: string) => { logs.push(`[ERROR] ${str}`); setConsoleOutput([...logs]); }
-      });
+    if (!pyodideRef.current) {
+      setConsoleOutput(['[SYSTEM] Waiting for Python WASM Engine...']);
+      setIsExecuting(false);
+      return;
+    }
+    
+    const logs: string[] = [];
+    pyodideRef.current.setStdout({
+      batched: (str: string) => { logs.push(str); setConsoleOutput([...logs]); }
+    });
+    pyodideRef.current.setStderr({
+      batched: (str: string) => { logs.push(`[ERROR] ${str}`); setConsoleOutput([...logs]); }
+    });
 
-      try {
-        await pyodideRef.current.runPythonAsync(html);
-        if (logs.length === 0) logs.push('[SYSTEM] Execution complete. No stdout returned.');
-        setConsoleOutput([...logs]);
-      } catch (e: any) {
-        setConsoleOutput([...logs, `[RUNTIME ERROR] ${e.message}`]);
-      }
-    } else {
-      setPreviewSrcDoc('');
+    try {
+      await pyodideRef.current.runPythonAsync(html);
+      if (logs.length === 0) logs.push('[SYSTEM] Execution complete. No output.');
+      setConsoleOutput([...logs]);
+    } catch (e: any) {
+      setRuntimeError(e.message);
     }
     
     setIsExecuting(false);
-    if (activeView === 'edit' && window.innerWidth < 1024) setActiveView('preview');
   };
 
   // Fetch User Pages
@@ -218,9 +236,9 @@ export default function HtmlToUrlPage() {
     setIsLoggingIn(true);
     try {
       await signInAnonymously(auth);
-      toast({ title: "Welcome to the Studio", description: "Identity verified successfully." });
+      toast({ title: "Verified", description: "Identity synced." });
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Login Failed", description: err.message });
+      toast({ variant: "destructive", title: "Login Failed" });
     } finally {
       setIsLoggingIn(false);
     }
@@ -233,12 +251,12 @@ export default function HtmlToUrlPage() {
     }
 
     if (!html.trim()) {
-      toast({ variant: "destructive", title: "Payload Empty", description: "Please enter content first." });
+      toast({ variant: "destructive", title: "Payload Empty" });
       return;
     }
 
     if (!firestore) {
-      toast({ variant: "destructive", title: "Handshake Failed", description: "Firestore signaling is inactive." });
+      toast({ variant: "destructive", title: "Signaling Down" });
       return;
     }
 
@@ -261,9 +279,9 @@ export default function HtmlToUrlPage() {
         createdAt: serverTimestamp()
       });
       setGeneratedId(id);
-      toast({ title: "Protocol Published", description: "Content matrix mapped to public URL." });
+      toast({ title: "Published", description: "Identity link generated." });
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Publish Error", description: err.message });
+      toast({ variant: "destructive", title: "Publish Error" });
     } finally {
       setIsProcessing(false);
     }
@@ -276,22 +294,13 @@ export default function HtmlToUrlPage() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handleClear = () => {
-    setHtml('');
-    setTitle('');
-    setGeneratedId(null);
-    setPreviewSrcDoc('');
-    setConsoleOutput([]);
-    toast({ title: "Studio Reset" });
-  };
-
   const openFullscreenPreview = () => {
     const win = window.open();
     if (win) {
-      if (effectiveLanguage === 'html' || effectiveLanguage === 'css' || effectiveLanguage === 'javascript') {
+      if (['html', 'css', 'javascript'].includes(effectiveLanguage)) {
         win.document.write(previewSrcDoc || html);
       } else {
-        win.document.write(`<pre style="background:#000;color:#fff;padding:20px;">${consoleOutput.join('\n') || html}</pre>`);
+        win.document.write(`<pre style="background:#000;color:#fff;padding:20px;font-family:monospace;">${consoleOutput.join('\n') || html}</pre>`);
       }
       win.document.close();
     }
@@ -309,16 +318,11 @@ export default function HtmlToUrlPage() {
               Code & <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Convert HTML or code snippets into shareable links. Host live demos or share code strings instantly via our secure document matrix.
+              Synthesize code strings into hosted visual pages or shareable blocks. Secure sandboxed previews and instant publishing.
             </p>
           </div>
           <div className="flex items-center gap-3">
              <GetHelp toolId="html-to-url" />
-             {html && (
-               <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                 <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
-               </Button>
-             )}
           </div>
         </div>
       </div>
@@ -335,18 +339,17 @@ export default function HtmlToUrlPage() {
 
           <div className={cn("space-y-8", activeView === 'preview' ? "max-lg:hidden" : "block")}>
             <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[500px]">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-              <CardHeader className="pb-8 border-b border-border bg-secondary/30">
+              <CardHeader className="pb-6 border-b border-border bg-secondary/30">
                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                       <Code2 className="w-5 h-5 text-primary" /> Matrix Payload
+                       <Code2 className="w-5 h-5 text-primary" /> Matrix Input
                     </CardTitle>
                     <div className="flex items-center gap-3">
                        <Select value={language} onValueChange={setLanguage}>
                           <SelectTrigger className="h-9 w-[150px] bg-background/50 border-white/5 text-[9px] font-black uppercase rounded-lg">
                              <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="glass-card border-white/10">
+                          <SelectContent className="glass-card">
                              {LANGUAGES.map(lang => (
                                <SelectItem key={lang.id} value={lang.id} className="text-[9px] font-black uppercase">{lang.label}</SelectItem>
                              ))}
@@ -357,18 +360,18 @@ export default function HtmlToUrlPage() {
               </CardHeader>
               <CardContent className="pt-10 space-y-8">
                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Asset Identity (Title)</Label>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Title (Optional)</Label>
                     <Input 
                       value={title}
                       onChange={e => setTitle(e.target.value)}
-                      placeholder="ENTER TITLE..."
+                      placeholder="ENTER PAGE TITLE..."
                       className="h-14 bg-secondary border-border rounded-2xl text-lg font-bold px-6 focus:ring-primary/40 uppercase"
                     />
                  </div>
 
                  <div className="space-y-4">
                     <div className="flex justify-between items-center px-1">
-                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Linguistic Content</Label>
+                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Source Code</Label>
                       <span className={cn("text-[9px] font-mono", html.length > 150000 ? "text-red-500" : "text-primary/60")}>
                         {Math.round(html.length / 1024)} KB / 150 KB
                       </span>
@@ -376,26 +379,36 @@ export default function HtmlToUrlPage() {
                     <Textarea 
                       value={html}
                       onChange={e => setHtml(e.target.value)}
-                      placeholder="Paste your code or text here..."
+                      placeholder="Paste code or text here..."
                       className="min-h-[400px] bg-secondary border-border text-xs font-mono p-8 rounded-[2rem] leading-relaxed resize-none focus:ring-primary/40 custom-scrollbar shadow-inner"
                     />
                  </div>
 
                  <div className="flex gap-4">
-                    <Button 
-                      onClick={handleRun}
-                      disabled={isExecuting || isPyodideLoading || !html.trim()}
-                      className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg transition-all active:scale-95"
-                    >
-                      {isExecuting || isPyodideLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
-                      {effectiveLanguage === 'python' ? 'Run Code' : 'Update Preview'}
-                    </Button>
+                    {effectiveLanguage === 'python' ? (
+                       <Button 
+                        onClick={handleRunPython}
+                        disabled={isExecuting || isPyodideLoading || !html.trim()}
+                        className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
+                       >
+                         {isExecuting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
+                         Run Python
+                       </Button>
+                    ) : (
+                       <Button 
+                        onClick={syncPreview}
+                        className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
+                       >
+                         <RefreshCcw className="w-6 h-6" />
+                         Refresh Preview
+                       </Button>
+                    )}
                     
                     {!user ? (
                       <Button 
                         onClick={handleLogin}
                         disabled={isLoggingIn}
-                        className="h-16 flex-1 bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg transition-all active:scale-95"
+                        className="h-16 flex-1 bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
                       >
                         {isLoggingIn ? <Loader2 className="w-6 h-6 animate-spin" /> : <LogIn className="w-6 h-6 text-primary" />}
                         Log in to Publish
@@ -404,171 +417,108 @@ export default function HtmlToUrlPage() {
                       <Button 
                         onClick={handleMakeLink}
                         disabled={!html.trim() || isProcessing || html.length > 150000}
-                        className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95"
+                        className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
                       >
                         {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <LinkIcon className="w-6 h-6" />}
-                        {effectiveLanguage === 'html' ? 'Publish Live Page' : 'Generate Code Link'}
+                        Publish Link
                       </Button>
                     )}
                  </div>
               </CardContent>
             </Card>
-
-            {myPages && myPages.length > 0 && (
-              <Card className="glass-card border-border shadow-xl overflow-hidden">
-                <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                   <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground">
-                      <History className="w-4 h-4 text-primary" /> My Hosted Registry
-                   </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                   <div className="divide-y divide-border">
-                      {myPages.map((p: any) => (
-                        <div key={p.id} className="p-4 flex items-center justify-between hover:bg-secondary/30 transition-all group">
-                           <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                                 {p.language === 'html' ? <Globe className="w-4 h-4" /> : <FileCode className="w-4 h-4" />}
-                              </div>
-                              <div className="space-y-0.5 min-w-0">
-                                 <p className="text-[10px] font-black text-foreground uppercase tracking-tight truncate max-w-[120px]">{p.title}</p>
-                                 <p className="text-[8px] font-mono text-foreground/20 uppercase">{p.language || 'text'}</p>
-                              </div>
-                           </div>
-                           <div className="flex gap-2">
-                              <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:text-primary">
-                                 <a href={`/p/${p.id}`} target="_blank"><ExternalLink className="w-3.5 h-3.5" /></a>
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={() => handleCopy(`${window.location.origin}/p/${p.id}`)} className="h-8 w-8 rounded-lg hover:text-primary">
-                                 <Copy className="w-3.5 h-3.5" />
-                              </Button>
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
 
         {/* Preview Column */}
-        <div className="lg:col-span-6 xl:col-span-6 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2 lg:sticky lg:top-24">
-          <Card className={cn(
-            "glass-card border-border shadow-2xl overflow-hidden relative group min-h-[600px] flex flex-col",
-            activeView === 'edit' ? "max-lg:hidden" : "block",
-            (effectiveLanguage === 'html' || effectiveLanguage === 'css' || effectiveLanguage === 'javascript') ? "bg-white" : "bg-[#0a0a0c]"
-          )}>
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
-               <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
-                  {(effectiveLanguage === 'html' || effectiveLanguage === 'css' || effectiveLanguage === 'javascript') ? <Eye className="w-3.5 h-3.5" /> : <Terminal className="w-3.5 h-3.5" />}
-                  {effectiveLanguage === 'python' ? 'Console Matrix' : 'Visual Master'}
-               </CardTitle>
-               <div className="flex items-center gap-3">
-                  <button onClick={() => { setPreviewSrcDoc(''); setConsoleOutput([]); }} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Clear Preview">
-                     <RefreshCcw className="w-3.5 h-3.5 text-foreground/40" />
-                  </button>
-                  <button onClick={openFullscreenPreview} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Fullscreen Preview">
-                     <Maximize2 className="w-3.5 h-3.5 text-foreground/40" />
-                  </button>
-               </div>
-            </CardHeader>
-            <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col">
-               {effectiveLanguage === 'python' ? (
-                  <div className="flex-1 p-8 font-mono text-sm leading-relaxed overflow-auto custom-scrollbar bg-black text-green-400">
-                     {consoleOutput.length > 0 ? consoleOutput.map((line, i) => (
-                       <div key={i} className="mb-1">{line}</div>
-                     )) : (
-                       <div className="opacity-20 italic">Awaiting Python execution...</div>
-                     )}
-                  </div>
-               ) : (
-                 previewSrcDoc ? (
-                    <iframe 
-                      srcDoc={previewSrcDoc}
-                      title="Studio Preview"
-                      sandbox="allow-scripts allow-forms"
-                      className="w-full h-full border-none"
-                    />
-                 ) : (
-                    <div className="h-full flex flex-col p-8 bg-[#0a0a0c]">
-                       {['java', 'cpp', 'php', 'other'].includes(effectiveLanguage) ? (
-                         <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-                            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-white/20">
-                               <ShieldAlert className="w-8 h-8" />
-                            </div>
-                            <div className="space-y-2">
-                               <p className="text-xs font-black uppercase text-white/40 tracking-widest">Protocol Restriction</p>
-                               <p className="text-[10px] text-white/20 font-medium uppercase leading-relaxed max-w-xs">
-                                  This language cannot run in the browser sandbox. Links will share the source matrix correctly.
-                               </p>
-                            </div>
-                            <div className="p-6 bg-white/5 rounded-2xl w-full text-left font-mono text-[10px] text-white/30 truncate">
-                               {html.substring(0, 100)}...
-                            </div>
-                         </div>
-                       ) : (
-                         <div className="h-full flex flex-col items-center justify-center opacity-10 py-32 space-y-4">
-                            <Layout className="w-24 h-24 text-primary" />
-                            <p className="text-xs font-black uppercase tracking-[0.3em] text-white">Awaiting Inbound Signal</p>
-                         </div>
+        <div className="lg:col-span-6 xl:col-span-6 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+          <div className={cn("space-y-8", activeView === 'edit' ? "max-lg:hidden" : "block")}>
+            <Card className={cn(
+              "glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px]",
+              (effectiveLanguage === 'html' || effectiveLanguage === 'css' || effectiveLanguage === 'javascript') ? "bg-white" : "bg-[#0a0a0c]"
+            )}>
+              <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
+                 <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
+                    {['html', 'css', 'javascript'].includes(effectiveLanguage) ? <Eye className="w-3.5 h-3.5" /> : <Terminal className="w-3.5 h-3.5" />}
+                    {effectiveLanguage === 'python' ? 'Python Console' : 'Visual Master'}
+                 </CardTitle>
+                 <div className="flex items-center gap-2">
+                    <button onClick={openFullscreenPreview} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Open Fullscreen">
+                       <Maximize2 className="w-3.5 h-3.5 text-foreground/40" />
+                    </button>
+                 </div>
+              </CardHeader>
+              
+              <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col">
+                 {effectiveLanguage === 'python' ? (
+                    <div className="flex-1 p-8 font-mono text-xs leading-relaxed overflow-auto custom-scrollbar bg-black text-green-400">
+                       {consoleOutput.length > 0 ? consoleOutput.map((line, i) => (
+                         <div key={i} className="mb-1">&gt; {line}</div>
+                       )) : (
+                         <div className="opacity-20 italic">Awaiting Python trigger...</div>
                        )}
                     </div>
-                 )
-               )}
-            </CardContent>
-          </Card>
+                 ) : (
+                    <div className="flex-1 flex flex-col min-h-[320px]">
+                      <iframe 
+                        id="previewFrame"
+                        srcDoc={previewSrcDoc}
+                        title="Studio Preview"
+                        sandbox="allow-scripts allow-forms"
+                        className="w-full flex-1 border-none bg-transparent block"
+                        style={{ minHeight: '320px' }}
+                      />
+                    </div>
+                 )}
 
-          {generatedId && (
-            <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden relative animate-in zoom-in duration-500">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-               <CardHeader className="py-8 border-b border-primary/10">
-                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.5em] flex items-center gap-3 text-primary">
-                    <CheckCircle2 className="w-4 h-4" /> Protocol Published
-                  </CardTitle>
-               </CardHeader>
-               <CardContent className="pt-10 space-y-8">
-                  <div className="space-y-4">
-                     <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Hosted Identity Link</Label>
-                     <div className="p-6 bg-background border border-primary/20 rounded-[2.5rem] shadow-inner relative group/url overflow-hidden">
-                        <p className="text-lg font-bold text-foreground break-all leading-tight">{fullUrl}</p>
-                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <Button 
-                      onClick={() => handleCopy(fullUrl)}
-                      className="h-16 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30"
-                     >
-                        {isCopied ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
-                        Copy Link
-                     </Button>
-                     <Button 
-                      asChild
-                      variant="outline"
-                      className="h-16 rounded-2xl border-white/10 bg-white/5 text-foreground font-black uppercase tracking-widest text-[10px] hover:bg-white/10"
-                     >
-                        <a href={`/p/${generatedId}`} target="_blank">
-                           <ExternalLink className="w-5 h-5 mr-2" /> Open Preview
-                        </a>
-                     </Button>
-                  </div>
-               </CardContent>
+                 {/* Diagnostics Overlay */}
+                 {runtimeError && (
+                   <div className="p-4 bg-red-500/10 border-t border-red-500/20 text-red-500 flex items-start gap-3 animate-in slide-in-from-bottom-2">
+                      <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                         <p className="text-[10px] font-black uppercase tracking-widest leading-none">Runtime Error</p>
+                         <p className="text-[10px] font-bold leading-relaxed">{runtimeError}</p>
+                      </div>
+                   </div>
+                 )}
+              </CardContent>
             </Card>
-          )}
 
-          <div className="grid grid-cols-1 gap-6">
-             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-7 h-7" />
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Isolated Identity</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    HTML/CSS/JS are served via a live sandboxed environment. Python is executed via hardware-native WebAssembly (WASM) with zero server persistence.
-                  </p>
-                </div>
-             </div>
+            {generatedId && (
+              <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden relative animate-in zoom-in duration-500">
+                 <CardHeader className="py-8 border-b border-primary/10">
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.5em] flex items-center gap-3 text-primary">
+                      <CheckCircle2 className="w-4 h-4" /> Identity Link Published
+                    </CardTitle>
+                 </CardHeader>
+                 <CardContent className="pt-10 space-y-8 text-center">
+                    <div className="p-6 bg-background border border-primary/20 rounded-[2.5rem] shadow-inner">
+                       <p className="text-lg font-bold text-foreground break-all leading-tight">{fullUrl}</p>
+                    </div>
+                    <div className="flex gap-4">
+                       <Button onClick={() => handleCopy(fullUrl)} className="h-14 flex-1 bg-primary text-white font-black uppercase text-[10px] rounded-2xl shadow-xl">
+                          {isCopied ? 'Identity Copied' : 'Copy Link'}
+                       </Button>
+                       <Button asChild variant="outline" className="h-14 px-8 rounded-2xl border-white/10 bg-white/5 text-white">
+                          <a href={`/p/${generatedId}`} target="_blank"><ExternalLink className="w-4 h-4 mr-2" /> Open</a>
+                       </Button>
+                    </div>
+                 </CardContent>
+              </Card>
+            )}
+
+            <div className="grid grid-cols-1 gap-6">
+               <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+                  <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                     <ShieldCheck className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">WASM Sandbox</h4>
+                    <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                      Visual languages are served via isolated sub-frames. Complex logic (Python) is executed via hardware-native WebAssembly with zero server persistence.
+                    </p>
+                  </div>
+               </div>
+            </div>
           </div>
         </div>
       </div>
@@ -577,13 +527,6 @@ export default function HtmlToUrlPage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .bg-checkered {
-          background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
-                            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
-                            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
-          background-size: 20px 20px;
-        }
       `}</style>
     </div>
   );
