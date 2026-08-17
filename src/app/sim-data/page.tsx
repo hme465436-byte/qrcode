@@ -29,48 +29,95 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
+// --- Original Data Registry (Mock Database) ---
+const SIM_REGISTRY: Record<string, any> = {
+  '03001234567': {
+    owner: "AHMED KHAN",
+    cnic: "35202-1234567-1",
+    address: "MODEL TOWN, LAHORE, PUNJAB",
+    status: "ACTIVE",
+    activationDate: "2019-04-12",
+    carrier: "Mobilink (Jazz)"
+  },
+  '03129876543': {
+    owner: "SARA BIBI",
+    cnic: "42101-9876543-2",
+    address: "DEFENCE PHASE 6, KARACHI, SINDH",
+    status: "ACTIVE",
+    activationDate: "2021-11-05",
+    carrier: "Zong"
+  },
+  '03335554444': {
+    owner: "MUHAMMAD ALI",
+    cnic: "61101-5554444-3",
+    address: "SECTOR F-7, ISLAMABAD, ICT",
+    status: "ACTIVE",
+    activationDate: "2018-01-20",
+    carrier: "Ufone"
+  },
+  '03456667777': {
+    owner: "FATIMA ZAHRA",
+    cnic: "33102-6667777-4",
+    address: "CANTT AREA, FAISALABAD, PUNJAB",
+    status: "ACTIVE",
+    activationDate: "2023-02-14",
+    carrier: "Telenor"
+  }
+};
+
 export default function SimDataPage() {
   const { toast } = useToast();
   const [number, setNumber] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const getCarrier = (num: string) => {
-    // Remove leading 0 if present to check prefix
     const clean = num.startsWith('0') ? num.substring(1) : num;
-    if (clean.startsWith('30')) return 'Mobilink (Jazz)';
+    if (clean.startsWith('30') || clean.startsWith('32')) return 'Mobilink / Warid (Jazz)';
     if (clean.startsWith('34')) return 'Telenor';
     if (clean.startsWith('33')) return 'Ufone';
     if (clean.startsWith('31')) return 'Zong';
-    if (clean.startsWith('32')) return 'Warid';
     return 'Unknown Network';
   };
 
   const handleSearch = async () => {
     const cleanNum = number.trim().replace(/[^0-9]/g, '');
     if (cleanNum.length < 10) {
-      toast({ variant: "destructive", title: "Input Required", description: "Please enter a valid Pakistani number." });
+      toast({ variant: "destructive", title: "Input Required", description: "Please enter a valid Pakistani number (11 digits)." });
       return;
     }
 
     setIsProcessing(true);
     setResult(null);
+    setHasSearched(false);
 
-    // Simulated API Latency for Prototype
+    // Simulated API Latency for Protocol Realism
     await new Promise(r => setTimeout(r, 1800));
 
-    setResult({
-      number: cleanNum,
-      carrier: getCarrier(cleanNum),
-      owner: "IDENTIFIED PERSON",
-      cnic: "35201-XXXXXXX-X",
-      address: "PUNJAB, PAKISTAN",
-      status: "ACTIVE",
-      activationDate: "2022-08-24"
-    });
+    // Lookup in Original Data Matrix
+    const formattedNum = cleanNum.startsWith('0') ? cleanNum : `0${cleanNum}`;
+    const foundData = SIM_REGISTRY[formattedNum];
 
+    if (foundData) {
+      setResult(foundData);
+      toast({ title: "Signal Mapped", description: "Identity data retrieved successfully." });
+    } else {
+      // Fallback for demo: show carrier but note missing specific identity
+      setResult({
+        owner: "RECORD NOT FOUND",
+        cnic: "UNAVAILABLE",
+        address: "SIGNAL UNKNOWN",
+        status: "INACTIVE / UNLISTED",
+        activationDate: "N/A",
+        carrier: getCarrier(formattedNum),
+        isMissing: true
+      });
+      toast({ variant: "destructive", title: "No Record Found", description: "This number is not in the current registry." });
+    }
+
+    setHasSearched(true);
     setIsProcessing(false);
-    toast({ title: "Signal Mapped", description: "Identity data retrieved for " + cleanNum });
   };
 
   return (
@@ -90,9 +137,9 @@ export default function SimDataPage() {
            </div>
            <div className="flex items-center gap-3">
               <GetHelp toolId="sim-data" />
-              {result && (
-                <Button variant="outline" size="sm" onClick={() => { setNumber(''); setResult(null); }} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
-                   <Trash2 className="w-3.5 h-3.5 mr-2" /> Purge
+              {(result || number) && (
+                <Button variant="outline" size="sm" onClick={() => { setNumber(''); setResult(null); setHasSearched(false); }} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
+                   <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset Matrix
                 </Button>
               )}
            </div>
@@ -121,7 +168,7 @@ export default function SimDataPage() {
                   <Input 
                     placeholder="03XXXXXXXXX"
                     value={number}
-                    onChange={(e) => setNumber(e.target.value)}
+                    onChange={(e) => setNumber(e.target.value.replace(/[^0-9]/g, '').substring(0, 11))}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     className="h-16 bg-secondary border-border rounded-2xl text-2xl font-mono font-bold text-center tracking-widest focus:ring-primary/40"
                   />
@@ -129,17 +176,17 @@ export default function SimDataPage() {
                     <Phone className="w-6 h-6 text-primary" />
                   </div>
                 </div>
-                <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest text-center">Format: 11 Digits (0300...)</p>
+                <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest text-center">Format: 11 Digits (e.g. 03001234567)</p>
               </div>
 
               <div className="flex gap-4">
                 <Button 
                   onClick={handleSearch}
-                  disabled={isProcessing || !number.trim()}
+                  disabled={isProcessing || number.length < 10}
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Identify Matrix
+                  Identify Signal
                 </Button>
               </div>
             </CardContent>
@@ -168,10 +215,10 @@ export default function SimDataPage() {
                   <Activity className="w-5 h-5" />
                 </div>
                 <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
-                  <Activity className="w-3.5 h-3.5" /> Identity Matrix
+                   Identity Matrix
                 </CardTitle>
               </div>
-              {result && (
+              {result && !result.isMissing && (
                 <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest animate-pulse">
                   Signal Isolated
                 </div>
@@ -198,16 +245,31 @@ export default function SimDataPage() {
                  <div className="space-y-10 animate-in zoom-in duration-500 w-full">
                     {/* Primary Identifier */}
                     <div className="flex flex-col sm:flex-row items-center gap-8 border-b border-white/5 pb-10">
-                       <div className="w-24 h-24 rounded-[2.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-xl ring-4 ring-primary/5">
+                       <div className={cn(
+                         "w-24 h-24 rounded-[2.5rem] border flex items-center justify-center shadow-xl ring-4",
+                         result.isMissing ? "bg-red-500/10 border-red-500/20 text-red-500 ring-red-500/5" : "bg-primary/10 border-primary/20 text-primary ring-primary/5"
+                       )}>
                           <User className="w-10 h-10" />
                        </div>
                        <div className="text-center sm:text-left space-y-2">
-                          <h3 className="text-4xl font-headline font-black text-foreground uppercase tracking-tight">{result.owner}</h3>
+                          <h3 className={cn(
+                            "text-4xl font-headline font-black uppercase tracking-tight",
+                            result.isMissing ? "text-red-500/60" : "text-foreground"
+                          )}>
+                            {result.owner}
+                          </h3>
                           <div className="flex flex-wrap justify-center sm:justify-start gap-4">
-                             <div className="flex items-center gap-2 text-primary">
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Identity Verified</span>
-                             </div>
+                             {!result.isMissing ? (
+                               <div className="flex items-center gap-2 text-primary">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  <span className="text-[10px] font-black uppercase tracking-widest">Verified Identity</span>
+                               </div>
+                             ) : (
+                               <div className="flex items-center gap-2 text-destructive">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span className="text-[10px] font-black uppercase tracking-widest">Record Missing</span>
+                               </div>
+                             )}
                              <div className="flex items-center gap-2 text-foreground/40">
                                 <Activity className="w-4 h-4" />
                                 <span className="text-[10px] font-black uppercase tracking-widest">Status: {result.status}</span>
@@ -242,7 +304,7 @@ export default function SimDataPage() {
                        <div className="space-y-1">
                           <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Protocol Notice</p>
                           <p className="text-[9px] text-foreground/40 leading-relaxed font-medium uppercase">
-                             Identity retrieval is based on publicly indexed registry matrices. Recent MNP (Mobile Number Portability) changes may result in stale carrier signatures.
+                             Identity retrieval is based on a simulated clinical registry. Real-time MNP (Mobile Number Portability) changes may impact carrier signature accuracy.
                           </p>
                        </div>
                     </div>
@@ -268,3 +330,4 @@ export default function SimDataPage() {
     </div>
   );
 }
+
