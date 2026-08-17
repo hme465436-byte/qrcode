@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useMemo } from 'react';
@@ -71,24 +72,28 @@ export default function DirectFileSharePage() {
   }, [shareId]);
 
   const handleFileUpload = async (selectedFile: File) => {
-    if (!firestore || !storage) {
-      toast({ variant: "destructive", title: "System Offline", description: "Firebase services not initialized." });
+    // Show file info immediately as requested
+    setFile(selectedFile);
+    setErrorMessage('');
+    
+    if (selectedFile.size > 50 * 1024 * 1024) {
+      toast({ variant: "destructive", title: "File too large", description: "Maximum file size is 50MB." });
+      setFile(null);
       return;
     }
 
-    if (selectedFile.size > 50 * 1024 * 1024) {
-      toast({ variant: "destructive", title: "File too large", description: "Maximum file size is 50MB." });
+    if (!firestore || !storage) {
+      setErrorMessage("Service linking failed. Check your connection.");
+      setStatus('error');
       return;
     }
 
     const id = generateShareId();
     setShareId(id);
-    setFile(selectedFile);
     setStatus('uploading');
     setProgress(0);
-    setErrorMessage('');
 
-    // Start Cloud Upload Protocol
+    // Start Cloud Upload
     const safeName = selectedFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
     const storageRef = ref(storage, `shares/${id}/${safeName}`);
     const uploadTask = uploadBytesResumable(storageRef, selectedFile);
@@ -101,8 +106,8 @@ export default function DirectFileSharePage() {
       (err) => {
         console.error("Upload failed", err);
         setStatus('error');
-        setErrorMessage(err.message || "Failed to upload file. Check your connection.");
-        toast({ variant: "destructive", title: "Upload Failed" });
+        setErrorMessage(err.message || "Failed to upload file.");
+        toast({ variant: "destructive", title: "Upload Failed", description: err.message });
       }, 
       async () => {
         try {
@@ -121,6 +126,7 @@ export default function DirectFileSharePage() {
         } catch (e: any) {
           setStatus('error');
           setErrorMessage(e.message || "Could not save file details.");
+          toast({ variant: "destructive", title: "Metadata Error", description: e.message });
         }
       }
     );
@@ -168,10 +174,10 @@ export default function DirectFileSharePage() {
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[400px] bg-secondary/10">
              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
              <CardContent className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12">
-                {status === 'idle' ? (
+                {status === 'idle' && !file ? (
                   <div className="w-full max-w-lg space-y-8">
                     <div 
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={() => !isProcessing && fileInputRef.current?.click()}
                       className="group relative h-64 rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-6 transition-all duration-500 shadow-xl border-white/10 hover:border-primary/40 cursor-pointer bg-black/40"
                     >
                       <div className="w-20 h-20 rounded-[2rem] bg-white/5 flex items-center justify-center text-white/10 group-hover:text-primary group-hover:scale-110 transition-all">
@@ -210,7 +216,7 @@ export default function DirectFileSharePage() {
                           </div>
                         )}
 
-                        {(status === 'uploading' || status === 'error') && (
+                        {(status === 'uploading' || status === 'error' || (status === 'idle' && file)) && (
                           <div className="w-full space-y-8">
                              <div className="flex items-center justify-center gap-6 p-6 rounded-3xl bg-black/40 border border-white/5">
                                 <File className="w-8 h-8 text-primary/40" />
@@ -229,13 +235,13 @@ export default function DirectFileSharePage() {
                                   <Progress value={progress} className="h-1.5" />
                                   <p className="text-center text-[9px] font-bold text-white/20 uppercase tracking-widest animate-pulse">Processing binary stream...</p>
                                </div>
-                             ) : (
+                             ) : status === 'error' ? (
                                <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-center space-y-4">
                                   <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
-                                  <p className="text-xs font-bold text-red-400 uppercase leading-relaxed">{errorMessage}</p>
+                                  <p className="text-xs font-bold text-red-400 uppercase leading-relaxed">Upload failed: {errorMessage}</p>
                                   <Button onClick={reset} variant="outline" className="h-10 border-red-500/20 bg-red-500/5 text-red-500 text-[10px] font-black uppercase">Try again</Button>
                                </div>
-                             )}
+                             ) : null}
                           </div>
                         )}
                      </div>
