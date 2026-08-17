@@ -115,11 +115,11 @@ const TOOLS: Tool[] = [
     href: '/direct-file-share', 
     icon: Share2, 
     title: 'Direct File Share', 
-    desc: 'Send large files device-to-device (P2P) without cloud storage.', 
-    label: 'P2P NET', 
+    desc: 'Send large files directly to any device via secret link.', 
+    label: 'LINK SHARE', 
     color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['send file', 'p2p', 'share without upload', 'direct share', 'transfer', 'file send'],
+    keywords: ['share file', 'send file', 'toffee', 'p2p', 'direct share', 'transfer', 'file send', 'no upload'],
     category: 'utilities'
   },
   { 
@@ -744,7 +744,7 @@ const TOOLS: Tool[] = [
     title: 'Video to MP3', 
     desc: 'Extract high-quality audio tracks from videos.', 
     label: 'MEDIA', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['mp4', 'mp3', 'video', 'audio', 'convert', 'music', 'extract', 'sound', 'ffmpeg'],
     category: 'utilities'
@@ -954,7 +954,7 @@ export default function Home() {
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
-      'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share'
+      'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
