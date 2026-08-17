@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -26,7 +25,8 @@ import {
   Quote,
   ChevronRight,
   ChevronDown,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -259,12 +260,6 @@ export default function JsonFormatterPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
-      {/* SEO & Header */}
-      <head>
-        <title>Advanced JSON Formatter | Free Online | My Kit Tool</title>
-        <meta name="description" content="Professional JSON formatter, validator, and minifier. Interactive tree view, key sorting, and string escaping. 100% private, local browser processing." />
-      </head>
-
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Braces className="w-3.5 h-3.5" /> Linguistic Suite
@@ -315,7 +310,6 @@ export default function JsonFormatterPage() {
             </CardHeader>
             <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
               <div className="relative flex-1 flex overflow-hidden">
-                {/* Line Numbers Simulation */}
                 <div className="w-12 bg-black/20 border-r border-white/5 pt-8 flex flex-col items-center text-[10px] font-mono text-white/10 select-none no-scrollbar overflow-hidden">
                   {Array.from({ length: 50 }).map((_, i) => (
                     <div key={i} className="h-6 leading-6">{i + 1}</div>
@@ -333,7 +327,6 @@ export default function JsonFormatterPage() {
                 />
               </div>
 
-              {/* Input Toolbox */}
               <div className="p-6 border-t border-border bg-secondary/20 grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Button 
                   onClick={() => formatJson('pretty')} 
@@ -371,7 +364,6 @@ export default function JsonFormatterPage() {
             </CardContent>
           </Card>
 
-          {/* Validation Alert */}
           {error ? (
             <div className="p-6 rounded-[2.5rem] bg-destructive/10 border border-destructive/20 flex items-start gap-5 animate-in shake duration-500 shadow-xl shadow-destructive/5">
               <AlertCircle className="w-8 h-8 text-destructive shrink-0 mt-1" />
@@ -399,7 +391,6 @@ export default function JsonFormatterPage() {
           )}
         </div>
 
-        {/* Output Section */}
         <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[650px] flex flex-col">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -455,7 +446,6 @@ export default function JsonFormatterPage() {
                 )}
               </div>
 
-              {/* Output Actions */}
               <div className="p-6 border-t border-border bg-[#0a0a0c] flex flex-col gap-6">
                 <div className="grid grid-cols-2 gap-4">
                    <Button 
@@ -499,57 +489,6 @@ export default function JsonFormatterPage() {
         </div>
       </div>
 
-      {/* SEO Content Footer */}
-      <section className="mt-20 max-w-4xl mx-auto space-y-12 pb-20">
-         <div className="space-y-6">
-            <h2 className="text-3xl font-headline font-black uppercase tracking-tight text-foreground">Advanced JSON Production</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-foreground/60 leading-relaxed font-medium">
-               <div className="space-y-4">
-                  <p>Our JSON Formatter Studio provides a clinical environment for developers and data engineers to sanitize, validate, and visualize structured linguistic payloads.</p>
-                  <p>Unlike standard formatters, we utilize hardware-native JSON protocols to perform key sorting and string escaping without any data latency or transmission to remote servers.</p>
-               </div>
-               <div className="space-y-4">
-                  <p>Use the interactive Tree View to traverse complex hierarchical objects, or leverage the Minifier to strip whitespace and optimize your payloads for production API integration.</p>
-                  <p>Everything works locally within your browser's WASM sandbox, ensuring your sensitive configuration and data remain strictly private and permanent.</p>
-               </div>
-            </div>
-         </div>
-
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-           {[
-             { q: "Is this JSON formatter secure?", a: "Absolutely. We do not store or transmit any input data. All structural re-mapping and formatting occur 100% locally in your browser memory." },
-             { q: "Can I handle large JSON files?", a: "Yes. Our studio is optimized for high-volume data streams. For extremely large matrices, we recommend using the Text View to minimize UI rendering overhead." },
-             { q: "What does 'Key Sorting' do?", a: "It alphabetically reorders object keys at all levels. This is essential for diffing JSON files or creating canonical data representations." }
-           ].map((faq, i) => (
-             <div key={i} className="p-8 rounded-[2.5rem] bg-secondary/50 border border-border space-y-4 group hover:border-primary/20 transition-all">
-                <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                   <Info className="w-5 h-5" />
-                </div>
-                <h4 className="text-sm font-black uppercase tracking-tight text-foreground">{faq.q}</h4>
-                <p className="text-xs text-foreground/40 leading-relaxed font-medium">{faq.a}</p>
-             </div>
-           ))}
-         </div>
-      </section>
-
-      {/* Structured Data (JSON-LD) */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "JSON Formatter PRO",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Web",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "featureList": ["JSON Formatting", "Syntax Validation", "Tree View Visualization", "Minification", "Key Sorting"],
-        "breadcrumb": {
-          "@type": "BreadcrumbList",
-          "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://mykittool.app" },
-            { "@type": "ListItem", "position": 2, "name": "JSON Formatter", "item": "https://mykittool.app/json-formatter" }
-          ]
-        }
-      })}} />
-      
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
