@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   X, 
@@ -38,7 +38,11 @@ import {
   Binary,
   Info,
   Type,
-  Split
+  Split,
+  MonitorPlay,
+  DownloadCloud,
+  Mic,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
@@ -84,6 +88,10 @@ const TOOLS: Tool[] = [
   { href: '/hex-converter', title: 'Hex Converter', icon: FileCode, keywords: ['hex', 'binary', 'dump'], desc: 'Binary to hex.' },
   { href: '/code-converter', title: 'AOB Converter', icon: Binary, keywords: ['aob', 'code', 'pattern'], desc: 'AOB conversion.' },
   { href: '/dictionary', title: 'Dictionary', icon: Info, keywords: ['meaning', 'word', 'dict'], desc: 'English word search.' },
+  { href: '/image-url-downloader', title: 'URL Downloader', icon: DownloadCloud, keywords: ['extract', 'save image', 'scrape'], desc: 'URL image ripper.' },
+  { href: '/speaker-tester', title: 'Speaker Tester', icon: Activity, keywords: ['audio', 'left right', 'frequency'], desc: 'Audio hardware test.' },
+  { href: '/mic-tester', title: 'Mic Tester', icon: Mic, keywords: ['microphone', 'record', 'input'], desc: 'Mic hardware test.' },
+  { href: '/live-wallpaper', title: 'Live Wallpaper', icon: MonitorPlay, keywords: ['video', 'loop', 'pc', 'phone'], desc: 'Create live loops.' },
 ];
 
 const QUICK_CHIPS = ["PDF tools", "Image tools", "How to use"];
@@ -182,7 +190,7 @@ export function StudioBot() {
     let foundTools: Tool[] = [];
 
     if (lowQuery.includes('pdf')) {
-      response = "I have several PDF tools: Merge, Split, Compress, Unlock, and Protect. Which do you need?";
+      response = "I have several PDF tools: Merge, Split, Compressor, Unlock, and Protect. Which do you need?";
       foundTools = TOOLS.filter(t => t.href.includes('pdf'));
     } else if (lowQuery.includes('image') || lowQuery.includes('photo')) {
       response = "For images, I can Enhance, Resize, Compress, or Convert formats. Check these out:";
@@ -293,21 +301,28 @@ export function StudioBot() {
 
                   {msg.tools && (
                     <div className="w-full flex flex-col gap-2 mt-1 animate-in zoom-in-95 duration-300">
-                      {msg.tools.map((tool) => (
-                        <button 
-                          key={tool.href}
-                          onClick={() => { setIsOpen(false); router.push(tool.href); }}
-                          className="w-full flex items-center justify-between p-3 rounded-xl bg-white border border-black/5 hover:border-[#6B9BD1]/40 transition-all group shadow-sm"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-[#6B9BD1]">
-                              <tool.icon className="w-3.5 h-3.5" />
+                      {msg.tools.map((t) => {
+                        // Critical Fix: Component references are lost during JSON serialization (sessionStorage)
+                        // We must resolve the actual Icon component from the static TOOLS registry using href
+                        const tool = TOOLS.find(master => master.href === t.href) || t;
+                        const ToolIcon = (typeof tool.icon === 'function' || typeof tool.icon === 'object') ? tool.icon : Search;
+                        
+                        return (
+                          <button 
+                            key={tool.href}
+                            onClick={() => { setIsOpen(false); router.push(tool.href); }}
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-white border border-black/5 hover:border-[#6B9BD1]/40 transition-all group shadow-sm text-left"
+                          >
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-[#6B9BD1] shrink-0">
+                                <ToolIcon className="w-3.5 h-3.5" />
+                              </div>
+                              <span className="text-[10px] font-black uppercase text-black/60 group-hover:text-[#6B9BD1] transition-colors truncate">{tool.title}</span>
                             </div>
-                            <span className="text-[10px] font-black uppercase text-black/60 group-hover:text-[#6B9BD1] transition-colors">{tool.title}</span>
-                          </div>
-                          <ArrowRight className="w-3 h-3 text-[#6B9BD1]/40 group-hover:text-[#6B9BD1] transition-all group-hover:translate-x-0.5" />
-                        </button>
-                      ))}
+                            <ArrowRight className="w-3 h-3 text-[#6B9BD1]/40 group-hover:text-[#6B9BD1] transition-all group-hover:translate-x-0.5 shrink-0" />
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
