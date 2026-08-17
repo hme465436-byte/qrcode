@@ -4,6 +4,7 @@ import { Navbar } from '@/components/qr-canvas/navbar';
 import { Footer } from '@/components/qr-canvas/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { FeedbackRow } from '@/components/qr-canvas/feedback-row';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -54,13 +55,15 @@ export default function RootLayout({
         className="font-body bg-background text-foreground antialiased selection:bg-primary/20 selection:text-foreground overflow-x-hidden w-full max-w-full"
         suppressHydrationWarning
       >
-        <Navbar />
-        <main className="min-h-screen pt-16 w-full max-w-full">
-          {children}
-          <FeedbackRow />
-        </main>
-        <Footer />
-        <Toaster />
+        <FirebaseClientProvider>
+          <Navbar />
+          <main className="min-h-screen pt-16 w-full max-w-full">
+            {children}
+            <FeedbackRow />
+          </main>
+          <Footer />
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
