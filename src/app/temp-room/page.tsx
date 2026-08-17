@@ -33,15 +33,12 @@ import { doc, setDoc, deleteDoc, onSnapshot, updateDoc, serverTimestamp, getDoc 
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Production Constants ---
-const ROOMS_COLLECTION = "temp_rooms";
+// SECURITY RULES ADVISORY:
+// match /tempRooms/{id} {
+//   allow read, write: if true;
+// }
+const ROOMS_COLLECTION = "tempRooms";
 const MAX_TEXT_SIZE = 50 * 1024; // 50KB Limit for stability
-
-/**
- * SECURITY RULES ADVISORY (Add to firestore.rules):
- * match /temp_rooms/{code} {
- *   allow read, write: if true;
- * }
- */
 
 export default function TempRoomPage() {
   const { toast } = useToast();
@@ -56,13 +53,12 @@ export default function TempRoomPage() {
   
   // Refs for debouncing and local sync
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastRemoteTextRef = useRef<string>('');
   const qrRef = useRef<HTMLDivElement>(null);
   const qrInstance = useRef<any>(null);
 
-  // Generate 6-char room code
+  // Generate 6-char room code (High Readability Set)
   const generateCode = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing 0, O, I, 1
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; 
     let result = '';
     for (let i = 0; i < 6; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -72,22 +68,27 @@ export default function TempRoomPage() {
 
   // --- Actions ---
   const handleCreate = async () => {
-    if (!db) return;
+    if (!db) {
+      alert("Firestore missing. The signaling service is not initialized.");
+      return;
+    }
+    
     setIsConnecting(true);
     const code = generateCode();
     
     try {
+      // Hard-coded creation protocol
       await setDoc(doc(db, ROOMS_COLLECTION, code), {
         text: '',
-        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
         status: 'waiting'
       });
       
       setCode(code);
       setView('waiting');
       startListener(code);
-    } catch (e) {
-      toast({ variant: "destructive", title: "Creation Failed", description: "Could not initialize room matrix." });
+    } catch (e: any) {
+      alert("Creation Failed: " + (e.message || "Unknown hardware error"));
     } finally {
       setIsConnecting(false);
     }
@@ -103,7 +104,7 @@ export default function TempRoomPage() {
       const snap = await getDoc(docRef);
       
       if (!snap.exists()) {
-        toast({ variant: "destructive", title: "Room Not Found", description: "Wrong or expired code." });
+        alert("Room Not Found: The provided code is incorrect or the matrix has expired.");
         setIsConnecting(false);
         return;
       }
@@ -111,9 +112,8 @@ export default function TempRoomPage() {
       await updateDoc(docRef, { status: 'connected' });
       setView('active');
       startListener(code);
-    } catch (e) {
-      toast({ variant: "destructive", title: "Join Failed", description: "Check your network uplink." });
-    } finally {
+    } catch (e: any) {
+      alert("Join Failed: " + e.message);
       setIsConnecting(false);
     }
   };
@@ -132,17 +132,14 @@ export default function TempRoomPage() {
         setView('active');
       }
       
-      // Update local text only if it's different from what we last sent
+      // Update local text only if it's different from state to prevent recursion
       if (data.text !== undefined && data.text !== sharedText) {
-        lastRemoteTextRef.current = data.text;
         setSharedText(data.text);
       }
     });
 
-    // Cleanup on leave
-    const cleanup = async () => {
+    const cleanup = () => {
       unsubscribe();
-      await deleteDoc(doc(db, ROOMS_COLLECTION, code)).catch(() => {});
     };
 
     window.addEventListener('beforeunload', cleanup);
@@ -163,7 +160,7 @@ export default function TempRoomPage() {
           updatedAt: serverTimestamp()
         });
       } catch (e) {
-        console.warn("Sync failed");
+        console.warn("Signal Sync Error");
       }
     }, 150);
   };
@@ -179,9 +176,9 @@ export default function TempRoomPage() {
     try {
       const text = await navigator.clipboard.readText();
       handleTextChange(text);
-      toast({ title: "Pasted from clipboard" });
+      toast({ title: "Matrix Injected" });
     } catch (e) {
-      toast({ variant: "destructive", title: "Paste blocked" });
+      toast({ variant: "destructive", title: "Paste Restricted" });
     }
   };
 
@@ -406,7 +403,7 @@ export default function TempRoomPage() {
               </div>
               <div className="space-y-2">
                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Protocol Tip</h4>
-                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                <p className="text-[11px] text-foreground/40 font-medium uppercase leading-relaxed">
                   Perfect for moving long URLs, Wi-Fi keys, or code snippets between your phone and laptop without sending emails to yourself.
                 </p>
               </div>
