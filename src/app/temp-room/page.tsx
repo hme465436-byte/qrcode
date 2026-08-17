@@ -1,10 +1,10 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   ClipboardType, 
   Plus, 
-  ArrowRight, 
   Copy, 
   Trash2, 
   CheckCircle2, 
@@ -17,7 +17,6 @@ import {
   MessageSquare,
   AlertCircle,
   CornerDownLeft,
-  RefreshCcw,
   LogOut,
   Smartphone,
   Globe
@@ -29,16 +28,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useFirestore } from '@/firebase';
-import { doc, setDoc, deleteDoc, onSnapshot, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-// --- Production Constants ---
-// SECURITY RULES ADVISORY:
-// match /tempRooms/{id} {
-//   allow read, write: if true;
-// }
 const ROOMS_COLLECTION = "tempRooms";
-const MAX_TEXT_SIZE = 50 * 1024; // 50KB Limit for stability
+const MAX_TEXT_SIZE = 50 * 1024; // 50KB Limit
 
 export default function TempRoomPage() {
   const { toast } = useToast();
@@ -51,12 +45,12 @@ export default function TempRoomPage() {
   const [isCopied, setIsCopied] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   
-  // Refs for debouncing and local sync
+  // Refs
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
   const qrRef = useRef<HTMLDivElement>(null);
   const qrInstance = useRef<any>(null);
 
-  // Generate 6-char room code (High Readability Set)
+  // High Readability Character Set
   const generateCode = () => {
     const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; 
     let result = '';
@@ -66,10 +60,39 @@ export default function TempRoomPage() {
     return result;
   };
 
+  // --- Core Listener Protocol ---
+  useEffect(() => {
+    if (!db || !roomCode || view === 'start' || view === 'closed') return;
+
+    const unsubscribe = onSnapshot(doc(db, ROOMS_COLLECTION, roomCode), (snapshot) => {
+      if (!snapshot.exists()) {
+        if (view === 'active') setView('closed');
+        return;
+      }
+      
+      const data = snapshot.data();
+      
+      // Auto-transition when peer connects
+      if (data.status === 'connected' && view === 'waiting') {
+        setView('active');
+        toast({ title: "Peer Connected", description: "Linguistic sync active." });
+      }
+      
+      // Sync text matrix
+      if (data.text !== undefined && data.text !== sharedText) {
+        setSharedText(data.text);
+      }
+    }, (err) => {
+      console.warn("Snapshot Protocol Error:", err.message);
+    });
+
+    return () => unsubscribe();
+  }, [db, roomCode, view, sharedText, toast]);
+
   // --- Actions ---
   const handleCreate = async () => {
     if (!db) {
-      alert("Firestore missing. The signaling service is not initialized.");
+      alert("Firestore missing. The signaling service is not initialized. Check your Firebase configuration.");
       return;
     }
     
@@ -77,8 +100,8 @@ export default function TempRoomPage() {
     const code = generateCode();
     
     try {
-      // Hard-coded creation protocol
-      await setDoc(doc(db, ROOMS_COLLECTION, code), {
+      const docRef = doc(db, ROOMS_COLLECTION, code);
+      await setDoc(docRef, {
         text: '',
         createdAt: serverTimestamp(),
         status: 'waiting'
@@ -86,7 +109,7 @@ export default function TempRoomPage() {
       
       setCode(code);
       setView('waiting');
-      startListener(code);
+      toast({ title: "Room Created", description: `Code ${code} is now broadcast.` });
     } catch (e: any) {
       alert("Creation Failed: " + (e.message || "Unknown hardware error"));
     } finally {
@@ -104,63 +127,37 @@ export default function TempRoomPage() {
       const snap = await getDoc(docRef);
       
       if (!snap.exists()) {
-        alert("Room Not Found: The provided code is incorrect or the matrix has expired.");
+        alert("Room Not Found: The code is incorrect or the matrix has expired.");
         setIsConnecting(false);
         return;
       }
 
       await updateDoc(docRef, { status: 'connected' });
+      setCode(code);
       setView('active');
-      startListener(code);
+      toast({ title: "Connected", description: "Joined existing sync room." });
     } catch (e: any) {
       alert("Join Failed: " + e.message);
+    } finally {
       setIsConnecting(false);
     }
-  };
-
-  const startListener = (code: string) => {
-    if (!db) return;
-    
-    const unsubscribe = onSnapshot(doc(db, ROOMS_COLLECTION, code), (snapshot) => {
-      if (!snapshot.exists()) {
-        setView('closed');
-        return;
-      }
-      
-      const data = snapshot.data();
-      if (data.status === 'connected' && view === 'waiting') {
-        setView('active');
-      }
-      
-      // Update local text only if it's different from state to prevent recursion
-      if (data.text !== undefined && data.text !== sharedText) {
-        setSharedText(data.text);
-      }
-    });
-
-    const cleanup = () => {
-      unsubscribe();
-    };
-
-    window.addEventListener('beforeunload', cleanup);
-    return cleanup;
   };
 
   const handleTextChange = (val: string) => {
     if (val.length > MAX_TEXT_SIZE) return;
     setSharedText(val);
 
-    // Debounce Firestore Update
+    // Debounced Sync Protocol
     if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
     updateTimerRef.current = setTimeout(async () => {
-      if (!db || !roomCode) return;
+      if (!db || !roomCode || view !== 'active') return;
       try {
         await updateDoc(doc(db, ROOMS_COLLECTION, roomCode), {
           text: val,
           updatedAt: serverTimestamp()
         });
       } catch (e) {
-        console.warn("Signal Sync Error");
+        // Silent background fail to prevent interrupt
       }
     }, 150);
   };
@@ -172,17 +169,7 @@ export default function TempRoomPage() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      handleTextChange(text);
-      toast({ title: "Matrix Injected" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Paste Restricted" });
-    }
-  };
-
-  // --- QR Generation ---
+  // --- QR Synthesis ---
   useEffect(() => {
     if (view === 'waiting' && qrRef.current && roomCode) {
       const render = async () => {
@@ -202,7 +189,7 @@ export default function TempRoomPage() {
     }
   }, [view, roomCode]);
 
-  // --- URL Join Detection ---
+  // URL Parameter Detection
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const joinCode = params.get('join');
@@ -223,14 +210,14 @@ export default function TempRoomPage() {
               Temp <span className="text-primary italic">Room</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Real-time shared clipboard. Type on one device, see it on the other instantly. Data is ephemeral and purged when the session ends.
+              Real-time ephemeral clipboard. Type on one device, see it on the other instantly. Data is volatile and purged upon session termination.
             </p>
           </div>
           <div className="flex items-center gap-3">
              <GetHelp toolId="temp-room" />
              {(view === 'active' || view === 'waiting') && (
                <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
-                 <LogOut className="w-3.5 h-3.5 mr-2" /> Leave
+                 <LogOut className="w-3.5 h-3.5 mr-2" /> Abort
                </Button>
              )}
           </div>
@@ -238,7 +225,6 @@ export default function TempRoomPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-        {/* Workspace - Left */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-6">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px] bg-secondary/10">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -250,14 +236,9 @@ export default function TempRoomPage() {
                     view === 'active' ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse" : "bg-white/10"
                   )} />
                   <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">
-                    {view === 'active' ? 'Room Active' : view === 'waiting' ? 'Waiting for Join' : 'Standby'}
+                    {view === 'active' ? 'Link Synchronized' : view === 'waiting' ? 'Broadcasting Code' : 'Hardware Standby'}
                   </CardTitle>
                </div>
-               {view === 'active' && (
-                 <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">
-                    {sharedText.length.toLocaleString()} Chars / 50KB
-                 </span>
-               )}
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col p-6 sm:p-10 relative overflow-hidden">
@@ -298,7 +279,7 @@ export default function TempRoomPage() {
                {view === 'waiting' && (
                  <div className="flex-1 flex flex-col items-center justify-center gap-10 animate-in fade-in duration-700">
                     <div className="space-y-4 text-center">
-                       <p className="text-[10px] font-black uppercase text-primary tracking-[0.4em]">Room Ready</p>
+                       <p className="text-[10px] font-black uppercase text-primary tracking-[0.4em]">Unique Handshake Code</p>
                        <h3 className="text-5xl sm:text-7xl font-headline font-black text-white tracking-[0.1em]">{roomCode}</h3>
                     </div>
 
@@ -309,9 +290,9 @@ export default function TempRoomPage() {
                     <div className="flex flex-col items-center gap-4 text-center px-10">
                        <div className="flex items-center gap-3">
                           <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Waiting for join...</p>
+                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Awaiting Peer Intake</p>
                        </div>
-                       <p className="text-[9px] text-white/10 uppercase max-w-[240px] leading-relaxed">Share this code with your other device. Once they join, the clipboard will sync instantly.</p>
+                       <p className="text-[9px] text-white/10 uppercase max-w-[240px] leading-relaxed">Broadcast this code to the secondary device. Sync will activate immediately upon join.</p>
                     </div>
                  </div>
                )}
@@ -321,20 +302,17 @@ export default function TempRoomPage() {
                     <Textarea 
                       value={sharedText}
                       onChange={e => handleTextChange(e.target.value)}
-                      placeholder="Start typing on either device..."
-                      className="flex-1 bg-black/20 border-white/10 rounded-[2.5rem] p-10 text-xl font-medium leading-relaxed resize-none focus:ring-primary/40 text-white min-h-[300px] lg:min-h-0 custom-scrollbar"
+                      placeholder="Start typing... content replicates instantly on connected hardware."
+                      className="flex-1 bg-black/20 border-white/10 rounded-[2.5rem] p-10 text-xl font-medium leading-relaxed resize-none focus:ring-primary/40 text-white min-h-[300px] lg:min-h-0 custom-scrollbar shadow-inner"
                     />
                     
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                        <Button onClick={handleCopy} className="h-16 bg-primary text-white font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
                           {isCopied ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
-                          Copy All
+                          Copy Matrix
                        </Button>
-                       <Button variant="outline" onClick={handlePaste} className="h-16 border-white/10 bg-white/5 text-white font-black uppercase text-[11px] tracking-widest rounded-2xl hover:bg-white/10">
-                          Paste
-                       </Button>
-                       <Button variant="outline" onClick={() => handleTextChange('')} className="h-16 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:text-destructive hidden sm:flex">
-                          Clear
+                       <Button variant="outline" onClick={() => handleTextChange('')} className="h-16 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:text-destructive">
+                          Purge All
                        </Button>
                     </div>
                  </div>
@@ -346,13 +324,13 @@ export default function TempRoomPage() {
                        <X className="w-10 h-10" />
                     </div>
                     <div className="text-center space-y-2">
-                       <h3 className="text-2xl font-headline font-black uppercase text-white">Room Closed</h3>
+                       <h3 className="text-2xl font-headline font-black uppercase text-white">Registry Purged</h3>
                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest max-w-[240px] mx-auto">
-                          The room has been destroyed. Ephemeral data is purged.
+                          Room has been destroyed. All ephemeral sync data was immediately neutralized.
                        </p>
                     </div>
                     <Button onClick={() => window.location.reload()} className="h-14 px-10 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-[10px]">
-                       Start New Session
+                       Initialize New Studio
                     </Button>
                  </div>
                )}
@@ -362,9 +340,9 @@ export default function TempRoomPage() {
           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
             <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-1">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Absolute</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Privacy Sovereignty</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                Content sync is highly volatile. Data is immediately neutralized when you close the tab or refresh. No historical logs are maintained.
+                Hardware sync is highly volatile. Data is immediately neutralized upon session closure. No persistent logs are maintained.
               </p>
             </div>
           </div>
@@ -375,14 +353,14 @@ export default function TempRoomPage() {
            <Card className="glass-card border-border shadow-xl">
               <CardHeader className="py-6 border-b border-white/5 bg-white/2">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Activity className="w-5 h-5 text-primary" /> Matrix Intelligence
+                    <Activity className="w-5 h-5 text-primary" /> Matrix Intel
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-6">
                  {[
-                   { icon: Smartphone, title: 'Multi-Device', desc: 'Sync text between mobile and desktop without needing an account.' },
-                   { icon: Globe, title: 'Network Native', desc: 'Works across different networks using real-time signaling.' },
-                   { icon: ShieldCheck, title: 'Zero Storage', desc: 'Data exists only for the duration of the room session.' },
+                   { icon: Smartphone, title: 'Identity Agnostic', desc: 'Sync text between hardware units without account registry.' },
+                   { icon: Globe, title: 'Network Unified', desc: 'Works across diverse network architectures using real-time signaling.' },
+                   { icon: ShieldCheck, title: 'Volatile Memory', desc: 'Linguistic data exists only for the duration of the active handshake.' },
                  ].map((tip, i) => (
                    <div key={i} className="flex gap-5 group">
                       <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary shrink-0 border border-border group-hover:scale-110 transition-transform">
@@ -397,26 +375,19 @@ export default function TempRoomPage() {
               </CardContent>
            </Card>
 
-           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
               <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                  <MessageSquare className="w-7 h-7" />
               </div>
               <div className="space-y-2">
-                <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Protocol Tip</h4>
+                <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Clinical Protocol</h4>
                 <p className="text-[11px] text-foreground/40 font-medium uppercase leading-relaxed">
-                  Perfect for moving long URLs, Wi-Fi keys, or code snippets between your phone and laptop without sending emails to yourself.
+                  Ideal for rapid deployment of complex strings, Wi-Fi keys, or code blocks between mobile and desktop hardware.
                 </p>
               </div>
            </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-      `}</style>
     </div>
   );
 }
