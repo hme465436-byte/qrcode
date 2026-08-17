@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "SignalingRoom": {
+      "title": "Signaling Room",
+      "description": "A temporary room for WebRTC signaling exchange.",
+      "type": "object",
+      "properties": {
+        "offer": { "type": "string" },
+        "answer": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "fileMeta": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "size": { "type": "number" },
+            "type": { "type": "string" }
+          }
+        }
+      }
+    },
+    "IceCandidate": {
+      "title": "ICE Candidate",
+      "description": "An ICE candidate for WebRTC connection.",
+      "type": "object",
+      "properties": {
+        "candidate": { "type": "string" },
+        "sdpMLineIndex": { "type": "number" },
+        "sdpMid": { "type": "string" }
+      }
+    }
+  },
+  "auth": {
+    "providers": [
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "/p2p_signaling/{roomId}": {
+      "schema": "#/entities/SignalingRoom",
+      "description": "Active P2P signaling rooms."
+    },
+    "/p2p_signaling/{roomId}/callerCandidates/{id}": {
+      "schema": "#/entities/IceCandidate",
+      "description": "ICE candidates from the sender."
+    },
+    "/p2p_signaling/{roomId}/calleeCandidates/{id}": {
+      "schema": "#/entities/IceCandidate",
+      "description": "ICE candidates from the receiver."
+    }
+  }
+}

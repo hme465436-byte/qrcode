@@ -1,4 +1,3 @@
-
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -16,7 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/mic-tester', '/live-wallpaper', '/youtube-thumbnail-downloader', 
     '/youtube-thumbnail-maker', '/youtube-banner-maker', '/age-calculator', 
     '/rename-file', '/lorem-ipsum-generator', '/nickname-generator', '/donate',
-    '/image-border-frame', '/custom-watermark'
+    '/image-border-frame', '/custom-watermark', '/direct-file-share', '/wifi-qr-decoder'
   ];
 
   const routes = tools.map(tool => ({

@@ -304,5 +304,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Draggable positioning works best on a desktop mouse, but touch snapping is optimized for mobile.'
     ],
     privacy: 'Hardware-native synthesis ensures your assets and brand logos never leave your hardware. No data is logged.'
+  },
+  'direct-file-share': {
+    title: 'Direct File Share',
+    description: 'Transfer files directly between devices using P2P WebRTC technology. No cloud storage, no file limits, total privacy.',
+    steps: [
+      'To SEND: Select or drop a file. Share the 6-digit code or QR with the recipient.',
+      'To RECEIVE: Enter the provided code on the other device.',
+      'Keep both browser tabs open until the progress reaches 100%.',
+      'Once complete, the receiver can save the file locally.',
+      'The signaling data is automatically purged after the connection is established.'
+    ],
+    tips: [
+      'Both devices should ideally be on the same WiFi network for the fastest transfer speeds.',
+      'Large files (GBs) are supported as long as your device has enough memory to handle the stream.',
+      'If the connection fails, refresh both pages and try a new code.'
+    ],
+    privacy: 'Files never touch our servers. We only facilitate the initial connection handshake. 100% private streaming.'
   }
 };

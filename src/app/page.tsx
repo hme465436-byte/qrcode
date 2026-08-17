@@ -74,7 +74,9 @@ import {
   TrendingDown,
   Eraser,
   Ghost,
-  Wifi
+  Wifi,
+  Share2,
+  MoveHorizontal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -108,6 +110,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/direct-file-share', 
+    icon: Share2, 
+    title: 'Direct File Share', 
+    desc: 'Send large files device-to-device (P2P) without cloud storage.', 
+    label: 'P2P NET', 
+    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['send file', 'p2p', 'share without upload', 'direct share', 'transfer', 'file send'],
+    category: 'utilities'
   },
   { 
     href: '/wifi-qr-decoder', 
@@ -764,7 +777,7 @@ const TOOLS: Tool[] = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
@@ -841,7 +854,7 @@ const TOOLS: Tool[] = [
     title: 'English Dictionary', 
     desc: 'Professional linguistic analysis and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
@@ -941,7 +954,7 @@ export default function Home() {
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
-      'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR'
+      'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
