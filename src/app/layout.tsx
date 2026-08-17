@@ -3,7 +3,6 @@ import './globals.css';
 import { Navbar } from '@/components/qr-canvas/navbar';
 import { Footer } from '@/components/qr-canvas/footer';
 import { Toaster } from '@/components/ui/toaster';
-import { StudioBot } from '@/components/qr-canvas/studio-bot';
 import { FeedbackRow } from '@/components/qr-canvas/feedback-row';
 
 export const viewport: Viewport = {
@@ -60,7 +59,6 @@ export default function RootLayout({
           {children}
           <FeedbackRow />
         </main>
-        <StudioBot />
         <Footer />
         <Toaster />
       </body>

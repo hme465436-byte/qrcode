@@ -161,65 +161,6 @@
     padding: 5px; 
     filter: drop-shadow(0 0 20px hsla(var(--primary), 1)) drop-shadow(0 0 45px hsla(var(--primary), 0.7)) drop-shadow(0 0 80px hsla(var(--primary), 0.3));
   }
-
-  @keyframes kit-sway {
-    0%, 100% { transform: rotate(-2deg) translateY(0); }
-    50% { transform: rotate(2deg) translateY(-4px); }
-  }
-
-  @keyframes kit-blink {
-    0%, 48%, 52%, 100% { transform: scaleY(1); }
-    50% { transform: scaleY(0.05); }
-  }
-
-  @keyframes kit-ear-twitch {
-    0%, 90%, 100% { transform: rotate(0deg); }
-    92%, 96% { transform: rotate(-8deg); }
-    94%, 98% { transform: rotate(8deg); }
-  }
-
-  @keyframes kit-tail-flick {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(15deg) translateX(2px); }
-  }
-
-  @keyframes kit-wiggle {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    25% { transform: scale(1.05) rotate(5deg); }
-    75% { transform: scale(1.05) rotate(-5deg); }
-  }
-
-  @keyframes kit-wave {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(-30deg); }
-  }
-
-  @keyframes kit-grip-adjust {
-    0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(2px); }
-  }
-
-  @keyframes heart-float {
-    0% { transform: translateY(0) scale(0.5); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translateY(-60px) translateX(15px) scale(1.5); opacity: 0; }
-  }
-
-  @keyframes bubble-pop {
-    0% { transform: scale(0.4) translateX(20px); opacity: 0; }
-    70% { transform: scale(1.1) translateX(-5px); }
-    100% { transform: scale(1) translateX(0); opacity: 1; }
-  }
-
-  .animate-kit-sway { animation: kit-sway 4s ease-in-out infinite; }
-  .animate-kit-blink { animation: kit-blink 4s ease-in-out infinite; }
-  .animate-kit-ear-twitch { animation: kit-ear-twitch 3s ease-in-out infinite; }
-  .animate-kit-tail-flick { animation: kit-tail-flick 2s ease-in-out infinite; }
-  .animate-kit-wiggle { animation: kit-wiggle 0.4s ease-in-out; }
-  .animate-kit-wave { animation: kit-wave 0.8s ease-in-out infinite; }
-  .animate-kit-grip { animation: kit-grip-adjust 2s ease-in-out infinite; }
-  .animate-heart-float { animation: heart-float 1.5s ease-out forwards; }
-  .animate-bubble-pop { animation: bubble-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 }
 
 .font-headline {
