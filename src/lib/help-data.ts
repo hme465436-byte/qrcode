@@ -161,15 +161,15 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     description: 'Advanced identity synthesis for gaming and branding. Generate stylized, unique nicknames and gamertags with clinical font mapping and artistic symbol matrixing.',
     steps: [
       'Enter your base identifier in the input field.',
-      'Select a typographic font style from the Fonts tab (Bold, Monospace, etc.).',
-      'Apply left and right symbols from the library to frame your identity.',
-      'Toggle filters like "No Spaces" or "Max 16 Chars" for specific game engine compatibility.',
-      'Synthesize a batch of 20 variations and star your favorite identity strings.'
+      'Select a typographic font style from the Fonts tab (Bold, Fraktur, Monospace, etc.).',
+      'Navigate to Prefix/Suffix tabs to select from 1,000+ categorized artistic symbols.',
+      'Use the search box in each tab to find specific fonts or symbols instantly.',
+      'Review your styled name in the Live Preview matrix and generate a batch of 20 unique variations.'
     ],
     tips: [
-      'Use "Fullwidth" font for a distinctive wide-letter aesthetic.',
-      'The "Small-Caps" font is highly recommended for professional gaming aliases.',
-      'Frame your name with "Weapons" or "Royalty" symbols for high-impact profiles.'
+      'Use "Load More" at the bottom of the symbol lists to explore the full library without slowing down the page.',
+      'The "Small-Caps" and "Fullwidth" fonts are highly recommended for professional gaming aliases.',
+      'Frame your name with "Weapons" or "Fire" symbols for high-impact competitive profiles.'
     ],
     privacy: 'All generation occurs locally using random sampling. No identifiers are logged or stored.'
   }

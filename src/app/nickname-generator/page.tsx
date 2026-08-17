@@ -38,7 +38,13 @@ import {
   Palette,
   AlignLeft,
   ChevronRight,
-  Strikethrough
+  Strikethrough,
+  Search,
+  Heart,
+  ArrowRightCircle,
+  Leaf,
+  Shapes,
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,7 +57,62 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-// --- Linguistic Constants ---
+// --- Unicode Font Mappings ---
+const mapTo = (text: string, startA: number, starta: number, special: Record<string, string> = {}) => {
+  return text.split('').map(c => {
+    if (special[c]) return special[c];
+    const code = c.charCodeAt(0);
+    if (c >= 'A' && c <= 'Z') return String.fromCodePoint(startA + code - 65);
+    if (c >= 'a' && c <= 'z') return String.fromCodePoint(starta + code - 97);
+    return c;
+  }).join('');
+};
+
+const FONT_REGISTRY = [
+  { id: 'bold', label: 'Bold Sans', map: (t: string) => mapTo(t, 0x1D5D4, 0x1D5EE) },
+  { id: 'italic', label: 'Italic Sans', map: (t: string) => mapTo(t, 0x1D608, 0x1D622) },
+  { id: 'bold_italic', label: 'Bold Italic', map: (t: string) => mapTo(t, 0x1D63C, 0x1D656) },
+  { id: 'monospace', label: 'Monospace', map: (t: string) => mapTo(t, 0x1D670, 0x1D68A) },
+  { id: 'circled', label: 'Circled', map: (t: string) => mapTo(t, 0x24B6, 0x24D0) },
+  { id: 'squared', label: 'Squared', map: (t: string) => mapTo(t, 0x1F130, 0x1F130) },
+  { id: 'double_struck', label: 'Double Struck', map: (t: string) => mapTo(t, 0x1D538, 0x1D552) },
+  { id: 'fraktur', label: 'Fraktur', map: (t: string) => mapTo(t, 0x1D504, 0x1D51E) },
+  { id: 'bold_fraktur', label: 'Bold Fraktur', map: (t: string) => mapTo(t, 0x1D56C, 0x1D586) },
+  { id: 'script', label: 'Script', map: (t: string) => mapTo(t, 0x1D49C, 0x1D4B6) },
+  { id: 'smallcaps', label: 'Small Caps', map: (t: string) => {
+    const m: any = {'a':'ᴀ','b':'ʙ','c':'ᴄ','d':'ᴅ','e':'ᴇ','f':'ꜰ','g':'ɢ','h':'ʜ','i':'ɪ','j':'ᴊ','k':'ᴋ','l':'ʟ','m':'ᴍ','n':'ɴ','o':'ᴏ','p':'ᴘ','q':'ǫ','r':'ʀ','s':'ꜱ','t':'ᴛ','u':'ᴜ','v':'ᴠ','w':'ᴡ','x':'x','y':'ʏ','z':'ᴢ'};
+    return t.toLowerCase().split('').map(c => m[c] || c).join('');
+  }},
+  { id: 'fullwidth', label: 'Fullwidth', map: (t: string) => t.split('').map(c => {
+    const code = c.charCodeAt(0);
+    return (code >= 33 && code <= 126) ? String.fromCharCode(code + 65248) : c;
+  }).join('') },
+  { id: 'superscript', label: 'Superscript', map: (t: string) => {
+    const m: any = {'a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ','f':'ᶠ','g':'ᵍ','h':'ʰ','i':'ⁱ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','n':'ⁿ','o':'ᵒ','p':'ᵖ','q':'ᵠ','r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','x':'ˣ','y':'ʸ','z':'ᶻ'};
+    return t.toLowerCase().split('').map(c => m[c] || c).join('');
+  }},
+  { id: 'subscript', label: 'Subscript', map: (t: string) => {
+    const m: any = {'a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ','o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ'};
+    return t.toLowerCase().split('').map(c => m[c] || c).join('');
+  }}
+];
+
+// --- Massive Categorized Symbol Library ---
+const SYMBOL_CATEGORIES: Record<string, string[]> = {
+  stars: ['★', '☆', '✦', '✧', '✪', '✫', '✬', '✭', '✮', '✯', '✰', '✵', '❂', '✴', '✷', '✸', '✹', '✺', '🌠', '✨', '⭐', '🌟'],
+  fire: ['🔥', '⚡', '☄', '🌩', '🌪', '🌀', '❄', '❅', '❆', '🌋', '🌊', '💧', '☀️', '☁️', '🌤️', '💨', '🔋', '🔌'],
+  weapons: ['⚔', '🏹', '🛡', '🗡', '🔫', '💣', '🧨', '⛓', '⚔️', '⚔︎', '🛡️', '⛏︎', '⚒︎', '🔨', '🔫', '🔪', '🥋'],
+  hearts: ['❤️', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '💘', '💝', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎'],
+  arrows: ['➔', '➜', '➛', '➞', '➡', '➢', '➣', '➤', '➥', '➦', '➲', '↞', '↠', '↢', '↣', '↤', '↥', '↦', '↧', '↨', '↫', '↬', '↭', '↮'],
+  crowns: ['👑', '♕', '♔', '♛', '♚', '💎', '⚜', '🔱', '🎖', '🥇', '🥈', '🥉', '💍', '👒'],
+  nature: ['🐉', '🦅', '🦊', '🐍', '🐺', '🦁', '🐯', '🦄', '🐾', '☘', '❀', '🌻', '🍃', '🍁', '🌵', '🌴', '🌲', '🌳', '🪴', '🍄', '🐚'],
+  faces: ['😊', '😎', '😈', '💀', '👻', '👽', '👾', '🤖', '🎃', '🤡', '🦊', '🦁', '🦄', '🐱', '🐶', '🐭', '🐹', '🐰'],
+  shapes: ['■', '□', '▢', '▣', '▤', '▥', '▦', '▧', '▨', '▩', '▪', '▫', '▬', '▭', '▮', '▯', '▰', '▱', '▲', '△', '▴', '▵', '▶', '▷', '▸', '▹', '►', '▻', '▼', '▽', '▾', '▿', '◀', '◁', '◂', '◃', '◄', '◅', '◆', '◇', '◈', '◉', '◊', '○', '◌', '◍', '◎', '●', '◐', '◑', '◒', '◓', '◔', '◕', '◖', '◗', '◘', '◙', '◚', '◛', '◜', '◝', '◞', '◟', '◠', '◡', '◢', '◣', '◤', '◥', '◦', '◧', '◨', '◩', '◪', '◫', '◬', '◭', '◮', '◯'],
+  game: ['亗', '⚡︎', '♆', 'ϟ', '⚔︎', '⚖︎', '⚓︎', '⚙︎', '☬', '☫', '☤', '☥', '☦', '☧', '☨', '☩', '☪', '☫', '☬', '☭', '☮', '☯', '☸', '♿', '♨', '♰', '♱', '♲', '♳', '♴', '♵', '♶', '♷', '♸', '♹', '♺', '♻', '♼', '♽', '♾', '♿', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅', '⚓', '⚔', '⚕', '⚖', '⚗', '⚘', '⚙', '⚚', '⚛', '⚜', '⚠', '⚡', '⚢', '⚣', '⚤', '⚥', '⚦', '⚧', '⚨', '⚩', '⚪', '⚫', '⚬', '⚭', '⚮', '⚯', '⚰', '⚱', '⚲']
+};
+
+const ALL_SYMBOLS = Object.values(SYMBOL_CATEGORIES).flat();
+
 type NicknameStyle = 'cool' | 'fire' | 'cute' | 'pro' | 'funny' | 'aesthetic' | 'minimal';
 type LengthMode = 'short' | 'medium' | 'long';
 type GameTag = 'None' | 'FF' | 'PUBG' | 'COD' | 'Roblox' | 'Free';
@@ -62,62 +123,6 @@ interface BatchHistory {
   style: NicknameStyle;
   nicknames: string[];
 }
-
-// --- Unicode Font Mappings ---
-const FONT_MAPS: Record<string, (text: string) => string> = {
-  none: (t) => t,
-  bold: (t) => t.split('').map(c => {
-    const code = c.charCodeAt(0);
-    if (c >= 'A' && c <= 'Z') return String.fromCodePoint(0x1D5D4 + code - 65);
-    if (c >= 'a' && c <= 'z') return String.fromCodePoint(0x1D5EE + code - 97);
-    return c;
-  }).join(''),
-  italic: (t) => t.split('').map(c => {
-    const code = c.charCodeAt(0);
-    if (c >= 'A' && c <= 'Z') return String.fromCodePoint(0x1D608 + code - 65);
-    if (c >= 'a' && c <= 'z') return String.fromCodePoint(0x1D622 + code - 97);
-    return c;
-  }).join(''),
-  monospace: (t) => t.split('').map(c => {
-    const code = c.charCodeAt(0);
-    if (c >= 'A' && c <= 'Z') return String.fromCodePoint(0x1D670 + code - 65);
-    if (c >= 'a' && c <= 'z') return String.fromCodePoint(0x1D68A + code - 97);
-    if (c >= '0' && c <= '9') return String.fromCodePoint(0x1D7F6 + code - 48);
-    return c;
-  }).join(''),
-  circled: (t) => t.split('').map(c => {
-    const code = c.charCodeAt(0);
-    if (c >= 'A' && c <= 'Z') return String.fromCodePoint(0x24B6 + code - 65);
-    if (c >= 'a' && c <= 'z') return String.fromCodePoint(0x24D0 + code - 97);
-    if (c >= '1' && c <= '9') return String.fromCodePoint(0x2460 + code - 49);
-    if (c === '0') return '⓪';
-    return c;
-  }).join(''),
-  smallcaps: (t) => {
-    const map: Record<string, string> = {
-      'a':'ᴀ','b':'ʙ','c':'ᴄ','d':'ᴅ','e':'ᴇ','f':'ꜰ','g':'ɢ','h':'ʜ','i':'ɪ','j':'ᴊ','k':'ᴋ','l':'ʟ','m':'ᴍ','n':'ɴ','o':'ᴏ','p':'ᴘ','q':'ǫ','r':'ʀ','s':'ꜱ','t':'ᴛ','u':'ᴜ','v':'ᴠ','w':'ᴡ','x':'x','y':'ʏ','z':'ᴢ'
-    };
-    return t.toLowerCase().split('').map(c => map[c] || c).join('');
-  },
-  fullwidth: (t) => t.split('').map(c => {
-    const code = c.charCodeAt(0);
-    if (code >= 33 && code <= 126) return String.fromCharCode(code + 65248);
-    return c;
-  }).join(''),
-};
-
-const SYMBOLS = [
-  '★', '☆', '✦', '✧', '✪', '✫', '✬', '✭', '✮', '✯', '✰', '✵', '❂', '✴', '✷', 
-  '🔥', '⚡', '☄', '🌩', '🌪', '🌀', '❄', '❅', '❆', '🌋', '🌊',
-  '⚔', '🏹', '🛡', '🗡', '🔫', '💣', '🧨', '⛓', '⚔️', '⚔︎', '🛡️',
-  '❤️', '💖', '💗', '💓', '💞', '💕', '💟', '❣', '❣', '💘', '💝',
-  '🐉', '🦅', '🦊', '🐍', '🐺', '🦁', '🐯', '🦄', '🐾', '☘', '❀', '🌻', '🍃', '🍁', '🌵',
-  '👑', '♕', '♔', '♛', '♚', '💎', '⚜', '🔱', '🏅', '🏆', '🎖',
-  '➔', '➜', '➛', '➞', '➡', '➢', '➣', '➤', '➥', '➦', '➲', '📡', '⚛', '☣', '☢',
-  '๏', '々', '×', '•', '◈', '💠', '⚓', '🛸', '🛰', '🚀',
-  '꧁', '꧂', 'ঔ', '𖤍', '᚛', '᚜', '〠', '〄', '⚚', '☯', '☸', '☪', '☮',
-  '亗', '⚡︎', '♆', 'ϟ', '⚔︎', '⚖︎', '⛏︎', '⚒︎', '⚓︎', '⚙︎'
-];
 
 const LEET_MAP: Record<string, string> = {
   'a': '4', 'e': '3', 'i': '1', 'o': '0', 's': '5', 't': '7', 'g': '6', 'b': '8'
@@ -136,16 +141,21 @@ const STYLE_TEMPLATES: Record<NicknameStyle, string[]> = {
 export default function AdvancedNicknameGeneratorPage() {
   const { toast } = useToast();
   const [name, setName] = useState('Umar');
-  const [fontStyle, setFontStyle] = useState('none');
+  const [fontStyle, setFontStyle] = useState('bold');
   const [leftSym, setLeftSym] = useState('');
   const [rightSym, setRightSym] = useState('');
   
   const [gameTag, setGameTag] = useState<GameTag>('None');
   const [style, setStyle] = useState<NicknameStyle>('cool');
   const [lengthMode, setLengthMode] = useState<LengthMode>('medium');
-  const [useSymbols, setUseSymbols] = useState(true);
   const [noSpaces, setNoSpaces] = useState(true);
   const [max16, setMax16] = useState(true);
+  
+  // Search & Pagination State
+  const [fontSearch, setFontSearch] = useState('');
+  const [symbolSearch, setSymbolSearch] = useState('');
+  const [symbolCategory, setSymbolCategory] = useState('all');
+  const [symbolLimit, setSymbolLimit] = useState(50);
   
   const [nicknames, setNicknames] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -159,15 +169,15 @@ export default function AdvancedNicknameGeneratorPage() {
     }).join('');
   };
 
-  const getStyledName = (n: string) => {
-    const mapper = FONT_MAPS[fontStyle] || FONT_MAPS['none'];
+  const getStyledName = useCallback((n: string) => {
+    const mapper = FONT_REGISTRY.find(f => f.id === fontStyle)?.map || ((t: string) => t);
     return mapper(n);
-  };
+  }, [fontStyle]);
 
   const currentDecoratedName = useMemo(() => {
     if (!name.trim()) return '';
     return `${leftSym}${getStyledName(name.trim())}${rightSym}`;
-  }, [name, fontStyle, leftSym, rightSym]);
+  }, [name, getStyledName, leftSym, rightSym]);
 
   const generate = useCallback((addToHistory = false) => {
     if (!name.trim()) return;
@@ -182,33 +192,25 @@ export default function AdvancedNicknameGeneratorPage() {
     for (let i = 0; i < count; i++) {
       let variant = activeTemplates[i % activeTemplates.length].replace('[n]', styledName);
       
-      // Apply Game Tag
       if (gameTag !== 'None') {
         variant = Math.random() > 0.5 ? `${gameTag}_${variant}` : `${variant}_${gameTag}`;
       }
 
-      // Apply Leet speak randomly for cool/pro
       if ((style === 'cool' || style === 'pro') && Math.random() > 0.5) {
         variant = applyLeet(variant);
       }
 
-      // Apply framing symbols
       variant = `${leftSym}${variant}${rightSym}`;
 
-      // Handle Length
       if (lengthMode === 'short') variant = variant.substring(0, 8);
       if (lengthMode === 'long') variant = variant + (Math.random() > 0.5 ? '_007' : '_Elite');
-
-      // Filter: No Spaces
       if (noSpaces) variant = variant.replace(/\s+/g, '_');
-
-      // Filter: Max 16
       if (max16) variant = variant.substring(0, 16);
 
       results.push(variant);
     }
 
-    const finalResults = results.sort(() => Math.random() - 0.5);
+    const finalResults = Array.from(new Set(results)).sort(() => Math.random() - 0.5);
     setNicknames(finalResults);
 
     if (addToHistory) {
@@ -218,9 +220,9 @@ export default function AdvancedNicknameGeneratorPage() {
         style: style,
         nicknames: finalResults
       };
-      setHistory(prev => [entry, ...prev].slice(0, 10));
+      setHistory(prev => [entry, ...prev].slice(0, 20));
     }
-  }, [name, gameTag, style, lengthMode, useSymbols, noSpaces, max16, fontStyle, leftSym, rightSym]);
+  }, [name, gameTag, style, lengthMode, noSpaces, max16, getStyledName, leftSym, rightSym]);
 
   useEffect(() => {
     generate(false);
@@ -237,29 +239,25 @@ export default function AdvancedNicknameGeneratorPage() {
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(id);
-    toast({ title: "Copied", description: "Identity matrix saved to clipboard." });
+    toast({ title: "Copied", description: "Identity saved to clipboard." });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
-  const handleDownload = () => {
-    const content = `[MY KIT TOOL - NICKNAME MASTER]\n\n` + 
-                    `Source: ${name}\n` +
-                    `Font: ${fontStyle}\n\n` +
-                    `BATCH RESULTS:\n${nicknames.join('\n')}\n\n` +
-                    `FAVORITES:\n${favorites.join('\n')}`;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `mykit-nicknames-${Date.now()}.txt`;
-    a.click();
-    toast({ title: "Master Exported" });
-  };
+  const filteredFonts = useMemo(() => {
+    return FONT_REGISTRY.filter(f => 
+      f.label.toLowerCase().includes(fontSearch.toLowerCase())
+    );
+  }, [fontSearch]);
 
-  const handleRestore = (batch: BatchHistory) => {
-    setNicknames(batch.nicknames);
-    toast({ title: "Batch Restored", description: "Identity matrix re-aligned." });
-  };
+  const filteredSymbols = useMemo(() => {
+    let pool = symbolCategory === 'all' ? ALL_SYMBOLS : (SYMBOL_CATEGORIES[symbolCategory] || []);
+    if (symbolSearch) {
+      pool = pool.filter(s => s.includes(symbolSearch));
+    }
+    return Array.from(new Set(pool)).slice(0, symbolLimit);
+  }, [symbolSearch, symbolCategory, symbolLimit]);
+
+  const handleLoadMoreSymbols = () => setSymbolLimit(prev => prev + 50);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -272,7 +270,7 @@ export default function AdvancedNicknameGeneratorPage() {
             Nickname <span className="text-primary italic">Generator PRO</span>
           </h1>
           <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional competitive identity synthesis. Generate stylized gamertags with clinical font mapping and artistic symbol matrixing.
+            Professional competitive identity synthesis. Generate stylized gamertags with clinical font mapping and categorized symbol matrixing.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
@@ -312,7 +310,7 @@ export default function AdvancedNicknameGeneratorPage() {
                    </Button>
                    <Button 
                     variant="outline"
-                    onClick={() => { setLeftSym(''); setRightSym(''); setFontStyle('none'); }}
+                    onClick={() => { setLeftSym(''); setRightSym(''); setFontStyle('bold'); }}
                     className="h-12 w-12 rounded-xl border-border bg-secondary text-foreground/40 hover:text-destructive"
                    >
                      <Trash2 className="w-4 h-4" />
@@ -342,56 +340,96 @@ export default function AdvancedNicknameGeneratorPage() {
                <Tabs defaultValue="fonts" className="w-full">
                   <TabsList className="grid grid-cols-3 bg-secondary/50 p-1 border-b border-border h-14 rounded-none">
                      <TabsTrigger value="fonts" className="rounded-none text-[9px] font-black uppercase">Fonts</TabsTrigger>
-                     <TabsTrigger value="left" className="rounded-none text-[9px] font-black uppercase">Left Sym</TabsTrigger>
-                     <TabsTrigger value="right" className="rounded-none text-[9px] font-black uppercase">Right Sym</TabsTrigger>
+                     <TabsTrigger value="left" className="rounded-none text-[9px] font-black uppercase">Prefix</TabsTrigger>
+                     <TabsTrigger value="right" className="rounded-none text-[9px] font-black uppercase">Suffix</TabsTrigger>
                   </TabsList>
 
-                  <div className="p-6 h-[400px] overflow-y-auto custom-scrollbar">
-                     <TabsContent value="fonts" className="m-0 space-y-3">
-                        {Object.keys(FONT_MAPS).map((f) => (
-                          <button
-                            key={f}
-                            onClick={() => setFontStyle(f)}
-                            className={cn(
-                              "w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left",
-                              fontStyle === f ? "bg-primary/10 border-primary text-primary shadow-sm" : "bg-secondary/30 border-border text-foreground/50 hover:border-primary/20"
-                            )}
-                          >
-                             <span className="text-sm font-bold truncate">{FONT_MAPS[f](name || 'Sample')}</span>
-                             <span className="text-[8px] font-black uppercase tracking-widest opacity-40">{f}</span>
-                          </button>
-                        ))}
+                  <div className="p-0 h-[450px] flex flex-col">
+                     <TabsContent value="fonts" className="m-0 flex flex-col h-full">
+                        <div className="p-4 border-b border-white/5">
+                           <div className="relative">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20" />
+                              <input 
+                                placeholder="Search fonts..." 
+                                value={fontSearch}
+                                onChange={(e) => setFontSearch(e.target.value)}
+                                className="w-full h-10 bg-secondary/50 border border-white/5 rounded-lg pl-9 text-[10px] font-black uppercase tracking-widest outline-none focus:border-primary/40 transition-all"
+                              />
+                           </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
+                           {filteredFonts.map((f) => (
+                             <button
+                               key={f.id}
+                               onClick={() => setFontStyle(f.id)}
+                               className={cn(
+                                 "w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left",
+                                 fontStyle === f.id ? "bg-primary/10 border-primary text-primary shadow-sm" : "bg-secondary/30 border-border text-foreground/50 hover:border-primary/20"
+                               )}
+                             >
+                                <span className="text-sm font-bold truncate">{f.map(name || 'Sample')}</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest opacity-40">{f.label}</span>
+                             </button>
+                           ))}
+                        </div>
                      </TabsContent>
 
-                     <TabsContent value="left" className="m-0 grid grid-cols-5 gap-2">
-                        {SYMBOLS.map((s, idx) => (
-                          <button 
-                            key={idx} 
-                            onClick={() => setLeftSym(s)}
-                            className={cn(
-                              "aspect-square rounded-xl border flex items-center justify-center text-lg transition-all",
-                              leftSym === s ? "bg-primary text-white border-primary" : "bg-secondary/30 border-border text-foreground/60 hover:bg-primary/5"
-                            )}
-                          >
-                            {s}
-                          </button>
-                        ))}
-                     </TabsContent>
-
-                     <TabsContent value="right" className="m-0 grid grid-cols-5 gap-2">
-                        {SYMBOLS.map((s, idx) => (
-                          <button 
-                            key={idx} 
-                            onClick={() => setRightSym(s)}
-                            className={cn(
-                              "aspect-square rounded-xl border flex items-center justify-center text-lg transition-all",
-                              rightSym === s ? "bg-primary text-white border-primary" : "bg-secondary/30 border-border text-foreground/60 hover:bg-primary/5"
-                            )}
-                          >
-                            {s}
-                          </button>
-                        ))}
-                     </TabsContent>
+                     {['left', 'right'].map(tab => (
+                       <TabsContent key={tab} value={tab} className="m-0 flex flex-col h-full">
+                          <div className="p-4 border-b border-white/5 space-y-4">
+                             <div className="grid grid-cols-2 gap-2">
+                                <div className="relative">
+                                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20" />
+                                   <input 
+                                     placeholder="Search..." 
+                                     value={symbolSearch}
+                                     onChange={(e) => setSymbolSearch(e.target.value)}
+                                     className="w-full h-10 bg-secondary/50 border border-white/5 rounded-lg pl-9 text-[10px] font-black uppercase outline-none focus:border-primary/40"
+                                   />
+                                </div>
+                                <Select value={symbolCategory} onValueChange={setSymbolCategory}>
+                                   <SelectTrigger className="h-10 bg-secondary/50 border-white/5 text-[9px] font-black uppercase rounded-lg">
+                                      <SelectValue />
+                                   </SelectTrigger>
+                                   <SelectContent className="glass-card">
+                                      <SelectItem value="all" className="text-[9px] font-black uppercase">All Symbols</SelectItem>
+                                      {Object.keys(SYMBOL_CATEGORIES).map(cat => (
+                                         <SelectItem key={cat} value={cat} className="text-[9px] font-black uppercase">{cat}</SelectItem>
+                                      ))}
+                                   </SelectContent>
+                                </Select>
+                             </div>
+                             <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => tab === 'left' ? setLeftSym('') : setRightSym('')}
+                              className="w-full h-8 text-[8px] font-black uppercase tracking-widest rounded-lg border-dashed"
+                             >
+                               <X className="w-3 h-3 mr-1.5" /> Remove Symbol
+                             </Button>
+                          </div>
+                          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 grid grid-cols-5 gap-2 content-start">
+                             {filteredSymbols.map((s, idx) => (
+                               <button 
+                                 key={idx} 
+                                 onClick={() => tab === 'left' ? setLeftSym(s) : setRightSym(s)}
+                                 className={cn(
+                                   "aspect-square rounded-xl border flex items-center justify-center text-lg transition-all",
+                                   (tab === 'left' ? leftSym : rightSym) === s ? "bg-primary text-white border-primary" : "bg-secondary/30 border-border text-foreground/60 hover:bg-primary/5"
+                                 )}
+                               >
+                                 {s}
+                               </button>
+                             ))}
+                             <button 
+                               onClick={handleLoadMoreSymbols}
+                               className="col-span-full py-4 text-[9px] font-black uppercase text-primary/40 hover:text-primary transition-all flex items-center justify-center gap-2"
+                             >
+                                <Plus className="w-3 h-3" /> Load More Matrix Data
+                             </button>
+                          </div>
+                       </TabsContent>
+                     ))}
                   </div>
                </Tabs>
             </CardContent>
@@ -399,7 +437,7 @@ export default function AdvancedNicknameGeneratorPage() {
 
           <Card className="glass-card border-border shadow-xl overflow-hidden">
              <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Advanced Filters</CardTitle>
+                <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Advanced Batch Filters</CardTitle>
              </CardHeader>
              <CardContent className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -564,7 +602,7 @@ export default function AdvancedNicknameGeneratorPage() {
                              <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest mt-0.5">{new Date(batch.timestamp).toLocaleTimeString()}</p>
                           </div>
                        </div>
-                       <Button variant="ghost" size="sm" onClick={() => handleRestore(batch)} className="text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-lg">
+                       <Button variant="ghost" size="sm" onClick={() => { setNicknames(batch.nicknames); toast({ title: "Batch Restored" }); }} className="text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-lg">
                           Restore
                        </Button>
                     </div>
