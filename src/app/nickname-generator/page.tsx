@@ -38,7 +38,6 @@ import {
   Palette,
   AlignLeft,
   ChevronRight,
-  Strikethrough,
   Search,
   Heart,
   ArrowRightCircle,
@@ -243,6 +242,18 @@ export default function AdvancedNicknameGeneratorPage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
+  const handleDownload = () => {
+    if (nicknames.length === 0) return;
+    const content = nicknames.join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mykit_nicknames_${Date.now()}.txt`;
+    a.click();
+    toast({ title: "Batch Exported" });
+  };
+
   const filteredFonts = useMemo(() => {
     return FONT_REGISTRY.filter(f => 
       f.label.toLowerCase().includes(fontSearch.toLowerCase())
@@ -405,7 +416,7 @@ export default function AdvancedNicknameGeneratorPage() {
                               onClick={() => tab === 'left' ? setLeftSym('') : setRightSym('')}
                               className="w-full h-8 text-[8px] font-black uppercase tracking-widest rounded-lg border-dashed"
                              >
-                               <X className="w-3 h-3 mr-1.5" /> Remove Symbol
+                               <X className="w-3.5 h-3.5 mr-1.5" /> Remove Symbol
                              </Button>
                           </div>
                           <div className="flex-1 overflow-y-auto custom-scrollbar p-4 grid grid-cols-5 gap-2 content-start">
@@ -425,7 +436,7 @@ export default function AdvancedNicknameGeneratorPage() {
                                onClick={handleLoadMoreSymbols}
                                className="col-span-full py-4 text-[9px] font-black uppercase text-primary/40 hover:text-primary transition-all flex items-center justify-center gap-2"
                              >
-                                <Plus className="w-3 h-3" /> Load More Matrix Data
+                                <Plus className="w-3.5 h-3.5" /> Load More Matrix Data
                              </button>
                           </div>
                        </TabsContent>
@@ -617,6 +628,7 @@ export default function AdvancedNicknameGeneratorPage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
