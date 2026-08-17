@@ -1,7 +1,6 @@
-
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   Fingerprint, 
   Hash, 
@@ -384,7 +383,7 @@ export default function HashGeneratorPage() {
 
               <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
                  <div className="flex items-center gap-4 px-6 h-14 rounded-2xl bg-secondary/50 border border-border">
-                    <span className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Uppercase HEX</span>
+                    <span className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Uppercase Output</span>
                     <Switch checked={isUppercase} onCheckedChange={setIsUppercase} />
                  </div>
                  <Button 
