@@ -25,7 +25,8 @@ import {
   Terminal,
   ArrowRight,
   Sparkles,
-  LayoutGrid
+  LayoutGrid,
+  Book
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -123,7 +124,7 @@ export default function AboutPage() {
 
       {/* Story Section */}
       <section className="container mx-auto px-6 pt-32 space-y-16">
-         <div className="flex items-center gap-6">
+         <div className="items-center gap-6 hidden md:flex">
             <div className="h-[1px] flex-1 bg-white/5" />
             <h2 className="text-2xl font-headline font-black text-foreground uppercase tracking-widest flex items-center gap-4">
                <History className="w-6 h-6 text-primary" /> The Production Story
@@ -222,7 +223,7 @@ export default function AboutPage() {
                </div>
 
                <div className="space-y-6 relative z-10">
-                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.3em] ml-1">Linguistic Uplink (Email)</Label>
+                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Linguistic Uplink (Email)</Label>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1 h-16 bg-secondary border border-border rounded-2xl flex items-center px-6 font-mono text-sm font-bold text-foreground overflow-hidden">
                       {email}
