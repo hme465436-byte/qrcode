@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -29,6 +28,23 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Keep AI background opacity below 30% to ensure scannability.'
     ],
     privacy: 'All rendering occurs on your device. Your URLs and brand logos never leave your browser.'
+  },
+  'temp-room': {
+    title: 'Temp Room Studio',
+    description: 'Establish an ephemeral P2P text synchronization tunnel between two hardware devices.',
+    steps: [
+      'Click "Create Room" on your primary device to generate a 6-character identity code.',
+      'Enter the code or scan the generated QR on your secondary device to join.',
+      'Once the status displays "Connected", any text typed in the shared box will sync instantly.',
+      'Use "Copy All" to save the textual matrix to your local clipboard.',
+      'Close the tab or refresh to definitively destroy the room and purge all ephemeral data.'
+    ],
+    tips: [
+      'Ensure both browser tabs remain active during the sync cycle.',
+      'The 6-character code is case-insensitive for rapid manual entry.',
+      'Ideal for transferring long URLs, code blocks, or notes between mobile and desktop.'
+    ],
+    privacy: 'Text data streams via WebRTC DataChannels directly between devices. No textual payloads are ever stored in the cloud.'
   },
   'hide-message-photo': {
     title: 'Hide Message in Photo Pro',
@@ -342,5 +358,3 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     privacy: 'This tool uses WebRTC for direct device-to-device streaming. Your files are never uploaded to any server or cloud storage.'
   }
 };
-
-

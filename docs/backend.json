@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "SignalingRoom": {
@@ -27,6 +28,16 @@
         "sdpMLineIndex": { "type": "number" },
         "sdpMid": { "type": "string" }
       }
+    },
+    "TempRoom": {
+      "title": "Temp Room",
+      "description": "A temporary room for live text synchronization.",
+      "type": "object",
+      "properties": {
+        "peerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["waiting", "connected"] },
+        "createdAt": { "type": "number" }
+      }
     }
   },
   "auth": {
@@ -46,6 +57,10 @@
     "/p2p_signaling/{roomId}/calleeCandidates/{id}": {
       "schema": "#/entities/IceCandidate",
       "description": "ICE candidates from the receiver."
+    },
+    "/temp_rooms/{code}": {
+      "schema": "#/entities/TempRoom",
+      "description": "Ephemeral pairing data for live clipboard sharing."
     }
   }
 }

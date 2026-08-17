@@ -78,7 +78,8 @@ import {
   Wifi,
   Share2,
   MoveHorizontal,
-  Eye
+  Eye,
+  ClipboardType
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -112,6 +113,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/temp-room', 
+    icon: ClipboardType, 
+    title: 'Temp Room', 
+    desc: 'Shared live clipboard. Instant text sync between devices.', 
+    label: 'LIVE SYNC', 
+    color: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+    glowClass: 'bg-orange-400/10',
+    keywords: ['temp room', 'clipboard share', 'join code', 'live paste', 'text sync', 'copy paste share'],
+    category: 'utilities'
   },
   { 
     href: '/hide-message-photo', 
@@ -968,7 +980,7 @@ export default function Home() {
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
-      'Hide text in image', 'Secret photo', 'Steganography'
+      'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 'Join code'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
