@@ -67,7 +67,8 @@ import {
   Braces,
   Fingerprint,
   Hash,
-  WholeWord
+  WholeWord,
+  Frame
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -112,6 +113,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
     category: 'generators'
+  },
+  { 
+    href: '/image-border-frame', 
+    icon: Frame, 
+    title: 'Image Border & Frame', 
+    desc: 'Add professional borders and artistic frames to your photos.', 
+    label: 'GEOMETRY', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['border', 'frame', 'photo frame', 'edge', 'outline', 'polaroid', 'canvas', 'branding'],
+    category: 'image'
   },
   { 
     href: '/nickname-generator', 
@@ -715,7 +727,7 @@ const TOOLS: Tool[] = [
     label: 'CREATIVE', 
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
-    keywords: ['dots', 'braille', 'art', 'image to text', 'ascii'],
+    keywords: ['dots', 'braille', ' art', 'image to text', 'ascii'],
     category: 'image'
   },
   { 
@@ -856,7 +868,7 @@ export default function Home() {
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
-      'UUID Generator', 'Lorem Ipsum'
+      'UUID Generator', 'Lorem Ipsum', 'Image Border'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

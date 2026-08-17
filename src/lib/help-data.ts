@@ -188,5 +188,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Frame your name with "Weapons" or "Fire" symbols for high-impact competitive profiles.'
     ],
     privacy: 'All generation occurs locally using random sampling. No identifiers are logged or stored.'
+  },
+  'image-border-frame': {
+    title: 'Image Border & Frame',
+    description: 'Add professional borders and artistic frames to your visual assets with precision control.',
+    steps: [
+      'Import a photograph (JPG, PNG, or WebP up to 10MB).',
+      'Select a frame style from the profile list (Solid, Polaroid, Double).',
+      'Adjust border width, corner radius, and inner padding sliders.',
+      'Choose a chromatic background color for the frame matrix.',
+      'Enable the shadow protocol for a professional floating depth effect.',
+      'Export your framed master as a high-fidelity PNG or JPG.'
+    ],
+    tips: [
+      'Use the Polaroid style for classic archival or social media posts.',
+      'The "Extra Rounded" geometry is perfect for high-impact profile avatars.'
+    ],
+    privacy: 'All visual re-matricing occurs locally in your browser memory. No data is logged or transmitted.'
   }
 };
