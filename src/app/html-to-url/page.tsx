@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -29,7 +30,9 @@ import {
   ChevronDown,
   Terminal,
   FileJson,
-  FileText
+  FileText,
+  Play,
+  Cpu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,7 +71,6 @@ export default function HtmlToUrlPage() {
   const { user, loading: authLoading } = useUser();
   
   const [html, setHtml] = useState('');
-  const [debouncedHtml, setDebouncedHtml] = useState('');
   const [title, setTitle] = useState('');
   const [language, setLanguage] = useState('auto');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -77,22 +79,121 @@ export default function HtmlToUrlPage() {
   const [isCopied, setIsCopied] = useState(false);
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
 
-  // Logic: Identify if we should show visual preview
-  const isHtmlTarget = useMemo(() => {
-    if (language === 'html') return true;
-    if (language === 'auto' && (html.toLowerCase().includes('<html') || html.toLowerCase().includes('<!doctype') || html.toLowerCase().includes('<div') || html.toLowerCase().includes('<script'))) {
-      return true;
-    }
-    return false;
+  // Preview / Execution State
+  const [previewSrcDoc, setPreviewSrcDoc] = useState('');
+  const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
+  const [isPyodideLoading, setIsPyodideLoading] = useState(false);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const pyodideRef = useRef<any>(null);
+
+  // Logic: Identify effective language
+  const effectiveLanguage = useMemo(() => {
+    if (language !== 'auto') return language;
+    const low = html.toLowerCase();
+    if (low.includes('<html') || low.includes('<!doctype') || low.includes('<div') || low.includes('<script')) return 'html';
+    if (low.includes('import ') || low.includes('def ') || low.includes('print(')) return 'python';
+    if (low.includes('{') && low.includes('}') && (low.includes('color:') || low.includes('margin:'))) return 'css';
+    return 'text';
   }, [language, html]);
 
-  // Debounce HTML for preview
+  // Load Pyodide on Demand
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedHtml(html);
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [html]);
+    if (effectiveLanguage === 'python' && !pyodideRef.current && !isPyodideLoading) {
+      const loadPy = async () => {
+        setIsPyodideLoading(true);
+        try {
+          if (!(window as any).loadPyodide) {
+            const script = document.createElement('script');
+            script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
+            document.head.appendChild(script);
+            await new Promise((resolve) => (script.onload = resolve));
+          }
+          pyodideRef.current = await (window as any).loadPyodide();
+          toast({ title: "Python Engine Ready", description: "WASM Runtime initialized." });
+        } catch (e) {
+          toast({ variant: "destructive", title: "Engine Failure", description: "Python runtime could not be loaded." });
+        } finally {
+          setIsPyodideLoading(false);
+        }
+      };
+      loadPy();
+    }
+  }, [effectiveLanguage, isPyodideLoading, toast]);
+
+  const handleRun = async () => {
+    if (!html.trim()) return;
+    setConsoleOutput([]);
+    setIsExecuting(true);
+
+    if (effectiveLanguage === 'html') {
+      setPreviewSrcDoc(html);
+    } else if (effectiveLanguage === 'css') {
+      const cssDoc = `
+        <html>
+          <head><style>${html}</style></head>
+          <body style="background: #f8fafc; padding: 40px; font-family: sans-serif;">
+            <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+              <h1 class="preview-heading">CSS Visual Master</h1>
+              <p class="preview-text">This content serves as a canvas for your style protocol. Your CSS is applied globally to this frame.</p>
+              <button style="padding: 10px 20px; border-radius: 8px; cursor: pointer;">Action Component</button>
+            </div>
+          </body>
+        </html>
+      `;
+      setPreviewSrcDoc(cssDoc);
+    } else if (effectiveLanguage === 'javascript') {
+      const jsDoc = `
+        <html>
+          <body style="background: #0f172a; color: #22d3ee; padding: 20px; font-family: monospace;">
+            <div id="root">Executing JS Matrix...</div>
+            <script>
+              const root = document.getElementById('root');
+              const console = {
+                log: (...args) => {
+                  const p = document.createElement('div');
+                  p.textContent = '> ' + args.join(' ');
+                  root.appendChild(p);
+                }
+              };
+              try {
+                ${html}
+              } catch (e) {
+                root.textContent = 'ERROR: ' + e.message;
+              }
+            </script>
+          </body>
+        </html>
+      `;
+      setPreviewSrcDoc(jsDoc);
+    } else if (effectiveLanguage === 'python') {
+      if (!pyodideRef.current) {
+        setConsoleOutput(['[SYSTEM] Waiting for Python WASM Engine...']);
+        setIsExecuting(false);
+        return;
+      }
+      
+      const logs: string[] = [];
+      pyodideRef.current.setStdout({
+        batched: (str: string) => { logs.push(str); setConsoleOutput([...logs]); }
+      });
+      pyodideRef.current.setStderr({
+        batched: (str: string) => { logs.push(`[ERROR] ${str}`); setConsoleOutput([...logs]); }
+      });
+
+      try {
+        await pyodideRef.current.runPythonAsync(html);
+        if (logs.length === 0) logs.push('[SYSTEM] Execution complete. No stdout returned.');
+        setConsoleOutput([...logs]);
+      } catch (e: any) {
+        setConsoleOutput([...logs, `[RUNTIME ERROR] ${e.message}`]);
+      }
+    } else {
+      setPreviewSrcDoc('');
+    }
+    
+    setIsExecuting(false);
+    if (activeView === 'edit' && window.innerWidth < 1024) setActiveView('preview');
+  };
 
   // Fetch User Pages
   const pagesQuery = useMemo(() => {
@@ -155,7 +256,7 @@ export default function HtmlToUrlPage() {
       await setDoc(doc(firestore, "pages", id), {
         html: html.trim(),
         title: title.trim() || 'Untitled Studio Page',
-        language: language === 'auto' ? (isHtmlTarget ? 'html' : 'text') : language,
+        language: language === 'auto' ? effectiveLanguage : language,
         uid: user.uid,
         createdAt: serverTimestamp()
       });
@@ -179,17 +280,19 @@ export default function HtmlToUrlPage() {
     setHtml('');
     setTitle('');
     setGeneratedId(null);
+    setPreviewSrcDoc('');
+    setConsoleOutput([]);
     toast({ title: "Studio Reset" });
   };
 
   const openFullscreenPreview = () => {
-    if (!isHtmlTarget) {
-      toast({ title: "Preview Restricted", description: "Visual master only available for HTML protocol." });
-      return;
-    }
     const win = window.open();
     if (win) {
-      win.document.write(html);
+      if (effectiveLanguage === 'html' || effectiveLanguage === 'css' || effectiveLanguage === 'javascript') {
+        win.document.write(previewSrcDoc || html);
+      } else {
+        win.document.write(`<pre style="background:#000;color:#fff;padding:20px;">${consoleOutput.join('\n') || html}</pre>`);
+      }
       win.document.close();
     }
   };
@@ -273,17 +376,26 @@ export default function HtmlToUrlPage() {
                     <Textarea 
                       value={html}
                       onChange={e => setHtml(e.target.value)}
-                      placeholder={language === 'html' ? "Paste your HTML here..." : "Paste your code or text here..."}
+                      placeholder="Paste your code or text here..."
                       className="min-h-[400px] bg-secondary border-border text-xs font-mono p-8 rounded-[2rem] leading-relaxed resize-none focus:ring-primary/40 custom-scrollbar shadow-inner"
                     />
                  </div>
 
-                 <div className="pt-4">
+                 <div className="flex gap-4">
+                    <Button 
+                      onClick={handleRun}
+                      disabled={isExecuting || isPyodideLoading || !html.trim()}
+                      className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg transition-all active:scale-95"
+                    >
+                      {isExecuting || isPyodideLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
+                      {effectiveLanguage === 'python' ? 'Run Code' : 'Update Preview'}
+                    </Button>
+                    
                     {!user ? (
                       <Button 
                         onClick={handleLogin}
                         disabled={isLoggingIn}
-                        className="h-16 w-full bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg transition-all active:scale-95"
+                        className="h-16 flex-1 bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg transition-all active:scale-95"
                       >
                         {isLoggingIn ? <Loader2 className="w-6 h-6 animate-spin" /> : <LogIn className="w-6 h-6 text-primary" />}
                         Log in to Publish
@@ -292,10 +404,10 @@ export default function HtmlToUrlPage() {
                       <Button 
                         onClick={handleMakeLink}
                         disabled={!html.trim() || isProcessing || html.length > 150000}
-                        className="h-16 w-full bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95"
+                        className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95"
                       >
                         {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <LinkIcon className="w-6 h-6" />}
-                        {isHtmlTarget ? 'Make Shareable Link' : 'Generate Code Link'}
+                        {effectiveLanguage === 'html' ? 'Publish Live Page' : 'Generate Code Link'}
                       </Button>
                     )}
                  </div>
@@ -344,16 +456,16 @@ export default function HtmlToUrlPage() {
           <Card className={cn(
             "glass-card border-border shadow-2xl overflow-hidden relative group min-h-[600px] flex flex-col",
             activeView === 'edit' ? "max-lg:hidden" : "block",
-            isHtmlTarget ? "bg-white" : "bg-[#0a0a0c]"
+            (effectiveLanguage === 'html' || effectiveLanguage === 'css' || effectiveLanguage === 'javascript') ? "bg-white" : "bg-[#0a0a0c]"
           )}>
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
-                  {isHtmlTarget ? <Eye className="w-3.5 h-3.5" /> : <Terminal className="w-3.5 h-3.5" />}
-                  {isHtmlTarget ? 'Visual Master' : 'Source Protocol'}
+                  {(effectiveLanguage === 'html' || effectiveLanguage === 'css' || effectiveLanguage === 'javascript') ? <Eye className="w-3.5 h-3.5" /> : <Terminal className="w-3.5 h-3.5" />}
+                  {effectiveLanguage === 'python' ? 'Console Matrix' : 'Visual Master'}
                </CardTitle>
                <div className="flex items-center gap-3">
-                  <button onClick={() => setDebouncedHtml('')} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Clear Preview">
+                  <button onClick={() => { setPreviewSrcDoc(''); setConsoleOutput([]); }} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Clear Preview">
                      <RefreshCcw className="w-3.5 h-3.5 text-foreground/40" />
                   </button>
                   <button onClick={openFullscreenPreview} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Fullscreen Preview">
@@ -361,27 +473,48 @@ export default function HtmlToUrlPage() {
                   </button>
                </div>
             </CardHeader>
-            <CardContent className="flex-1 p-0 relative overflow-hidden">
-               {debouncedHtml ? (
-                 isHtmlTarget ? (
+            <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col">
+               {effectiveLanguage === 'python' ? (
+                  <div className="flex-1 p-8 font-mono text-sm leading-relaxed overflow-auto custom-scrollbar bg-black text-green-400">
+                     {consoleOutput.length > 0 ? consoleOutput.map((line, i) => (
+                       <div key={i} className="mb-1">{line}</div>
+                     )) : (
+                       <div className="opacity-20 italic">Awaiting Python execution...</div>
+                     )}
+                  </div>
+               ) : (
+                 previewSrcDoc ? (
                     <iframe 
-                      srcDoc={debouncedHtml}
+                      srcDoc={previewSrcDoc}
                       title="Studio Preview"
                       sandbox="allow-scripts allow-forms"
                       className="w-full h-full border-none"
                     />
                  ) : (
-                    <div className="h-full flex flex-col p-8">
-                       <div className="p-8 rounded-[2rem] bg-secondary/30 border border-white/5 font-mono text-xs text-foreground/60 leading-relaxed overflow-auto custom-scrollbar whitespace-pre-wrap">
-                          {debouncedHtml}
-                       </div>
+                    <div className="h-full flex flex-col p-8 bg-[#0a0a0c]">
+                       {['java', 'cpp', 'php', 'other'].includes(effectiveLanguage) ? (
+                         <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+                            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-white/20">
+                               <ShieldAlert className="w-8 h-8" />
+                            </div>
+                            <div className="space-y-2">
+                               <p className="text-xs font-black uppercase text-white/40 tracking-widest">Protocol Restriction</p>
+                               <p className="text-[10px] text-white/20 font-medium uppercase leading-relaxed max-w-xs">
+                                  This language cannot run in the browser sandbox. Links will share the source matrix correctly.
+                               </p>
+                            </div>
+                            <div className="p-6 bg-white/5 rounded-2xl w-full text-left font-mono text-[10px] text-white/30 truncate">
+                               {html.substring(0, 100)}...
+                            </div>
+                         </div>
+                       ) : (
+                         <div className="h-full flex flex-col items-center justify-center opacity-10 py-32 space-y-4">
+                            <Layout className="w-24 h-24 text-primary" />
+                            <p className="text-xs font-black uppercase tracking-[0.3em] text-white">Awaiting Inbound Signal</p>
+                         </div>
+                       )}
                     </div>
                  )
-               ) : (
-                 <div className="h-full flex flex-col items-center justify-center opacity-10 py-32 space-y-4">
-                    <Layout className="w-24 h-24 text-primary" />
-                    <p className="text-xs font-black uppercase tracking-[0.3em] text-foreground">Awaiting Inbound Signal</p>
-                 </div>
                )}
             </CardContent>
           </Card>
@@ -432,7 +565,7 @@ export default function HtmlToUrlPage() {
                 <div className="space-y-2">
                   <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Isolated Identity</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    HTML is served via a live sandboxed environment. Logic-based codes (Python, Java, etc.) are served in a safe, readable matrix with zero server execution.
+                    HTML/CSS/JS are served via a live sandboxed environment. Python is executed via hardware-native WebAssembly (WASM) with zero server persistence.
                   </p>
                 </div>
              </div>
