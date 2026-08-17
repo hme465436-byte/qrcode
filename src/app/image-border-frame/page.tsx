@@ -117,8 +117,7 @@ export default function ImageBorderFramePage() {
     const b = borderWidth;
     const p = padding;
     const r = cornerRadius;
-    const dpi = 72; // Standard base DPI for scaling
-    const mmToPx = (mm: number) => Math.round((mm / 25.4) * 300); // Internal high-res scale
+    const dpiValue = 72; // Standard base DPI for scaling
 
     // Calculate base dimensions
     let targetW = img.width;
@@ -336,6 +335,20 @@ export default function ImageBorderFramePage() {
                           "max-w-full max-h-full object-contain rounded-lg shadow-2xl ring-1 ring-white/10 transition-all duration-500",
                           isProcessing && "opacity-50 blur-sm"
                         )}
+                        onMouseDown={(e) => {
+                          if (!image) return;
+                          isDragging.current = true;
+                          lastMousePos.current = { x: e.clientX, y: e.clientY };
+                        }}
+                        onMouseMove={(e) => {
+                          if (!isDragging.current || !image) return;
+                          const dx = e.clientX - lastMousePos.current.x;
+                          const dy = e.clientY - lastMousePos.current.y;
+                          setPos(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                          lastMousePos.current = { x: e.clientX, y: e.clientY };
+                        }}
+                        onMouseUp={() => { isDragging.current = false; }}
+                        onMouseLeave={() => { isDragging.current = false; }}
                       />
                    </div>
                  )}
@@ -363,32 +376,35 @@ export default function ImageBorderFramePage() {
 
           {/* Controls - Scrollable */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-            {/* Aspect Presets - Horizontal Scroll */}
+            {/* Aspect Presets - Refined Horizontal Scroll */}
             <Card className="glass-card border-white/5 shadow-xl">
-               <CardHeader className="py-4 border-b border-white/5 bg-white/2">
+               <CardHeader className="py-3 px-4 border-b border-white/5 bg-white/2">
                   <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Aspect Profiles</Label>
                </CardHeader>
-               <CardContent className="p-2 overflow-x-auto no-scrollbar">
-                  <div className="flex gap-2 min-w-max px-2">
+               <CardContent className="p-0 overflow-hidden">
+                  <div className="flex overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory px-4 py-4 gap-3 flex-nowrap">
                     {[
                       { id: 'original', icon: ImageIconLucide, label: 'Original' },
                       { id: '1:1', icon: Square, label: '1:1 Square' },
                       { id: '4:5', icon: Smartphone, label: '4:5 Portrait' },
                       { id: '16:9', icon: Youtube, label: '16:9 Land' },
-                      { id: '9:16', icon: Smartphone, label: '9:16 Story' },
                     ].map((p) => (
                       <button
                         key={p.id}
                         onClick={() => applyAspect(p.id as any)}
                         className={cn(
-                          "flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all h-12",
-                          aspect === p.id ? "bg-primary text-white border-primary shadow-lg" : "bg-white/5 border-white/5 text-white/40 hover:text-primary"
+                          "flex items-center gap-3 px-6 py-3 rounded-2xl border transition-all h-12 snap-start shrink-0 min-w-[140px] justify-center",
+                          aspect === p.id 
+                            ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-[1.02]" 
+                            : "bg-white/5 border-white/5 text-white/40 hover:text-primary hover:bg-white/10"
                         )}
                       >
                         <p.icon className="w-3.5 h-3.5" />
-                        <span className="text-[9px] font-black uppercase whitespace-nowrap">{p.label}</span>
+                        <span className="text-[9px] font-black uppercase whitespace-nowrap tracking-wider">{p.label}</span>
                       </button>
                     ))}
+                    {/* Ghost spacer to allow peeking at end */}
+                    <div className="w-4 shrink-0" />
                   </div>
                </CardContent>
             </Card>
@@ -417,11 +433,11 @@ export default function ImageBorderFramePage() {
 
                 {image && (
                   <div className="space-y-10 animate-in zoom-in duration-500 pb-4">
-                    {/* Style Row */}
+                    {/* Style Row - Horizontal Scroll Consistency */}
                     <div className="space-y-4">
                       <Label className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Style Profile</Label>
-                      <div className="overflow-x-auto no-scrollbar -mx-2">
-                        <div className="flex gap-2 min-w-max px-2">
+                      <div className="overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory -mx-6">
+                        <div className="flex gap-2 flex-nowrap px-6 py-2">
                            {[
                              { id: 'solid', label: 'Solid' },
                              { id: 'polaroid', label: 'Polaroid' },
@@ -436,13 +452,14 @@ export default function ImageBorderFramePage() {
                               key={s.id}
                               onClick={() => setFrameStyle(s.id as any)}
                               className={cn(
-                                "h-10 px-4 rounded-xl border text-[8px] font-black uppercase tracking-widest transition-all",
+                                "h-11 px-5 rounded-xl border text-[8px] font-black uppercase tracking-widest transition-all snap-start shrink-0",
                                 frameStyle === s.id ? "bg-primary text-white border-primary shadow-lg" : "bg-white/5 border-white/5 text-white/40 hover:text-primary"
                               )}
                              >
                                {s.label}
                              </button>
                            ))}
+                           <div className="w-4 shrink-0" />
                         </div>
                       </div>
                     </div>
@@ -522,7 +539,7 @@ export default function ImageBorderFramePage() {
                           placeholder="ENTER LABEL..." 
                           value={caption} 
                           onChange={e => setCaption(e.target.value)}
-                          className="h-14 bg-black/40 border-white/10 rounded-2xl text-xs font-black tracking-widest uppercase text-center"
+                          className="h-14 bg-black/40 border-white/10 rounded-2xl text-xs font-black tracking-widest uppercase text-center w-full"
                          />
                          <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
