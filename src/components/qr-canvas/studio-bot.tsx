@@ -169,19 +169,19 @@ export function StudioBot() {
       {!isOpen ? (
         <button 
           onClick={() => setIsOpen(true)}
-          className="pointer-events-auto group relative flex items-end justify-end w-32 h-32 overflow-hidden outline-none"
+          className="pointer-events-auto group relative flex items-end justify-end w-26 h-26 overflow-hidden outline-none"
           aria-label="Open Kit"
         >
           {/* Peeking animation - sits in the bottom corner */}
-          <div className="absolute -bottom-6 -right-6 w-28 h-28 transform transition-transform duration-300 group-hover:scale-105 animate-kit-bounce">
+          <div className="absolute -bottom-5 -right-5 w-22 h-22 transform transition-transform duration-300 group-hover:scale-105 animate-kit-bounce">
             <KitSVG isPeeking={true} />
           </div>
         </button>
       ) : (
         <div className="pointer-events-auto flex flex-col items-center animate-in slide-in-from-bottom-8 zoom-in-95 duration-500 w-[280px] sm:w-[320px]">
           {/* Sitting Panda */}
-          <div className="relative z-10 -mb-6 animate-kit-wave">
-             <KitSVG className="w-24 h-24 sm:w-28 sm:h-28" />
+          <div className="relative z-10 -mb-5 animate-kit-wave">
+             <KitSVG className="w-18 h-18 sm:w-22 sm:h-22" />
           </div>
 
           <Card className="w-full border-none shadow-[0_12px_40px_rgba(43,75,120,0.18)] overflow-hidden flex flex-col bg-[#FFF9F0]/92 backdrop-blur-xl rounded-[20px]">
