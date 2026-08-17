@@ -155,5 +155,21 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'HTML mode is ideal for quick CMS content testing.'
     ],
     privacy: 'Linguistic synthesis is 100% local and randomized.'
+  },
+  'nickname-generator': {
+    title: 'Nickname Studio',
+    description: 'Generate stylized, unique nicknames and gamertags with artistic matrixing.',
+    steps: [
+      'Enter a primary name or keyword in the Input Matrix.',
+      'Select a linguistic style (Cool, Fire, Pro, etc.).',
+      'Optionally enable the Symbol Matrix for ASCII framing.',
+      'Review the 12 generated variations in the preview grid.',
+      'Copy your favorites or download the entire master set.'
+    ],
+    tips: [
+      'Use "Symbol Matrix" for professional Discord or gaming profiles.',
+      'Regenerate multiple times to discover unique high-entropy combinations.'
+    ],
+    privacy: 'All generation occurs locally using random sampling. No names are logged or stored.'
   }
 };

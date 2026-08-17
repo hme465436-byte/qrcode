@@ -66,7 +66,8 @@ import {
   Monitor,
   Braces,
   Fingerprint,
-  Hash
+  Hash,
+  WholeWord
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -110,6 +111,17 @@ const TOOLS: Tool[] = [
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
     keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
+    category: 'generators'
+  },
+  { 
+    href: '/nickname-generator', 
+    icon: Wand2, 
+    title: 'Nickname Studio', 
+    desc: 'Synthesize stylized nicknames and gamertags with artistic matrixing.', 
+    label: 'IDENTITY', 
+    color: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
+    glowClass: 'bg-violet-400/10',
+    keywords: ['nickname', 'gamertag', 'alias', 'brand name', 'generator', 'gaming id'],
     category: 'generators'
   },
   { 
@@ -842,7 +854,7 @@ export default function Home() {
       'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
       'Word to PDF', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
-      'Video to MP3', 'Image to PDF', 'AOB Converter',
+      'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum'
     ];
@@ -962,7 +974,7 @@ export default function Home() {
                 <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000 pointer-events-none" />
                 <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within/search:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
 
-                <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl transition-all duration-500 group-hover:from-primary/30 group-focus-within/search:from-primary/60 group-focus-within/search:to-primary/30">
+                <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl duration-500 group-hover:from-primary/30 group-focus-within/search:from-primary/60 group-focus-within/search:to-primary/30">
                   <div className="moving-border-matrix" />
                   <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within/search:border-primary/50 group-focus-within/search:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
                     <div className="absolute inset-y-0 left-5 flex items-center pointer-none">

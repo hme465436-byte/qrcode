@@ -14,7 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/code-converter', '/dictionary', '/image-url-downloader', '/speaker-tester', 
     '/mic-tester', '/live-wallpaper', '/youtube-thumbnail-downloader', 
     '/youtube-thumbnail-maker', '/youtube-banner-maker', '/age-calculator', 
-    '/rename-file', '/lorem-ipsum-generator'
+    '/rename-file', '/lorem-ipsum-generator', '/nickname-generator'
   ];
 
   const routes = tools.map(tool => ({
