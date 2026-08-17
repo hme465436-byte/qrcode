@@ -97,8 +97,8 @@ function ImageResultCard({
         <div className="min-w-0">
           <p className="text-[9px] font-black uppercase text-foreground truncate">{asset.label}</p>
         </div>
-        <Button onClick={() => onDownload(asset)} size="icon" className="w-8 h-8 rounded-lg bg-primary shrink-0">
-          <Download className="w-3.5 h-3.5" />
+        <Button onClick={() => onDownload(asset)} size="icon" className="w-8 h-8 rounded-lg bg-primary shrink-0 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+          <Download className="w-3.5 h-3.5 text-white" />
         </Button>
       </div>
     </div>
@@ -185,8 +185,8 @@ export default function ImageUrlDownloaderPage() {
     if (isDirectImage) {
       const asset: ImageAsset = { id: 'direct', url: url, label: 'Direct Image', type: 'image' };
       setFoundImages([asset]);
-      // Perform immediate production trigger for direct links
-      await downloadSingle(asset);
+      setIsProcessing(false);
+      toast({ title: "Signal Mapped", description: "Matrix ready for production." });
       return;
     }
 
@@ -200,6 +200,7 @@ export default function ImageUrlDownloaderPage() {
           type: 'web'
         }));
         setFoundImages(assets);
+        toast({ title: "Discovery Complete", description: `Isolated ${assets.length} visual identifiers.` });
       } else {
         setError("No images could be extracted. Please use a direct image URL.");
       }
@@ -283,7 +284,7 @@ export default function ImageUrlDownloaderPage() {
                     className="h-16 bg-secondary border-border rounded-2xl text-xs font-mono px-6 focus:ring-primary/40" 
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/input:opacity-100 transition-opacity">
-                    <Globe className="w-6 h-6 text-primary" />
+                    {extractVideoId(url) ? <Youtube className="w-6 h-6 text-red-600" /> : <Globe className="w-6 h-6 text-primary" />}
                   </div>
                 </div>
                 <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed flex items-center gap-2">
@@ -297,7 +298,7 @@ export default function ImageUrlDownloaderPage() {
                   disabled={isProcessing || !url.trim()} 
                   className="h-14 flex-1 bg-primary text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl shadow-primary/30 active:scale-95"
                 >
-                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Download Asset'}
+                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : (url.trim() ? 'Go' : 'Process Signal')}
                 </Button>
                 <Button 
                   variant="outline" 
