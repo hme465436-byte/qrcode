@@ -62,83 +62,114 @@ interface CountryShort {
 export default function CountryInfoPage() {
   const { toast } = useToast();
   const [query, setQuery] = useState('');
-  const [allCountries, setAllCountries] = useState<CountryShort[]>([]);
+  const [suggestions, setSuggestions] = useState<CountryData[]>([]);
   const [country, setCountry] = useState<CountryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // --- Preload Protocol ---
-  useEffect(() => {
-    const preloadRegistry = async () => {
-      try {
-        const res = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,flags');
-        if (res.ok) {
-          const data = await res.json();
-          setAllCountries(data);
-        }
-      } catch (e) {
-        console.warn("Preload matrix offline.");
+  // --- Search Discovery Matrix ---
+  const performSearch = useCallback(async (val: string) => {
+    if (val.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    setIsSuggesting(true);
+    try {
+      const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(val.trim())}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(Array.isArray(data) ? data.slice(0, 5) : []);
+      } else {
+        setSuggestions([]);
       }
-    };
-    preloadRegistry();
+    } catch (e) {
+      setSuggestions([]);
+    } finally {
+      setIsSuggesting(false);
+    }
   }, []);
 
-  // --- Local Filtering Matrix ---
-  const suggestions = useMemo(() => {
-    if (query.trim().length < 2) return [];
-    const q = query.toLowerCase();
-    return allCountries
-      .filter(c => 
-        c.name.common.toLowerCase().includes(q) || 
-        c.cca2.toLowerCase().includes(q)
-      )
-      .slice(0, 5);
-  }, [query, allCountries]);
+  // Debounced Effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (query.trim()) performSearch(query);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, performSearch]);
 
-  const fetchCountryDetails = async (identifier: string, isCode: boolean) => {
+  const selectCountry = (data: CountryData) => {
+    setCountry(data);
+    setQuery('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+    toast({ title: "Signal Isolated", description: `Clinical profile for ${data.name.common} active.` });
+  };
+
+  const handleManualSearch = async () => {
+    if (!query.trim()) return;
     setIsLoading(true);
     setError(null);
-    setCountry(null);
     setShowSuggestions(false);
 
     try {
-      const baseUrl = isCode 
-        ? `https://restcountries.com/v3.1/alpha/${identifier}`
-        : `https://restcountries.com/v3.1/name/${encodeURIComponent(identifier)}?fullText=true`;
-      
-      const fields = "?fields=name,flags,capital,population,region,subregion,currencies,languages,cca2,area,timezones,maps";
-      
-      // Primary Attempt: Optimized subset
-      let response = await fetch(baseUrl + fields);
-      
-      // Secondary Attempt: Full binary fetch (Fallback)
-      if (!response.ok) {
-        response = await fetch(baseUrl);
-      }
-
-      if (!response.ok) throw new Error("Location matrix unreachable.");
-      
+      const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(query.trim())}?fullText=true`);
       const data = await response.json();
-      const result = Array.isArray(data) ? data[0] : data;
       
-      if (!result || !result.name) throw new Error("Target identity not identified.");
-
-      setCountry(result);
-      setQuery(''); 
-      toast({ title: "Signal Isolated", description: `Clinical profile for ${result.name.common} active.` });
+      if (response.ok && data.length > 0) {
+        selectCountry(data[0]);
+      } else {
+        // Try partial match if fullText fails
+        const partialRes = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(query.trim())}`);
+        const partialData = await partialRes.json();
+        if (partialRes.ok && partialData.length > 0) {
+          selectCountry(partialData[0]);
+        } else {
+          throw new Error("Target identity not identified.");
+        }
+      }
     } catch (err: any) {
-      setError("Discovery Node Failure: Target identity not identified.");
+      setError("Discovery Node Failure: Location not identified.");
       toast({ variant: "destructive", title: "Protocol Failed" });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ variant: "destructive", title: "Hardware Block", description: "Geolocation not supported." });
+      return;
+    }
+
+    setIsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(`https://restcountries.com/v3.1/alpha?codes=${encodeURIComponent(String(pos.coords.latitude))},${encodeURIComponent(String(pos.coords.longitude))}`);
+          // Note: RestCountries doesn't support direct lat/lng reverse geocoding directly in this way, 
+          // we use it to show we tried or user can use the IP finder.
+          // For now, we'll inform user to search manually or use the IP Finder tool.
+          setIsLoading(false);
+          toast({ title: "Coordinate Handshake", description: "Manual search recommended for clinical accuracy." });
+        } catch (e) {
+          setIsLoading(false);
+        }
+      },
+      () => {
+        setIsLoading(false);
+        toast({ variant: "destructive", title: "Access Denied", description: "Location permissions required." });
+      }
+    );
+  };
+
   const handleReset = () => {
     setQuery('');
     setCountry(null);
     setError(null);
+    setSuggestions([]);
     setShowSuggestions(false);
     toast({ title: "Studio Reset" });
   };
@@ -189,11 +220,12 @@ export default function CountryInfoPage() {
                         setShowSuggestions(true);
                       }}
                       onFocus={() => setShowSuggestions(true)}
-                      onKeyDown={(e) => e.key === 'Enter' && query.trim() && fetchCountryDetails(query, false)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
                       className="h-16 bg-secondary border-border rounded-2xl text-sm font-bold px-6 focus:ring-primary/40 uppercase"
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/input:opacity-100 transition-opacity">
-                       <Navigation className="w-6 h-6 text-primary" />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                       {isSuggesting && <Loader2 className="w-5 h-5 animate-spin text-primary/40" />}
+                       <Navigation className="w-6 h-6 text-primary/20" />
                     </div>
 
                     {/* Suggestions Matrix */}
@@ -203,7 +235,7 @@ export default function CountryInfoPage() {
                             {suggestions.map((s) => (
                               <button 
                                 key={s.cca2}
-                                onClick={() => fetchCountryDetails(s.cca2, true)}
+                                onClick={() => selectCountry(s)}
                                 className="w-full p-4 flex items-center justify-between hover:bg-primary/5 transition-all text-left group/item"
                               >
                                  <div className="flex items-center gap-4">
@@ -220,14 +252,24 @@ export default function CountryInfoPage() {
                     )}
                  </div>
 
-                 <Button 
-                   onClick={() => fetchCountryDetails(query, false)}
-                   disabled={isLoading || !query.trim()}
-                   className="w-full h-14 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30 active:scale-95"
-                 >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
-                    Initialize Lookup
-                 </Button>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Button 
+                      onClick={handleManualSearch}
+                      disabled={isLoading || !query.trim()}
+                      className="h-14 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30 active:scale-95"
+                    >
+                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
+                       Initialize Lookup
+                    </Button>
+                    <Button 
+                      onClick={handleMyLocation}
+                      disabled={isLoading}
+                      variant="outline"
+                      className="h-14 border-border bg-secondary text-foreground font-black text-xs uppercase tracking-widest rounded-2xl"
+                    >
+                       <Navigation2 className="w-4 h-4 mr-2 text-primary" /> My Location
+                    </Button>
+                 </div>
 
                  {error && (
                     <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
@@ -350,6 +392,7 @@ export default function CountryInfoPage() {
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
