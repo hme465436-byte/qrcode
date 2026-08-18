@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -25,7 +26,9 @@ import {
   CloudFog,
   CloudSnow,
   CloudDrizzle,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  Navigation2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,9 +65,15 @@ interface CityResult {
 interface WeatherData {
   current: {
     temp: number;
+    feelsLike: number;
     humidity: number;
     wind: number;
     code: number;
+  };
+  hourly: {
+    time: string[];
+    temp: number[];
+    code: number[];
   };
   daily: {
     time: string[];
@@ -114,15 +123,21 @@ export default function WeatherPage() {
     setSelectedCity(city);
 
     try {
-      const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}&longitude=${city.longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`);
+      const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}&longitude=${city.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`);
       const data = await response.json();
 
       setWeather({
         current: {
           temp: data.current.temperature_2m,
+          feelsLike: data.current.apparent_temperature,
           humidity: data.current.relative_humidity_2m,
           wind: data.current.wind_speed_10m,
           code: data.current.weather_code
+        },
+        hourly: {
+          time: data.hourly.time.slice(0, 12),
+          temp: data.hourly.temperature_2m.slice(0, 12),
+          code: data.hourly.weather_code.slice(0, 12)
         },
         daily: {
           time: data.daily.time,
@@ -143,6 +158,54 @@ export default function WeatherPage() {
     }
   };
 
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ variant: "destructive", title: "Protocol Error", description: "Geolocation not supported by this hardware." });
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setWeather(null);
+    setSearchResults([]);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          // Reverse geocode to get city name
+          const revRes = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`);
+          const revData = await revRes.json();
+          
+          const cityData: CityResult = revData.results?.[0] || {
+            id: 0,
+            name: "Current Location",
+            country: "Local Node",
+            latitude,
+            longitude,
+            country_code: "???"
+          };
+
+          fetchForecast(cityData);
+        } catch (e) {
+          fetchForecast({
+            id: 0,
+            name: "Current Location",
+            country: "Local Node",
+            latitude,
+            longitude,
+            country_code: "???"
+          });
+        }
+      },
+      (err) => {
+        setIsLoading(false);
+        setError("Location permission needed to initialize hardware sync.");
+        toast({ variant: "destructive", title: "Access Denied", description: "Hardware location permissions required." });
+      }
+    );
+  };
+
   const handleReset = () => {
     setQuery('');
     setSearchResults([]);
@@ -150,6 +213,10 @@ export default function WeatherPage() {
     setWeather(null);
     setError(null);
     toast({ title: "Studio Reset" });
+  };
+
+  const refreshData = () => {
+    if (selectedCity) fetchForecast(selectedCity);
   };
 
   return (
@@ -160,18 +227,23 @@ export default function WeatherPage() {
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
            <div>
-              <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
+              <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
                 Weather <span className="text-primary italic">Intelligence Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional atmospheric diagnostic unit. Isolate global meteorological data with real-time telemetry and 3-day projection matrices.
+                Professional atmospheric diagnostic unit. Isolate global meteorological data with real-time telemetry, hourly sync, and 7-day projection matrices.
               </p>
            </div>
            <div className="flex items-center gap-3">
               <GetHelp toolId="weather" />
+              {weather && (
+                 <Button variant="outline" size="sm" onClick={refreshData} disabled={isLoading} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary">
+                    <RotateCcw className={cn("w-3.5 h-3.5 mr-2", isLoading && "animate-spin")} /> Refresh
+                 </Button>
+              )}
               {(weather || selectedCity || query) && (
                 <Button variant="outline" size="sm" onClick={handleReset} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
+                   <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
                 </Button>
               )}
            </div>
@@ -203,14 +275,25 @@ export default function WeatherPage() {
                     <Globe className="w-6 h-6 text-primary" />
                   </div>
                 </div>
-                <Button 
-                  onClick={fetchCities} 
-                  disabled={isLoading || !query.trim()} 
-                  className="h-16 w-full bg-primary text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
-                >
-                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 mr-3" />}
-                  Identify Location
-                </Button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <Button 
+                    onClick={fetchCities} 
+                    disabled={isLoading || !query.trim()} 
+                    className="h-14 bg-primary text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                  >
+                    {isLoading && query ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 mr-3" />}
+                    Search City
+                  </Button>
+                  <Button 
+                    onClick={handleMyLocation} 
+                    disabled={isLoading}
+                    variant="outline"
+                    className="h-14 border-border bg-secondary hover:bg-white/5 text-foreground font-black text-xs uppercase tracking-[0.3em] rounded-2xl transition-all"
+                  >
+                    {isLoading && !query ? <Loader2 className="w-6 h-6 animate-spin" /> : <Navigation2 className="w-6 h-6 mr-3 text-primary" />}
+                    My Location
+                  </Button>
+                </div>
               </div>
 
               {/* City Selection Matrix */}
@@ -271,7 +354,7 @@ export default function WeatherPage() {
                 <Activity className="w-4 h-4 fill-primary/20" /> Atmospheric Master
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-8 sm:p-16 flex flex-col justify-center bg-black/10">
+            <CardContent className="flex-1 p-6 sm:p-10 flex flex-col gap-10 bg-black/10">
                {!weather && !isLoading && !error && (
                  <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-20">
                     <Cloud className="w-24 h-24 text-primary" />
@@ -303,7 +386,13 @@ export default function WeatherPage() {
                           <p className="text-[10px] font-black uppercase text-primary tracking-[0.6em]">{decodeWeather(weather.current.code).label}</p>
                        </div>
                        
-                       <h2 className="text-6xl sm:text-9xl font-headline font-black text-foreground tracking-tighter leading-none">{Math.round(weather.current.temp)}°</h2>
+                       <div className="relative inline-block">
+                         <h2 className="text-7xl sm:text-9xl font-headline font-black text-foreground tracking-tighter leading-none">{Math.round(weather.current.temp)}°</h2>
+                         <div className="absolute -top-4 -right-12 sm:-right-16 text-left">
+                            <p className="text-[8px] sm:text-[10px] font-black uppercase text-foreground/20 tracking-widest">Feels Like</p>
+                            <p className="text-lg sm:text-2xl font-black text-primary">{Math.round(weather.current.feelsLike)}°</p>
+                         </div>
+                       </div>
                        
                        <div className="space-y-1">
                           <h3 className="text-2xl font-headline font-black uppercase text-foreground">{weather.city}</h3>
@@ -313,14 +402,14 @@ export default function WeatherPage() {
 
                     {/* Stats Matrix */}
                     <div className="grid grid-cols-2 gap-4">
-                       <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-4">
+                       <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-5">
                           <Droplets className="w-5 h-5 text-primary mt-1 shrink-0" />
                           <div className="space-y-1">
                              <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Humidity</p>
                              <p className="text-xl font-headline font-black text-foreground uppercase">{weather.current.humidity}%</p>
                           </div>
                        </div>
-                       <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-4">
+                       <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-5">
                           <Wind className="w-5 h-5 text-primary mt-1 shrink-0" />
                           <div className="space-y-1">
                              <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Wind Flow</p>
@@ -329,18 +418,50 @@ export default function WeatherPage() {
                        </div>
                     </div>
 
-                    {/* 3-Day Projection */}
+                    {/* Hourly Scroll Matrix */}
+                    <div className="space-y-6">
+                       <div className="flex items-center justify-between px-1">
+                          <div className="flex items-center gap-3">
+                             <Clock className="w-4 h-4 text-primary" />
+                             <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">12-Hour Telemetry</h4>
+                          </div>
+                          <span className="text-[8px] font-black text-primary uppercase animate-pulse">Sync Active</span>
+                       </div>
+                       <div className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-4">
+                          {weather.hourly.time.map((time, i) => {
+                            const w = decodeWeather(weather.hourly.code[i]);
+                            const date = new Date(time);
+                            return (
+                              <div key={i} className="min-w-[100px] p-5 rounded-[2rem] bg-white/5 border border-white/5 flex flex-col items-center gap-3 snap-start group hover:border-primary/20 transition-all">
+                                 <span className="text-[8px] font-black uppercase text-white/20">{date.getHours().toString().padStart(2, '0')}:00</span>
+                                 <div className={cn("w-8 h-8 rounded-lg bg-secondary flex items-center justify-center transition-transform group-hover:scale-110", w.color)}>
+                                    {React.createElement(w.icon, { className: "w-4 h-4" })}
+                                 </div>
+                                 <span className="text-sm font-black text-foreground">{Math.round(weather.hourly.temp[i])}°</span>
+                              </div>
+                            );
+                          })}
+                       </div>
+                    </div>
+
+                    {/* 7-Day Projection */}
                     <div className="space-y-6">
                        <div className="flex items-center gap-3 px-1">
                           <Calendar className="w-4 h-4 text-primary" />
-                          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">3-Day Projection</h4>
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">7-Day Projection Matrix</h4>
                        </div>
-                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {[1, 2, 3].map((idx) => {
+                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {weather.daily.time.map((time, idx) => {
                             const w = decodeWeather(weather.daily.code[idx]);
+                            const isToday = idx === 0;
                             return (
-                              <div key={idx} className="p-6 rounded-[2.5rem] bg-white/5 border border-white/5 flex flex-col items-center gap-4 hover:border-primary/20 transition-all group">
-                                 <p className="text-[9px] font-black uppercase text-foreground/40">{new Date(weather.daily.time[idx]).toLocaleDateString('en-US', { weekday: 'short' })}</p>
+                              <div key={idx} className={cn(
+                                "p-6 rounded-[2.5rem] border flex flex-col items-center gap-4 hover:border-primary/20 transition-all group",
+                                isToday ? "bg-primary/10 border-primary/20 shadow-xl" : "bg-white/5 border-white/5"
+                              )}>
+                                 <p className={cn("text-[9px] font-black uppercase", isToday ? "text-primary" : "text-foreground/40")}>
+                                    {isToday ? 'Today' : new Date(time).toLocaleDateString('en-US', { weekday: 'short' })}
+                                 </p>
                                  <div className={cn("w-10 h-10 rounded-xl bg-secondary flex items-center justify-center transition-transform group-hover:scale-110", w.color)}>
                                     <w.icon className="w-5 h-5" />
                                  </div>
@@ -377,6 +498,7 @@ export default function WeatherPage() {
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
