@@ -93,6 +93,8 @@ const FONT_MAPS: Record<string, (text: string) => string> = {
   }).join(''),
 };
 
+const SYMBOLS = ['★', '✦', '♡', '⋆', 'ꨄ', '❥', '✧', '•', '·', '—'];
+
 const PHRASE_BANK: Record<Mood, { en: string[], urdu: string[], emojis: string[] }> = {
   Aesthetic: {
     en: ['Quiet nights, city lights.', 'Vibing in the shadows.', 'Lost in ethereal stars.', 'Whispers of a silent soul.', 'Art in constant motion.', 'Ethereal state of mind.', 'Golden thoughts only.', 'Bloom where you are planted.', 'Minimalist at heart.', 'Poetry in every pixel.'],
@@ -122,7 +124,7 @@ const PHRASE_BANK: Record<Mood, { en: string[], urdu: string[], emojis: string[]
   Funny: {
     en: ['Professional sleeper.', 'Life is a joke, I’m the punchline.', 'Send snacks, not drama.', 'Error 404: Bio not found.', 'CEO of procrastination.', 'I need coffee to exist.', 'Eating my feelings.', 'Just here for the memes.', 'Making bad choices look good.', 'Unsubscribed from reality.'],
     urdu: ['Bas sona hai.', 'Zindagi ek tanz hai.', 'Khana peena aur sona.', 'Nalayak par intelligent.', 'Sasti masti, mehngay khuwab.', 'Hum nahi sudhrain gy.', 'Pehly chai, phir baat.', 'Memes ka badshah.', 'Vaila bandah.', 'Error in system.'],
-    emojis: ['😂', '🫠', '✌️', '🍕', '🤡', '☕', '🛌', '🐒', '🍟', '👻']
+    emojis: ['😂', '🫠', '✌️', '🍕', '🤡', '☕', '🛌', '🐒', '🍟', 'ghost']
   },
   Simple: {
     en: ['Just a person.', 'Living day by day.', 'Simple soul.', 'Minimalist identity.', 'Clear mind, simple life.', 'Existing peacefully.', 'Doing my best.', 'Happy enough.', 'Constant state of calm.', 'Quiet life, loud mind.'],
@@ -168,70 +170,78 @@ export default function AdvancedBioMakerPage() {
     return Array.from({length: count}, () => pool[Math.floor(Math.random() * pool.length)]).join(' ');
   }, []);
 
+  const getRandomSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+
   const generateSingleBio = useCallback((targetMood: Mood) => {
     const banks = PHRASE_BANK[targetMood];
     const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
     
     let pool = languageMode === 'english' ? banks.en : languageMode === 'urdu' ? banks.urdu : [...banks.en, ...banks.urdu];
     
+    // Pick a random font style for the identity parts
+    const fontStyles: FontStyle[] = ['Bold', 'Cursive', 'Small Caps', 'Normal'];
+    const chosenFont = fontStyles[Math.floor(Math.random() * fontStyles.length)];
+    const applyStyle = (t: string) => chosenFont === 'Normal' ? t : FONT_MAPS[chosenFont](t);
+
+    const name = options.name ? inputs.name : '';
+    const job = options.profession ? inputs.profession : '';
+    const expert = options.expert ? inputs.expert : '';
+    const hobby = options.hobby ? inputs.hobby : '';
+    const loc = options.location ? inputs.location : '';
+
     const lines: string[] = [];
-    const nameLine = options.name ? inputs.name : '';
-    const jobLine = options.profession ? inputs.profession : '';
-    const expertLine = options.expert ? inputs.expert : '';
-    const hobbyLine = options.hobby ? inputs.hobby : '';
-    const locLine = options.location ? inputs.location : '';
+    const archetype = Math.floor(Math.random() * 5); // New 5 layout archetypes
 
-    // Advanced Structure Logic
-    const archetype = Math.floor(Math.random() * 3); // 0: Stack, 1: Minimal, 2: Pro
-
-    if (archetype === 0 || lineCount > 1) {
-      // Line 1: Identity or Opening
-      if (nameLine) {
-        const emo = emojiDensity !== 'none' ? getEmojis(targetMood, emojiDensity, 1) : '';
-        lines.push(`${emo} ${nameLine}`);
-      } else {
+    switch (archetype) {
+      case 0: // Layout 1: ★ name ★
+        if (name) lines.push(`★ ${applyStyle(name)} ★`);
         lines.push(pick(pool));
-      }
+        if (emojiDensity !== 'none') lines.push(getEmojis(targetMood, emojiDensity));
+        break;
 
-      // Line 2: Context or Middle
-      if (jobLine || expertLine) {
-        lines.push(`${jobLine || expertLine} • ${getEmojis(targetMood, emojiDensity, 1)}`);
-      } else if (lineCount > 1) {
+      case 1: // Layout 2: name | job
+        const l1 = [name ? applyStyle(name) : '', job].filter(Boolean).join(' | ');
+        if (l1) lines.push(l1);
+        const l2 = [hobby, loc].filter(Boolean).join(' · ');
+        if (l2) lines.push(l2);
+        else lines.push(pick(pool));
+        break;
+
+      case 2: // Layout 3: ✦ line ✦
+        lines.push(`✦ ${pick(pool)} ✦`);
+        lines.push(pick(pool).substring(0, 20));
+        if (emojiDensity !== 'none') lines.push(`${getRandomSymbol()} ${getEmojis(targetMood, emojiDensity, 1)}`);
+        break;
+
+      case 3: // Layout 4: styled name • line •
+        if (name) lines.push(applyStyle(name));
+        lines.push(`• ${pick(pool)} •`);
+        if (hobby || loc) lines.push(`${hobby || loc} ${getEmojis(targetMood, emojiDensity, 1)}`);
+        break;
+
+      case 4: // Layout 5: line ——— line
         lines.push(pick(pool));
-      }
+        lines.push('———');
+        lines.push(name ? applyStyle(name) : pick(pool));
+        break;
 
-      // Line 3: Closing or Hobby/Loc
-      if (lineCount > 2) {
-        if (locLine || hobbyLine) {
-           const emo = emojiDensity !== 'none' ? getEmojis(targetMood, emojiDensity, 1) : '';
-           lines.push(`${locLine ? '📍 ' + locLine : hobbyLine} ${emo}`);
-        } else {
-           lines.push(`${getEmojis(targetMood, emojiDensity, 1)} ${pick(pool)}`);
-        }
-      }
-    } else {
-      // Minimalist Single Line
-      const parts = [
-        nameLine, 
-        jobLine, 
-        pick(pool), 
-        getEmojis(targetMood, emojiDensity, 2)
-      ].filter(Boolean);
-      lines.push(parts.join(' | '));
+      default:
+        lines.push(name ? applyStyle(name) : pick(pool));
+        lines.push(pick(pool));
     }
 
     // Blend in "My Style" if provided
     if (myStyle.trim()) {
-      const idx = Math.min(lines.length - 1, 1);
-      lines.splice(idx, 0, myStyle.trim());
+      const idx = Math.min(lines.length, 1);
+      lines.splice(idx, 0, `✧ ${myStyle.trim()} ✧`);
     }
 
-    const finalRaw = lines.slice(0, lineCount).join('\n');
+    const finalRaw = lines.slice(0, lineCount + 1).filter(Boolean).join('\n');
     return {
       id: Math.random().toString(36).substr(2, 9),
       raw: finalRaw,
       styled: finalRaw,
-      font: 'Normal' as FontStyle,
+      font: chosenFont,
       mood: targetMood
     };
   }, [inputs, options, lineCount, emojiDensity, languageMode, myStyle, getEmojis]);
@@ -279,7 +289,7 @@ export default function AdvancedBioMakerPage() {
         if (font === 'Normal') return { ...b, font, styled: b.raw };
         const mapper = FONT_MAPS[font as keyof typeof FONT_MAPS];
         const lines = b.raw.split('\n');
-        // Only style the name or the first line for professional look
+        // Apply font to the first line or name part if present
         lines[0] = mapper(lines[0]);
         return { ...b, font, styled: lines.join('\n') };
       }
@@ -317,7 +327,7 @@ export default function AdvancedBioMakerPage() {
               Bio Maker <span className="text-primary italic">Studio Pro</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
-              Advanced identity synthesis matrix. Generate unique, high-entropy social bios with mood-accurate emoji protocols and real-time profile rendering.
+              Advanced identity synthesis matrix. Generate unique, high-entropy social bios with aesthetic symbol sets and real-time profile rendering.
             </p>
           </div>
           <div className="flex items-center gap-3">
