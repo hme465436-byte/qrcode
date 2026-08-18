@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Coins, 
   RefreshCcw, 
@@ -28,7 +28,8 @@ import {
   MonitorPlay,
   Play,
   Pause,
-  Banknote
+  Banknote,
+  Server
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,13 +87,18 @@ interface MarketCoin {
 
 export default function CryptoPricesPage() {
   const { toast } = useToast();
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   // State Matrix
   const [watchlist, setWatchlist] = useState<CoinIdentity[]>(DEFAULT_COINS);
   const [prices, setPrices] = useState<PriceData | null>(null);
   const [markets, setMarkets] = useState<MarketCoin[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<CoinIdentity[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  
   const [isSearching, setIsSearching] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAutoRefresh, setIsAutoRefresh] = useState(true);
   const [displayCurrency, setDisplayCurrency] = useState<'USD' | 'PKR'>('USD');
@@ -125,13 +131,57 @@ export default function CryptoPricesPage() {
       .catch(() => {});
   }, []);
 
+  // --- Click Outside Protocol ---
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // --- Debounced Suggestion Protocol ---
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSuggesting(true);
+      try {
+        const res = await fetch(`${SEARCH_API}${encodeURIComponent(searchQuery.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          const items = (data.coins || []).slice(0, 8).map((c: any) => ({
+            id: c.id,
+            symbol: c.symbol.toUpperCase(),
+            name: c.name,
+            thumb: c.thumb,
+            market_cap_rank: c.market_cap_rank
+          }));
+          setSuggestions(items);
+          setShowDropdown(items.length > 0);
+        }
+      } catch (e) {
+        setShowDropdown(false);
+      } finally {
+        setIsSuggesting(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const saveWatchlist = (newList: CoinIdentity[]) => {
     setWatchlist(newList);
     localStorage.setItem(PERSIST_KEY, JSON.stringify(newList));
   };
 
   // --- Telemetry Protocols ---
-
   const fetchMarkets = async () => {
     try {
       const response = await fetch(MARKETS_API);
@@ -194,9 +244,25 @@ export default function CryptoPricesPage() {
     }
   }, [isAutoRefresh, fetchPrices]);
 
+  const addCoinToMonitor = (coin: CoinIdentity) => {
+    if (!watchlist.find(c => c.id === coin.id)) {
+      saveWatchlist([coin, ...watchlist]);
+      toast({ title: "Asset Integrated", description: `${coin.name} added to monitor.` });
+    } else {
+      toast({ title: "Asset Present", description: "Identity already exists in monitor." });
+    }
+    setSearchQuery('');
+    setShowDropdown(false);
+  };
+
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!searchQuery.trim() || isSearching) return;
+
+    if (suggestions.length > 0) {
+      addCoinToMonitor(suggestions[0]);
+      return;
+    }
 
     setIsSearching(true);
     setError(null);
@@ -210,23 +276,13 @@ export default function CryptoPricesPage() {
       const data = await res.json();
       
       if (data.coins && data.coins.length > 0) {
-        const found = data.coins[0];
-        const newCoin: CoinIdentity = {
-          id: found.id,
-          symbol: found.symbol.toUpperCase(),
-          name: found.name,
-          thumb: found.thumb,
-          market_cap_rank: found.market_cap_rank
-        };
-
-        // Avoid duplicates in matrix
-        if (!watchlist.find(c => c.id === newCoin.id)) {
-          saveWatchlist([newCoin, ...watchlist]);
-          toast({ title: "Asset Integrated", description: `${newCoin.name} added to monitor.` });
-        } else {
-          toast({ title: "Asset Present", description: "Identity already exists in monitor." });
-        }
-        setSearchQuery('');
+        addCoinToMonitor({
+          id: data.coins[0].id,
+          symbol: data.coins[0].symbol.toUpperCase(),
+          name: data.coins[0].name,
+          thumb: data.coins[0].thumb,
+          market_cap_rank: data.coins[0].market_cap_rank
+        });
       } else {
         toast({ variant: "destructive", title: "Discovery Failed", description: "No asset identified for this query." });
       }
@@ -284,14 +340,14 @@ export default function CryptoPricesPage() {
         
         {/* Search & Management Column */}
         <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+           <Card className="glass-card border-border shadow-2xl overflow-visible relative group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
                     <Search className="w-5 h-5 text-primary" /> Discovery Protocol
                  </CardTitle>
               </CardHeader>
-              <CardContent className="pt-10 space-y-6">
+              <CardContent className="pt-10 space-y-6 relative">
                  <form onSubmit={handleSearch} className="space-y-4">
                     <div className="relative group/input">
                        <Input 
@@ -300,7 +356,8 @@ export default function CryptoPricesPage() {
                         onChange={e => setSearchQuery(e.target.value)}
                         className="h-16 bg-secondary border-border rounded-2xl text-sm font-bold px-6 focus:ring-primary/40 uppercase"
                        />
-                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                       <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                          {isSuggesting && <Loader2 className="w-4 h-4 animate-spin text-primary/40" />}
                           <Button 
                             type="submit" 
                             disabled={!searchQuery.trim() || isSearching}
@@ -311,6 +368,40 @@ export default function CryptoPricesPage() {
                           </Button>
                        </div>
                     </div>
+
+                    {/* Suggestions Dropdown */}
+                    {showDropdown && (
+                      <div ref={dropdownRef} className="absolute left-6 right-6 top-[calc(100%-12px)] z-50 animate-in slide-in-from-top-2 duration-300">
+                         <div className="glass-card border-border shadow-2xl rounded-2xl overflow-hidden max-h-[320px] overflow-y-auto custom-scrollbar">
+                            <div className="divide-y divide-white/5">
+                               {suggestions.map((coin) => (
+                                 <button
+                                   key={coin.id}
+                                   type="button"
+                                   onClick={() => addCoinToMonitor(coin)}
+                                   className="w-full flex items-center justify-between p-4 hover:bg-primary/5 transition-all group/sugg"
+                                 >
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-9 h-9 rounded-xl bg-secondary border border-white/5 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
+                                          {coin.thumb ? <img src={coin.thumb} alt="" className="w-full h-full object-cover" /> : <Server className="w-4 h-4 text-foreground/10" />}
+                                       </div>
+                                       <div className="text-left min-w-0">
+                                          <p className="text-[11px] font-bold text-foreground uppercase truncate group-hover/sugg:text-primary transition-colors">{coin.name}</p>
+                                          <p className="text-[9px] font-black text-foreground/20 uppercase">{coin.symbol}</p>
+                                       </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                       {coin.market_cap_rank && (
+                                         <span className="text-[8px] font-black text-foreground/20 uppercase bg-secondary/50 px-2 py-0.5 rounded-lg border border-white/5">Rank #{coin.market_cap_rank}</span>
+                                       )}
+                                       <ChevronRight className="w-4 h-4 text-foreground/10 group-hover/sugg:translate-x-1 group-hover/sugg:text-primary transition-all" />
+                                    </div>
+                                 </button>
+                               ))}
+                            </div>
+                         </div>
+                      </div>
+                    )}
                  </form>
 
                  <div className="pt-4 border-t border-white/5">
