@@ -7,31 +7,34 @@ import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { firebaseConfig } from './config';
 
 /**
- * Standardized Hardware Core
- * Centralized initialization for all studio production units.
+ * Firebase Core Initialization
+ * Centralized setup for production services with pre-flight validation.
  */
-const isConfigValid = 
+const isConfigValid = !!(
   firebaseConfig.apiKey && 
   firebaseConfig.apiKey !== "undefined" && 
   firebaseConfig.projectId && 
-  firebaseConfig.projectId !== "undefined";
+  firebaseConfig.projectId !== "undefined"
+);
 
-let app: FirebaseApp;
-let db: Firestore;
-let auth: Auth;
-let storage: FirebaseStorage;
+let app: FirebaseApp | null = null;
+let db: Firestore | null = null;
+let auth: Auth | null = null;
+let storage: FirebaseStorage | null = null;
 
 if (typeof window !== 'undefined') {
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
-  storage = getStorage(app);
-} else {
-  // SSR Fallbacks
-  app = null as any;
-  db = null as any;
-  auth = null as any;
-  storage = null as any;
+  if (isConfigValid) {
+    try {
+      app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      auth = getAuth(app);
+      storage = getStorage(app);
+    } catch (err) {
+      console.error("Firebase initialization failed:", err);
+    }
+  } else {
+    console.warn("Firebase configuration is missing or invalid. Check environment variables.");
+  }
 }
 
 export { app, db, auth, storage };

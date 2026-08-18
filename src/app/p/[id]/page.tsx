@@ -28,7 +28,7 @@ export default function HostedPageViewer() {
     if (!id) return;
 
     const fetchPage = async () => {
-      // 1. Hardware Fallback Check (Local)
+      // 1. Check Local Hardware Memory first
       const localKey = "kit_page_" + id;
       const localRaw = localStorage.getItem(localKey);
       if (localRaw) {
@@ -39,7 +39,7 @@ export default function HostedPageViewer() {
         } catch (e) {}
       }
 
-      // 2. Global Registry Check (Cloud)
+      // 2. Check Global Database
       if (db) {
         try {
           const docRef = doc(db, "pages", id as string);
@@ -51,7 +51,7 @@ export default function HostedPageViewer() {
             return;
           }
         } catch (err: any) {
-          console.warn("Database fetch error", err);
+          console.warn("Fetch failed", err);
         }
       }
 
@@ -75,7 +75,7 @@ export default function HostedPageViewer() {
     return (
       <div className="fixed inset-0 bg-[#0a0a0c] flex flex-col items-center justify-center gap-8">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Negotiating Signal...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Loading...</p>
       </div>
     );
   }
