@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -120,6 +119,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/wps-sheets', 
+    icon: Table, 
+    title: 'WPS Sheets', 
+    desc: 'Create and edit spreadsheets for WPS and Excel locally.', 
+    label: 'FISCAL', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['wps', 'excel', 'spreadsheet', 'table', 'csv', 'inventory', 'invoice', 'sheets'],
+    category: 'utilities'
   },
   { 
     href: '/bio-maker', 
@@ -1055,7 +1065,7 @@ export default function Home() {
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
       'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
-      'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio'
+      'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

@@ -29,6 +29,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     ],
     privacy: 'All rendering occurs on your device. Your URLs and brand logos never leave your browser.'
   },
+  'wps-sheets': {
+    title: 'WPS Sheets Studio',
+    description: 'A clinical spreadsheet utility for managing data matrices, inventories, and financial rosters locally.',
+    steps: [
+      'Choose a production template (Attendance, Inventory, etc.) or start blank.',
+      'Click cells to enter your linguistic or numeric payload.',
+      'Use the top menu to insert or delete rows and columns as required.',
+      'Rename your sheet identifier in the header for file organization.',
+      'Download the final matrix as a .csv master for WPS Office or Excel.'
+    ],
+    tips: [
+      'The first row is hard-coded as the header row for CSV exports.',
+      'For large datasets, use a desktop hardware for better screen density.'
+    ],
+    privacy: '100% local synthesis. Spreadsheet data is volatile and held strictly in local memory.'
+  },
   'bmi-calculator': {
     title: 'BMI Calculator Studio',
     description: 'Biometric analysis tool for Body Mass Index (BMI) and healthy weight targets.',
