@@ -35,7 +35,11 @@ import {
   MoreVertical,
   Check,
   Settings2,
-  Eye
+  Eye,
+  Hash,
+  Terminal,
+  Activity,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,6 +66,7 @@ type FontStyle = 'Normal' | 'Bold' | 'Italic' | 'Cursive' | 'Small Caps';
 type EmojiDensity = 'none' | 'low' | 'normal' | 'extra';
 type LanguageMode = 'english' | 'urdu' | 'mix';
 type LengthMode = 'short' | 'medium';
+type LayoutType = 'A' | 'B' | 'C' | 'D';
 
 const PLATFORM_LIMITS: Record<Platform, number> = {
   Instagram: 150,
@@ -95,40 +100,69 @@ const FONT_MAPS: Record<string, (text: string) => string> = {
 
 const SYMBOLS = ['★', '✦', '♡', '⋆', 'ꨄ', '❥', '✧', '•', '·', '—'];
 
-const PHRASE_BANK: Record<Mood, { en: string[], urdu: string[], emojis: string[] }> = {
+// --- Linguistic Matrix ---
+const PHRASE_BANK: Record<Mood, { 
+  openings: string[], 
+  middles: string[], 
+  closers: string[], 
+  roles: string[], 
+  hashtags: string[],
+  emojis: string[] 
+}> = {
   Aesthetic: {
-    en: ['Quiet nights, city lights.', 'Vibing in the shadows.', 'Lost in ethereal stars.', 'Whispers of a silent soul.', 'Art in constant motion.', 'Ethereal state of mind.', 'Golden thoughts only.', 'Bloom where you are planted.', 'Minimalist at heart.', 'Poetry in every pixel.'],
-    urdu: ['Khuwabon ki haseen dunya.', 'Sukoon ki talash.', 'Bikhray huway moti.', 'Tanhayi ka musafir.', 'Dill ki gehri awaz.', 'Pakeeza khayal.', 'Rooh ki shanti.', 'Zindagi ek haseen fan.', 'Aesthetic mizaaj.', 'Narm lehja, sakht faislay.'],
+    openings: ['Quiet nights, city lights.', 'Vibing in the shadows.', 'Lost in ethereal stars.', 'Whispers of a silent soul.', 'Art in constant motion.', 'Ethereal state of mind.', 'Golden thoughts only.', 'Bloom where you are planted.', 'Minimalist at heart.', 'Poetry in every pixel.'],
+    middles: ['Collecting moments of peace.', 'Exploring the hidden beauty.', 'Lost in my own frequency.', 'Searching for silver linings.', 'Finding art in every detail.'],
+    closers: ['Stay dreamy.', 'Pure vibes only.', 'Keep it aesthetic.', 'Chasing the moon.', 'In silence we bloom.'],
+    roles: ['Dreamer', 'Digital Nomad', 'Soul Searcher', 'Vibe Curator', 'Visual Artist'],
+    hashtags: ['#Aesthetic', '#Vibes', '#QuietLife'],
     emojis: ['✨', '🌙', '☁️', '🤍', '🎐', '🕯️', '🎞️', '🪐', '🕰️', '🌸']
   },
   Real: {
-    en: ['Authentic energy always.', 'Keeping it 100.', 'No filters, just reality.', 'Built, not bought.', 'Mindset is everything.', 'Progress over perfection.', 'Truth seeker.', 'Original identity.', 'Reality check: Active.', 'Ground level living.'],
-    urdu: ['Asli pehchan, sacha rasta.', 'Saaf dil, seedhi baat.', 'Bina kisi dikhawe k.', 'Apni dunya ka raja.', 'Zameeni haqeeqat.', 'Mehnat hi aslool hai.', 'Sachi batain, kamosh mizaaj.', 'Waqt ki qadar.', 'Imaandari pehchan.', 'Kudrat ka karishma.'],
+    openings: ['Authentic energy always.', 'Keeping it 100.', 'No filters, just reality.', 'Built, not bought.', 'Mindset is everything.', 'Progress over perfection.', 'Truth seeker.', 'Original identity.'],
+    middles: ['Living one day at a time.', 'Hard work meets ambition.', 'Staying grounded, aim high.', 'Respecting the hustle.', 'Reality check: Active.'],
+    closers: ['Peace out.', 'Stay true.', 'No fake zones.', 'Be original.', 'Hustle hard.'],
+    roles: ['Hustler', 'Strategist', 'Builder', 'Leader', 'Visionary'],
+    hashtags: ['#RealTalk', '#Hustle', '#Authentic'],
     emojis: ['☕', '📍', '💼', '💯', '🔋', '🏆', '⛓️', '📈', '🧿', '⚖️']
   },
-  Ego: {
-    en: ['Main character energy.', 'Born to lead, not follow.', 'Rare breed, high frequency.', 'Elite protocol initiated.', 'God tier confidence.', 'Winning by default.', 'Success is my logic.', 'Making my own rules.', 'Fearless soul.', 'Top of the food chain.'],
-    urdu: ['Apni marzi ka malik.', 'Sab se alag, sab se behtareen.', 'Maidan mera hai.', 'Sher jaisa dil.', 'Nawabi mizaaj.', 'Raaj mera, asool meray.', 'Elite soch.', 'Zid hi junoon hai.', 'Mera muqabla sirf mujh se.', 'God level protocol.'],
-    emojis: ['👑', '🔥', '⚡', '💎', '🦁', '🗡️', '🏎️', '🌪️', '🔱', '🦅']
-  },
   Love: {
-    en: ['Heart full of whispers.', 'Late night thoughts of you.', 'Soft soul, loud heart.', 'Kindness always.', 'Spreading warmth.', 'Soul deep connections.', 'Grateful for every second.', 'Sunshine state of mind.', 'Radiating love.', 'Yours truly, forever.'],
-    urdu: ['Dil-e-nadaan ka sukoon.', 'Mohabbat hi sab kuch hai.', 'Pyar banto, khush raho.', 'Naram mizaaj, gehra pyar.', 'Duaon ka sath.', 'Dil ki dharkan.', 'Sukoon-e-qalb.', 'Khushi ki sachi wajah.', 'Sacha sath, haseen safar.', 'Bas tera intezar.'],
+    openings: ['Heart full of whispers.', 'Late night thoughts of you.', 'Soft soul, loud heart.', 'Kindness always.', 'Spreading warmth.', 'Soul deep connections.', 'Grateful for every second.'],
+    middles: ['Radiating positive energy.', 'Loving life and you.', 'Finding joy in little things.', 'Heart wide open.', 'Believe in magic.'],
+    closers: ['Yours truly.', 'With love.', 'Stay kind.', 'Forever grateful.', 'Keep smiling.'],
+    roles: ['Believer', 'Kind Soul', 'Healer', 'Dreamer', 'Partner'],
+    hashtags: ['#Love', '#Peace', '#Kindness'],
     emojis: ['🤍', '💕', '✨', '🌙', '❤️', '💍', '🧸', '💌', '🌸', '🏹']
   },
+  Ego: {
+    openings: ['Main character energy.', 'Born to lead, not follow.', 'Rare breed, high frequency.', 'Elite protocol initiated.', 'God tier confidence.', 'Winning by default.'],
+    middles: ['Making my own rules.', 'Success is my only logic.', 'Top of the food chain.', 'Unmatched ambition.', 'Silent moves, loud impact.'],
+    closers: ['Boss up.', 'I am the one.', 'Legends never die.', 'Stay elite.', 'Winning only.'],
+    roles: ['CEO', 'Alpha', 'King', 'Icon', 'Elite'],
+    hashtags: ['#Winning', '#Boss', '#Elite'],
+    emojis: ['👑', '🔥', '⚡', '💎', '🦁', '🗡️', '🏎️', '🌪️', '🔱', '🦅']
+  },
   Angry: {
-    en: ['Cold as ice.', 'Sharp mind, silent storm.', 'Broken trust, zero noise.', 'Expect nothing.', 'Shadow self active.', 'Chaos theory.', 'No mercy for fakes.', 'End of the line.', 'Silent but deadly.', 'Living in the dark.'],
-    urdu: ['Akela hi kafi hoon.', 'Bharosa ab khatam.', 'Andheri raah, sacha rasta.', 'Sab jhoot hai.', 'Badla zaroor milay ga.', 'Kamosh toofan.', 'Khatarnak soch.', 'Zulmat ka saya.', 'Koi umeed nahi.', 'Dunya matlabi hai.'],
+    openings: ['Cold as ice.', 'Sharp mind, silent storm.', 'Broken trust, zero noise.', 'Expect nothing.', 'Shadow self active.'],
+    middles: ['Chaos theory constant.', 'No mercy for fakes.', 'End of the line.', 'Living in the dark.', 'Silent but deadly.'],
+    closers: ['Don\'t cross me.', 'Game over.', 'Move on.', 'Cold heart.', 'Silence is power.'],
+    roles: ['Shadow', 'Storm', 'Phantom', 'Ghost', 'Glitch'],
+    hashtags: ['#Cold', '#Silence', '#NoFake'],
     emojis: ['🖤', '⚡', '🧊', '🌑', '🥀', '🔪', '💀', '🩸', '🌪️', '⛓️']
   },
   Funny: {
-    en: ['Professional sleeper.', 'Life is a joke, I’m the punchline.', 'Send snacks, not drama.', 'Error 404: Bio not found.', 'CEO of procrastination.', 'I need coffee to exist.', 'Eating my feelings.', 'Just here for the memes.', 'Making bad choices look good.', 'Unsubscribed from reality.'],
-    urdu: ['Bas sona hai.', 'Zindagi ek tanz hai.', 'Khana peena aur sona.', 'Nalayak par intelligent.', 'Sasti masti, mehngay khuwab.', 'Hum nahi sudhrain gy.', 'Pehly chai, phir baat.', 'Memes ka badshah.', 'Vaila bandah.', 'Error in system.'],
-    emojis: ['😂', '🫠', '✌️', '🍕', '🤡', '☕', '🛌', '🐒', '🍟', 'ghost']
+    openings: ['Professional sleeper.', 'Life is a joke, I’m the punchline.', 'Send snacks, not drama.', 'Error 404: Bio not found.'],
+    middles: ['CEO of procrastination.', 'I need coffee to exist.', 'Eating my feelings.', 'Just here for the memes.', 'Making bad choices look good.'],
+    closers: ['Unsubscribed from reality.', 'LOL', 'Stay weird.', 'Be back later.', 'Joke is on you.'],
+    roles: ['Comedian', 'Snack Specialist', 'Procrastinator', 'Meme Lord', 'Error'],
+    hashtags: ['#Humor', '#Snacks', '#Funny'],
+    emojis: ['😂', '🫠', '✌️', '🍕', '🤡', '☕', '🛌', '🐒', '🍟', '👻']
   },
   Simple: {
-    en: ['Just a person.', 'Living day by day.', 'Simple soul.', 'Minimalist identity.', 'Clear mind, simple life.', 'Existing peacefully.', 'Doing my best.', 'Happy enough.', 'Constant state of calm.', 'Quiet life, loud mind.'],
-    urdu: ['Sada zindagi, sacha mizaaj.', 'Bas guzar rahi hai.', 'Shukar alhumdulillah.', 'Kam goi, behtari.', 'Sukoon e dil.', 'Normal insaan.', 'Seedhi baat.', 'Choti khushiyan.', 'Asan zindagi.', 'Khuda ka sath.'],
+    openings: ['Just a person.', 'Living day by day.', 'Simple soul.', 'Minimalist identity.', 'Clear mind, simple life.'],
+    middles: ['Existing peacefully.', 'Doing my best.', 'Happy enough.', 'Constant state of calm.', 'Quiet life, loud mind.'],
+    closers: ['Take care.', 'Peace.', 'Simple.', 'Live well.', 'Thanks.'],
+    roles: ['Person', 'Human', 'Observer', 'Lover of life', 'Simplicity'],
+    hashtags: ['#Simple', '#Peaceful', '#Life'],
     emojis: ['📍', '📌', '🌑', '⚪', '⚫', '◼️', '◻️', '🕯️', '☕', '📎']
   }
 };
@@ -139,6 +173,8 @@ interface BioResult {
   styled: string;
   font: FontStyle;
   mood: Mood;
+  layout: LayoutType;
+  chips: string[];
 }
 
 export default function AdvancedBioMakerPage() {
@@ -153,7 +189,7 @@ export default function AdvancedBioMakerPage() {
   const [languageMode, setLanguageMode] = useState<LanguageMode>('english');
   
   // Fields State
-  const [options, setOptions] = useState({ name: true, profession: false, expert: false, hobby: false, location: false, custom: false });
+  const [options, setOptions] = useState({ name: true, profession: true, expert: false, hobby: true, location: false, custom: false });
   const [inputs, setInputs] = useState({ name: 'Umar', profession: 'Developer', expert: 'UI/UX', hobby: 'Gaming', location: 'Matrix', custom: '' });
   const [myStyle, setMyStyle] = useState('');
   
@@ -163,123 +199,109 @@ export default function AdvancedBioMakerPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedBioId, setSelectedBioId] = useState<string | null>(null);
 
-  const getEmojis = useCallback((m: Mood, density: EmojiDensity, forceCount?: number) => {
-    if (density === 'none') return '';
+  const getEmoji = (m: Mood) => {
     const pool = PHRASE_BANK[m].emojis;
-    const count = forceCount || (density === 'low' ? 1 : density === 'normal' ? 2 : 4);
-    return Array.from({length: count}, () => pool[Math.floor(Math.random() * pool.length)]).join(' ');
-  }, []);
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
 
-  const getRandomSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+  const getEmojiBatch = (m: Mood, count: number) => {
+    const pool = PHRASE_BANK[m].emojis;
+    return Array.from({length: count}, () => pool[Math.floor(Math.random() * pool.length)]);
+  };
 
-  const generateSingleBio = useCallback((targetMood: Mood) => {
-    const banks = PHRASE_BANK[targetMood];
+  const generateSingleBio = useCallback((targetMood: Mood, targetLayout: LayoutType): BioResult => {
+    const bank = PHRASE_BANK[targetMood];
     const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
     
-    let pool = languageMode === 'english' ? banks.en : languageMode === 'urdu' ? banks.urdu : [...banks.en, ...banks.urdu];
-    
-    // Pick a random font style for the identity parts
-    const fontStyles: FontStyle[] = ['Bold', 'Cursive', 'Small Caps', 'Normal'];
+    // Choose font
+    const fontStyles: FontStyle[] = ['Bold', 'Small Caps', 'Normal'];
     const chosenFont = fontStyles[Math.floor(Math.random() * fontStyles.length)];
-    const applyStyle = (t: string) => chosenFont === 'Normal' ? t : FONT_MAPS[chosenFont](t);
+    const applyFont = (t: string) => chosenFont === 'Normal' ? t : FONT_MAPS[chosenFont](t);
 
     const name = options.name ? inputs.name : '';
     const job = options.profession ? inputs.profession : '';
-    const expert = options.expert ? inputs.expert : '';
     const hobby = options.hobby ? inputs.hobby : '';
     const loc = options.location ? inputs.location : '';
 
-    const lines: string[] = [];
-    const archetype = Math.floor(Math.random() * 5); // New 5 layout archetypes
+    let lines: string[] = [];
+    const mainEmojis = getEmojiBatch(targetMood, 3);
 
-    switch (archetype) {
-      case 0: // Layout 1: ★ name ★
-        if (name) lines.push(`★ ${applyStyle(name)} ★`);
-        lines.push(pick(pool));
-        if (emojiDensity !== 'none') lines.push(getEmojis(targetMood, emojiDensity));
+    switch (targetLayout) {
+      case 'A': // Layout A: Emoji Role | Emoji Role | Emoji Role | Statement
+        const roles = [job, hobby, pick(bank.roles)].filter(Boolean);
+        const aLine = roles.map((r, i) => `${mainEmojis[i % 3]} ${r}`).join(' | ');
+        lines.push(aLine);
+        lines.push(`${getEmoji(targetMood)} ${pick(bank.middles)}`);
         break;
 
-      case 1: // Layout 2: name | job
-        const l1 = [name ? applyStyle(name) : '', job].filter(Boolean).join(' | ');
-        if (l1) lines.push(l1);
-        const l2 = [hobby, loc].filter(Boolean).join(' · ');
-        if (l2) lines.push(l2);
-        else lines.push(pick(pool));
+      case 'B': // Layout B: 🌟 Umar | Your Go-To Consultant \n Line 2 \n Line 3 \n Closer
+        lines.push(`${mainEmojis[0]} ${name ? applyFont(name) : 'Identity'} | ${job || pick(bank.roles)}`);
+        lines.push(`${mainEmojis[1]} ${pick(bank.middles)}`);
+        lines.push(`${mainEmojis[2]} ${pick(bank.closers)}`);
         break;
 
-      case 2: // Layout 3: ✦ line ✦
-        lines.push(`✦ ${pick(pool)} ✦`);
-        lines.push(pick(pool).substring(0, 20));
-        if (emojiDensity !== 'none') lines.push(`${getRandomSymbol()} ${getEmojis(targetMood, emojiDensity, 1)}`);
+      case 'C': // Layout C: 🎨 Artist & Creative Vibes \n Line 2 \n Line 3 \n #ArtLover
+        lines.push(`${mainEmojis[0]} ${job || pick(bank.roles)} & ${pick(bank.roles)}`);
+        lines.push(`${mainEmojis[1]} ${pick(bank.openings)}`);
+        lines.push(`${pick(bank.hashtags)}`);
         break;
 
-      case 3: // Layout 4: styled name • line •
-        if (name) lines.push(applyStyle(name));
-        lines.push(`• ${pick(pool)} •`);
-        if (hobby || loc) lines.push(`${hobby || loc} ${getEmojis(targetMood, emojiDensity, 1)}`);
+      case 'D': // Layout D: Name: Role 1 \n Role 2 \n Role 3 \n Closer
+        if (name) lines.push(`${applyFont(name)}: ${mainEmojis[0]} ${job || pick(bank.roles)}`);
+        else lines.push(`${mainEmojis[0]} ${job || pick(bank.roles)}`);
+        lines.push(`${mainEmojis[1]} ${hobby || pick(bank.roles)}`);
+        lines.push(`${mainEmojis[2]} ${pick(bank.middles)}`);
         break;
-
-      case 4: // Layout 5: line ——— line
-        lines.push(pick(pool));
-        lines.push('———');
-        lines.push(name ? applyStyle(name) : pick(pool));
-        break;
-
-      default:
-        lines.push(name ? applyStyle(name) : pick(pool));
-        lines.push(pick(pool));
     }
 
-    // Blend in "My Style" if provided
+    // Blend my style if provided
     if (myStyle.trim()) {
-      const idx = Math.min(lines.length, 1);
-      lines.splice(idx, 0, `✧ ${myStyle.trim()} ✧`);
+      lines.splice(1, 0, `✧ ${myStyle.trim()} ✧`);
     }
 
-    const finalRaw = lines.slice(0, lineCount + 1).filter(Boolean).join('\n');
+    // Enforce line count setting
+    lines = lines.slice(0, lineCount).filter(Boolean);
+
+    const finalRaw = lines.join('\n');
     return {
       id: Math.random().toString(36).substr(2, 9),
       raw: finalRaw,
       styled: finalRaw,
       font: chosenFont,
-      mood: targetMood
+      mood: targetMood,
+      layout: targetLayout,
+      chips: mainEmojis
     };
-  }, [inputs, options, lineCount, emojiDensity, languageMode, myStyle, getEmojis]);
+  }, [inputs, options, lineCount, emojiDensity, languageMode, myStyle]);
 
   const generateBatch = useCallback((append = false) => {
     setIsGenerating(true);
     const newBatch: BioResult[] = [];
-    const usedRaw = new Set(bios.map(b => b.raw));
-
-    let attempts = 0;
-    while (newBatch.length < 8 && attempts < 50) {
-      const b = generateSingleBio(mood);
-      if (!usedRaw.has(b.raw)) {
-        newBatch.push(b);
-        usedRaw.add(b.raw);
-      }
-      attempts++;
-    }
+    const layouts: LayoutType[] = ['A', 'B', 'C', 'D', 'A', 'B', 'C', 'D'];
     
+    layouts.forEach(l => {
+      newBatch.push(generateSingleBio(mood, l));
+    });
+
     setBios(prev => append ? [...prev, ...newBatch] : newBatch);
     if (!append && newBatch.length > 0) setSelectedBioId(newBatch[0].id);
     setIsGenerating(false);
-    toast({ title: append ? "Batch Extended" : "8 New Bios Synthesized" });
-  }, [generateSingleBio, mood, toast, bios]);
+    toast({ title: append ? "Batch Extended" : "8 Unique Bios Synthesized" });
+  }, [generateSingleBio, mood, toast]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('mykit_bio_favs_pro_v2');
+    const saved = localStorage.getItem('mykit_bio_favs_pro_v3');
     if (saved) try { setFavorites(JSON.parse(saved)); } catch(e) {}
     generateBatch(false);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const saveFavs = (newFavs: BioResult[]) => {
     setFavorites(newFavs);
-    localStorage.setItem('mykit_bio_favs_pro_v2', JSON.stringify(newFavs));
+    localStorage.setItem('mykit_bio_favs_pro_v3', JSON.stringify(newFavs));
   };
 
   const remixBio = (id: string) => {
-    setBios(prev => prev.map(b => b.id === id ? generateSingleBio(b.mood) : b));
+    setBios(prev => prev.map(b => b.id === id ? generateSingleBio(b.mood, b.layout) : b));
     toast({ title: "Remixed", description: "Linguistic vectors recalculated." });
   };
 
@@ -289,8 +311,8 @@ export default function AdvancedBioMakerPage() {
         if (font === 'Normal') return { ...b, font, styled: b.raw };
         const mapper = FONT_MAPS[font as keyof typeof FONT_MAPS];
         const lines = b.raw.split('\n');
-        // Apply font to the first line or name part if present
-        lines[0] = mapper(lines[0]);
+        // Apply font to parts that look like names or headers
+        lines[0] = lines[0].split(' ').map(w => w.length > 2 ? mapper(w) : w).join(' ');
         return { ...b, font, styled: lines.join('\n') };
       }
       return b;
@@ -310,7 +332,7 @@ export default function AdvancedBioMakerPage() {
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: "Content Copied", description: "Bio saved to clipboard." });
+    toast({ title: "Identity Isolated", description: "Bio saved to clipboard." });
   };
 
   const selectedBio = useMemo(() => bios.find(b => b.id === selectedBioId) || bios[0], [bios, selectedBioId]);
@@ -327,7 +349,7 @@ export default function AdvancedBioMakerPage() {
               Bio Maker <span className="text-primary italic">Studio Pro</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
-              Advanced identity synthesis matrix. Generate unique, high-entropy social bios with aesthetic symbol sets and real-time profile rendering.
+              Advanced identity synthesis matrix. Generate unique, high-entropy social bios with categorized structural layouts and real-time platform previews.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -340,21 +362,21 @@ export default function AdvancedBioMakerPage() {
         
         {/* LEFT: Controls Pane */}
         <div className="lg:col-span-4 xl:col-span-3 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-           <Card className="glass-card border-border shadow-2xl overflow-hidden sticky top-24">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden lg:sticky lg:top-24">
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Settings2 className="w-5 h-5 text-primary" /> Parameters
+                    <Settings2 className="w-5 h-5 text-primary" /> Matrix Parameters
                  </CardTitle>
               </CardHeader>
-              <CardContent className="pt-8 space-y-10">
+              <CardContent className="pt-8 space-y-8">
                  {/* Step 1: Platforms */}
                  <div className="space-y-4">
                     <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Platform Target</Label>
                     <div className="grid grid-cols-2 gap-2">
-                       {Object.keys(PLATFORM_LIMITS).map((p) => (
+                       {(['Instagram', 'TikTok', 'WhatsApp', 'Facebook'] as Platform[]).map((p) => (
                          <button
                            key={p}
-                           onClick={() => setPlatform(p as Platform)}
+                           onClick={() => setPlatform(p)}
                            className={cn(
                              "h-12 rounded-xl border flex items-center justify-center gap-2 text-[10px] font-black uppercase transition-all",
                              platform === p ? "bg-primary text-white border-primary shadow-lg" : "bg-secondary/50 border-border text-foreground/40"
@@ -385,7 +407,7 @@ export default function AdvancedBioMakerPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-3">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Line Count</Label>
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Line Density</Label>
                           <div className="grid grid-cols-3 bg-secondary/50 p-1 rounded-xl border border-border h-11">
                              {[1, 2, 3].map(l => (
                                <button key={l} onClick={() => setLineCount(l)} className={cn("rounded-lg text-[10px] font-black transition-all", lineCount === l ? "bg-primary text-white" : "text-foreground/40")}>{l}</button>
@@ -393,35 +415,21 @@ export default function AdvancedBioMakerPage() {
                           </div>
                        </div>
                        <div className="space-y-3">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Language Matrix</Label>
-                          <Select value={languageMode} onValueChange={(v: any) => setLanguageMode(v)}>
-                             <SelectTrigger className="h-11 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[9px]">
-                                <SelectValue />
-                             </SelectTrigger>
-                             <SelectContent className="glass-card">
-                                <SelectItem value="english">English</SelectItem>
-                                <SelectItem value="urdu">Roman Urdu</SelectItem>
-                                <SelectItem value="mix">Mix Hybrid</SelectItem>
-                             </SelectContent>
-                          </Select>
-                       </div>
-                    </div>
-
-                    <div className="space-y-4">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Emoji Frequency</Label>
-                       <div className="grid grid-cols-2 gap-2">
-                          {(['none', 'low', 'normal', 'extra'] as EmojiDensity[]).map(d => (
-                            <button key={d} onClick={() => setEmojiDensity(d)} className={cn("h-10 rounded-xl border text-[9px] font-black uppercase transition-all", emojiDensity === d ? "bg-primary text-white border-primary" : "bg-secondary/30 border-border text-foreground/40")}>{d}</button>
-                          ))}
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Complexity</Label>
+                          <div className="grid grid-cols-2 bg-secondary/50 p-1 rounded-xl border border-border h-11">
+                             {(['short', 'medium'] as LengthMode[]).map(l => (
+                               <button key={l} onClick={() => setLengthMode(l)} className={cn("rounded-lg text-[9px] font-black uppercase transition-all", lengthMode === l ? "bg-primary text-white" : "text-foreground/40")}>{l}</button>
+                             ))}
+                          </div>
                        </div>
                     </div>
 
                     <div className="space-y-3">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">"My Style" Hook</Label>
+                       <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">My Style (Vibe Hook)</Label>
                        <Input 
                         value={myStyle}
                         onChange={e => setMyStyle(e.target.value)}
-                        placeholder="Paste your own catchphrase..."
+                        placeholder="Paste your catchphrase..."
                         className="h-12 bg-primary/5 border-primary/20 rounded-xl text-xs italic font-medium focus:ring-primary/40"
                        />
                     </div>
@@ -429,13 +437,13 @@ export default function AdvancedBioMakerPage() {
 
                  {/* Step 3: Identifiers */}
                  <div className="space-y-4 pt-4 border-t border-white/5">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Identity Identifiers</Label>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Identity Tokens</Label>
                     <div className="grid grid-cols-2 gap-3">
                        {[
-                         { id: 'name', label: 'Name' },
-                         { id: 'profession', label: 'Job' },
-                         { id: 'hobby', label: 'Hobby' },
-                         { id: 'location', label: 'Loc' }
+                         { id: 'name', label: 'Name', icon: User },
+                         { id: 'profession', label: 'Job', icon: Zap },
+                         { id: 'hobby', label: 'Hobby', icon: Heart },
+                         { id: 'location', label: 'Loc', icon: MapPin }
                        ].map(opt => (
                          <div key={opt.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border group hover:border-primary/20 transition-all cursor-pointer" onClick={() => setOptions(prev => ({ ...prev, [opt.id as keyof typeof options]: !prev[opt.id as keyof typeof options] }))}>
                             <Checkbox checked={options[opt.id as keyof typeof options]} className="data-[state=checked]:bg-primary" />
@@ -443,24 +451,26 @@ export default function AdvancedBioMakerPage() {
                          </div>
                        ))}
                     </div>
-                    {Object.entries(options).map(([k, active]) => active && k !== 'expert' && k !== 'custom' && (
-                      <Input 
-                        key={k}
-                        value={inputs[k as keyof typeof inputs]}
-                        onChange={e => setInputs(prev => ({ ...prev, [k]: e.target.value }))}
-                        placeholder={k.toUpperCase()}
-                        className="h-10 bg-secondary/50 border-border rounded-xl text-[10px] font-bold"
-                      />
-                    ))}
+                    <div className="space-y-2">
+                      {Object.entries(options).map(([k, active]) => active && ['name', 'profession', 'hobby', 'location'].includes(k) && (
+                        <Input 
+                          key={k}
+                          value={inputs[k as keyof typeof inputs]}
+                          onChange={e => setInputs(prev => ({ ...prev, [k]: e.target.value }))}
+                          placeholder={k.toUpperCase()}
+                          className="h-10 bg-secondary/50 border-border rounded-xl text-[10px] font-bold"
+                        />
+                      ))}
+                    </div>
                  </div>
 
                  <div className="flex flex-col gap-3 pt-6">
                     <Button onClick={() => generateBatch(false)} disabled={isGenerating} className="h-16 w-full bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 text-xs uppercase tracking-widest active:scale-95 transition-all">
                        {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 mr-3" />}
-                       Generate 8 Bios
+                       Generate 8 Variants
                     </Button>
                     <Button variant="outline" onClick={() => { setMood(Object.keys(PHRASE_BANK)[Math.floor(Math.random() * 7)] as Mood); generateBatch(false); }} className="h-12 border-border bg-secondary text-[10px] font-black uppercase tracking-widest">
-                       Surprise Me
+                       Surprise Matrix
                     </Button>
                  </div>
               </CardContent>
@@ -507,15 +517,15 @@ export default function AdvancedBioMakerPage() {
                       </div>
                       
                       <div className="space-y-2 pt-4 border-t border-black/5 dark:border-white/5">
-                         <h5 className="font-bold text-sm text-foreground">{inputs.name || 'User'}</h5>
+                         <h5 className="font-bold text-sm text-foreground">{inputs.name || 'User Identity'}</h5>
                          <div className="text-sm font-medium text-foreground/80 leading-relaxed whitespace-pre-wrap">
                             {selectedBio.styled}
                          </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 pt-2">
-                         <Button className="h-10 rounded-xl bg-secondary text-foreground text-[10px] font-black uppercase">Edit Profile</Button>
-                         <Button className="h-10 rounded-xl bg-secondary text-foreground text-[10px] font-black uppercase">Share Profile</Button>
+                         <Button className="h-10 rounded-xl bg-secondary text-foreground text-[10px] font-black uppercase">Edit Protocol</Button>
+                         <Button className="h-10 rounded-xl bg-secondary text-foreground text-[10px] font-black uppercase">Share identity</Button>
                       </div>
                    </div>
                 </Card>
@@ -530,7 +540,7 @@ export default function AdvancedBioMakerPage() {
              </div>
            ) : (
              <div className="space-y-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                    {bios.map((bio) => {
                      const isOver = bio.styled.length > PLATFORM_LIMITS[platform];
                      return (
@@ -545,7 +555,7 @@ export default function AdvancedBioMakerPage() {
                           <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                              <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                <span className="text-[8px] font-black uppercase tracking-widest text-foreground/40">{bio.mood}</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest text-foreground/40">{bio.mood} (Type {bio.layout})</span>
                              </div>
                              <div className={cn("text-[9px] font-mono font-bold", isOver ? "text-red-500" : "text-primary/60")}>
                                 {bio.styled.length}/{PLATFORM_LIMITS[platform]}
@@ -559,10 +569,16 @@ export default function AdvancedBioMakerPage() {
                                  className="w-full min-h-[120px] bg-transparent border-none p-0 text-sm font-medium leading-relaxed resize-none focus-visible:ring-0 shadow-none scrollbar-hide"
                                 />
                              </div>
+
+                             <div className="flex flex-wrap gap-1.5">
+                                {bio.chips.map((emo, i) => (
+                                  <div key={i} className="w-8 h-8 rounded-lg bg-secondary border border-border flex items-center justify-center text-sm shadow-inner">{emo}</div>
+                                ))}
+                             </div>
                              
                              <div className="space-y-4 pt-4 border-t border-white/5">
-                                <div className="flex overflow-x-auto no-scrollbar gap-1.5 pb-2">
-                                   {(['Normal', 'Bold', 'Italic', 'Cursive', 'Small Caps'] as FontStyle[]).map(f => (
+                                <div className="flex overflow-x-auto no-scrollbar gap-1.5 pb-1">
+                                   {(['Normal', 'Bold', 'Small Caps'] as FontStyle[]).map(f => (
                                      <button
                                        key={f}
                                        onClick={(e) => { e.stopPropagation(); applyFont(bio.id, f); }}
@@ -576,20 +592,22 @@ export default function AdvancedBioMakerPage() {
                                    ))}
                                 </div>
                                 
-                                <div className="flex gap-2">
-                                   <Button onClick={(e) => { e.stopPropagation(); handleCopy(bio.styled, bio.id); }} className="h-10 flex-1 bg-primary text-white font-black uppercase text-[9px] tracking-widest rounded-xl shadow-lg">
-                                      <Copy className="w-3.5 h-3.5 mr-2" /> Copy
+                                <div className="grid grid-cols-1 gap-2">
+                                   <Button onClick={(e) => { e.stopPropagation(); handleCopy(bio.styled, bio.id); }} className="h-10 w-full bg-primary text-white font-black uppercase text-[9px] tracking-widest rounded-xl shadow-lg">
+                                      <Copy className="w-3.5 h-3.5 mr-2" /> Copy Master
                                    </Button>
-                                   <Button variant="outline" onClick={(e) => { e.stopPropagation(); remixBio(bio.id); }} className="h-10 w-10 p-0 border-border bg-secondary hover:text-primary rounded-xl">
-                                      <RotateCcw className="w-3.5 h-3.5" />
-                                   </Button>
-                                   <Button 
-                                    variant="outline" 
-                                    onClick={(e) => { e.stopPropagation(); toggleFav(bio); }} 
-                                    className={cn("h-10 w-10 p-0 border-border bg-secondary rounded-xl transition-all", favorites.some(f => f.id === bio.id) && "text-yellow-500 border-yellow-500/20 bg-yellow-500/10")}
-                                   >
-                                      <Star className={cn("w-3.5 h-3.5", favorites.some(f => f.id === bio.id) && "fill-current")} />
-                                   </Button>
+                                   <div className="grid grid-cols-2 gap-2">
+                                      <Button variant="outline" onClick={(e) => { e.stopPropagation(); remixBio(bio.id); }} className="h-10 border-border bg-secondary hover:text-primary rounded-xl text-[8px] font-black uppercase">
+                                         <RefreshCcw className="w-3.5 h-3.5 mr-2" /> Remix
+                                      </Button>
+                                      <Button 
+                                       variant="outline" 
+                                       onClick={(e) => { e.stopPropagation(); toggleFav(bio); }} 
+                                       className={cn("h-10 border-border bg-secondary rounded-xl transition-all text-[8px] font-black uppercase", favorites.some(f => f.id === bio.id) && "text-yellow-500 border-yellow-500/20 bg-yellow-500/10")}
+                                      >
+                                         <Star className={cn("w-3.5 h-3.5 mr-2", favorites.some(f => f.id === bio.id) && "fill-current")} /> Fav
+                                      </Button>
+                                   </div>
                                 </div>
                              </div>
                           </CardContent>
