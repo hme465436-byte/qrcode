@@ -1,23 +1,23 @@
 
 "use client"
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { 
   Trash2, 
   CheckCircle2,
   Copy,
   Globe,
-  ExternalLink,
   Zap,
   Code2,
   Eye,
   X,
-  History,
   Save,
   FileText,
   ShieldCheck,
   Layout,
-  Info
+  Info,
+  ArrowLeft,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,15 +28,6 @@ import { cn } from '@/lib/utils';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v6';
-
-interface HistoryItem {
-  id: string;
-  title: string;
-  url: string;
-  date: number;
-}
-
 export default function HtmlToUrlPage() {
   const { toast } = useToast();
   
@@ -44,13 +35,13 @@ export default function HtmlToUrlPage() {
   const [debouncedHtml, setDebouncedHtml] = useState('');
   const [publishedLink, setPublishedLink] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
-  const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
   const [viewHtml, setViewHtml] = useState<string | null>(null);
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- 1. Router Logic (Hash Extraction) ---
   const checkHash = useCallback(() => {
+    if (typeof window === 'undefined') return;
     const hash = window.location.hash;
     if (hash.startsWith('#z=')) {
       const code = hash.slice(3);
@@ -71,14 +62,6 @@ export default function HtmlToUrlPage() {
     return () => window.removeEventListener('hashchange', checkHash);
   }, [checkHash]);
 
-  // --- 2. Studio Init ---
-  useEffect(() => {
-    const saved = localStorage.getItem(HISTORY_KEY);
-    if (saved) {
-      try { setLocalHistory(JSON.parse(saved)); } catch (e) {}
-    }
-  }, []);
-
   // Debounce Preview Sync (200ms)
   useEffect(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -90,32 +73,21 @@ export default function HtmlToUrlPage() {
 
   const previewSrcDoc = useMemo(() => {
     if (!debouncedHtml.trim()) {
-      return "<html><body style='background:#060608;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#3b82f6;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Input</p></body></html>";
+      return "<html><body style='background:#060608;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#3b82f6;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Input</p> body></html>";
     }
     return debouncedHtml;
   }, [debouncedHtml]);
 
-  // --- 3. Actions ---
+  // --- 2. Actions ---
   const handlePublish = () => {
     if (!htmlInput.trim()) return;
 
-    // LZ-Compression Protocol
+    // LZ-Compression Protocol (Self-Sustaining)
     const code = compressToEncodedURIComponent(htmlInput.trim());
     const link = window.location.origin + window.location.pathname + "#z=" + code;
 
-    // Update Local Registry
-    const historyItem = { 
-      id: Math.random().toString(36).substr(2, 9), 
-      title: 'Published Code', 
-      url: link, 
-      date: Date.now() 
-    };
-    const nextHistory = [historyItem, ...localHistory].slice(0, 10);
-    setLocalHistory(nextHistory);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
-
     setPublishedLink(link);
-    toast({ title: "Link Generated", description: "Self-sustaining compressed URL ready." });
+    toast({ title: "Link Ready", description: "Self-sustaining compressed URL generated." });
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -131,13 +103,7 @@ export default function HtmlToUrlPage() {
     toast({ title: "Studio Reset" });
   };
 
-  const purgeHistory = () => {
-    setLocalHistory([]);
-    localStorage.removeItem(HISTORY_KEY);
-    toast({ title: "History Purged" });
-  };
-
-  // --- 4. Render Logic (Viewer vs Editor) ---
+  // --- 3. Render Logic (Viewer vs Editor) ---
 
   if (viewHtml !== null) {
     return (
@@ -181,6 +147,11 @@ export default function HtmlToUrlPage() {
           </div>
           <div className="flex items-center gap-3">
              <GetHelp toolId="html-to-url" />
+             {htmlInput && (
+                <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
+                   <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
+                </Button>
+             )}
           </div>
         </div>
       </div>
@@ -193,7 +164,7 @@ export default function HtmlToUrlPage() {
             <CardHeader className="pb-6 border-b border-border bg-secondary/30">
                <div className="flex items-center justify-between">
                   <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Code2 className="w-5 h-5 text-primary" /> Workspace
+                    <Code2 className="w-5 h-5 text-primary" /> Editor
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-mono text-primary/60">{htmlInput.length.toLocaleString()} Chars</span>
@@ -212,7 +183,7 @@ export default function HtmlToUrlPage() {
                   <Button 
                     onClick={handlePublish}
                     disabled={!htmlInput.trim()}
-                    className="h-16 w-full bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
+                    className="h-16 w-full bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95 transition-all"
                   >
                     <Save className="w-6 h-6" />
                     Generate Compressed Link
@@ -238,48 +209,12 @@ export default function HtmlToUrlPage() {
                             Copy Short Link
                          </Button>
                          <Button onClick={() => window.open(publishedLink, '_blank')} variant="outline" className="flex-1 h-12 border-emerald-500/20 text-emerald-600 font-black uppercase text-[9px] bg-white/5">
-                            Test Page <ExternalLink className="w-4 h-4 ml-2" />
+                            Launch Page <ExternalLink className="w-4 h-4 ml-2" />
                          </Button>
                       </div>
                     </div>
                   )}
                </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-border shadow-xl overflow-hidden">
-            <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
-                <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                  <History className="w-4 h-4 text-primary" /> Recent Production
-                </CardTitle>
-                <button onClick={purgeHistory} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-all">Purge</button>
-            </CardHeader>
-            <CardContent className="p-0">
-                {!localHistory.length ? (
-                  <div className="py-20 text-center opacity-20">
-                    <Globe className="w-12 h-12 mx-auto" />
-                    <p className="text-[10px] font-black uppercase tracking-widest px-12">No recent sessions found</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-white/5">
-                    {localHistory.map((page, i) => (
-                        <div key={i} className="p-5 flex items-center justify-between gap-4 hover:bg-white/5 transition-all">
-                          <div className="min-w-0 flex-1">
-                              <p className="text-xs font-mono font-bold text-foreground truncate uppercase">{page.url.substring(0, 40)}...</p>
-                              <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">{new Date(page.date).toLocaleDateString()}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                              <Button size="icon" variant="ghost" onClick={() => handleCopy(page.url, `list-${i}`)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
-                                {isCopied === `list-${i}` ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => window.open(page.url, '_blank')} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
-                                <ExternalLink className="w-4 h-4" />
-                              </Button>
-                          </div>
-                        </div>
-                    ))}
-                  </div>
-                )}
             </CardContent>
           </Card>
         </div>
@@ -289,7 +224,7 @@ export default function HtmlToUrlPage() {
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[400px] bg-white">
             <CardHeader className="py-3 border-b border-border bg-secondary/30 shrink-0">
                <CardTitle className="text-[9px] font-black text-primary uppercase tracking-[0.4em] flex items-center gap-2">
-                  <Eye className="w-3.5 h-3.5" /> Monitor
+                  <Eye className="w-3.5 h-3.5" /> Live Monitor
                </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col min-h-[320px]">
@@ -305,23 +240,23 @@ export default function HtmlToUrlPage() {
           <div className="grid grid-cols-1 gap-6">
              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <Zap className="w-7 h-7" />
+                   <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Self-Contained Links</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Database-Free</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Utilizing the LZ-String algorithm to embed compressed payloads directly into the URL hash. No database fetch required for retrieval.
+                    Utilizing the LZ-String algorithm to embed compressed payloads directly into the URL hash. Your content is stored within the link itself.
                   </p>
                 </div>
              </div>
              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-7 h-7" />
+                   <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Instant Preview</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Zero data is stored on our servers. The entire page content is carried within the link itself and reconstructed locally in your browser.
+                    Real-time visual monitoring with a 200ms debounce buffer to ensure a smooth, hardware-native drafting experience.
                   </p>
                 </div>
              </div>
@@ -336,13 +271,5 @@ export default function HtmlToUrlPage() {
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
-  );
-}
-
-function ArrowLeft({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
-    </svg>
   );
 }
