@@ -18,7 +18,8 @@ import {
   Globe,
   Quote,
   Trash2,
-  Hash
+  Hash,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -153,7 +154,7 @@ export default function QuranAyahPage() {
                     <Hash className="w-5 h-5 text-primary" />
                   </div>
                 </div>
-                <Button type="submit" disabled={isLoading || !searchQuery.trim()} className="w-full h-12 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-xl shadow-primary/20">
+                <Button type="submit" disabled={isLoading || !searchQuery.trim()} className="w-full h-12 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30">
                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 mr-2" />} Execute Lookup
                 </Button>
                 <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest text-center">Enter Surah:Ayah or Ayah Number</p>
@@ -223,7 +224,7 @@ export default function QuranAyahPage() {
                    <div className="flex-1 flex flex-col items-center justify-center space-y-10 py-20">
                       <div className="relative">
                          <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                         <Globe className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
+                         <Globe className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                       </div>
                       <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Decoding Textual Buffer...</p>
                    </div>
