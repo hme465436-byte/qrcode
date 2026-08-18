@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/image-border-frame', '/custom-watermark', '/direct-file-share', '/wifi-qr-decoder',
     '/hide-message-photo', '/temp-room', '/sim-data', '/html-to-url', '/tax-calculator', '/lucky-draw',
     '/bmi-calculator', '/bio-maker', '/image-size-increaser', '/wps-sheets', '/speed-test', '/ip-finder',
-    '/currency-converter', '/weather'
+    '/currency-converter', '/weather', '/namaz-times'
   ];
 
   const routes = tools.map(tool => ({

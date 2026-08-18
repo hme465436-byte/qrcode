@@ -92,12 +92,14 @@ import {
   Gauge,
   MapPin,
   Banknote,
-  Cloud
+  Cloud,
+  Moon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button as ShadButton } from '@/components/ui/button';
 import { SpaceBackground } from '@/components/qr-canvas/space-background';
+import { Card } from '@/components/ui/card';
 
 const VIEW_MODE_KEY = 'mykit_view_mode';
 
@@ -126,6 +128,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/namaz-times', 
+    icon: Moon, 
+    title: 'Namaz Times', 
+    desc: 'Clinical prayer timings with Hijri calendar and countdown.', 
+    label: 'TEMPORAL', 
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    glowClass: 'bg-indigo-400/10',
+    keywords: ['namaz', 'prayer times', 'salat', 'islamic', 'hijri', 'fajr', 'maghrib', 'karachi'],
+    category: 'utilities'
   },
   { 
     href: '/weather', 
@@ -958,7 +971,7 @@ const TOOLS: Tool[] = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
@@ -1024,7 +1037,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -1061,7 +1074,7 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
         isGrid ? "flex-col h-full" : "w-full"
       )}
     >
-      <div className={cn(
+      <Card className={cn(
         "relative flex-1 flex rounded-[2.5rem] bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 shadow-2xl group-hover:shadow-primary/5 overflow-hidden",
         isGrid ? "flex-col p-8 hover:-translate-y-2 text-left" : "flex-row items-center p-6 hover:-translate-x-1 gap-6"
       )}>
@@ -1108,7 +1121,7 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
             <ArrowRight className="w-5 h-5 text-primary/20 group-hover:text-primary transition-all group-hover:translate-x-1 icon-3d" />
           </div>
         )}
-      </div>
+      </Card>
     </Link>
   );
 });
@@ -1141,7 +1154,8 @@ export default function Home() {
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
       'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
       'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP', 'Currency Converter',
-      'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection'
+      'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection',
+      'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1217,7 +1231,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
-      {/* JSON-LD for Organization & ItemList */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -1235,7 +1248,7 @@ export default function Home() {
         }}
       />
 
-      {/* HERO SECTION - RECALIBRATED COSMIC PROTOCOL */}
+      {/* HERO SECTION */}
       <section className="w-full px-4 sm:px-6 pt-20 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-visible flex flex-col justify-center">
         <SpaceBackground />
         
@@ -1291,7 +1304,7 @@ export default function Home() {
                 </div>
              </div>
 
-             {/* Category Pills - Sticky Row */}
+             {/* Category Pills */}
              <div className="sticky top-20 z-20 flex flex-wrap items-center justify-center gap-2 p-2 rounded-[2rem] bg-secondary/50 border border-white/5 backdrop-blur-xl shadow-2xl w-fit mx-auto">
                 {CATEGORIES.map((cat) => (
                   <button
@@ -1344,7 +1357,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Unified Tool Matrix Container */}
           <div className="space-y-12">
             <div className={cn(
               "w-full transition-all duration-300",
@@ -1359,7 +1371,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* See More Controls */}
             {visibleCount < filteredTools.length && (
               <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
                  <ShadButton 
@@ -1375,83 +1386,7 @@ export default function Home() {
                  </p>
               </div>
             )}
-
-            {/* All Tools Shown Footer */}
-            {visibleCount >= filteredTools.length && filteredTools.length > 0 && (
-              <div className="flex flex-col items-center gap-4 py-8 opacity-40">
-                 <div className="flex items-center gap-3">
-                    <div className="h-px w-12 bg-white/10" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em]">All tools shown</span>
-                    <div className="h-px w-12 bg-white/10" />
-                 </div>
-              </div>
-            )}
           </div>
-        </div>
-      </section>
-
-      {/* FEATURE SECTION */}
-      <section className="w-full py-32 border-t border-white/5 relative bg-[#060608]/50">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 items-center">
-            <div className="lg:col-span-5 space-y-8 text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
-                Privacy Sovereign
-              </div>
-              <h2 className="text-4xl sm:text-6xl font-headline font-black uppercase tracking-tight leading-[0.95] overflow-wrap-anywhere">Definitive <span className="text-primary italic">Security</span> Mandate</h2>
-              <p className="text-lg text-foreground/40 font-medium leading-relaxed overflow-wrap-anywhere">
-                Our studio operates entirely within your browser's memory sandbox. We have eliminated server-side storage to ensure your branding and technical data remain strictly private and permanent.
-              </p>
-              <div className="grid grid-cols-1 gap-6 pt-4">
-                {[
-                  { title: 'WASM Processing', desc: 'Hardware-accelerated performance via WebAssembly.', icon: Zap },
-                  { title: 'Zero Data Leakage', desc: 'No logs, no cookies, no third-party tracking.', icon: ShieldCheck },
-                  { title: 'Fidelity Control', desc: '1:1 pixel mapping for precision production.', icon: Maximize }
-                ].map((f, i) => (
-                  <div className={cn("flex gap-4 items-start group/feat", i === 0 && "cursor-default")} key={i}>
-                    <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center text-primary shrink-0 mt-1 icon-container-3d group-hover/feat:scale-110 transition-transform">
-                      <f.icon className="w-4 h-4 icon-3d" />
-                    </div>
-                    <div className="space-y-1 min-w-0">
-                      <h4 className="text-sm font-black uppercase tracking-widest text-foreground truncate">{f.title}</h4>
-                      <p className="text-xs text-foreground/40 font-medium overflow-wrap-anywhere">{f.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="lg:col-span-7 relative">
-               <div className="glass-card p-4 rounded-[2.5rem] border-white/10 shadow-2xl relative z-10 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
-                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/40 border border-white/5 flex items-center justify-center group">
-                     <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/mykit-ui/1200/800')] bg-cover bg-center opacity-30 grayscale transition-all duration-1000 group-hover:scale-110" />
-                     <div className="relative z-10 w-20 h-20 rounded-full bg-white text-black flex items-center justify-center shadow-2xl cursor-pointer hover:scale-110 transition-transform">
-                        <Play className="w-8 h-8 fill-current ml-1 icon-3d" />
-                     </div>
-                  </div>
-               </div>
-               <div className="absolute -top-12 -left-12 w-64 h-64 bg-primary/5 rounded-full blur-[100px]" />
-               <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-primary/10 rounded-full blur-[100px]" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTAs */}
-      <section className="w-full px-6 py-40 text-center">
-        <div className="max-w-4xl mx-auto space-y-12">
-           <h2 className="text-5xl sm:text-8xl font-headline font-black uppercase tracking-tight leading-none overflow-wrap-anywhere">Ready for <span className="text-primary italic">Production?</span></h2>
-           <p className="text-lg text-foreground/40 font-medium max-w-xl mx-auto uppercase tracking-tighter overflow-wrap-anywhere">
-             Join thousands of designers and engineers using the world's premier local utility matrix.
-           </p>
-           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-             <Link href="/single" className="w-full sm:auto px-12 py-5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
-               Open Studio
-             </Link>
-             <Link href="/about" className="w-full sm:auto px-12 py-5 bg-white/5 border border-white/10 text-foreground/40 font-black text-xs uppercase tracking-[0.3em] rounded-xl hover:bg-white/10 transition-all">
-               Documentation
-             </Link>
-           </div>
         </div>
       </section>
     </div>
@@ -1463,7 +1398,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
     <div className="col-span-full py-24 glass-card rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-8 px-6">
       <Search className="w-12 h-12 text-foreground/5 animate-pulse icon-3d" />
       <div className="space-y-2 text-center">
-        <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">Coming Soon</h3>
+        <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">No Units Found</h3>
         <p className="text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
       </div>
       <ShadButton 
@@ -1472,7 +1407,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
         className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10 w-full sm:w-auto"
       >
         <RotateCcw className="w-4 h-4 mr-2 icon-3d" />
-        Reset
+        Reset Filters
       </ShadButton>
     </div>
   );
