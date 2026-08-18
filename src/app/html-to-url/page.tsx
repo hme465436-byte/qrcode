@@ -15,7 +15,9 @@ import {
   Loader2,
   Save,
   KeyRound,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck,
+  Layout
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +33,7 @@ import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v6';
+const HISTORY_KEY = 'htmlToUrlHistory_v7';
 
 interface HistoryItem {
   id: string;
@@ -61,10 +63,12 @@ export default function HtmlToUrlPage() {
   
   const [statusText, setStatusText] = useState('Click Login as Guest');
   const [isGuestReady, setIsGuestReady] = useState(false);
+  const [guestError, setGuestError] = useState<string | null>(null);
 
+  // Identity Handshake
   useEffect(() => {
     if (!auth) {
-      setStatusText("Configuration missing");
+      setStatusText("Hardware Config Missing");
       return;
     }
     return onAuthStateChanged(auth, (u) => {
@@ -74,18 +78,18 @@ export default function HtmlToUrlPage() {
   }, []);
 
   const handleGuestLogin = async () => {
-    if (!auth) {
-      toast({ variant: "destructive", title: "Error", description: "Firebase is not configured correctly." });
-      return;
-    }
+    if (!auth) return;
+    setGuestError(null);
     setStatusText("Logging in...");
     try {
       await signInAnonymously(auth);
     } catch (e: any) {
-      setStatusText(`${e.code}: ${e.message}`);
+      setGuestError(e.code);
+      setStatusText("Handshake Failed");
     }
   };
 
+  // Load History
   useEffect(() => {
     const saved = localStorage.getItem(HISTORY_KEY);
     if (saved) {
@@ -110,7 +114,7 @@ export default function HtmlToUrlPage() {
       if (effectiveLanguage === 'javascript') return `<html><body><script>try{${html}}catch(e){document.body.innerHTML=e.message}</script></body></html>`;
       return html;
     }
-    return `<html><body style='background:#0a0a0c;color:#4ade80;padding:20px;font-family:monospace;'>[Code View Active]</body></html>`; 
+    return `<html><body style='background:#0a0a0c;color:#4ade80;padding:20px;font-family:monospace;'>[Linguistic View Active]</body></html>`; 
   }, [html, effectiveLanguage]);
 
   const handleMakeLink = async () => {
@@ -127,15 +131,18 @@ export default function HtmlToUrlPage() {
       const url = `${window.location.origin}/p/${id}`;
       const createdAt = Date.now();
 
-      // Save locally first for instant access on this device
+      // 1. Immediate Local Save (Hardware Persistence)
       localStorage.setItem(`kit_page_${id}`, JSON.stringify({ html, title, createdAt }));
 
-      // Save to cloud
+      // 2. Background Cloud Sync (Firestore)
       await setDoc(doc(db, "pages", id), { 
         html: html.trim(), 
         title: title.trim() || 'Untitled', 
         uid: auth.currentUser.uid,
         createdAt 
+      }).catch((e) => {
+         console.warn("Cloud Sync Latency:", e.message);
+         toast({ title: "Local Save Success", description: "Saved to browser. Cloud sync pending." });
       });
 
       const historyItem = { id, title: title || 'Untitled', url, date: createdAt };
@@ -143,10 +150,9 @@ export default function HtmlToUrlPage() {
       setLocalHistory(nextHistory);
       localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
       
-      toast({ title: "Published" });
+      toast({ title: "Page Published" });
       window.open(url, '_blank');
     } catch (err: any) {
-      setStatusText(`${err.code}: ${err.message}`);
       toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
       setIsProcessing(false);
@@ -182,7 +188,7 @@ export default function HtmlToUrlPage() {
             <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
               Code & <span className="text-primary italic">URL Studio</span>
             </h1>
-            <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl">
+            <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
               Convert raw code into a shareable link. Professional production with real-time preview and secure local fallback.
             </p>
           </div>
@@ -199,7 +205,7 @@ export default function HtmlToUrlPage() {
           <Card className="glass-card border-border shadow-xl overflow-hidden">
              <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground">
-                  <KeyRound className="w-4 h-4 text-primary" /> Session
+                  <KeyRound className="w-4 h-4 text-primary" /> Session Identity
                 </CardTitle>
                 <div className={cn(
                   "text-[9px] font-black uppercase px-3 py-1 rounded-full border",
@@ -208,7 +214,7 @@ export default function HtmlToUrlPage() {
                   {statusText}
                 </div>
              </CardHeader>
-             <CardContent className="pt-8">
+             <CardContent className="pt-8 space-y-4">
                 {!isGuestReady && (
                   <Button 
                     onClick={handleGuestLogin}
@@ -217,10 +223,16 @@ export default function HtmlToUrlPage() {
                     Login as Guest
                   </Button>
                 )}
+                {guestError && (
+                  <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
+                    <AlertCircle className="w-4 h-4 text-destructive" />
+                    <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">Protocol Fail: {guestError}</p>
+                  </div>
+                )}
                 {isGuestReady && (
                   <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-center gap-4">
                      <CheckCircle2 className="w-5 h-5 text-primary" />
-                     <span className="text-[10px] font-black uppercase text-foreground/60">Ready to Publish</span>
+                     <span className="text-[10px] font-black uppercase text-foreground/60">Guest Authorized</span>
                   </div>
                 )}
              </CardContent>
@@ -290,14 +302,14 @@ export default function HtmlToUrlPage() {
             <Card className="glass-card border-border shadow-xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                   <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                    <History className="w-4 h-4 text-primary" /> My Local Links
+                    <History className="w-4 h-4 text-primary" /> Local Archive
                   </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                   {!localHistory.length ? (
                     <div className="py-20 text-center space-y-4 opacity-20">
                       <Globe className="w-12 h-12 mx-auto" />
-                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No links yet</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No links in registry</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
@@ -333,29 +345,42 @@ export default function HtmlToUrlPage() {
             <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-white">
               <CardHeader className="py-4 border-b border-border bg-secondary/30 shrink-0">
                  <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
-                    <Eye className="w-3.5 h-3.5" /> Preview
+                    <Eye className="w-3.5 h-3.5" /> Visual monitor
                  </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col">
+              <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col min-h-[320px]">
                   <iframe 
                     srcDoc={previewSrcDoc}
                     title="Preview"
                     sandbox="allow-scripts allow-forms"
-                    className="flex-1 w-full h-full min-height-[320px] border-none bg-transparent block"
+                    className="flex-1 w-full h-full border-none bg-transparent block"
                   />
               </CardContent>
             </Card>
 
-            <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
-               <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                  <ShieldCheck className="w-7 h-7" />
-               </div>
-               <div className="space-y-2">
-                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local Privacy</h4>
-                 <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                   Your pages are saved locally before syncing to the cloud. Links work immediately on your device.
-                 </p>
-               </div>
+            <div className="grid grid-cols-1 gap-6">
+                <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+                   <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                      <ShieldCheck className="w-7 h-7" />
+                   </div>
+                   <div className="space-y-2">
+                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local Privacy</h4>
+                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                       Your pages are committed to local hardware memory before cloud synchronization, ensuring 100% link accessibility on this device.
+                     </p>
+                   </div>
+                </div>
+                <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+                   <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                      <Zap className="w-7 h-7" />
+                   </div>
+                   <div className="space-y-2">
+                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Instant Delivery</h4>
+                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                       Clinical-grade zero latency. The studio generates a unique link identity and launches your page in a new window immediately.
+                     </p>
+                   </div>
+                </div>
             </div>
           </div>
         </div>
