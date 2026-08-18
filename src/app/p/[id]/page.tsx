@@ -1,22 +1,16 @@
-
 "use client"
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { db } from '@/firebase';
 import { 
   Loader2, 
   AlertCircle, 
   ArrowLeft,
-  Globe,
   Copy,
   CheckCircle2,
-  FileCode,
-  Terminal,
-  Activity,
-  ShieldCheck,
-  Zap
+  FileCode
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -25,7 +19,6 @@ import { useToast } from '@/hooks/use-toast';
 export default function HostedPageViewer() {
   const { id } = useParams();
   const { toast } = useToast();
-  const firestore = useFirestore();
   const [data, setData] = useState<{ html: string; title: string; language?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,23 +28,7 @@ export default function HostedPageViewer() {
     if (!id) return;
 
     const fetchPage = async () => {
-      // 1. Check Global Registry
-      if (firestore) {
-        try {
-          const docRef = doc(firestore, "pages", id as string);
-          const docSnap = await getDoc(docRef);
-          
-          if (docSnap.exists()) {
-            setData(docSnap.data() as any);
-            setLoading(false);
-            return;
-          }
-        } catch (err: any) {
-          console.warn("Firestore fetch error", err);
-        }
-      }
-
-      // 2. Local Hardware Fallback
+      // 1. Hardware Fallback Check (Local)
       const localKey = "kit_page_" + id;
       const localRaw = localStorage.getItem(localKey);
       if (localRaw) {
@@ -62,12 +39,28 @@ export default function HostedPageViewer() {
         } catch (e) {}
       }
 
+      // 2. Global Registry Check (Cloud)
+      if (db) {
+        try {
+          const docRef = doc(db, "pages", id as string);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            setData(docSnap.data() as any);
+            setLoading(false);
+            return;
+          }
+        } catch (err: any) {
+          console.warn("Database fetch error", err);
+        }
+      }
+
       setError("This link does not exist");
       setLoading(false);
     };
 
     fetchPage();
-  }, [firestore, id]);
+  }, [id]);
 
   const handleCopy = () => {
     if (data?.html) {
@@ -82,7 +75,7 @@ export default function HostedPageViewer() {
     return (
       <div className="fixed inset-0 bg-[#0a0a0c] flex flex-col items-center justify-center gap-8">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Fetching Data...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Negotiating Signal...</p>
       </div>
     );
   }

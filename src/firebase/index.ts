@@ -7,9 +7,8 @@ import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { firebaseConfig } from './config';
 
 /**
- * Hardware Initialization Protocol
- * Synchronizes the local browser with the production signaling matrix.
- * Hardened to prevent crashes if environment variables are missing.
+ * Standardized Hardware Core
+ * Centralized initialization for all studio production units.
  */
 const isConfigValid = 
   firebaseConfig.apiKey && 
@@ -17,20 +16,22 @@ const isConfigValid =
   firebaseConfig.projectId && 
   firebaseConfig.projectId !== "undefined";
 
-let app: FirebaseApp | null = null;
-let db: Firestore | null = null;
-let auth: Auth | null = null;
-let storage: FirebaseStorage | null = null;
+let app: FirebaseApp;
+let db: Firestore;
+let auth: Auth;
+let storage: FirebaseStorage;
 
-if (isConfigValid && typeof window !== 'undefined') {
-  try {
-    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    auth = getAuth(app);
-    storage = getStorage(app);
-  } catch (err) {
-    console.error("Firebase: Hardware handshake failed.", err);
-  }
+if (typeof window !== 'undefined') {
+  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+  storage = getStorage(app);
+} else {
+  // SSR Fallbacks
+  app = null as any;
+  db = null as any;
+  auth = null as any;
+  storage = null as any;
 }
 
 export { app, db, auth, storage };
