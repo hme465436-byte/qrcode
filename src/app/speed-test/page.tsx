@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -9,6 +8,7 @@ import {
   Activity, 
   Zap, 
   RefreshCcw, 
+  RotateCcw,
   ShieldCheck, 
   Info,
   Play,
@@ -59,6 +59,7 @@ export default function SpeedTestPage() {
     setJitterMs(null);
     setProgress(0);
     setCurrentSpeed(0);
+    setStep('idle');
   };
 
   const runPingTest = async () => {
