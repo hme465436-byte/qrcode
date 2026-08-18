@@ -77,15 +77,20 @@ export default function HtmlToUrlPage() {
   // Preview State
   const [previewSrcDoc, setPreviewSrcDoc] = useState('');
 
-  // 1. Guest Authentication Protocol
+  // 1. Guest Authentication Protocol with Clinical Debug Alerts
   const handleGuestLogin = async () => {
-    if (!auth) return;
+    if (!auth) {
+      alert("Hardware Error: Firebase Auth instance not initialized.");
+      return;
+    }
     setIsLoggingIn(true);
     setErrorCode(null);
     try {
-      await signInAnonymously(auth);
-      toast({ title: "Guest ready" });
+      const cred = await signInAnonymously(auth);
+      alert("Guest OK: " + cred.user.uid);
+      toast({ title: "Guest identity active" });
     } catch (err: any) {
+      alert(err.code + " " + err.message);
       setErrorCode(err.code);
     } finally {
       setIsLoggingIn(false);
@@ -165,7 +170,7 @@ export default function HtmlToUrlPage() {
 
   const handleMakeLink = async () => {
     if (!user) {
-      toast({ variant: "destructive", title: "Login required", description: "Please Login as Guest first." });
+      toast({ variant: "destructive", title: "Access Blocked", description: "Please Login as Guest first to establish session identity." });
       return;
     }
 
@@ -187,12 +192,12 @@ export default function HtmlToUrlPage() {
         createdAt 
       };
 
-      // 1. Cloud Save
-      if (!firestore) throw new Error("Firestore unavailable");
-      await setDoc(doc(firestore, "pages", id), payload);
-
-      // 2. Hardware Memory Cache
+      // 1. Hardware Memory Cache (Immediate retrieval)
       localStorage.setItem(`kit_page_${id}`, JSON.stringify(payload));
+
+      // 2. Global Cloud Sync (Firestore)
+      if (!firestore) throw new Error("Database reference missing");
+      await setDoc(doc(firestore, "pages", id), payload);
       
       const historyItem: HistoryItem = {
         id,
@@ -204,9 +209,10 @@ export default function HtmlToUrlPage() {
       updateLocalHistory(historyItem);
       setGeneratedId(id);
       
-      toast({ title: "Link ready" });
+      toast({ title: "Master Published", description: "Page is now live in the global registry." });
       window.open(newUrl, '_blank');
     } catch (err: any) {
+      alert(err.code + " " + err.message);
       setErrorCode(err.code || "unknown_error");
     } finally {
       setIsProcessing(false);
@@ -216,7 +222,7 @@ export default function HtmlToUrlPage() {
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(label);
-    toast({ title: "Copied" });
+    toast({ title: "Protocol Copied" });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -232,7 +238,7 @@ export default function HtmlToUrlPage() {
               Code & <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Convert raw code into a shareable link. Professional production with real-time hardware sync.
+              Convert raw code into a shareable link. Professional production with real-time hardware sync and global delivery.
             </p>
           </div>
           <div className="flex flex-col items-end gap-3">
@@ -240,6 +246,7 @@ export default function HtmlToUrlPage() {
                 <GetHelp toolId="html-to-url" />
                 {!user ? (
                   <Button 
+                    type="button"
                     onClick={handleGuestLogin} 
                     disabled={isLoggingIn}
                     className="h-11 px-6 bg-primary text-white font-black uppercase text-[10px] rounded-xl shadow-xl shadow-primary/20"
@@ -251,7 +258,7 @@ export default function HtmlToUrlPage() {
                   <div className="px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-3">
                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                      <span className="text-[10px] font-black uppercase text-green-600 tracking-widest">
-                        Guest ready
+                        Guest-{user.uid.substring(0, 6)} Ready
                      </span>
                   </div>
                 )}
@@ -294,7 +301,7 @@ export default function HtmlToUrlPage() {
               </CardHeader>
               <CardContent className="pt-10 space-y-8">
                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Title</Label>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Document Title</Label>
                     <Input 
                       value={title}
                       onChange={e => setTitle(e.target.value)}
@@ -321,10 +328,13 @@ export default function HtmlToUrlPage() {
                       type="button"
                       onClick={handleMakeLink}
                       disabled={!html.trim() || isProcessing}
-                      className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 active:scale-95"
+                      className={cn(
+                        "h-16 flex-1 font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95",
+                        user ? "bg-primary text-white" : "bg-secondary text-foreground/20 border-border"
+                      )}
                     >
                       {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                      Publish Link
+                      {user ? 'Publish Link' : 'Login Required'}
                     </Button>
                  </div>
               </CardContent>
@@ -334,7 +344,7 @@ export default function HtmlToUrlPage() {
             <Card className="glass-card border-border shadow-xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                   <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                    <History className="w-4 h-4 text-primary" /> My Links
+                    <History className="w-4 h-4 text-primary" /> My Local Links
                   </CardTitle>
                   <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Saved</span>
               </CardHeader>
@@ -342,7 +352,7 @@ export default function HtmlToUrlPage() {
                   {!localHistory.length ? (
                     <div className="py-20 text-center space-y-4 opacity-20">
                       <Globe className="w-12 h-12 mx-auto" />
-                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No links found on this device.</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No links identified on this device.</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
@@ -406,7 +416,7 @@ export default function HtmlToUrlPage() {
               <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden relative animate-in zoom-in duration-500">
                  <CardHeader className="py-8 border-b border-primary/10">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.5em] flex items-center gap-3 text-primary">
-                      <CheckCircle2 className="w-4 h-4" /> Link Active
+                      <CheckCircle2 className="w-4 h-4" /> Synthesis Complete
                     </CardTitle>
                  </CardHeader>
                  <CardContent className="pt-10 space-y-8 text-center">
@@ -418,7 +428,7 @@ export default function HtmlToUrlPage() {
                           {isCopied === 'link' ? 'Copied' : 'Copy Link'}
                        </Button>
                        <Button asChild variant="outline" className="h-14 px-8 rounded-2xl border-white/10 bg-white/5 text-white">
-                          <a href={`/p/${generatedId}`} target="_blank"><ExternalLink className="w-4 h-4 mr-2" /> Open</a>
+                          <a href={`/p/${generatedId}`} target="_blank"><ExternalLink className="w-4 h-4 mr-2" /> Open Page</a>
                        </Button>
                     </div>
                  </CardContent>
@@ -430,9 +440,9 @@ export default function HtmlToUrlPage() {
                   <ShieldCheck className="w-7 h-7" />
                </div>
                <div className="space-y-2">
-                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local Privacy</h4>
+                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local-First Resilience</h4>
                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                   Your document identity is unique and secure. History is preserved locally on this hardware for rapid retrieval.
+                   Documents are saved to your hardware memory before cloud commitment. Links function immediately on your own device even during network delays.
                  </p>
                </div>
             </div>
