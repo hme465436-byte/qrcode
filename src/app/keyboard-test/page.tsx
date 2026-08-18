@@ -192,8 +192,16 @@ export default function KeyboardTestPage() {
     toast({ title: "Matrix Purged", description: "Hardware testing buffer cleared." });
   };
 
+  // --- Helper for Key Widths ---
+  const getKeyFlex = (code: string) => {
+    if (code === 'Space') return 'flex-[7]';
+    if (['Backspace', 'Enter', 'ShiftLeft', 'ShiftRight', 'CapsLock', 'Tab'].includes(code)) return 'flex-[2]';
+    if (['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft'].includes(code)) return 'flex-[1.5]';
+    return 'flex-1';
+  };
+
   return (
-    <div ref={containerRef} className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full bg-[#0a0a0c] min-h-screen">
+    <div ref={containerRef} className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full bg-[#0a0a0c] min-h-screen overflow-x-hidden">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
@@ -240,15 +248,15 @@ export default function KeyboardTestPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
         {/* Main Keyboard Grid */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-6 min-w-0">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative bg-black/60 p-4 sm:p-10">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             
-            <div className="flex flex-col gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-4">
+            <div className="flex flex-col gap-2 sm:gap-4 w-full">
               {ROWS.map((row, rIdx) => (
                 <div key={rIdx} className={cn(
-                  "flex gap-1.5 sm:gap-3 min-w-max",
-                  rIdx === 0 ? "justify-start mb-4" : "justify-center"
+                  "flex gap-1 sm:gap-2 w-full",
+                  rIdx === 0 ? "justify-start mb-4 overflow-x-auto no-scrollbar" : "justify-center"
                 )}>
                   {row.map((code) => {
                     const isPressed = pressedKeys.has(code);
@@ -259,16 +267,14 @@ export default function KeyboardTestPage() {
                       <div 
                         key={code}
                         className={cn(
-                          "h-12 sm:h-16 px-2 sm:px-4 rounded-lg sm:rounded-xl border transition-all duration-75 flex items-center justify-center font-mono font-bold text-[9px] sm:text-xs uppercase tracking-tighter select-none cursor-default",
-                          "min-w-[40px] sm:min-w-[56px]",
-                          code === 'Space' && "w-[160px] sm:w-[350px]",
-                          (code === 'Backspace' || code === 'Enter' || code === 'ShiftLeft' || code === 'ShiftRight' || code === 'CapsLock' || code === 'Tab' || code === 'ControlLeft' || code === 'ControlRight') && "min-w-[70px] sm:min-w-[100px]",
-                          code.startsWith('F') && !code.startsWith('Fi') && "h-10 sm:h-12 bg-white/[0.02]",
+                          "h-10 sm:h-14 lg:h-16 px-1 sm:px-2 rounded-md sm:rounded-xl border transition-all duration-75 flex items-center justify-center font-mono font-bold text-[7px] sm:text-[10px] lg:text-xs uppercase tracking-tighter select-none cursor-default min-w-0",
+                          getKeyFlex(code),
+                          code.startsWith('F') && !code.startsWith('Fi') && "h-8 sm:h-10 lg:h-12 bg-white/[0.02] flex-none w-10 sm:w-14",
                           isPressed ? "bg-green-500/20 border-green-500/50 text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]" : "bg-white/5 border-white/10 text-white/10",
                           isCurrentlyActive && "scale-90 bg-primary text-white border-primary shadow-[0_0_25px_rgba(59,130,246,0.6)] z-20"
                         )}
                       >
-                        {label}
+                        <span className="truncate">{label}</span>
                       </div>
                     );
                   })}
