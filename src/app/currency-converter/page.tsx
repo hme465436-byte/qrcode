@@ -5,6 +5,7 @@ import {
   Coins, 
   ArrowRightLeft, 
   RefreshCcw, 
+  RotateCcw,
   Trash2, 
   CheckCircle2, 
   Info,
@@ -252,7 +253,7 @@ export default function CurrencyConverterPage() {
             </CardHeader>
             <CardContent className="flex-1 p-8 sm:p-16 flex flex-col justify-center bg-black/10">
                {!result && !isLoading && !error && (
-                 <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6">
+                 <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-24">
                     <Banknote className="w-24 h-24 text-primary" />
                     <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Fiscal Signal</p>
                  </div>
@@ -264,7 +265,7 @@ export default function CurrencyConverterPage() {
                        <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                        <Globe className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
                     </div>
-                    <p className="text-[10px] font-black uppercase text-primary tracking-[0.4em]">Querying Global Market Nodes...</p>
+                    <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Querying Global Market Nodes...</p>
                  </div>
                )}
 
