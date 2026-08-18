@@ -4,7 +4,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Trash2, 
-  Info,
   CheckCircle2,
   Copy,
   Globe,
@@ -13,37 +12,32 @@ import {
   Code2,
   Activity,
   Eye,
-  RefreshCcw,
-  Maximize2,
   Layout,
   Terminal,
-  Play,
   X,
   History,
-  Clock,
   Loader2,
-  Link as LinkIcon,
   ShieldCheck,
-  AlertCircle,
   Save,
   User,
-  ShieldAlert
+  ShieldAlert,
+  LogIn
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { signInAnonymously } from 'firebase/auth';
 import { useFirestore, useAuth, useUser } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v3';
+const HISTORY_KEY = 'htmlToUrlHistory_v4';
 
 interface HistoryItem {
   id: string;
@@ -67,47 +61,36 @@ export default function HtmlToUrlPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user, loading: authLoading } = useUser();
+  const { user } = useUser();
   
   const [html, setHtml] = useState('');
   const [title, setTitle] = useState('');
   const [language, setLanguage] = useState('auto');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [generatedId, setGeneratedId] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
 
   // Preview State
   const [previewSrcDoc, setPreviewSrcDoc] = useState('');
 
-  // 1. Session Initialization (Resilient Handshake)
-  useEffect(() => {
+  // 1. Guest Authentication Protocol
+  const handleGuestLogin = async () => {
     if (!auth) return;
-
-    // Safety Timeout: Unlock UI after 4 seconds regardless of network
-    const timeout = setTimeout(() => setIsReady(true), 4000);
-
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      if (u) {
-        setIsReady(true);
-        clearTimeout(timeout);
-      } else {
-        signInAnonymously(auth).catch((err) => {
-          setErrorMessage(err.code);
-          setIsReady(true); // Still unlock for local-only use
-          clearTimeout(timeout);
-        });
-      }
-    });
-
-    return () => {
-      unsubscribe();
-      clearTimeout(timeout);
-    };
-  }, [auth]);
+    setIsLoggingIn(true);
+    setErrorCode(null);
+    try {
+      await signInAnonymously(auth);
+      toast({ title: "Guest ready" });
+    } catch (err: any) {
+      setErrorCode(err.code);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
 
   // 2. Load History
   useEffect(() => {
@@ -128,7 +111,7 @@ export default function HtmlToUrlPage() {
   };
 
   const purgeLocalItem = async (id: string) => {
-    if (!confirm("Confirm definitive removal from this device?")) return;
+    if (!confirm("Confirm removal from this device?")) return;
     
     if (firestore) {
       try {
@@ -142,7 +125,7 @@ export default function HtmlToUrlPage() {
       return next;
     });
     localStorage.removeItem(`kit_page_${id}`);
-    toast({ title: "Purged", description: "Document removed from local registry." });
+    toast({ title: "Purged" });
   };
 
   const effectiveLanguage = useMemo(() => {
@@ -156,7 +139,7 @@ export default function HtmlToUrlPage() {
 
   const syncPreview = useCallback(() => {
     if (!html.trim()) {
-      setPreviewSrcDoc("<html><body style='background:#f1f5f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#64748b;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Visual Signal</p></body></html>");
+      setPreviewSrcDoc("<html><body style='background:#f1f5f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#64748b;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Input</p></body></html>");
       return;
     }
 
@@ -169,7 +152,7 @@ export default function HtmlToUrlPage() {
       }
       setPreviewSrcDoc(content);
     } else {
-      setPreviewSrcDoc(''); 
+      setPreviewSrcDoc("<html><body style='background:#0a0a0c;color:#4ade80;padding:20px;font-family:monospace;'>[Linguistic Preview Not Supported]</body></html>"); 
     }
   }, [html, effectiveLanguage]);
 
@@ -181,61 +164,53 @@ export default function HtmlToUrlPage() {
   const fullUrl = (id: string) => typeof window !== 'undefined' ? `${window.location.origin}/p/${id}` : '';
 
   const handleMakeLink = async () => {
-    if (!html.trim()) {
-      toast({ variant: "destructive", title: "Empty Payload" });
+    if (!user) {
+      toast({ variant: "destructive", title: "Login required", description: "Please Login as Guest first." });
       return;
     }
 
-    const size = new TextEncoder().encode(html).length;
-    if (size > 150 * 1024) {
-      toast({ variant: "destructive", title: "Payload Overload", description: "Document exceeds 150KB limit." });
-      return;
-    }
+    if (!html.trim()) return;
 
     setIsProcessing(true);
-    setErrorMessage(null);
+    setErrorCode(null);
     
-    // Phase 1: Identity Generation
-    const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-    const newUrl = fullUrl(id);
-    const createdAt = Date.now();
+    try {
+      const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+      const newUrl = fullUrl(id);
+      const createdAt = Date.now();
 
-    const payload = { 
-      html: html.trim(), 
-      title: title.trim() || 'Untitled Page', 
-      language: effectiveLanguage,
-      uid: user?.uid || 'guest',
-      createdAt 
-    };
-    
-    // Phase 2: Local Hardware Memory (Immediate Access)
-    localStorage.setItem(`kit_page_${id}`, JSON.stringify(payload));
-    
-    const historyItem: HistoryItem = {
-      id,
-      title: payload.title,
-      url: newUrl,
-      date: createdAt,
-      language: effectiveLanguage
-    };
-    updateLocalHistory(historyItem);
-    setGeneratedId(id);
+      const payload = { 
+        html: html.trim(), 
+        title: title.trim() || 'Untitled Page', 
+        language: effectiveLanguage,
+        uid: user.uid,
+        createdAt 
+      };
 
-    // Phase 3: Global Cloud Sync
-    if (firestore && user) {
-      try {
-        await setDoc(doc(firestore, "pages", id), payload);
-        toast({ title: "Public Link Created" });
-      } catch (err: any) {
-        console.warn("Cloud save failed", err);
-        setErrorMessage(err.code || "Cloud sync restricted. Page exists in this browser only.");
-      }
-    } else {
-      setErrorMessage("No active account session. Link saved locally.");
+      // 1. Cloud Save
+      if (!firestore) throw new Error("Firestore unavailable");
+      await setDoc(doc(firestore, "pages", id), payload);
+
+      // 2. Hardware Memory Cache
+      localStorage.setItem(`kit_page_${id}`, JSON.stringify(payload));
+      
+      const historyItem: HistoryItem = {
+        id,
+        title: payload.title,
+        url: newUrl,
+        date: createdAt,
+        language: effectiveLanguage
+      };
+      updateLocalHistory(historyItem);
+      setGeneratedId(id);
+      
+      toast({ title: "Link ready" });
+      window.open(newUrl, '_blank');
+    } catch (err: any) {
+      setErrorCode(err.code || "unknown_error");
+    } finally {
+      setIsProcessing(false);
     }
-
-    window.open(newUrl, '_blank');
-    setIsProcessing(false);
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -257,19 +232,31 @@ export default function HtmlToUrlPage() {
               Code & <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Synthesize code or text into a shareable web link. Fast, anonymous production with hardware-native local fallback.
+              Convert raw code into a shareable link. Professional production with real-time hardware sync.
             </p>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-end gap-3">
              <div className="flex items-center gap-4">
                 <GetHelp toolId="html-to-url" />
-                <div className="px-4 py-2 rounded-xl bg-secondary border border-border flex items-center gap-3">
-                   <div className={cn("w-2 h-2 rounded-full", user ? "bg-green-500 animate-pulse" : "bg-white/10")} />
-                   <span className="text-[10px] font-black uppercase text-foreground/40 tracking-widest">
-                      {user ? `Guest-${user.uid.substring(user.uid.length - 6).toUpperCase()}` : 'Initializing...'}
-                   </span>
-                </div>
+                {!user ? (
+                  <Button 
+                    onClick={handleGuestLogin} 
+                    disabled={isLoggingIn}
+                    className="h-11 px-6 bg-primary text-white font-black uppercase text-[10px] rounded-xl shadow-xl shadow-primary/20"
+                  >
+                    {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4 mr-2" />}
+                    Login as Guest
+                  </Button>
+                ) : (
+                  <div className="px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-3">
+                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                     <span className="text-[10px] font-black uppercase text-green-600 tracking-widest">
+                        Guest ready
+                     </span>
+                  </div>
+                )}
              </div>
+             {errorCode && <p className="text-[10px] font-bold text-red-500 uppercase">{errorCode}</p>}
           </div>
         </div>
       </div>
@@ -307,11 +294,11 @@ export default function HtmlToUrlPage() {
               </CardHeader>
               <CardContent className="pt-10 space-y-8">
                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Document Title</Label>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Title</Label>
                     <Input 
                       value={title}
                       onChange={e => setTitle(e.target.value)}
-                      placeholder="ENTER PAGE TITLE..."
+                      placeholder="ENTER TITLE..."
                       className="h-14 bg-secondary border-border rounded-2xl text-lg font-bold px-6 focus:ring-primary/40 uppercase"
                     />
                  </div>
@@ -319,9 +306,7 @@ export default function HtmlToUrlPage() {
                  <div className="space-y-4">
                     <div className="flex justify-between items-center px-1">
                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Source Code</Label>
-                      <span className={cn("text-[9px] font-mono", html.length > 150000 ? "text-red-500" : "text-primary/60")}>
-                        {Math.round(html.length / 1024)} KB / 150 KB
-                      </span>
+                      <span className="text-[9px] font-mono text-primary/60">{html.length.toLocaleString()} Chars</span>
                     </div>
                     <Textarea 
                       value={html}
@@ -335,23 +320,13 @@ export default function HtmlToUrlPage() {
                     <Button 
                       type="button"
                       onClick={handleMakeLink}
-                      disabled={!html.trim() || isProcessing || html.length > 150000}
+                      disabled={!html.trim() || isProcessing}
                       className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 active:scale-95"
                     >
                       {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
                       Publish Link
                     </Button>
                  </div>
-
-                 {errorMessage && (
-                   <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3">
-                      <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-                      <p className="text-[10px] font-bold uppercase tracking-widest leading-relaxed">
-                        Cloud Error: {errorMessage} <br />
-                        <span className="text-[8px] opacity-60">Identity is preserved in your browser only.</span>
-                      </p>
-                   </div>
-                 )}
               </CardContent>
             </Card>
 
@@ -359,9 +334,9 @@ export default function HtmlToUrlPage() {
             <Card className="glass-card border-border shadow-xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                   <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                    <History className="w-4 h-4 text-primary" /> Local Registry
+                    <History className="w-4 h-4 text-primary" /> My Links
                   </CardTitle>
-                  <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Total</span>
+                  <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Saved</span>
               </CardHeader>
               <CardContent className="p-0">
                   {!localHistory.length ? (
@@ -408,13 +383,10 @@ export default function HtmlToUrlPage() {
         {/* Preview Column */}
         <div className="lg:col-span-6 xl:col-span-6 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
           <div className={cn("space-y-8", activeView === 'edit' ? "max-lg:hidden" : "block")}>
-            <Card className={cn(
-              "glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px]",
-              (effectiveLanguage === 'html' || effectiveLanguage === 'css' || effectiveLanguage === 'javascript') ? "bg-white" : "bg-[#0a0a0c]"
-            )}>
+            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-white">
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
-                    {['html', 'css', 'javascript'].includes(effectiveLanguage) ? <Eye className="w-3.5 h-3.5" /> : <Terminal className="w-3.5 h-3.5" />}
+                    <Eye className="w-3.5 h-3.5" />
                     Live Monitor
                  </CardTitle>
               </CardHeader>
@@ -434,7 +406,7 @@ export default function HtmlToUrlPage() {
               <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden relative animate-in zoom-in duration-500">
                  <CardHeader className="py-8 border-b border-primary/10">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.5em] flex items-center gap-3 text-primary">
-                      <CheckCircle2 className="w-4 h-4" /> Destination Signal Ready
+                      <CheckCircle2 className="w-4 h-4" /> Link Active
                     </CardTitle>
                  </CardHeader>
                  <CardContent className="pt-10 space-y-8 text-center">
@@ -446,7 +418,7 @@ export default function HtmlToUrlPage() {
                           {isCopied === 'link' ? 'Copied' : 'Copy Link'}
                        </Button>
                        <Button asChild variant="outline" className="h-14 px-8 rounded-2xl border-white/10 bg-white/5 text-white">
-                          <a href={`/p/${generatedId}`} target="_blank"><ExternalLink className="w-4 h-4 mr-2" /> Open Live</a>
+                          <a href={`/p/${generatedId}`} target="_blank"><ExternalLink className="w-4 h-4 mr-2" /> Open</a>
                        </Button>
                     </div>
                  </CardContent>
@@ -458,9 +430,9 @@ export default function HtmlToUrlPage() {
                   <ShieldCheck className="w-7 h-7" />
                </div>
                <div className="space-y-2">
-                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local-First Recovery</h4>
+                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local Privacy</h4>
                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                   Documents are cached to hardware memory immediately. This ensures your links work on your device even if cloud synchronization experiences latency.
+                   Your document identity is unique and secure. History is preserved locally on this hardware for rapid retrieval.
                  </p>
                </div>
             </div>

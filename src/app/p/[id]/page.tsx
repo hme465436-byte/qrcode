@@ -30,17 +30,12 @@ export default function HostedPageViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
-  const [source, setSource] = useState<'cloud' | 'local' | null>(null);
 
   useEffect(() => {
     if (!id) return;
 
     const fetchPage = async () => {
-      // 1. Hardware Memory Dual-Check (Local Fallback)
-      const localKey = "kit_page_" + id;
-      const localRaw = localStorage.getItem(localKey);
-      
-      // 2. Global Registry Check
+      // 1. Check Global Registry
       if (firestore) {
         try {
           const docRef = doc(firestore, "pages", id as string);
@@ -48,26 +43,26 @@ export default function HostedPageViewer() {
           
           if (docSnap.exists()) {
             setData(docSnap.data() as any);
-            setSource('cloud');
             setLoading(false);
             return;
           }
         } catch (err: any) {
-          console.error("Fetch failure", err);
+          console.warn("Firestore fetch error", err);
         }
       }
 
-      // 3. Fallback to Local if Cloud absent
+      // 2. Local Hardware Fallback
+      const localKey = "kit_page_" + id;
+      const localRaw = localStorage.getItem(localKey);
       if (localRaw) {
         try {
           setData(JSON.parse(localRaw));
-          setSource('local');
           setLoading(false);
           return;
         } catch (e) {}
       }
 
-      setError("Page not found in registry.");
+      setError("This link does not exist");
       setLoading(false);
     };
 
@@ -97,8 +92,7 @@ export default function HostedPageViewer() {
       <div className="fixed inset-0 bg-[#0a0a0c] flex flex-col items-center justify-center p-6 text-center gap-10">
         <AlertCircle className="w-12 h-12 text-destructive animate-bounce" />
         <div className="space-y-2">
-           <h2 className="text-xl font-headline font-black text-white uppercase">Page Not Found</h2>
-           <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{error}</p>
+           <h2 className="text-xl font-headline font-black text-white uppercase">{error}</h2>
         </div>
         <Button asChild variant="outline" className="h-12 px-8 rounded-xl border-white/10 bg-white/5 text-white font-black uppercase text-[10px]">
            <Link href="/html-to-url">Back to Studio</Link>
@@ -129,7 +123,7 @@ export default function HostedPageViewer() {
                   </div>
                   <div className="space-y-0.5">
                      <h2 className="text-sm font-black uppercase text-white tracking-widest truncate max-w-[200px]">{data.title}</h2>
-                     <p className="text-[8px] font-bold text-white/20 uppercase tracking-[0.2em]">{source === 'local' ? 'Local Memory' : 'Cloud Registry'}</p>
+                     <p className="text-[8px] font-bold text-white/20 uppercase tracking-[0.2em]">Verified Secure</p>
                   </div>
                </div>
                <Button onClick={handleCopy} className="h-10 px-6 rounded-xl bg-white text-black font-black uppercase text-[9px] tracking-widest">
