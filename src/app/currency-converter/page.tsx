@@ -17,7 +17,11 @@ import {
   ArrowRight,
   Loader2,
   Banknote,
-  Globe
+  Globe,
+  Copy,
+  History,
+  TrendingDown,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,7 +41,22 @@ const CURRENCIES = [
   { code: 'EUR', label: 'Euro', flag: '🇪🇺' },
   { code: 'GBP', label: 'British Pound', flag: '🇬🇧' },
   { code: 'INR', label: 'Indian Rupee', flag: '🇮🇳' },
+  { code: 'TRY', label: 'Turkish Lira', flag: '🇹🇷' },
+  { code: 'CNY', label: 'Chinese Yuan', flag: '🇨🇳' },
 ];
+
+const HISTORY_KEY = 'mykit_currency_history_v2';
+const QUICK_AMOUNTS = [1, 10, 100, 1000, 50000];
+
+interface HistoryItem {
+  id: string;
+  from: string;
+  to: string;
+  amount: number;
+  result: number;
+  rate: number;
+  timestamp: number;
+}
 
 export default function CurrencyConverterPage() {
   const { toast } = useToast();
@@ -53,13 +72,37 @@ export default function CurrencyConverterPage() {
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [isCopied, setIsCopied] = useState(false);
 
-  const fetchRates = async () => {
+  // --- Initialize Session ---
+  useEffect(() => {
+    const saved = localStorage.getItem(HISTORY_KEY);
+    if (saved) {
+      try { setHistory(JSON.parse(saved)); } catch (e) {}
+    }
+  }, []);
+
+  const saveToHistory = (res: number, currentRate: number) => {
+    const item: HistoryItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      from: fromCurrency,
+      to: toCurrency,
+      amount: parseFloat(amount),
+      result: res,
+      rate: currentRate,
+      timestamp: Date.now()
+    };
+    const next = [item, ...history.filter(h => !(h.from === fromCurrency && h.to === toCurrency && h.amount === parseFloat(amount)))].slice(0, 8);
+    setHistory(next);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  };
+
+  const fetchRates = async (silent = false) => {
     if (!amount || parseFloat(amount) <= 0) return;
     
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     setError(null);
-    setResult(null);
 
     const endpoints = [
       { 
@@ -91,11 +134,13 @@ export default function CurrencyConverterPage() {
         const parsed = endpoint.parser(data);
         
         if (parsed.rate) {
+          const res = parseFloat(amount) * parsed.rate;
           setRate(parsed.rate);
-          setResult(parseFloat(amount) * parsed.rate);
+          setResult(res);
           setLastUpdate(parsed.time);
+          saveToHistory(res, parsed.rate);
           success = true;
-          toast({ title: "Signal Isolated", description: `Rates synchronized via ${endpoint.source}.` });
+          if (!silent) toast({ title: "Signal Isolated", description: `Rates synchronized via ${endpoint.source}.` });
           break;
         }
       } catch (err) {
@@ -105,10 +150,10 @@ export default function CurrencyConverterPage() {
 
     if (!success) {
       setError("Matrix Retrieval Failure: Financial nodes are unreachable.");
-      toast({ variant: "destructive", title: "Sync Failed" });
+      if (!silent) toast({ variant: "destructive", title: "Sync Failed" });
     }
     
-    setIsLoading(false);
+    if (!silent) setIsLoading(false);
   };
 
   const handleSwap = () => {
@@ -116,6 +161,15 @@ export default function CurrencyConverterPage() {
     setToCurrency(fromCurrency);
     setResult(null);
     setRate(null);
+  };
+
+  const handleCopy = () => {
+    if (result === null) return;
+    const text = `${amount} ${fromCurrency} = ${result.toFixed(2)} ${toCurrency}\nRate: 1 ${fromCurrency} = ${rate?.toFixed(4)} ${toCurrency}\nTime: ${lastUpdate}`;
+    navigator.clipboard.writeText(text);
+    setIsCopied(true);
+    toast({ title: "Result Copied" });
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const handleClear = () => {
@@ -126,8 +180,14 @@ export default function CurrencyConverterPage() {
     toast({ title: "Studio Reset" });
   };
 
+  const purgeHistory = () => {
+    setHistory([]);
+    localStorage.removeItem(HISTORY_KEY);
+    toast({ title: "History Purged" });
+  };
+
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-6xl">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Coins className="w-3.5 h-3.5" /> Fiscal Suite
@@ -135,7 +195,7 @@ export default function CurrencyConverterPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-              Currency <span className="text-primary italic">Converter</span>
+              Currency <span className="text-primary italic">Converter Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
               Professional exchange rate matrix. Convert global currencies locally with real-time market calibration and fallback protocol reliability.
@@ -172,6 +232,22 @@ export default function CurrencyConverterPage() {
                     <div className="absolute left-6 top-1/2 -translate-y-1/2 text-foreground/20 font-black text-lg group-focus-within/amt:text-primary transition-colors">
                       {CURRENCIES.find(c => c.code === fromCurrency)?.flag}
                     </div>
+                  </div>
+                  
+                  {/* Quick Chips */}
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {QUICK_AMOUNTS.map(val => (
+                      <button
+                        key={val}
+                        onClick={() => setAmount(val.toString())}
+                        className={cn(
+                          "px-4 py-1.5 rounded-lg border text-[8px] font-black uppercase tracking-widest transition-all",
+                          parseFloat(amount) === val ? "bg-primary text-white border-primary shadow-lg" : "bg-secondary/50 border-border text-foreground/40 hover:text-primary"
+                        )}
+                      >
+                        {val.toLocaleString()}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -218,28 +294,64 @@ export default function CurrencyConverterPage() {
                 </div>
               </div>
 
-              <Button 
-                onClick={fetchRates} 
-                disabled={isLoading || !amount} 
-                className="h-16 w-full bg-primary text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
-              >
-                 {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 mr-3" />}
-                 Execute Conversion
-              </Button>
+              <div className="flex gap-4">
+                <Button 
+                  onClick={() => fetchRates()} 
+                  disabled={isLoading || !amount} 
+                  className="h-16 flex-1 bg-primary text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                >
+                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 mr-3" />}
+                  Execute Conversion
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => fetchRates(true)}
+                  disabled={isLoading || !amount}
+                  className="h-16 w-16 rounded-2xl border-border bg-secondary hover:text-primary transition-all"
+                >
+                   <RefreshCcw className={cn("w-6 h-6", isLoading && "animate-spin")} />
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
-          <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-             <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <ShieldCheck className="w-7 h-7" />
-             </div>
-             <div className="space-y-2">
-               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
-               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                 Conversion payloads are processed strictly within your browser. We do not store or transmit your financial data to any remote database.
-               </p>
-             </div>
-          </div>
+          {/* History Tracker */}
+          <Card className="glass-card border-border shadow-xl overflow-hidden flex flex-col min-h-[300px]">
+             <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                   <History className="w-4 h-4 text-primary" />
+                   <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Archive Matrix</CardTitle>
+                </div>
+                {history.length > 0 && (
+                   <button onClick={purgeHistory} className="text-[9px] font-black text-foreground/20 hover:text-red-500 uppercase transition-colors">Purge</button>
+                )}
+             </CardHeader>
+             <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1">
+                {history.length === 0 ? (
+                  <div className="py-20 text-center opacity-10 space-y-4">
+                     <Activity className="w-10 h-10 mx-auto" />
+                     <p className="text-[10px] font-black uppercase tracking-widest">Zero Matrix History</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/5">
+                     {history.map(item => (
+                       <div key={item.id} className="p-5 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => { setAmount(item.amount.toString()); setFromCurrency(item.from); setToCurrency(item.to); setResult(item.result); setRate(item.rate); }}>
+                          <div className="flex items-center gap-4 overflow-hidden">
+                             <div className="w-10 h-10 rounded-xl bg-secondary border border-white/5 flex items-center justify-center text-primary/40 group-hover:text-primary transition-colors shrink-0 shadow-inner font-mono text-[9px] font-bold">
+                                {item.from}
+                             </div>
+                             <div className="min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate uppercase">{item.amount} {item.from} → {item.result.toFixed(2)} {item.to}</p>
+                                <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
+                             </div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-primary transition-all" />
+                       </div>
+                     ))}
+                  </div>
+                )}
+             </CardContent>
+          </Card>
         </div>
 
         {/* Results - Right */}
@@ -307,10 +419,11 @@ export default function CurrencyConverterPage() {
                     </div>
 
                     <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row gap-4">
-                       <Button onClick={() => { navigator.clipboard.writeText(`${amount} ${fromCurrency} = ${result.toFixed(2)} ${toCurrency}`); toast({ title: "Result Copied" }); }} className="h-16 flex-1 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-white/90">
+                       <Button onClick={handleCopy} className="h-16 flex-1 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-white/90 transition-all active:scale-95">
+                          {isCopied ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                           Copy Fiscal Report
                        </Button>
-                       <Button onClick={fetchRates} variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                       <Button onClick={() => fetchRates()} variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
                           <RefreshCcw className="w-5 h-5" />
                        </Button>
                     </div>
@@ -318,12 +431,40 @@ export default function CurrencyConverterPage() {
                )}
             </CardContent>
           </Card>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <ShieldCheck className="w-7 h-7" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Absolute</h4>
+                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                    Conversion payloads are processed strictly within your browser. We do not store or transmit your financial data to any remote database.
+                  </p>
+                </div>
+             </div>
+             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <Globe className="w-7 h-7" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Market Accuracy</h4>
+                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                    Real-time market data sourced via dual-pass API protocols ensure mid-market exchange rates with 1:1 fiscal fidelity.
+                  </p>
+                </div>
+             </div>
+          </div>
         </div>
       </div>
       
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
       `}</style>
     </div>
   );
