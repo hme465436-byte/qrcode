@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -28,7 +27,8 @@ import {
   Minus,
   Sparkles,
   RefreshCcw,
-  Search
+  Search,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -181,8 +181,8 @@ export default function WatermarkCleanerPage() {
     const sensitivity = 40;
     for (let y = 1; y < canvas.height - 1; y += 2) {
       for (let x = 1; x < canvas.width - 1; x += 2) {
-        const i = (y * canvas.width + x) * 4;
-        const diff = Math.abs(data[i] - data[i + 4]) + Math.abs(data[i] - data[i + canvas.width * 4]);
+        const idx = (y * canvas.width + x) * 4;
+        const diff = Math.abs(data[idx] - data[idx + 4]) + Math.abs(data[idx] - data[idx + canvas.width * 4]);
         if (diff > sensitivity) {
           mCtx.fillRect(x - 5, y - 5, 10, 10);
         }
@@ -217,7 +217,7 @@ export default function WatermarkCleanerPage() {
     
     // Core Pixel Diffusion Matrix
     // We execute 5 passes of local inpainting
-    for (let pass = 0; i < 5; i++) {
+    for (let pass = 0; pass < 5; pass++) {
        const imgData = ctx.getImageData(0, 0, width, height);
        const maskData = mCtx.getImageData(0, 0, width, height);
        const pixels = imgData.data;
@@ -311,7 +311,7 @@ export default function WatermarkCleanerPage() {
                    <Button variant="outline" size="sm" onClick={undo} disabled={history.length === 0} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest">
                       <Undo2 className="w-3.5 h-3.5 mr-2" /> Undo
                    </Button>
-                   <Button variant="outline" size="sm" onClick={() => { setImage(null); setLoadedImage(null); setHistory([]); }} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
+                   <Button variant="outline" size="sm" onClick={() => { setImage(null); setLoadedImage(null); setHistory([]); }} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
                       <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
                    </Button>
                 </div>
@@ -431,7 +431,7 @@ export default function WatermarkCleanerPage() {
                        <button onClick={() => setMode('brush')} className={cn("flex-1 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase transition-all", mode === 'brush' ? "bg-primary text-white" : "text-foreground/40 hover:text-foreground")}>
                           <Eraser className="w-4 h-4" /> Brush
                        </button>
-                       <button onClick={() => setMode('auto')} className={cn("flex-1 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase transition-all", mode === 'auto' ? "bg-primary text-white" : "text-foreground/40 hover:text-foreground")}>
+                       <button onClick={() => setMode('auto')} className={cn("flex-1 rounded-xl flex items-center justify-center gap-2 text-[10px) font-black uppercase transition-all", mode === 'auto' ? "bg-primary text-white" : "text-foreground/40 hover:text-foreground")}>
                           <Wand2 className="w-4 h-4" /> Auto Text
                        </button>
                     </div>
@@ -512,3 +512,4 @@ export default function WatermarkCleanerPage() {
     </div>
   );
 }
+
