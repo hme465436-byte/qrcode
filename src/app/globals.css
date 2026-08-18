@@ -48,6 +48,16 @@
 }
 
 @layer base {
+  html, body, * {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
   html, body {
     @apply overflow-x-hidden w-full;
     max-width: 100%;
@@ -175,16 +185,6 @@
   @apply animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out fill-mode-both;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-primary/10 rounded-full hover:bg-primary/20 transition-colors;
-}
-
 .stagger-1 { animation-delay: 100ms; }
 .stagger-2 { animation-delay: 200ms; }
 .stagger-3 { animation-delay: 300ms; }
@@ -213,12 +213,4 @@ button {
 
 .markdown-preview td {
   @apply border-b border-t-0 border-x-0;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
