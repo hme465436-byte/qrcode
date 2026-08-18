@@ -10,7 +10,8 @@ import {
   ArrowLeft,
   Copy,
   CheckCircle2,
-  FileCode
+  FileCode,
+  Globe
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -19,24 +20,20 @@ import { useToast } from '@/hooks/use-toast';
 export default function HostedPageViewer() {
   const { id } = useParams();
   const { toast } = useToast();
-  const [data, setData] = useState<{ html: string; title: string; language?: string } | null>(null);
+  const [html, setHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     if (!id) return;
 
     const fetchPage = async () => {
-      // 1. Check Local Hardware Memory first
-      const localKey = "kit_page_" + id;
-      const localRaw = localStorage.getItem(localKey);
-      if (localRaw) {
-        try {
-          setData(JSON.parse(localRaw));
-          setLoading(false);
-          return;
-        } catch (e) {}
+      // 1. Check Local Hardware Memory first (Highest Priority)
+      const localData = localStorage.getItem("kit_page_" + id);
+      if (localData) {
+        setHtml(localData);
+        setLoading(false);
+        return;
       }
 
       // 2. Check Global Database
@@ -46,16 +43,15 @@ export default function HostedPageViewer() {
           const docSnap = await getDoc(docRef);
           
           if (docSnap.exists()) {
-            setData(docSnap.data() as any);
+            setHtml(docSnap.data()?.html || null);
             setLoading(false);
             return;
           }
-        } catch (err: any) {
-          console.warn("Fetch failed", err);
+        } catch (err) {
+          console.warn("Fetch error:", err);
         }
       }
 
-      setError("This link does not exist");
       setLoading(false);
     };
 
@@ -63,8 +59,8 @@ export default function HostedPageViewer() {
   }, [id]);
 
   const handleCopy = () => {
-    if (data?.html) {
-      navigator.clipboard.writeText(data.html);
+    if (html) {
+      navigator.clipboard.writeText(html);
       setIsCopied(true);
       toast({ title: "Copied" });
       setTimeout(() => setIsCopied(false), 2000);
@@ -80,13 +76,11 @@ export default function HostedPageViewer() {
     );
   }
 
-  if (error || !data) {
+  if (!html) {
     return (
       <div className="fixed inset-0 bg-[#0a0a0c] flex flex-col items-center justify-center p-6 text-center gap-10">
         <AlertCircle className="w-12 h-12 text-destructive animate-bounce" />
-        <div className="space-y-2">
-           <h2 className="text-xl font-headline font-black text-white uppercase">{error}</h2>
-        </div>
+        <h2 className="text-xl font-headline font-black text-white uppercase tracking-tight">This link does not exist</h2>
         <Button asChild variant="outline" className="h-12 px-8 rounded-xl border-white/10 bg-white/5 text-white font-black uppercase text-[10px]">
            <Link href="/html-to-url">Back to Studio</Link>
         </Button>
@@ -94,16 +88,16 @@ export default function HostedPageViewer() {
     );
   }
 
-  const isHtml = data.language === 'html' || (!data.language && (data.html.includes('<html') || data.html.includes('<!doctype')));
+  const isHtmlTag = html.toLowerCase().includes('<html') || html.toLowerCase().includes('<!doctype') || html.toLowerCase().includes('<body');
 
   return (
     <div className="fixed inset-0 bg-white dark:bg-[#0a0a0c] flex flex-col">
-       <title>{data.title} | MY KIT TOOL</title>
+       <title>MY KIT TOOL | Page View</title>
        
-       {isHtml ? (
+       {isHtmlTag ? (
          <iframe 
-          srcDoc={data.html}
-          title={data.title}
+          srcDoc={html}
+          title="HTML Preview"
           sandbox="allow-scripts allow-forms"
           className="flex-1 w-full h-full border-none block"
          />
@@ -115,7 +109,7 @@ export default function HostedPageViewer() {
                      <FileCode className="w-5 h-5" />
                   </div>
                   <div className="space-y-0.5">
-                     <h2 className="text-sm font-black uppercase text-white tracking-widest truncate max-w-[200px]">{data.title}</h2>
+                     <h2 className="text-sm font-black uppercase text-white tracking-widest">Shared Code</h2>
                      <p className="text-[8px] font-bold text-white/20 uppercase tracking-[0.2em]">Verified Secure</p>
                   </div>
                </div>
@@ -127,14 +121,17 @@ export default function HostedPageViewer() {
             
             <div className="flex-1 overflow-auto custom-scrollbar p-8 sm:p-12">
                <pre className="max-w-5xl mx-auto font-mono text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap break-all bg-black/40 p-10 rounded-[2.5rem] border border-white/5 shadow-inner">
-                  {data.html}
+                  {html}
                </pre>
             </div>
          </div>
        )}
 
-       <div className="h-10 bg-[#0a0a0c] border-t border-white/10 px-6 flex items-center justify-between shrink-0 z-50">
-          <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">ID: {id}</span>
+       <div className="h-12 bg-[#0a0a0c] border-t border-white/10 px-6 flex items-center justify-between shrink-0 z-50">
+          <div className="flex items-center gap-2">
+            <Globe className="w-3 h-3 text-white/20" />
+            <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">ID: {id}</span>
+          </div>
           <Link href="/html-to-url" className="flex items-center gap-2 text-[9px] font-black text-primary uppercase tracking-widest hover:text-white transition-all">
              STUDIO <ArrowLeft className="w-3 h-3 rotate-180" />
           </Link>
