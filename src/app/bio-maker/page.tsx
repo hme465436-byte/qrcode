@@ -33,7 +33,9 @@ import {
   Search,
   LayoutGrid,
   MoreVertical,
-  Check
+  Check,
+  Settings2,
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,7 +50,6 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -60,6 +61,7 @@ type Mood = 'Real' | 'Aesthetic' | 'Love' | 'Ego' | 'Angry' | 'Funny' | 'Simple'
 type FontStyle = 'Normal' | 'Bold' | 'Italic' | 'Cursive' | 'Small Caps';
 type EmojiDensity = 'none' | 'low' | 'normal' | 'extra';
 type LanguageMode = 'english' | 'urdu' | 'mix';
+type LengthMode = 'short' | 'medium';
 
 const PLATFORM_LIMITS: Record<Platform, number> = {
   Instagram: 150,
@@ -159,24 +161,11 @@ export default function AdvancedBioMakerPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedBioId, setSelectedBioId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('mykit_bio_favs_pro');
-    if (saved) try { setFavorites(JSON.parse(saved)); } catch(e) {}
-    
-    // Initial batch
-    generateBatch(false);
-  }, []);
-
-  const saveFavs = (newFavs: BioResult[]) => {
-    setFavorites(newFavs);
-    localStorage.setItem('mykit_bio_favs_pro', JSON.stringify(newFavs));
-  };
-
-  const getEmojiSet = (m: Mood, density: EmojiDensity) => {
+  const getEmojiSet = useCallback((m: Mood, density: EmojiDensity) => {
     const count = density === 'none' ? 0 : density === 'low' ? 1 : density === 'normal' ? 2 : 4;
     const pool = PHRASE_BANK[m].emojis;
     return Array.from({length: count}, () => pool[Math.floor(Math.random() * pool.length)]).join(' ');
-  };
+  }, []);
 
   const generateSingleBio = useCallback((targetMood: Mood) => {
     const banks = PHRASE_BANK[targetMood];
@@ -226,9 +215,9 @@ export default function AdvancedBioMakerPage() {
       font: 'Normal' as FontStyle,
       mood: targetMood
     };
-  }, [inputs, options, lineCount, emojiDensity, languageMode, myStyle]);
+  }, [inputs, options, lineCount, emojiDensity, languageMode, myStyle, getEmojiSet]);
 
-  const generateBatch = (append = false) => {
+  const generateBatch = useCallback((append = false) => {
     setIsGenerating(true);
     const newBatch: BioResult[] = [];
     for (let i = 0; i < 8; i++) {
@@ -239,6 +228,19 @@ export default function AdvancedBioMakerPage() {
     if (!append) setSelectedBioId(newBatch[0].id);
     setIsGenerating(false);
     toast({ title: append ? "Added 8 new variations" : "8 New Bios Synthesized" });
+  }, [generateSingleBio, mood, toast]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('mykit_bio_favs_pro');
+    if (saved) try { setFavorites(JSON.parse(saved)); } catch(e) {}
+    
+    // Initial batch
+    generateBatch(false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveFavs = (newFavs: BioResult[]) => {
+    setFavorites(newFavs);
+    localStorage.setItem('mykit_bio_favs_pro', JSON.stringify(newFavs));
   };
 
   const remixBio = (id: string) => {
@@ -268,6 +270,11 @@ export default function AdvancedBioMakerPage() {
     if (isFav) saveFavs(favorites.filter(f => f.id !== bio.id));
     else saveFavs([...favorites, bio]);
     toast({ title: isFav ? "Removed from favorites" : "Added to favorites" });
+  };
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Identity Copied" });
   };
 
   const selectedBio = useMemo(() => bios.find(b => b.id === selectedBioId) || bios[0], [bios, selectedBioId]);
@@ -394,7 +401,7 @@ export default function AdvancedBioMakerPage() {
                          { id: 'hobby', label: 'Hobby' },
                          { id: 'location', label: 'Loc' }
                        ].map(opt => (
-                         <div key={opt.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border group hover:border-primary/20 transition-all cursor-pointer" onClick={() => setOptions(prev => ({ ...prev, [opt.id]: !prev[opt.id as keyof typeof options] }))}>
+                         <div key={opt.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border group hover:border-primary/20 transition-all cursor-pointer" onClick={() => setOptions(prev => ({ ...prev, [opt.id as keyof typeof options]: !prev[opt.id as keyof typeof options] }))}>
                             <Checkbox checked={options[opt.id as keyof typeof options]} className="data-[state=checked]:bg-primary" />
                             <span className="text-[9px] font-black uppercase tracking-widest text-foreground/50">{opt.label}</span>
                          </div>
