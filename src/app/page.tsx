@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -132,7 +131,7 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
-    href: '/country-info', 
+    href: '/country', 
     icon: Globe, 
     title: 'Country Info', 
     desc: 'Isolate clinical profiles, flags, and geographic matrices of global nations.', 
