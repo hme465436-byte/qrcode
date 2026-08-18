@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Coins, 
   RefreshCcw, 
@@ -17,25 +17,36 @@ import {
   Info,
   CheckCircle2,
   DollarSign,
-  Clock
+  Clock,
+  Search,
+  Plus,
+  Trash2,
+  X,
+  TrendingDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Configuration Matrix ---
-const COINS = [
-  { id: 'bitcoin', symbol: 'BTC', label: 'Bitcoin' },
-  { id: 'ethereum', symbol: 'ETH', label: 'Ethereum' },
-  { id: 'tether', symbol: 'USDT', label: 'Tether' },
-  { id: 'binancecoin', symbol: 'BNB', label: 'BNB' },
-  { id: 'solana', symbol: 'SOL', label: 'Solana' },
+const DEFAULT_COINS = [
+  { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' },
+  { id: 'ethereum', symbol: 'ETH', name: 'Ethereum' },
+  { id: 'tether', symbol: 'USDT', name: 'Tether' },
+  { id: 'binancecoin', symbol: 'BNB', name: 'BNB' },
+  { id: 'solana', symbol: 'SOL', name: 'Solana' },
+  { id: 'ripple', symbol: 'XRP', name: 'XRP' },
+  { id: 'dogecoin', symbol: 'DOGE', name: 'Dogecoin' },
+  { id: 'cardano', symbol: 'ADA', name: 'Cardano' },
 ];
 
-const API_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether,binancecoin,solana&vs_currencies=usd,pkr&include_24hr_change=true';
+const SEARCH_API = 'https://api.coingecko.com/api/v3/search?query=';
+const PRICE_API_BASE = 'https://api.coingecko.com/api/v3/simple/price';
+const PERSIST_KEY = 'mykit_crypto_watchlist_v3';
 
 interface PriceData {
   [key: string]: {
@@ -45,19 +56,63 @@ interface PriceData {
   };
 }
 
+interface CoinIdentity {
+  id: string;
+  symbol: string;
+  name: string;
+  thumb?: string;
+}
+
 export default function CryptoPricesPage() {
   const { toast } = useToast();
+  
+  // State Matrix
+  const [watchlist, setWatchlist] = useState<CoinIdentity[]>(DEFAULT_COINS);
   const [prices, setPrices] = useState<PriceData | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<number | null>(null);
 
+  // --- Persistence Handshake ---
+  useEffect(() => {
+    const saved = localStorage.getItem(PERSIST_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setWatchlist(parsed);
+        }
+      } catch (e) {
+        console.error("Watchlist reconstruction failed.");
+      }
+    }
+  }, []);
+
+  const saveWatchlist = (newList: CoinIdentity[]) => {
+    setWatchlist(newList);
+    localStorage.setItem(PERSIST_KEY, JSON.stringify(newList));
+  };
+
+  // --- Telemetry Protocols ---
+
   const fetchPrices = useCallback(async (silent = false) => {
+    if (watchlist.length === 0) return;
     if (!silent) setIsLoading(true);
     setError(null);
 
+    const ids = watchlist.map(c => c.id).join(',');
+    const url = `${PRICE_API_BASE}?ids=${ids}&vs_currencies=usd,pkr&include_24hr_change=true`;
+
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(url);
+      
+      if (response.status === 429) {
+        setError("Rate Limit Active: Global discovery nodes are throttled. Please wait 60 seconds.");
+        return;
+      }
+
       if (!response.ok) throw new Error("Financial nodes unreachable.");
       
       const data = await response.json();
@@ -76,21 +131,68 @@ export default function CryptoPricesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [watchlist, toast]);
 
   useEffect(() => {
     fetchPrices();
-    // Auto-refresh every 60 seconds if tab is active
     const interval = setInterval(() => fetchPrices(true), 60000);
     return () => clearInterval(interval);
   }, [fetchPrices]);
+
+  const handleSearch = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!searchQuery.trim() || isSearching) return;
+
+    setIsSearching(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${SEARCH_API}${encodeURIComponent(searchQuery.trim())}`);
+      if (res.status === 429) {
+         setError("Search Throttled: discovery node restricted. Wait 60s.");
+         return;
+      }
+      const data = await res.json();
+      
+      if (data.coins && data.coins.length > 0) {
+        const found = data.coins[0];
+        const newCoin: CoinIdentity = {
+          id: found.id,
+          symbol: found.symbol.toUpperCase(),
+          name: found.name,
+          thumb: found.thumb
+        };
+
+        // Avoid duplicates in matrix
+        if (!watchlist.find(c => c.id === newCoin.id)) {
+          saveWatchlist([newCoin, ...watchlist]);
+          toast({ title: "Asset Integrated", description: `${newCoin.name} added to monitor.` });
+        } else {
+          toast({ title: "Asset Present", description: "Identity already exists in monitor." });
+        }
+        setSearchQuery('');
+      } else {
+        toast({ variant: "destructive", title: "Discovery Failed", description: "No asset identified for this query." });
+      }
+    } catch (err) {
+      setError("Search uplink failure.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const removeCoin = (id: string) => {
+    const next = watchlist.filter(c => c.id !== id);
+    saveWatchlist(next);
+    toast({ title: "Asset Purged" });
+  };
 
   const formatCurrency = (val: number, currency: 'USD' | 'PKR') => {
     return new Intl.NumberFormat(currency === 'PKR' ? 'en-PK' : 'en-US', {
       style: 'currency',
       currency: currency,
-      minimumFractionDigits: val < 1 ? 4 : 2,
-      maximumFractionDigits: val < 1 ? 6 : 2,
+      minimumFractionDigits: val < 0.1 ? 4 : 2,
+      maximumFractionDigits: val < 0.1 ? 6 : 2,
     }).format(val).replace('PKR', 'Rs.');
   };
 
@@ -101,11 +203,11 @@ export default function CryptoPricesPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
             <TrendingUp className="w-3.5 h-3.5" /> Market Telemetry
           </div>
-          <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
+          <h1 className="text-3xl md:text-5xl lg:text-7xl font-headline font-black text-foreground uppercase tracking-tight">
             Crypto <span className="text-primary italic">Prices Studio</span>
           </h1>
           <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional real-time financial matrix. Monitor Bitcoin, Ethereum, and major digital assets in USD and PKR with clinical precision.
+            Professional real-time financial matrix. Monitor global digital assets in USD and PKR with clinical precision. Search and expand your monitor in real-time.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
@@ -117,8 +219,89 @@ export default function CryptoPricesPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* Search & Management Column */}
+        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+              <CardHeader className="pb-8 border-b border-border bg-secondary/30">
+                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
+                    <Search className="w-5 h-5 text-primary" /> Discovery Protocol
+                 </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-10 space-y-6">
+                 <form onSubmit={handleSearch} className="space-y-4">
+                    <div className="relative group/input">
+                       <Input 
+                        placeholder="Search coin (e.g. Polkadot)..." 
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="h-16 bg-secondary border-border rounded-2xl text-sm font-bold px-6 focus:ring-primary/40 uppercase"
+                       />
+                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <Button 
+                            type="submit" 
+                            disabled={!searchQuery.trim() || isSearching}
+                            size="icon" 
+                            className="h-10 w-10 rounded-xl bg-primary text-white shadow-lg"
+                          >
+                             {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                          </Button>
+                       </div>
+                    </div>
+                    <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest text-center">Identifying via CoinGecko V3 Nodes</p>
+                 </form>
+
+                 <div className="pt-4 border-t border-white/5">
+                    <div className="flex justify-between items-center mb-4">
+                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Current Monitor</Label>
+                       <button onClick={() => saveWatchlist(DEFAULT_COINS)} className="text-[9px] font-black text-primary/40 hover:text-primary uppercase">Reset Default</button>
+                    </div>
+                    <div className="space-y-2 max-h-[300px] overflow-auto custom-scrollbar pr-2">
+                       {watchlist.map(coin => (
+                         <div key={coin.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border group/row hover:border-primary/20 transition-all">
+                            <div className="flex items-center gap-3">
+                               <div className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-primary/40 font-bold text-[10px] overflow-hidden">
+                                  {coin.thumb ? <img src={coin.thumb} className="w-full h-full object-cover" /> : coin.symbol.slice(0, 3)}
+                               </div>
+                               <div className="min-w-0">
+                                  <p className="text-[10px] font-bold text-foreground truncate uppercase">{coin.name}</p>
+                                  <p className="text-[8px] font-black text-foreground/20 uppercase">{coin.symbol}</p>
+                               </div>
+                            </div>
+                            <button onClick={() => removeCoin(coin.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-colors opacity-0 group-hover/row:opacity-100"><Trash2 className="w-3.5 h-3.5" /></button>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+              </CardContent>
+           </Card>
+
+           <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                 <Clock className="w-8 h-8 text-primary/40" />
+                 <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Last Signal Sync</p>
+                    <p className="text-sm font-bold text-foreground uppercase">
+                       {lastSync ? new Date(lastSync).toLocaleTimeString() : 'Awaiting...'}
+                    </p>
+                 </div>
+              </div>
+           </div>
+        </div>
+
         {/* Main Price Matrix */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-6 animate-in fade-in duration-1000 stagger-2">
+           {error && (
+             <div className="p-6 rounded-[2rem] bg-amber-500/10 border border-amber-500/20 flex items-start gap-4 animate-in shake duration-500">
+                <AlertCircle className="w-6 h-6 text-amber-600 mt-1 shrink-0" />
+                <div className="space-y-1">
+                   <h4 className="text-[11px] font-black uppercase tracking-widest text-amber-700">Protocol Notice</h4>
+                   <p className="text-[12px] text-foreground/50 font-medium leading-relaxed">{error}</p>
+                </div>
+             </div>
+           )}
+
            {isLoading && !prices && (
              <div className="min-h-[500px] flex flex-col items-center justify-center gap-8">
                 <div className="relative">
@@ -129,20 +312,9 @@ export default function CryptoPricesPage() {
              </div>
            )}
 
-           {error && (
-             <Card className="glass-card border-destructive/20 bg-destructive/5 p-12 text-center flex flex-col items-center gap-6">
-                <AlertCircle className="w-16 h-16 text-destructive animate-bounce" />
-                <div className="space-y-2">
-                   <h3 className="text-xl font-headline font-black text-destructive uppercase">Matrix Error</h3>
-                   <p className="text-[11px] text-foreground/40 font-bold uppercase max-w-sm mx-auto">{error}</p>
-                </div>
-                <Button onClick={() => fetchPrices()} className="h-12 bg-secondary border border-border text-foreground font-black rounded-xl text-[9px] uppercase tracking-widest">Restart Protocol</Button>
-             </Card>
-           )}
-
            {prices && (
              <div className="grid grid-cols-1 gap-4 animate-in fade-in duration-700">
-                {COINS.map((coin) => {
+                {watchlist.map((coin) => {
                   const data = prices[coin.id];
                   if (!data) return null;
                   const isUp = data.usd_24h_change >= 0;
@@ -151,11 +323,11 @@ export default function CryptoPricesPage() {
                     <Card key={coin.id} className="glass-card border-border shadow-xl hover:border-primary/30 transition-all group">
                        <CardContent className="p-6 sm:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
                           <div className="flex items-center gap-6">
-                             <div className="w-16 h-16 rounded-[1.5rem] bg-secondary border border-border flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform">
-                                <span className="text-xl font-black">{coin.symbol}</span>
+                             <div className="w-16 h-16 rounded-[1.5rem] bg-secondary border border-border flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform overflow-hidden">
+                                {coin.thumb ? <img src={coin.thumb} className="w-full h-full object-cover scale-150" /> : <span className="text-xl font-black">{coin.symbol.slice(0, 3)}</span>}
                              </div>
                              <div className="space-y-1">
-                                <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">{coin.label}</h3>
+                                <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">{coin.name}</h3>
                                 <div className="flex items-center gap-2">
                                    <Badge className={cn(
                                      "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
@@ -189,49 +361,6 @@ export default function CryptoPricesPage() {
                 })}
              </div>
            )}
-        </div>
-
-        {/* Sidebar */}
-        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-           <Card className="glass-card border-border shadow-xl">
-              <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground/60">
-                    <Activity className="w-5 h-5 text-primary" /> Session Intelligence
-                 </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 space-y-8">
-                 <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border flex flex-col items-center text-center gap-4">
-                    <Clock className="w-8 h-8 text-primary/40" />
-                    <div className="space-y-1">
-                       <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Last Signal Sync</p>
-                       <p className="text-sm font-bold text-foreground uppercase">
-                          {lastSync ? new Date(lastSync).toLocaleTimeString() : 'Awaiting...'}
-                       </p>
-                    </div>
-                 </div>
-
-                 <div className="space-y-6">
-                    <div className="flex gap-4 group/item">
-                       <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary/40 shrink-0 border border-border group-hover/item:text-primary transition-colors">
-                          <Globe className="w-5 h-5" />
-                       </div>
-                       <div className="min-w-0">
-                          <p className="text-[8px] font-black uppercase text-foreground/20 tracking-widest mb-0.5">Global Protocol</p>
-                          <h4 className="text-[11px] font-bold text-foreground truncate uppercase">CoinGecko V3 API</h4>
-                       </div>
-                    </div>
-                    <div className="flex gap-4 group/item">
-                       <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary/40 shrink-0 border border-border group-hover/item:text-primary transition-colors">
-                          <Zap className="w-5 h-5" />
-                       </div>
-                       <div className="min-w-0">
-                          <p className="text-[8px] font-black uppercase text-foreground/20 tracking-widest mb-0.5">Refresh Frequency</p>
-                          <h4 className="text-[11px] font-bold text-foreground truncate uppercase">60s Dynamic Cycle</h4>
-                       </div>
-                    </div>
-                 </div>
-              </CardContent>
-           </Card>
 
            <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
              <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
@@ -240,7 +369,7 @@ export default function CryptoPricesPage() {
              <div className="space-y-2">
                <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                 Price discovery is performed anonymously. No financial identifiers, wallets, or search queries are stored or transmitted.
+                 Price discovery is performed anonymously. Your watchlist is stored strictly in local browser memory and never transmitted to our infrastructure.
                </p>
              </div>
           </div>
