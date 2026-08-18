@@ -202,26 +202,29 @@ export default function TaxCalculatorPage() {
                     <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Tax Percentage (%)</Label>
                     <span className="text-primary font-mono font-bold text-lg">{rate}%</span>
                  </div>
-                 <div className="flex gap-4">
+                 <div className="flex items-center gap-4">
                     <Input 
                       type="number"
                       value={rate}
                       onChange={(e) => setRate(e.target.value)}
-                      className="h-14 w-32 bg-secondary border-border rounded-2xl text-xl font-bold text-center"
+                      className="h-14 w-32 bg-secondary border-border rounded-2xl text-xl font-bold text-center shrink-0"
                     />
-                    <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar py-1">
+                    {/* SCROLLABLE CHIPS MATRIX */}
+                    <div className="flex-1 flex flex-nowrap gap-2 overflow-x-auto no-scrollbar py-1 whitespace-nowrap">
                        {QUICK_RATES.map(r => (
                          <button
                           key={r}
                           onClick={() => setRate(r.toString())}
                           className={cn(
-                            "px-4 h-12 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
-                            parseFloat(rate) === r ? "bg-primary text-white border-primary" : "bg-secondary/50 border-border text-foreground/40 hover:border-primary/20"
+                            "px-5 h-12 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all shrink-0 inline-flex items-center justify-center",
+                            parseFloat(rate) === r ? "bg-primary text-primary-foreground border-primary shadow-lg" : "bg-secondary/50 border-border text-foreground/40 hover:border-primary/20"
                           )}
                          >
                            {r}%
                          </button>
                        ))}
+                       {/* Padding for end of scroll */}
+                       <div className="w-1 shrink-0" />
                     </div>
                  </div>
               </div>
