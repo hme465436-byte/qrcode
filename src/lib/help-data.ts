@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -28,6 +27,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Keep AI background opacity below 30% to ensure scannability.'
     ],
     privacy: 'All rendering occurs on your device. Your URLs and brand logos never leave your browser.'
+  },
+  'ip-finder': {
+    title: 'IP Finder Studio',
+    description: 'Advanced network identity extraction. Isolate your public IP and ISP node information.',
+    steps: [
+      'The studio automatically initializes an identity discovery handshake upon load.',
+      'Review the "Public Identity Protocol" to see your current public IP address.',
+      'Analyze the "Identity Matrix" for your ISP, City, and Sovereign Domain.',
+      'Use the "Optical Matrix" to see your coordinates and launch a Map Protocol.',
+      'Click "Refresh Matrix" to re-calibrate your signal identifiers.'
+    ],
+    tips: [
+      'If discovery fails, ensure your firewall is not blocking external edge APIs.',
+      'Use the copy button next to the IP address for rapid technical documentation.'
+    ],
+    privacy: 'All discovery lookups are performed via edge APIs. No identity data or IP records are stored on our servers.'
   },
   'wps-sheets': {
     title: 'WPS Sheets Studio',

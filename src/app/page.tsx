@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -90,7 +89,8 @@ import {
   Maximize2,
   Keyboard,
   ChevronDown,
-  Gauge
+  Gauge,
+  MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -134,6 +134,17 @@ const TOOLS: Tool[] = [
     color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['speed test', 'internet speed', 'mbps', 'ping', 'download speed', 'upload speed', 'wifi test'],
+    category: 'utilities'
+  },
+  { 
+    href: '/ip-finder', 
+    icon: MapPin, 
+    title: 'IP Finder', 
+    desc: 'Isolate network identity, ISP, and geographic coordinates.', 
+    label: 'INTEL', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['ip finder', 'my ip', 'what is my ip', 'isp finder', 'location from ip', 'public ip'],
     category: 'utilities'
   },
   { 
@@ -945,7 +956,7 @@ const TOOLS: Tool[] = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
     category: 'utilities'
@@ -1105,7 +1116,7 @@ export default function Home() {
       'Hide text in image', 'Secret photo', 'Stenography', 'Temp Room', 'Clipboard share', 
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
       'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
-      'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed'
+      'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
