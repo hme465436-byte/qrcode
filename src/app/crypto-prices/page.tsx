@@ -98,6 +98,7 @@ export default function CryptoPricesPage() {
   const [displayCurrency, setDisplayCurrency] = useState<'USD' | 'PKR'>('USD');
   const [error, setError] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<number | null>(null);
+  const [geoCity, setGeoCity] = useState<string>('Global Node');
 
   // --- Persistence Handshake ---
   useEffect(() => {
@@ -112,6 +113,16 @@ export default function CryptoPricesPage() {
         console.error("Watchlist reconstruction failed.");
       }
     }
+
+    // Geocoding Handshake
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(data => {
+        if (data.city && data.country_name) {
+          setGeoCity(`${data.city}, ${data.country_name}`);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const saveWatchlist = (newList: CoinIdentity[]) => {
@@ -312,7 +323,7 @@ export default function CryptoPricesPage() {
                          <div key={coin.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border group/row hover:border-primary/20 transition-all">
                             <div className="flex items-center gap-3">
                                <div className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-primary/40 font-bold text-[10px] overflow-hidden shadow-inner">
-                                  {coin.thumb ? <img src={coin.thumb} className="w-full h-full object-cover" /> : coin.symbol.slice(0, 3)}
+                                  {coin.thumb ? <img src={coin.thumb} className="w-full h-full object-cover" alt={coin.name} /> : coin.symbol.slice(0, 3)}
                                </div>
                                <div className="min-w-0">
                                   <p className="text-[10px] font-bold text-foreground truncate uppercase">{coin.name}</p>
@@ -340,8 +351,8 @@ export default function CryptoPricesPage() {
               <div className="flex items-center gap-4">
                  <Globe className="w-10 h-10 text-primary/40 shrink-0" />
                  <div className="space-y-1">
-                    <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Network Location</p>
-                    <p className="text-sm font-bold text-foreground uppercase truncate">{location || 'Global Discovery'}</p>
+                    <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Network Node</p>
+                    <p className="text-sm font-bold text-foreground uppercase truncate">{geoCity || 'Global Discovery'}</p>
                  </div>
               </div>
            </div>
@@ -372,7 +383,7 @@ export default function CryptoPricesPage() {
                         <div className="flex items-center justify-between">
                            <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform overflow-hidden">
-                                 {coin.thumb ? <img src={coin.thumb} className="w-full h-full object-cover" /> : <span className="text-[10px] font-black">{coin.symbol}</span>}
+                                 {coin.thumb ? <img src={coin.thumb} className="w-full h-full object-cover" alt={coin.name} /> : <span className="text-[10px] font-black">{coin.symbol}</span>}
                               </div>
                               <div className="space-y-0.5">
                                  <h3 className="text-[11px] font-black text-foreground uppercase tracking-widest">{coin.name}</h3>
@@ -457,7 +468,6 @@ export default function CryptoPricesPage() {
                        {markets.map((coin) => {
                          const isUp = coin.price_change_percentage_24h >= 0;
                          // Handle PKR conversion for table since markets API only gives USD
-                         // Use current PKR rate from bitcoin if available as a reference
                          const pkrRate = (prices?.bitcoin?.pkr && prices?.bitcoin?.usd) ? prices.bitcoin.pkr / prices.bitcoin.usd : 280;
                          const priceToDisplay = displayCurrency === 'USD' ? coin.current_price : coin.current_price * pkrRate;
 
@@ -469,7 +479,7 @@ export default function CryptoPricesPage() {
                               <TableCell>
                                  <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-secondary border border-border p-1.5 shadow-inner shrink-0 group-hover:scale-105 transition-transform">
-                                       <img src={coin.image} className="w-full h-full object-contain" />
+                                       <img src={coin.image} className="w-full h-full object-contain" alt={coin.name} />
                                     </div>
                                     <div className="min-w-0">
                                        <p className="text-[11px] font-black uppercase text-foreground truncate">{coin.name}</p>
@@ -509,7 +519,7 @@ export default function CryptoPricesPage() {
                 <div className="space-y-2">
                   <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Market discovery is performed anonymously. Your custom watchlist and session metadata are stored strictly in local browser memory and never transmitted to our infrastructure.
+                    Market discovery is performed anonymously. Your custom watchlist and session metadata are stored strictly in local browser memory.
                   </p>
                 </div>
              </div>
@@ -520,7 +530,7 @@ export default function CryptoPricesPage() {
                 <div className="space-y-2">
                   <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Real-Time Sync</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Dual-pass API protocols ensure global market rates are synchronized with 1:1 fiscal fidelity across all active discovery nodes.
+                    Dual-pass API protocols ensure global market rates are synchronized with 1:1 fiscal fidelity across active nodes.
                   </p>
                 </div>
              </div>
