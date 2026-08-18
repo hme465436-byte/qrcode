@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Trash2, 
   Info,
@@ -330,7 +330,7 @@ export default function HtmlToUrlPage() {
             {/* Local History */}
             <Card className="glass-card border-border shadow-xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
-                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground/60">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
                     <History className="w-4 h-4 text-primary" /> My Links
                   </CardTitle>
                   <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Saved</span>
@@ -450,4 +450,3 @@ export default function HtmlToUrlPage() {
     </div>
   );
 }
-
