@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -129,6 +130,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/crypto-prices', 
+    icon: Coins, 
+    title: 'Crypto Prices', 
+    desc: 'Real-time market telemetry for BTC, ETH, and more in USD/PKR.', 
+    label: 'FISCAL', 
+    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
+    keywords: ['crypto', 'bitcoin', 'btc', 'price', 'ethereum', 'solana', 'market'],
+    category: 'utilities'
   },
   { 
     href: '/quran-ayah', 
@@ -1167,7 +1179,8 @@ export default function Home() {
       'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
       'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP', 'Currency Converter',
       'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection',
-      'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah'
+      'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
+      'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
