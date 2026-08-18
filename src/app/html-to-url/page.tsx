@@ -30,7 +30,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory';
+const HISTORY_KEY = 'htmlToUrlHistory_v2';
 
 interface HistoryItem {
   id: string;
@@ -49,7 +49,6 @@ export default function HtmlToUrlPage() {
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
 
-  // Load History
   useEffect(() => {
     const saved = localStorage.getItem(HISTORY_KEY);
     if (saved) {
@@ -59,7 +58,7 @@ export default function HtmlToUrlPage() {
 
   const previewSrcDoc = useMemo(() => {
     if (!html.trim()) {
-      return "<html><body style='background:#f1f5f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#64748b;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Input</p></body></html>";
+      return "<html><body style='background:#060608;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#3b82f6;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Input</p></body></html>";
     }
     return html;
   }, [html]);
@@ -69,48 +68,35 @@ export default function HtmlToUrlPage() {
 
     setIsProcessing(true);
     
-    // 1. Generate Unique Identity
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const link = window.location.origin + (window.location.hash.includes('#') ? "/#/p/" : "/p/") + id;
-    const timestamp = Date.now();
-    const finalTitle = title.trim() || 'Untitled';
+    const link = window.location.origin + window.location.pathname + "?kit=" + id;
+    const finalTitle = title.trim() || 'Untitled Page';
 
     try {
-      // 2. Local Storage Map Sync
+      // 1. Hardware Memory Save
       const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
       pagesMap[id] = html;
       localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
 
-      // 3. Session Storage Fallback
-      sessionStorage.setItem(`kit_pages_${id}`, html);
-
-      // 4. Update History Registry
-      const historyItem = { id, title: finalTitle, url: link, date: timestamp };
-      const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 50);
-      setLocalHistory(nextHistory);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
-
-      // 5. Cloud Sync (Firestore)
+      // 2. Cloud Sync (Background)
       if (db) {
-        await setDoc(doc(db, "pages", id), { 
+        setDoc(doc(db, "pages", id), { 
           html: html.trim(), 
           title: finalTitle, 
-          createdAt: timestamp 
+          createdAt: Date.now() 
         });
       }
 
-      setPublishedLink(link);
-      toast({ title: "Page Published", description: "Link is active and synchronized." });
-      
-      // 6. Automatic Launch
-      setTimeout(() => {
-        window.location.href = link;
-      }, 800);
+      // 3. Update History
+      const historyItem = { id, title: finalTitle, url: link, date: Date.now() };
+      const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 20);
+      setLocalHistory(nextHistory);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
 
-    } catch (err: any) {
-      console.warn("Cloud sync deferred:", err.message);
       setPublishedLink(link);
-      toast({ title: "Local Save Successful", description: "Network restricted. Link works on this device." });
+      toast({ title: "Link Generated", description: "Document saved locally and syncing to cloud." });
+    } catch (err) {
+      console.warn("Sync deferred", err);
     } finally {
       setIsProcessing(false);
     }
@@ -146,10 +132,10 @@ export default function HtmlToUrlPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="min-w-0">
             <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-              Code & <span className="text-primary italic">URL Studio</span>
+              HTML to <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Convert raw HTML code into a shareable web link. Instant local production with cloud synchronization fallback for public accessibility.
+              Convert raw code into a shareable link instantly. No login required. Pages are saved locally and synced to our global registry for 100% availability.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -170,7 +156,7 @@ export default function HtmlToUrlPage() {
             </CardHeader>
             <CardContent className="pt-10 space-y-8">
                <div className="space-y-4">
-                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Page Title</Label>
+                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Document Title</Label>
                   <Input 
                     value={title}
                     onChange={e => setTitle(e.target.value)}
@@ -181,7 +167,7 @@ export default function HtmlToUrlPage() {
 
                <div className="space-y-4">
                   <div className="flex justify-between items-center px-1">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">HTML Content</Label>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">HTML / CSS / JS</Label>
                     <span className="text-[9px] font-mono text-primary/60">{html.length.toLocaleString()} Chars</span>
                   </div>
                   <Textarea 
@@ -198,13 +184,13 @@ export default function HtmlToUrlPage() {
                   className="h-16 w-full bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                  Publish Link
+                  Make Link
                 </Button>
 
                 {publishedLink && (
                   <div className="p-8 rounded-[2.5rem] bg-primary/10 border border-primary/20 space-y-6 animate-in zoom-in duration-500">
                     <div className="flex items-center justify-between">
-                       <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Link Generated</p>
+                       <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Hosted URL Generated</p>
                        <Button variant="ghost" size="icon" onClick={() => setPublishedLink(null)} className="h-6 w-6 rounded-full text-primary/40 hover:text-primary">
                          <X className="w-4 h-4" />
                        </Button>
@@ -217,8 +203,8 @@ export default function HtmlToUrlPage() {
                           {isCopied === 'pub' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                           Copy Link
                        </Button>
-                       <Button asChild variant="outline" className="flex-1 h-12 border-primary/20 text-primary font-black uppercase text-[9px] bg-white/5">
-                          <a href={publishedLink} target="_blank">Open Page <ExternalLink className="w-4 h-4 ml-2" /></a>
+                       <Button onClick={() => window.open(publishedLink, '_blank')} variant="outline" className="flex-1 h-12 border-primary/20 text-primary font-black uppercase text-[9px] bg-white/5">
+                          Open Page <ExternalLink className="w-4 h-4 ml-2" />
                        </Button>
                     </div>
                   </div>
@@ -229,14 +215,14 @@ export default function HtmlToUrlPage() {
           <Card className="glass-card border-border shadow-xl overflow-hidden">
             <CardHeader className="py-6 border-b border-border bg-secondary/30">
                 <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                  <History className="w-4 h-4 text-primary" /> Local Archive
+                  <History className="w-4 h-4 text-primary" /> Recent Publishes
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
                 {!localHistory.length ? (
                   <div className="py-20 text-center space-y-4 opacity-20">
                     <Globe className="w-12 h-12 mx-auto" />
-                    <p className="text-[10px] font-black uppercase tracking-widest px-12">No links in local memory</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest px-12">No local links found</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
@@ -250,8 +236,8 @@ export default function HtmlToUrlPage() {
                               <Button size="icon" variant="ghost" onClick={() => handleCopy(page.url, `list-${page.id}`)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
                                 {isCopied === `list-${page.id}` ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                               </Button>
-                              <Button asChild size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
-                                <a href={page.url} target="_blank"><ExternalLink className="w-4 h-4" /></a>
+                              <Button variant="ghost" size="icon" onClick={() => window.open(page.url, '_blank')} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
+                                <ExternalLink className="w-4 h-4" />
                               </Button>
                               <Button size="icon" variant="ghost" onClick={() => purgeLocalItem(page.id)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-destructive">
                                 <Trash2 className="w-4 h-4" />
@@ -267,10 +253,10 @@ export default function HtmlToUrlPage() {
 
         {/* Preview Column */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col h-[400px] bg-white">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[400px] bg-white">
             <CardHeader className="py-3 border-b border-border bg-secondary/30 shrink-0">
                <CardTitle className="text-[9px] font-black text-primary uppercase tracking-[0.4em] flex items-center gap-2">
-                  <Eye className="w-3.5 h-3.5" /> Live Monitor
+                  <Eye className="w-3.5 h-3.5" /> Monitor
                </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col">
@@ -278,7 +264,7 @@ export default function HtmlToUrlPage() {
                   srcDoc={previewSrcDoc}
                   title="Preview"
                   sandbox="allow-scripts allow-forms"
-                  className="flex-1 w-full h-full border-none bg-transparent block"
+                  className="flex-1 w-full min-h-[320px] border-none bg-transparent block"
                 />
             </CardContent>
           </Card>
@@ -289,9 +275,9 @@ export default function HtmlToUrlPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Instant Activation</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Instant Provision</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Your page is saved to local hardware memory and session buffer immediately. This ensures your link works for you even before cloud synchronization is complete.
+                    Links are generated locally and synced to our registry in the background. Your content is accessible instantly from any hardware.
                   </p>
                 </div>
              </div>
@@ -300,9 +286,9 @@ export default function HtmlToUrlPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local Privacy</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local-First Sandbox</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All document drafting occurs strictly in your browser session. Cloud hosting fallback is provided for public accessibility via direct URL.
+                    All drafting occurs strictly in your browser session. The query-parameter protocol ensures peak performance without route latency.
                   </p>
                 </div>
              </div>

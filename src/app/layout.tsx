@@ -5,6 +5,8 @@ import { Footer } from '@/components/qr-canvas/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { FeedbackRow } from '@/components/qr-canvas/feedback-row';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { Suspense } from 'react';
+import { KitRouter } from '@/components/qr-canvas/kit-router';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -58,7 +60,11 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <Navbar />
           <main className="min-h-screen pt-16 w-full max-w-full">
-            {children}
+            <Suspense fallback={null}>
+              <KitRouter>
+                {children}
+              </KitRouter>
+            </Suspense>
             <FeedbackRow />
           </main>
           <Footer />
