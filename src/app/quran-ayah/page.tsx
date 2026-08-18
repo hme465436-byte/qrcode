@@ -19,12 +19,14 @@ import {
   Quote,
   Trash2,
   Hash,
-  ShieldCheck
+  ShieldCheck,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -33,6 +35,7 @@ interface AyahData {
   number: number;
   text: string;
   translation: string;
+  urduTranslation?: string;
   surah: {
     number: number;
     name: string;
@@ -47,15 +50,15 @@ export default function QuranAyahPage() {
   const [ayah, setAyah] = useState<AyahData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
+  const [isCopied, setIsCopied] = useState<string | null>(null);
 
   const fetchAyah = useCallback(async (reference: string | number = 'random') => {
     setIsLoading(true);
     try {
-      // 1. Fetch Translation (Asad)
+      // 1. Fetch English Translation (Asad)
       const transUrl = reference === 'random' 
-        ? `https://api.alquran.cloud/v1/ayah/random/en.asad`
-        : `https://api.alquran.cloud/v1/ayah/${reference}/en.asad`;
+        ? `https://api.aladhan.com/v1/ayah/random/en.asad`
+        : `https://api.aladhan.com/v1/ayah/${reference}/en.asad`;
       
       const transRes = await fetch(transUrl);
       const transJson = await transRes.json();
@@ -63,15 +66,29 @@ export default function QuranAyahPage() {
       if (transJson.code !== 200) throw new Error("Reference not identified.");
       
       const data = transJson.data;
+      const ayahNumber = data.number;
       
-      // 2. Fetch Arabic (Uthmani) for the same number
-      const arabicRes = await fetch(`https://api.alquran.cloud/v1/ayah/${data.number}/quran-uthmani`);
+      // 2. Parallel Fetch for Arabic and Urdu
+      const [arabicRes, urduRes] = await Promise.all([
+        fetch(`https://api.aladhan.com/v1/ayah/${ayahNumber}/quran-uthmani`),
+        fetch(`https://api.aladhan.com/v1/ayah/${ayahNumber}/ur.jalandhry`).catch(() => null)
+      ]);
+
       const arabicJson = await arabicRes.json();
+      let urduTranslation = undefined;
+      
+      if (urduRes) {
+        const urduJson = await urduRes.json();
+        if (urduJson.code === 200) {
+          urduTranslation = urduJson.data.text;
+        }
+      }
       
       setAyah({
-        number: data.number,
+        number: ayahNumber,
         text: arabicJson.data.text,
         translation: data.text,
+        urduTranslation,
         surah: data.surah,
         numberInSurah: data.numberInSurah
       });
@@ -80,6 +97,7 @@ export default function QuranAyahPage() {
         toast({ title: "Reference Isolated", description: `Surah ${data.surah.englishName} : ${data.numberInSurah}` });
       }
     } catch (err) {
+      console.error(err);
       toast({ variant: "destructive", title: "Protocol Failure", description: "Could not retrieve ayah matrix." });
     } finally {
       setIsLoading(false);
@@ -97,13 +115,17 @@ export default function QuranAyahPage() {
     setSearchQuery('');
   };
 
-  const handleCopy = () => {
-    if (!ayah) return;
-    const text = `${ayah.text}\n\n${ayah.translation}\n\n[Surah ${ayah.surah.englishName} ${ayah.surah.number}:${ayah.numberInSurah}]`;
+  const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    setIsCopied(true);
-    toast({ title: "Matrix Copied" });
-    setTimeout(() => setIsCopied(false), 2000);
+    setIsCopied(label);
+    toast({ title: `${label} Copied`, description: "Linguistic matrix saved to clipboard." });
+    setTimeout(() => setIsCopied(null), 2000);
+  };
+
+  const handleCopyAll = () => {
+    if (!ayah) return;
+    const text = `Arabic: ${ayah.text}\n\nEnglish: ${ayah.translation}${ayah.urduTranslation ? `\n\nUrdu: ${ayah.urduTranslation}` : ''}\n\n[Surah ${ayah.surah.englishName} ${ayah.surah.number}:${ayah.numberInSurah}]`;
+    handleCopy(text, 'Full Matrix');
   };
 
   return (
@@ -118,7 +140,7 @@ export default function QuranAyahPage() {
                 Quran Ayah <span className="text-primary italic">Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional linguistic discovery engine. Explore the Quranic matrix through random synthesis or clinical reference lookups with 1:1 textual fidelity.
+                Professional linguistic discovery engine. Explore the Quranic matrix through random synthesis or clinical reference lookups with 1:1 textual fidelity in Arabic, English, and Urdu.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -205,9 +227,9 @@ export default function QuranAyahPage() {
                  </div>
                  {ayah && (
                     <div className="flex gap-2">
-                       <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
+                       <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest">
                           {ayah.surah.englishName} {ayah.surah.number}:{ayah.numberInSurah}
-                       </div>
+                       </Badge>
                     </div>
                  )}
               </CardHeader>
@@ -231,7 +253,7 @@ export default function QuranAyahPage() {
                  )}
 
                  {ayah && !isLoading && (
-                   <div className="w-full space-y-16 animate-in zoom-in-95 duration-500">
+                   <div className="w-full space-y-12 animate-in zoom-in-95 duration-500">
                       {/* Arabic Script */}
                       <div className="text-center space-y-8">
                          <div className="flex flex-col items-center gap-4">
@@ -239,13 +261,41 @@ export default function QuranAyahPage() {
                             <p className="text-[10px] font-black uppercase text-foreground/30 tracking-[0.6em]">{ayah.surah.englishNameTranslation}</p>
                          </div>
                          
-                         <div className="p-10 rounded-[3rem] bg-white/5 border border-white/5 shadow-2xl relative overflow-hidden">
+                         <div className="p-10 rounded-[3rem] bg-white/5 border border-white/5 shadow-2xl relative overflow-hidden group/arab">
                             <div className="absolute top-0 right-0 p-6 text-white/5 font-mono text-[80px] leading-none pointer-events-none">{ayah.numberInSurah}</div>
                             <p className="text-4xl sm:text-6xl md:text-7xl font-medium text-foreground leading-[1.6] text-center" dir="rtl">
                                {ayah.text}
                             </p>
+                            <button 
+                              onClick={() => handleCopy(ayah.text, 'Arabic')}
+                              className="absolute bottom-4 left-4 p-3 rounded-xl bg-white/5 text-white/20 hover:text-primary transition-all opacity-0 group-hover/arab:opacity-100"
+                            >
+                               {isCopied === 'Arabic' ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            </button>
                          </div>
                       </div>
+
+                      {/* Urdu Translation */}
+                      {ayah.urduTranslation && (
+                        <div className="relative p-10 rounded-[2.5rem] bg-emerald-500/[0.03] border border-emerald-500/10 group/urdu overflow-hidden">
+                           <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/20 group-hover/urdu:bg-emerald-500 transition-all" />
+                           <div className="space-y-6 relative z-10 text-center">
+                              <p className="text-2xl sm:text-4xl font-medium text-foreground/90 leading-relaxed" dir="rtl">
+                                 {ayah.urduTranslation}
+                              </p>
+                              <div className="flex items-center justify-center gap-3 pt-4">
+                                 <div className="h-[1px] w-8 bg-emerald-500/40" />
+                                 <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Urdu Protocol: Fateh Muhammad Jalandhry</p>
+                              </div>
+                           </div>
+                           <button 
+                              onClick={() => handleCopy(ayah.urduTranslation!, 'Urdu')}
+                              className="absolute bottom-4 left-4 p-3 rounded-xl bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-500 transition-all opacity-0 group-hover/urdu:opacity-100"
+                            >
+                               {isCopied === 'Urdu' ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            </button>
+                        </div>
+                      )}
 
                       {/* English Translation */}
                       <div className="relative p-10 rounded-[2.5rem] bg-secondary/30 border border-border group/trans overflow-hidden">
@@ -257,16 +307,22 @@ export default function QuranAyahPage() {
                             </p>
                             <div className="flex items-center gap-3 pt-4">
                                <div className="h-[1px] w-8 bg-primary/40" />
-                               <p className="text-[10px] font-black uppercase tracking-widest text-primary">Translation Protocol: Muhammad Asad</p>
+                               <p className="text-[10px] font-black uppercase tracking-widest text-primary">English Protocol: Muhammad Asad</p>
                             </div>
                          </div>
+                         <button 
+                            onClick={() => handleCopy(ayah.translation, 'English')}
+                            className="absolute bottom-4 left-4 p-3 rounded-xl bg-white/5 text-white/20 hover:text-primary transition-all opacity-0 group-hover/trans:opacity-100"
+                          >
+                             {isCopied === 'English' ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          </button>
                       </div>
 
                       {/* Actions Row */}
                       <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row gap-4">
-                         <Button onClick={handleCopy} className="h-16 flex-1 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-white/90 active:scale-95 transition-all">
-                            {isCopied ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                            Copy Ayah Matrix
+                         <Button onClick={handleCopyAll} className="h-16 flex-1 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-white/90 active:scale-95 transition-all">
+                            {isCopied === 'Full Matrix' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                            Copy Full Matrix
                          </Button>
                          <Button onClick={() => fetchAyah()} variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl active:scale-95 transition-all">
                             <RefreshCcw className="w-5 h-5" />
