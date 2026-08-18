@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -24,7 +25,13 @@ import {
   AlertCircle,
   Fingerprint,
   Info,
-  Server
+  Server,
+  TrendingUp,
+  TrendingDown,
+  Tv,
+  Check,
+  Signal,
+  Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,15 +39,14 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
-import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip } from 'recharts';
 
 // --- Production Telemetry Config ---
 const CLOUDFLARE_DOWN = 'https://speed.cloudflare.com/__down?bytes=25000000';
 const CLOUDFLARE_UP = 'https://speed.cloudflare.com/__up';
 const PING_URL = 'https://www.cloudflare.com/favicon.ico';
-const HISTORY_KEY = 'mykit_speed_history_v6';
-const WARMUP_TIME_MS = 1500;
-const MASTER_TIMEOUT_MS = 25000; // Allow more time for dual pass upload
+const HISTORY_KEY = 'mykit_speed_history_v7';
+const WARMUP_TIME_MS = 2000;
+const MASTER_TIMEOUT_MS = 30000; 
 
 type TestStep = 'idle' | 'ping' | 'download' | 'upload' | 'complete';
 
@@ -50,7 +56,9 @@ interface SpeedResult {
   download: number;
   upload: number | null;
   ping: number;
+  jitter: number;
   location: string;
+  isp: string;
 }
 
 const GAUGE_POINTS = [0, 5, 10, 50, 100, 250, 500, 750, 1000];
@@ -75,6 +83,7 @@ export default function SpeedTestPage() {
   const [downloadMbps, setDownloadMbps] = useState<number | null>(null);
   const [uploadMbps, setUploadMbps] = useState<number | null>(null);
   const [pingMs, setPingMs] = useState<number | null>(null);
+  const [jitterMs, setJitterMs] = useState<number | null>(null);
   const [location, setLocation] = useState<string>('');
   const [ispName, setIspName] = useState<string>('');
   const [publicIp, setPublicIp] = useState<string>('');
@@ -84,12 +93,12 @@ export default function SpeedTestPage() {
   const [step, setStep] = useState<TestStep>('idle');
   const [progress, setProgress] = useState(0);
   const [currentSpeed, setCurrentSpeed] = useState(0);
-  const [graphData, setGraphData] = useState<{ time: number; speed: number }[]>([]);
   const [history, setHistory] = useState<SpeedResult[]>([]);
   const [isCopied, setIsCopied] = useState(false);
 
   const testTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Load Metadata & History
   useEffect(() => {
     const saved = localStorage.getItem(HISTORY_KEY);
     if (saved) try { setHistory(JSON.parse(saved)); } catch (e) {}
@@ -112,19 +121,21 @@ export default function SpeedTestPage() {
     setDownloadMbps(null);
     setUploadMbps(null);
     setPingMs(null);
+    setJitterMs(null);
     setProgress(0);
     setCurrentSpeed(0);
     setStep('idle');
-    setGraphData([]);
     if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
   };
 
   const handleCopy = () => {
     const text = [
-      `[MY KIT TOOL - SPEED TEST]`,
+      `[MY KIT TOOL - ADVANCED TELEMETRY]`,
       `Download: ${downloadMbps?.toFixed(1) || '--'} Mbps`,
       `Upload: ${uploadMbps?.toFixed(1) || '--'} Mbps`,
       `Ping: ${pingMs || '--'} ms`,
+      `Jitter: ${jitterMs || '--'} ms`,
+      `Quality: ${connectionQuality.label}`,
       `ISP: ${ispName || 'Unknown'}`,
       `IP: ${publicIp || 'Hidden'}`,
       `Node: ${location || 'Global'}`,
@@ -136,19 +147,31 @@ export default function SpeedTestPage() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const runPing = async (): Promise<number> => {
+  // --- Telemetry Core ---
+
+  const runPingAndJitter = async (): Promise<{ ping: number, jitter: number }> => {
     setStep('ping');
-    const samples = [];
-    for (let i = 0; i < 3; i++) {
+    const samples: number[] = [];
+    const jitterSamples: number[] = [];
+    
+    for (let i = 0; i < 10; i++) {
       const start = performance.now();
       try {
         await fetch(`${PING_URL}?t=${Date.now()}`, { mode: 'no-cors', cache: 'no-cache' });
-        samples.push(performance.now() - start);
+        const latency = performance.now() - start;
+        samples.push(latency);
+        if (i > 0) {
+          jitterSamples.push(Math.abs(latency - samples[i - 1]));
+        }
       } catch (e) {
         samples.push(20);
       }
+      setProgress(Math.round((i / 10) * 10));
     }
-    return Math.round(samples.reduce((a, b) => a + b) / samples.length);
+    
+    const avgPing = Math.round(samples.reduce((a, b) => a + b) / samples.length);
+    const avgJitter = Math.round(jitterSamples.reduce((a, b) => a + b) / jitterSamples.length);
+    return { ping: avgPing, jitter: avgJitter };
   };
 
   const runDownloadPass = async (baseProg: number): Promise<number> => {
@@ -164,7 +187,6 @@ export default function SpeedTestPage() {
       
       const totalBytes = 25000000;
       const reader = response.body.getReader();
-      let tick = 0;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -183,10 +205,6 @@ export default function SpeedTestPage() {
           if (durationSecs > 0) {
             const mbps = ((loaded - bytesAtMeasureStart) * 8) / (durationSecs * 1024 * 1024);
             setCurrentSpeed(mbps);
-            if (tick % 10 === 0) {
-              setGraphData(prev => [...prev, { time: prev.length, speed: parseFloat(mbps.toFixed(1)) }].slice(-60));
-            }
-            tick++;
           }
         }
         setProgress(baseProg + Math.min((loaded / totalBytes) * 20, 20));
@@ -204,7 +222,7 @@ export default function SpeedTestPage() {
     const size = 5 * 1024 * 1024; // 5MB payload
     const data = new Uint8Array(size);
     
-    // Chunked entropy generation for safety
+    // Chunked entropy generation for hardware safety
     for (let i = 0; i < size; i += 65536) {
       const end = Math.min(i + 65536, size);
       window.crypto.getRandomValues(data.subarray(i, end));
@@ -227,7 +245,7 @@ export default function SpeedTestPage() {
     };
 
     let result = await attemptUpload();
-    if (result === null) result = await attemptUpload(); // Single retry
+    if (result === null) result = await attemptUpload(); // Single fail-safe retry
     return result;
   };
 
@@ -244,22 +262,23 @@ export default function SpeedTestPage() {
       }
     }, MASTER_TIMEOUT_MS);
 
-    // 1. Ping
-    const p = await runPing();
-    setPingMs(p);
-    setProgress(10);
+    // Phase 1: Ping & Jitter
+    const { ping, jitter } = await runPingAndJitter();
+    setPingMs(ping);
+    setJitterMs(jitter);
+    setProgress(15);
 
-    // 2. Download Pass 1
-    const d1 = await runDownloadPass(10);
+    // Phase 2: Download Pass 1
+    const d1 = await runDownloadPass(15);
     setProgress(40);
     
-    // 3. Download Pass 2
+    // Phase 3: Download Pass 2
     const d2 = await runDownloadPass(40);
     const bestD = Math.max(d1, d2);
     setDownloadMbps(bestD);
-    setProgress(70);
+    setProgress(75);
 
-    // 4. Upload
+    // Phase 4: Upload
     const u = await runUploadPass();
     setUploadMbps(u);
     setProgress(100);
@@ -268,22 +287,59 @@ export default function SpeedTestPage() {
     setIsTesting(false);
     if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
 
-    // Archive
+    // Archive Result
     const res: SpeedResult = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
       download: bestD || 0,
       upload: u,
-      ping: p,
-      location: location
+      ping,
+      jitter,
+      location: location,
+      isp: ispName
     };
 
     setHistory(prev => {
-      const next = [res, ...prev].slice(0, 5);
+      const next = [res, ...prev].slice(0, 10);
       localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
       return next;
     });
+
+    toast({ title: "Master Benchmarked", description: "Network telemetry finalized." });
   };
+
+  // --- Analytical Computations ---
+
+  const connectionQuality = useMemo(() => {
+    if (!downloadMbps) return { label: 'Awaiting...', color: 'text-foreground/20' };
+    if (downloadMbps >= 100 && (pingMs || 0) < 20) return { label: 'Excellent', color: 'text-green-500' };
+    if (downloadMbps >= 50) return { label: 'Good', color: 'text-blue-500' };
+    if (downloadMbps >= 10) return { label: 'Fair', color: 'text-yellow-500' };
+    return { label: 'Poor', color: 'text-red-500' };
+  }, [downloadMbps, pingMs]);
+
+  const videoCapability = useMemo(() => {
+    if (!downloadMbps) return null;
+    return [
+      { res: '4K UHD', req: 25, ok: downloadMbps >= 25 },
+      { res: '1080p HD', req: 10, ok: downloadMbps >= 10 },
+      { res: '720p', req: 5, ok: downloadMbps >= 5 },
+      { res: '480p SD', req: 2, ok: downloadMbps >= 2 },
+    ];
+  }, [downloadMbps]);
+
+  const lastTestDiff = useMemo(() => {
+    if (history.length < 2 || isTesting || step !== 'complete') return null;
+    const prev = history[1].download;
+    const current = history[0].download;
+    if (!prev || !current) return null;
+    const diff = ((current - prev) / prev) * 100;
+    return { 
+      val: Math.abs(diff).toFixed(1), 
+      isFaster: diff > 0,
+      color: diff > 0 ? 'text-green-500' : 'text-red-500'
+    };
+  }, [history, isTesting, step]);
 
   const needleAngle = useMemo(() => {
     const val = isTesting ? currentSpeed : (downloadMbps || 0);
@@ -291,37 +347,37 @@ export default function SpeedTestPage() {
   }, [currentSpeed, downloadMbps, isTesting]);
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full overflow-hidden">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full overflow-hidden selection:bg-primary/20">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <Gauge className="w-3.5 h-3.5" /> Telemetry Protocol
+            <Gauge className="w-3.5 h-3.5" /> Telemetry Protocol v7.0
           </div>
-          <h1 className="text-3xl md:text-5xl lg:text-7xl font-headline font-black text-foreground uppercase tracking-tight leading-none overflow-wrap-anywhere">
-            Speed Test <span className="text-primary italic">Pro Studio</span>
+          <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-[0.9] overflow-wrap-anywhere">
+            Network <span className="text-primary italic">Pulse Studio</span>
           </h1>
           <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional high-fidelity telemetry. Analyze sustained bandwidth and network latency locally with 1:1 Cloudflare hardware synchronization.
+            Professional high-fidelity telemetry dashboard. Analyze sustained bandwidth, jitter, and video streaming capacity locally with 1:1 hardware synchronization.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="speed-test" />
-           <Button variant="outline" onClick={resetResults} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+           <Button variant="outline" size="sm" onClick={resetResults} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
               <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
            </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-        {/* Main Telemetry View */}
+        {/* Main Telemetry Workspace */}
         <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-left-6 duration-1000">
-           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[550px] flex flex-col bg-[#060608]">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group flex flex-col min-h-[600px] bg-[#060608]">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               
-              <CardContent className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 relative overflow-hidden">
+              <CardContent className="flex-1 flex flex-col items-center justify-center p-6 sm:p-16 relative overflow-hidden">
                  
                  {/* GAUGE MATRIX */}
-                 <div className="relative w-full max-w-[420px] aspect-[4/3] flex items-center justify-center pt-10">
+                 <div className="relative w-full max-w-[500px] aspect-[4/3] flex items-center justify-center pt-10">
                     <div className="absolute inset-0 bg-primary/5 blur-[120px] rounded-full animate-pulse" />
                     
                     <svg viewBox="0 0 200 120" className="w-full h-full fill-none">
@@ -359,28 +415,35 @@ export default function SpeedTestPage() {
                     </svg>
 
                     <div className="absolute bottom-4 flex flex-col items-center text-center">
-                       <h2 className="text-5xl sm:text-7xl font-headline font-black text-foreground tracking-tighter leading-none mb-1">
+                       <h2 className="text-6xl sm:text-9xl font-headline font-black text-foreground tracking-tighter leading-none mb-1">
                           {isTesting ? currentSpeed.toFixed(1) : (downloadMbps?.toFixed(1) || '0.0')}
                        </h2>
-                       <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4">Mbps Download</p>
+                       <p className="text-[10px] sm:text-[12px] font-black text-primary uppercase tracking-[0.6em] mb-4">Mbps Speed</p>
                        
+                       {lastTestDiff && (
+                          <div className={cn("flex items-center gap-2 mb-4 animate-in slide-in-from-bottom-2", lastTestDiff.color)}>
+                             {lastTestDiff.isFaster ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                             <span className="text-[10px] font-black uppercase tracking-widest">{lastTestDiff.val}% {lastTestDiff.isFaster ? 'FASTER' : 'SLOWER'} THAN PREVIOUS</span>
+                          </div>
+                       )}
+
                        {ispName && (
-                         <div className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 animate-in fade-in">
-                            <Zap className="w-3 h-3 text-primary animate-pulse" />
-                            <span className="text-[9px] font-black uppercase tracking-widest text-foreground/60">{ispName}</span>
+                         <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-white/5 border border-white/10 animate-in fade-in">
+                            <Signal className="w-3 h-3 text-primary animate-pulse" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">{ispName}</span>
                          </div>
                        )}
                     </div>
                  </div>
 
-                 <div className="w-full max-w-sm mt-12 space-y-6">
+                 <div className="w-full max-w-sm mt-16 space-y-6">
                     {!isTesting ? (
                       <Button 
                         onClick={startTest}
-                        className="h-20 w-full bg-primary text-white font-black text-xl uppercase tracking-[0.3em] rounded-[2.5rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all group"
+                        className="h-20 w-full bg-primary text-white font-black text-xl uppercase tracking-[0.4em] rounded-[2.5rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all group"
                       >
                          <Play className="w-6 h-6 mr-4 fill-current group-hover:scale-110 transition-transform" />
-                         {step === 'complete' ? 'Re-Run Protocol' : 'Start Studio'}
+                         {step === 'complete' ? 'Re-Run Test' : 'Launch Studio'}
                       </Button>
                     ) : (
                       <div className="space-y-4 text-center">
@@ -389,133 +452,164 @@ export default function SpeedTestPage() {
                             <span>{progress}%</span>
                          </div>
                          <Progress value={progress} className="h-1 rounded-full" />
-                         <p className="text-[9px] font-black uppercase text-foreground/20 italic">Cloudflare Edge Sync Active</p>
+                         <p className="text-[9px] font-black uppercase text-foreground/20 italic">Cloudflare Edge Synchronizing...</p>
                       </div>
                     )}
                  </div>
               </CardContent>
 
               {/* Status Tracking Bar */}
-              <div className="p-8 border-t border-white/5 bg-secondary/30 flex items-center justify-around">
+              <div className="p-8 border-t border-white/5 bg-secondary/30 flex items-center justify-around flex-wrap gap-y-6">
                  {[
                    { id: 'ping', label: 'Ping', icon: Clock, val: pingMs ? `${pingMs}ms` : '--' },
-                   { id: 'download', label: 'Down', icon: ArrowDown, val: downloadMbps ? `${downloadMbps.toFixed(1)} Mbps` : '--' },
-                   { id: 'upload', label: 'Up', icon: ArrowUp, val: uploadMbps ? `${uploadMbps.toFixed(1)} Mbps` : '--' },
+                   { id: 'jitter', label: 'Jitter', icon: Activity, val: jitterMs ? `${jitterMs}ms` : '--' },
+                   { id: 'download', label: 'Download', icon: ArrowDown, val: downloadMbps ? `${downloadMbps.toFixed(1)}` : '--' },
+                   { id: 'upload', label: 'Upload', icon: ArrowUp, val: uploadMbps ? `${uploadMbps.toFixed(1)}` : '--' },
                  ].map((s) => (
                    <div key={s.id} className={cn(
-                     "flex flex-col items-center gap-3 transition-all duration-700",
+                     "flex flex-col items-center gap-3 transition-all duration-700 min-w-[80px]",
                      step === s.id ? "scale-110 opacity-100" : "opacity-30"
                    )}>
-                      <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center border transition-all", step === s.id ? "bg-primary/20 border-primary text-primary shadow-lg" : "bg-white/5 border-white/10 text-white/10")}>
+                      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border transition-all", step === s.id ? "bg-primary/20 border-primary text-primary shadow-lg" : "bg-white/5 border-white/10 text-white/10")}>
                          <s.icon className="w-5 h-5" />
                       </div>
                       <div className="text-center space-y-0.5">
-                        <span className="text-[8px] font-black uppercase tracking-widest block">{s.label}</span>
-                        <span className="text-[10px] font-mono font-bold text-foreground leading-none">{s.val}</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest block">{s.label}</span>
+                        <span className="text-sm font-headline font-black text-foreground leading-none">{s.val}</span>
                       </div>
                    </div>
                  ))}
               </div>
            </Card>
 
-           {graphData.length > 0 && (
-              <Card className="glass-card border-border shadow-xl h-48 sm:h-64 p-6 relative overflow-hidden bg-black/40">
-                 <div className="absolute top-4 left-6 flex items-center gap-3">
-                    <div className={cn("w-1.5 h-1.5 rounded-full", isTesting ? "bg-primary animate-pulse" : "bg-white/10")} />
-                    <span className="text-[8px] font-black uppercase text-white/20 tracking-[0.2em]">Bitstream Pulse Matrix</span>
+           {/* Video Capability & Insights */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Card className="glass-card border-border shadow-xl p-8">
+                 <div className="flex items-center gap-3 mb-8">
+                    <Video className="w-5 h-5 text-primary" />
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground">Video Capability Matrix</h3>
                  </div>
-                 <div className="w-full h-full pt-6">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={graphData}>
-                           <Line type="monotone" dataKey="speed" stroke="hsl(var(--primary))" strokeWidth={3} dot={false} isAnimationActive={false} />
-                           <YAxis hide domain={[0, 'auto']} />
-                           <XAxis hide />
-                           <Tooltip 
-                            contentStyle={{ backgroundColor: '#0a0a0c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                            labelStyle={{ display: 'none' }}
-                            itemStyle={{ color: 'white', fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase' }}
-                           />
-                        </LineChart>
-                    </ResponsiveContainer>
-                 </div>
-              </Card>
-           )}
-        </div>
-
-        {/* Sidebar Analytics */}
-        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-           <Card className="glass-card border-border shadow-xl">
-              <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Activity className="w-4 h-4 text-primary" /> Identity Intel
-                 </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-8 space-y-6">
-                 <div className="grid grid-cols-1 gap-3">
-                    {[
-                      { label: 'Public IP Matrix', val: publicIp || 'Hidden', icon: Fingerprint },
-                      { label: 'Carrier Protocol', val: ispName || 'Identifying...', icon: Server },
-                      { label: 'Network Node', val: location || 'Searching...', icon: MapPin },
-                    ].map((info, i) => (
-                      <div key={i} className="p-5 rounded-2xl bg-secondary/50 border border-border group hover:border-primary/20 transition-all flex items-center justify-between">
-                        <div className="flex items-center gap-4 overflow-hidden">
-                           <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all">
-                              <info.icon className="w-4 h-4" />
-                           </div>
-                           <div className="min-w-0">
-                              <p className="text-[8px] font-black text-foreground/30 uppercase tracking-widest mb-0.5">{info.label}</p>
-                              <h4 className="text-xs font-bold text-foreground truncate uppercase">{info.val}</h4>
-                           </div>
-                        </div>
+                 <div className="space-y-4">
+                    {!videoCapability ? (
+                       <div className="py-10 text-center opacity-10">
+                          <p className="text-[10px] font-black uppercase tracking-widest">Awaiting result...</p>
+                       </div>
+                    ) : videoCapability.map((v) => (
+                      <div key={v.res} className={cn(
+                        "flex items-center justify-between p-4 rounded-2xl border transition-all",
+                        v.ok ? "bg-primary/5 border-primary/20" : "bg-secondary/30 border-white/5 opacity-40"
+                      )}>
+                         <div className="flex items-center gap-4">
+                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", v.ok ? "text-primary" : "text-foreground/20")}>
+                               <Tv className="w-4 h-4" />
+                            </div>
+                            <span className={cn("text-[11px] font-black uppercase tracking-widest", v.ok ? "text-foreground" : "text-foreground/40")}>{v.res}</span>
+                         </div>
+                         {v.ok ? <Check className="w-4 h-4 text-primary" /> : <X className="w-4 h-4 text-foreground/20" />}
                       </div>
                     ))}
                  </div>
+              </Card>
 
-                 {downloadMbps && (
-                    <div className="pt-4 border-t border-white/5 space-y-3">
-                       <Button onClick={handleCopy} variant="outline" className="w-full h-11 rounded-xl border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-widest active:scale-95">
-                          {isCopied ? <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
-                          Copy Telemetry Data
-                       </Button>
+              <Card className="glass-card border-border shadow-xl p-8 flex flex-col justify-between">
+                 <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                       <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground">Quality Analytics</h3>
+                       <div className={cn("px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest", connectionQuality.color)}>
+                          {connectionQuality.label}
+                       </div>
+                    </div>
+                    
+                    <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border space-y-4">
+                       <div className="flex items-center gap-3 text-primary">
+                          <ShieldCheck className="w-4 h-4" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">ISP Verified Profile</span>
+                       </div>
+                       <div className="space-y-1">
+                          <p className="text-[9px] font-black text-foreground/30 uppercase">Detected Carrier</p>
+                          <p className="text-sm font-bold text-foreground truncate uppercase">{ispName || '---'}</p>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="pt-8 space-y-4">
+                    <div className="flex items-center gap-3 px-1 text-foreground/40">
+                       <Info className="w-4 h-4" />
+                       <p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">Browser estimate, not ISP official. Performance may vary by server load.</p>
+                    </div>
+                    <Button onClick={handleCopy} disabled={!downloadMbps} className="w-full h-14 bg-white text-black font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-white/90">
+                       {isCopied ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                       Copy Benchmarks
+                    </Button>
+                 </div>
+              </Card>
+           </div>
+        </div>
+
+        {/* Sidebar History */}
+        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+           <Card className="glass-card border-border shadow-xl flex flex-col max-h-[500px]">
+              <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-3">
+                    <History className="w-4 h-4 text-primary" />
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Archive Matrix</CardTitle>
+                 </div>
+                 {history.length > 0 && (
+                   <button onClick={() => { setHistory([]); localStorage.removeItem(HISTORY_KEY); }} className="text-[8px] font-black text-foreground/20 hover:text-red-500 uppercase transition-colors">Purge Log</button>
+                 )}
+              </CardHeader>
+              <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1">
+                 {history.length === 0 ? (
+                    <div className="py-24 text-center opacity-10 space-y-4">
+                       <Activity className="w-12 h-12 mx-auto" />
+                       <p className="text-[11px] font-black uppercase tracking-widest">No previous benchmarks</p>
+                    </div>
+                 ) : (
+                    <div className="divide-y divide-white/5">
+                       {history.map(h => (
+                         <div key={h.id} className="p-6 flex items-center justify-between group hover:bg-white/5 transition-all">
+                            <div className="flex items-center gap-4 min-w-0">
+                               <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-primary/40 group-hover:text-primary shrink-0 transition-all shadow-inner">
+                                  <ArrowDown className="w-4 h-4" />
+                               </div>
+                               <div className="min-w-0">
+                                  <p className="text-sm font-headline font-black text-foreground truncate">{h.download.toFixed(1)} <span className="text-[10px] opacity-30">Mbps</span></p>
+                                  <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-tighter">{new Date(h.timestamp).toLocaleDateString()} • {new Date(h.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                               </div>
+                            </div>
+                            <div className="text-right">
+                               <span className="text-[10px] font-mono text-primary/60 font-bold block">{h.ping}ms</span>
+                               <span className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Ping</span>
+                            </div>
+                         </div>
+                       ))}
                     </div>
                  )}
               </CardContent>
            </Card>
 
-           <Card className="glass-card border-border shadow-xl flex flex-col max-h-[400px]">
-              <CardHeader className="py-4 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
-                 <div className="flex items-center gap-3">
-                    <History className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">History</CardTitle>
-                 </div>
-                 {history.length > 0 && (
-                   <button onClick={() => { setHistory([]); localStorage.removeItem(HISTORY_KEY); }} className="text-[8px] font-black text-foreground/20 hover:text-red-500 uppercase transition-colors">Purge</button>
-                 )}
+           <Card className="glass-card border-border shadow-xl">
+              <CardHeader className="py-6 border-b border-border bg-secondary/30">
+                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
+                    <Fingerprint className="w-5 h-5 text-primary" /> Session Metadata
+                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1">
-                 {history.length === 0 ? (
-                    <div className="py-20 text-center opacity-10 space-y-4">
-                       <Activity className="w-10 h-10 mx-auto" />
-                       <p className="text-[10px] font-black uppercase tracking-widest">No matrix history</p>
+              <CardContent className="p-8 space-y-6">
+                 {[
+                   { label: 'Network Origin', val: location || 'Identifying...', icon: MapPin },
+                   { label: 'Public Identity (IP)', val: publicIp || 'Hidden', icon: Shield },
+                   { label: 'Hardware Protocol', val: 'WASM Dual-Pass', icon: Zap },
+                 ].map((item, i) => (
+                    <div key={i} className="flex gap-4 group/item">
+                       <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary/40 shrink-0 border border-border group-hover/item:text-primary transition-colors">
+                          <item.icon className="w-4 h-4" />
+                       </div>
+                       <div className="min-w-0">
+                          <p className="text-[8px] font-black uppercase text-foreground/20 tracking-widest mb-0.5">{item.label}</p>
+                          <h4 className="text-[11px] font-bold text-foreground truncate uppercase">{item.val}</h4>
+                       </div>
                     </div>
-                 ) : (
-                    <div className="divide-y divide-white/5">
-                       {history.map(h => (
-                         <div key={h.id} className="p-5 flex items-center justify-between group hover:bg-white/5 transition-all">
-                            <div className="flex items-center gap-4 min-w-0">
-                               <div className="w-9 h-9 rounded-xl bg-secondary border border-border flex items-center justify-center text-primary/40 group-hover:text-primary shrink-0 transition-all">
-                                  <ArrowDown className="w-4 h-4" />
-                               </div>
-                               <div className="min-w-0">
-                                  <p className="text-[11px] font-bold text-foreground truncate uppercase">{h.download.toFixed(1)} Mbps</p>
-                                  <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-tighter">{new Date(h.timestamp).toLocaleDateString()} • {new Date(h.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
-                               </div>
-                            </div>
-                            <span className="text-[9px] font-mono text-primary/40 font-bold">{h.ping}ms</span>
-                         </div>
-                       ))}
-                    </div>
-                 )}
+                 ))}
               </CardContent>
            </Card>
 
@@ -526,7 +620,7 @@ export default function SpeedTestPage() {
              <div className="space-y-2">
                <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Privacy Sovereign</h4>
                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                 Telemetry is strictly execution-only. Hardware identifiers and bitstream results are volatile and held strictly in local browser memory.
+                 All diagnostic logic is 100% hardware-native. No performance logs or network identifiers are transmitted to our servers—all data is held strictly in local memory.
                </p>
              </div>
           </div>
