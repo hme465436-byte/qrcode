@@ -1078,12 +1078,12 @@ export default function Home() {
     }, typingSpeed);
 
     return () => clearTimeout(timeout);
-  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, iFocused, searchQuery]);
+  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, isFocused, searchQuery]);
 
   const dynamicPlaceholder = useMemo(() => {
     if (isFocused || searchQuery) return 'Search tools...';
     return `${placeholder}|`;
-  }, [placeholder, iFocused, searchQuery]);
+  }, [placeholder, isFocused, searchQuery]);
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_MODE_KEY) as 'grid' | 'list' | null;
