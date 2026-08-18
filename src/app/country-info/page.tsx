@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -54,58 +53,81 @@ interface CountryData {
   maps: { googleMaps: string };
 }
 
+interface CountryShort {
+  name: { common: string };
+  cca2: string;
+  flags: { png: string };
+}
+
 export default function CountryInfoPage() {
   const { toast } = useToast();
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<{name: string, cca2: string, flag: string}[]>([]);
+  const [allCountries, setAllCountries] = useState<CountryShort[]>([]);
   const [country, setCountry] = useState<CountryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // --- Suggestion Protocol ---
+  // --- Preload Protocol ---
   useEffect(() => {
-    if (query.trim().length < 2) {
-      setSuggestions([]);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
+    const preloadRegistry = async () => {
       try {
-        const res = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(query)}?fields=name,flags,cca2`);
+        const res = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,flags');
         if (res.ok) {
           const data = await res.json();
-          const list = data.slice(0, 5).map((c: any) => ({
-            name: c.name.common,
-            cca2: c.cca2,
-            flag: c.flags.png
-          }));
-          setSuggestions(list);
+          setAllCountries(data);
         }
-      } catch (e) {}
-    }, 300);
+      } catch (e) {
+        console.warn("Preload matrix offline.");
+      }
+    };
+    preloadRegistry();
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [query]);
+  // --- Local Filtering Matrix ---
+  const suggestions = useMemo(() => {
+    if (query.trim().length < 2) return [];
+    const q = query.toLowerCase();
+    return allCountries
+      .filter(c => 
+        c.name.common.toLowerCase().includes(q) || 
+        c.cca2.toLowerCase().includes(q)
+      )
+      .slice(0, 5);
+  }, [query, allCountries]);
 
-  const fetchCountry = async (id: string, isFullMatch = false) => {
+  const fetchCountryDetails = async (identifier: string, isCode: boolean) => {
     setIsLoading(true);
     setError(null);
     setCountry(null);
-    setSuggestions([]);
-    setQuery('');
+    setShowSuggestions(false);
 
     try {
-      const url = isFullMatch 
-        ? `https://restcountries.com/v3.1/name/${encodeURIComponent(id)}?fullText=true`
-        : `https://restcountries.com/v3.1/alpha/${id}`;
-        
-      const response = await fetch(url);
+      const baseUrl = isCode 
+        ? `https://restcountries.com/v3.1/alpha/${identifier}`
+        : `https://restcountries.com/v3.1/name/${encodeURIComponent(identifier)}?fullText=true`;
+      
+      const fields = "?fields=name,flags,capital,population,region,subregion,currencies,languages,cca2,area,timezones,maps";
+      
+      // Primary Attempt: Optimized subset
+      let response = await fetch(baseUrl + fields);
+      
+      // Secondary Attempt: Full binary fetch (Fallback)
+      if (!response.ok) {
+        response = await fetch(baseUrl);
+      }
+
       if (!response.ok) throw new Error("Location matrix unreachable.");
       
       const data = await response.json();
-      setCountry(data[0]);
-      toast({ title: "Signal Isolated", description: `Clinical profile for ${data[0].name.common} active.` });
-    } catch (err) {
+      const result = Array.isArray(data) ? data[0] : data;
+      
+      if (!result || !result.name) throw new Error("Target identity not identified.");
+
+      setCountry(result);
+      setQuery(''); 
+      toast({ title: "Signal Isolated", description: `Clinical profile for ${result.name.common} active.` });
+    } catch (err: any) {
       setError("Discovery Node Failure: Target identity not identified.");
       toast({ variant: "destructive", title: "Protocol Failed" });
     } finally {
@@ -117,7 +139,7 @@ export default function CountryInfoPage() {
     setQuery('');
     setCountry(null);
     setError(null);
-    setSuggestions([]);
+    setShowSuggestions(false);
     toast({ title: "Studio Reset" });
   };
 
@@ -162,7 +184,12 @@ export default function CountryInfoPage() {
                     <Input 
                       placeholder="Search name (e.g. Pakistan, Japan)..."
                       value={query}
-                      onChange={(e) => setQuery(e.target.value)}
+                      onChange={(e) => {
+                        setQuery(e.target.value);
+                        setShowSuggestions(true);
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                      onKeyDown={(e) => e.key === 'Enter' && query.trim() && fetchCountryDetails(query, false)}
                       className="h-16 bg-secondary border-border rounded-2xl text-sm font-bold px-6 focus:ring-primary/40 uppercase"
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/input:opacity-100 transition-opacity">
@@ -170,25 +197,37 @@ export default function CountryInfoPage() {
                     </div>
 
                     {/* Suggestions Matrix */}
-                    {suggestions.length > 0 && (
+                    {showSuggestions && suggestions.length > 0 && (
                       <div className="absolute left-0 right-0 top-full mt-2 z-50 animate-in slide-in-from-top-2 duration-300">
                          <div className="glass-card border-border shadow-2xl rounded-2xl overflow-hidden divide-y divide-white/5">
                             {suggestions.map((s) => (
                               <button 
                                 key={s.cca2}
-                                onClick={() => fetchCountry(s.cca2)}
-                                className="w-full p-4 flex items-center gap-4 hover:bg-primary/5 transition-all text-left"
+                                onClick={() => fetchCountryDetails(s.cca2, true)}
+                                className="w-full p-4 flex items-center justify-between hover:bg-primary/5 transition-all text-left group/item"
                               >
-                                 <div className="w-10 h-7 rounded-md overflow-hidden border border-white/10 shrink-0 shadow-sm">
-                                    <img src={s.flag} className="w-full h-full object-cover" alt="" />
+                                 <div className="flex items-center gap-4">
+                                    <div className="w-10 h-7 rounded-md overflow-hidden border border-white/10 shrink-0 shadow-sm">
+                                       <img src={s.flags.png} className="w-full h-full object-cover" alt="" />
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground group-hover/item:text-primary transition-colors">{s.name.common}</span>
                                  </div>
-                                 <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{s.name}</span>
+                                 <Badge className="bg-background/50 text-[8px] font-mono border-white/5">{s.cca2}</Badge>
                               </button>
                             ))}
                          </div>
                       </div>
                     )}
                  </div>
+
+                 <Button 
+                   onClick={() => fetchCountryDetails(query, false)}
+                   disabled={isLoading || !query.trim()}
+                   className="w-full h-14 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30 active:scale-95"
+                 >
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
+                    Initialize Lookup
+                 </Button>
 
                  {error && (
                     <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
@@ -216,7 +255,7 @@ export default function CountryInfoPage() {
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <Activity className="w-5 h-5" />
