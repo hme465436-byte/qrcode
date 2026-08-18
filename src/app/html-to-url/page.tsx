@@ -1,6 +1,7 @@
+
 "use client"
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Trash2, 
   Info,
@@ -34,7 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
@@ -70,6 +71,7 @@ export default function HtmlToUrlPage() {
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
+  const [cloudError, setCloudError] = useState<string | null>(null);
 
   // Preview / Execution State
   const [previewSrcDoc, setPreviewSrcDoc] = useState('');
@@ -95,12 +97,21 @@ export default function HtmlToUrlPage() {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
   };
 
-  const purgeLocalItem = (id: string) => {
-    if (!confirm("Remove this link from your local history?")) return;
+  const purgeLocalItem = async (id: string) => {
+    if (!confirm("Remove this link?")) return;
+    
+    // Attempt cloud delete
+    if (firestore) {
+      try {
+        await deleteDoc(doc(firestore, "pages", id));
+      } catch (e) {}
+    }
+
     const next = localHistory.filter(h => h.id !== id);
     setLocalHistory(next);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-    toast({ title: "History Updated", description: "Link removed from your device." });
+    localStorage.removeItem(`pages_${id}`);
+    toast({ title: "Deleted" });
   };
 
   const effectiveLanguage = useMemo(() => {
@@ -111,16 +122,6 @@ export default function HtmlToUrlPage() {
     if (low.includes('{') && low.includes('}') && (low.includes('color:') || low.includes('margin:'))) return 'css';
     return 'text';
   }, [language, html]);
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'RUNTIME_ERROR') {
-        setRuntimeError(event.data.message);
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
 
   const syncPreview = useCallback(() => {
     setRuntimeError(null);
@@ -161,82 +162,16 @@ export default function HtmlToUrlPage() {
   }, [html, effectiveLanguage]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      syncPreview();
-    }, 250);
+    const timer = setTimeout(syncPreview, 250);
     return () => clearTimeout(timer);
   }, [html, effectiveLanguage, syncPreview]);
-
-  useEffect(() => {
-    if (effectiveLanguage === 'python' && !pyodideRef.current && !isPyodideLoading) {
-      const loadPy = async () => {
-        setIsPyodideLoading(true);
-        try {
-          if (!(window as any).loadPyodide) {
-            const script = document.createElement('script');
-            script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
-            document.head.appendChild(script);
-            await new Promise((resolve) => (script.onload = resolve));
-          }
-          pyodideRef.current = await (window as any).loadPyodide();
-          toast({ title: "Python Ready" });
-        } catch (e) {
-          setRuntimeError("Python engine failed to load.");
-        } finally {
-          setIsPyodideLoading(false);
-        }
-      };
-      loadPy();
-    }
-  }, [effectiveLanguage, isPyodideLoading, toast]);
-
-  const handleRunPython = async () => {
-    if (!html.trim() || effectiveLanguage !== 'python') return;
-    setConsoleOutput([]);
-    setIsExecuting(true);
-    setRuntimeError(null);
-
-    if (!pyodideRef.current) {
-      setConsoleOutput(['Waiting for Python engine...']);
-      setIsExecuting(false);
-      return;
-    }
-    
-    const logs: string[] = [];
-    pyodideRef.current.setStdout({
-      batched: (str: string) => { logs.push(str); setConsoleOutput([...logs]); }
-    });
-    pyodideRef.current.setStderr({
-      batched: (str: string) => { logs.push(`[ERROR] ${str}`); setConsoleOutput([...logs]); }
-    });
-
-    try {
-      await pyodideRef.current.runPythonAsync(html);
-      if (logs.length === 0) logs.push('Execution complete.');
-      setConsoleOutput([...logs]);
-    } catch (e: any) {
-      setRuntimeError(e.message);
-    }
-    
-    setIsExecuting(false);
-  };
 
   const fullUrl = (id: string) => typeof window !== 'undefined' ? `${window.location.origin}/p/${id}` : '';
 
   const handleMakeLink = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!html.trim()) {
-      toast({ variant: "destructive", title: "Empty Payload" });
-      return;
-    }
-
-    if (!navigator.onLine) {
-      toast({ variant: "destructive", title: "Network Offline", description: "Please check your internet connection." });
-      return;
-    }
-
-    if (!firestore) {
-      toast({ variant: "destructive", title: "Database Error", description: "Database engine not initialized." });
+      toast({ variant: "destructive", title: "Empty content" });
       return;
     }
 
@@ -247,40 +182,43 @@ export default function HtmlToUrlPage() {
     }
 
     setIsProcessing(true);
-    setGeneratedId(null);
+    setCloudError(null);
+    
+    // Generate ID immediately
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    const newUrl = fullUrl(id);
 
-    try {
-      const docRef = await addDoc(collection(firestore, "pages"), {
-        html: html.trim(),
-        title: title.trim() || 'Untitled Page',
-        language: language === 'auto' ? effectiveLanguage : language,
-        createdAt: serverTimestamp()
-      });
-      
-      const newUrl = fullUrl(docRef.id);
-      setGeneratedId(docRef.id);
-      
-      updateLocalHistory({
-        id: docRef.id,
-        title: title.trim() || 'Untitled Page',
-        url: newUrl,
-        date: Date.now(),
-        language: effectiveLanguage
-      });
+    // 1. Save locally ALWAYS
+    localStorage.setItem(`pages_${id}`, html);
+    const historyItem: HistoryItem = {
+      id,
+      title: title.trim() || 'Untitled Page',
+      url: newUrl,
+      date: Date.now(),
+      language: effectiveLanguage
+    };
+    updateLocalHistory(historyItem);
+    setGeneratedId(id);
 
-      toast({ title: "Published", description: "Link generated and saved to history." });
-    } catch (err: any) {
-      console.error("Publish Error:", err);
-      let desc = err.message || "Could not save to database.";
-      if (err.code === 'permission-denied') {
-        desc = "Permission denied. Please ensure Firestore Security Rules for /pages/{id} are published.";
-      } else if (err.code === 'unavailable') {
-        desc = "Database is temporarily unavailable. Check your connection.";
+    // 2. Try save to Cloud
+    if (firestore) {
+      try {
+        await setDoc(doc(firestore, "pages", id), {
+          html: html.trim(),
+          title: title.trim() || 'Untitled Page',
+          language: language === 'auto' ? effectiveLanguage : language,
+          createdAt: Date.now()
+        });
+        toast({ title: "Saved to Cloud" });
+      } catch (err: any) {
+        setCloudError(`Cloud save failed: ${err.message || 'Check connection or rules'}`);
+        toast({ variant: "default", title: "Saved Locally", description: "Saved to browser, but cloud sync failed." });
       }
-      toast({ variant: "destructive", title: `Error: ${err.code || 'unknown'}`, description: desc });
-    } finally {
-      setIsProcessing(false);
+    } else {
+      setCloudError("Database not connected. Saved to browser only.");
     }
+
+    setIsProcessing(false);
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -288,18 +226,6 @@ export default function HtmlToUrlPage() {
     setIsCopied(label);
     toast({ title: "Copied" });
     setTimeout(() => setIsCopied(null), 2000);
-  };
-
-  const openFullscreenPreview = () => {
-    const win = window.open();
-    if (win) {
-      if (['html', 'css', 'javascript'].includes(effectiveLanguage)) {
-        win.document.write(previewSrcDoc || html);
-      } else {
-        win.document.write(`<pre style="background:#000;color:#fff;padding:20px;font-family:monospace;">${consoleOutput.join('\n') || html}</pre>`);
-      }
-      win.document.close();
-    }
   };
 
   return (
@@ -338,7 +264,7 @@ export default function HtmlToUrlPage() {
               <CardHeader className="pb-6 border-b border-border bg-secondary/30">
                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                       <Code2 className="w-5 h-5 text-primary" /> Input
+                       <Code2 className="w-5 h-5 text-primary" /> Editor
                     </CardTitle>
                     <div className="flex items-center gap-3">
                        <Select value={language} onValueChange={setLanguage}>
@@ -381,27 +307,6 @@ export default function HtmlToUrlPage() {
                  </div>
 
                  <div className="flex gap-4">
-                    {effectiveLanguage === 'python' ? (
-                       <Button 
-                        type="button"
-                        onClick={handleRunPython}
-                        disabled={isExecuting || isPyodideLoading || !html.trim()}
-                        className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
-                       >
-                         {isExecuting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
-                         Run Python
-                       </Button>
-                    ) : (
-                       <Button 
-                        type="button"
-                        onClick={syncPreview}
-                        className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-lg active:scale-95 transition-all"
-                       >
-                         <RefreshCcw className="w-6 h-6" />
-                         Refresh Preview
-                       </Button>
-                    )}
-                    
                     <Button 
                       type="button"
                       onClick={handleMakeLink}
@@ -409,9 +314,16 @@ export default function HtmlToUrlPage() {
                       className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
                     >
                       {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <LinkIcon className="w-6 h-6" />}
-                      Publish Link
+                      Make Link
                     </Button>
                  </div>
+
+                 {cloudError && (
+                   <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 flex items-start gap-3">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <p className="text-[10px] font-bold leading-relaxed">{cloudError}</p>
+                   </div>
+                 )}
               </CardContent>
             </Card>
 
@@ -475,46 +387,18 @@ export default function HtmlToUrlPage() {
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
                     {['html', 'css', 'javascript'].includes(effectiveLanguage) ? <Eye className="w-3.5 h-3.5" /> : <Terminal className="w-3.5 h-3.5" />}
-                    {effectiveLanguage === 'python' ? 'Console' : 'Preview'}
+                    Preview
                  </CardTitle>
-                 <div className="flex items-center gap-2">
-                    <button onClick={openFullscreenPreview} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Fullscreen">
-                       <Maximize2 className="w-3.5 h-3.5 text-foreground/40" />
-                    </button>
-                 </div>
               </CardHeader>
               
               <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col">
-                 {effectiveLanguage === 'python' ? (
-                    <div className="flex-1 p-8 font-mono text-xs leading-relaxed overflow-auto custom-scrollbar bg-black text-green-400">
-                       {consoleOutput.length > 0 ? consoleOutput.map((line, i) => (
-                         <div key={i} className="mb-1">&gt; {line}</div>
-                       )) : (
-                         <div className="opacity-20 italic">Awaiting Python...</div>
-                       )}
-                    </div>
-                 ) : (
-                    <div className="flex-1 flex flex-col min-h-[320px]">
-                      <iframe 
-                        id="previewFrame"
-                        srcDoc={previewSrcDoc}
-                        title="Preview"
-                        sandbox="allow-scripts allow-forms"
-                        className="w-full flex-1 border-none bg-transparent block"
-                        style={{ minHeight: '320px' }}
-                      />
-                    </div>
-                 )}
-
-                 {runtimeError && (
-                   <div className="p-4 bg-red-500/10 border-t border-red-500/20 text-red-500 flex items-start gap-3 animate-in slide-in-from-bottom-2">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <div className="space-y-1">
-                         <p className="text-[10px] font-black uppercase tracking-widest leading-none">Error</p>
-                         <p className="text-[10px] font-bold leading-relaxed">{runtimeError}</p>
-                      </div>
-                   </div>
-                 )}
+                  <iframe 
+                    id="previewFrame"
+                    srcDoc={previewSrcDoc}
+                    title="Preview"
+                    sandbox="allow-scripts allow-forms"
+                    className="w-full h-full min-h-[320px] border-none bg-transparent block"
+                  />
               </CardContent>
             </Card>
 
@@ -522,7 +406,7 @@ export default function HtmlToUrlPage() {
               <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden relative animate-in zoom-in duration-500">
                  <CardHeader className="py-8 border-b border-primary/10">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.5em] flex items-center gap-3 text-primary">
-                      <CheckCircle2 className="w-4 h-4" /> Link Published
+                      <CheckCircle2 className="w-4 h-4" /> Link Created
                     </CardTitle>
                  </CardHeader>
                  <CardContent className="pt-10 space-y-8 text-center">
@@ -549,7 +433,7 @@ export default function HtmlToUrlPage() {
                   <div className="space-y-2">
                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local Privacy</h4>
                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                      Drafting and previews happen entirely on your device. Only published links are saved to the database.
+                      Drafting and previews happen entirely on your device. Every save is also cached locally for immediate access.
                     </p>
                   </div>
                </div>
@@ -566,3 +450,4 @@ export default function HtmlToUrlPage() {
     </div>
   );
 }
+

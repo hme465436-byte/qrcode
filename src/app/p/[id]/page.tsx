@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useEffect, useState } from 'react';
@@ -26,23 +27,33 @@ export default function HostedPageViewer() {
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
-    if (!firestore || !id) return;
+    if (!id) return;
 
     const fetchPage = async () => {
-      try {
-        const docRef = doc(firestore, "pages", id as string);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          setData(docSnap.data() as any);
-        } else {
-          setError("This link is invalid or has expired.");
+      // 1. Try Firestore
+      if (firestore) {
+        try {
+          const docRef = doc(firestore, "pages", id as string);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            setData(docSnap.data() as any);
+            setLoading(false);
+            return;
+          }
+        } catch (err: any) {
+          console.warn("Cloud fetch failed, trying local fallback...");
         }
-      } catch (err: any) {
-        setError(err.message || "Failed to connect to database.");
-      } finally {
-        setLoading(false);
       }
+
+      // 2. Try Local Fallback (for the creator)
+      const local = localStorage.getItem(`pages_${id}`);
+      if (local) {
+        setData({ html: local, title: 'Local Snapshot' });
+      } else {
+        setError("Link not found in cloud or local storage.");
+      }
+      setLoading(false);
     };
 
     fetchPage();
@@ -59,10 +70,7 @@ export default function HostedPageViewer() {
   if (loading) {
     return (
       <div className="fixed inset-0 bg-[#0a0a0c] flex flex-col items-center justify-center gap-8">
-        <div className="relative">
-           <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-           <Globe className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
-        </div>
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Fetching Content...</p>
       </div>
     );
@@ -73,7 +81,7 @@ export default function HostedPageViewer() {
       <div className="fixed inset-0 bg-[#0a0a0c] flex flex-col items-center justify-center p-6 text-center gap-10">
         <AlertCircle className="w-20 h-20 text-destructive animate-bounce" />
         <div className="space-y-4">
-           <h2 className="text-2xl font-headline font-black text-white uppercase tracking-tight">Access Denied</h2>
+           <h2 className="text-2xl font-headline font-black text-white uppercase tracking-tight">Not Found</h2>
            <p className="text-sm text-white/30 font-bold uppercase tracking-widest max-w-sm mx-auto leading-relaxed">{error}</p>
         </div>
         <Button asChild variant="outline" className="h-14 px-10 rounded-2xl border-white/10 bg-white/5 text-white">
@@ -93,7 +101,7 @@ export default function HostedPageViewer() {
          <iframe 
           srcDoc={data.html}
           title={data.title}
-          sandbox="allow-scripts allow-forms allow-modals"
+          sandbox="allow-scripts allow-forms"
           className="flex-1 w-full h-full border-none"
          />
        ) : (
@@ -126,12 +134,11 @@ export default function HostedPageViewer() {
          </div>
        )}
 
-       {/* Studio Attribution Footer */}
        <div className="h-10 bg-[#0a0a0c] border-t border-white/10 px-6 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
              <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">
-               Live {isHtml ? 'Page' : 'Code'}: {data.title}
+               Live: {data.title}
              </span>
           </div>
           <Link href="/" className="flex items-center gap-2 text-[9px] font-black text-primary uppercase tracking-widest hover:text-white transition-all">
