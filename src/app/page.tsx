@@ -573,7 +573,7 @@ const TOOLS: Tool[] = [
   { 
     href: '/image-url-downloader', 
     icon: DownloadCloud, 
-    title: 'URL Image Downloader', 
+    title: 'URL Downloader', 
     desc: 'Extract images and YouTube thumbnails from any URL.', 
     label: 'MEDIA', 
     color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
@@ -1190,7 +1190,8 @@ export default function Home() {
       'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP', 'Currency Converter',
       'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection',
       'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
-      'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map'
+      'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
+      'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
