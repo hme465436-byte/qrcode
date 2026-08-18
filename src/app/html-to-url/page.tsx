@@ -230,8 +230,13 @@ export default function HtmlToUrlPage() {
       return;
     }
 
+    if (!navigator.onLine) {
+      toast({ variant: "destructive", title: "Network Offline", description: "Please check your internet connection." });
+      return;
+    }
+
     if (!firestore) {
-      toast({ variant: "destructive", title: "Database Offline", description: "Please check your connection." });
+      toast({ variant: "destructive", title: "Database Error", description: "Database engine not initialized." });
       return;
     }
 
@@ -266,7 +271,13 @@ export default function HtmlToUrlPage() {
       toast({ title: "Published", description: "Link generated and saved to history." });
     } catch (err: any) {
       console.error("Publish Error:", err);
-      toast({ variant: "destructive", title: "Error", description: err.message || "Could not save to database." });
+      let desc = err.message || "Could not save to database.";
+      if (err.code === 'permission-denied') {
+        desc = "Permission denied. Please ensure Firestore Security Rules for /pages/{id} are published.";
+      } else if (err.code === 'unavailable') {
+        desc = "Database is temporarily unavailable. Check your connection.";
+      }
+      toast({ variant: "destructive", title: `Error: ${err.code || 'unknown'}`, description: desc });
     } finally {
       setIsProcessing(false);
     }
