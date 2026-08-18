@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -17,6 +16,7 @@ import {
   Activity,
   ArrowRight,
   TrendingUp,
+  TrendingDown,
   Maximize,
   ShieldCheck,
   Scale,
@@ -474,7 +474,7 @@ export default function ImageSizeIncreaserPage() {
                  <Button 
                   onClick={runProduction}
                   disabled={!assets.length || isProcessing}
-                  className="h-16 w-full bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                  className="h-16 w-full bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 transition-all"
                  >
                     {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6" />}
                     Synthesize {assets.length > 1 ? 'Batch' : 'Master'}
@@ -549,7 +549,7 @@ export default function ImageSizeIncreaserPage() {
                          </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl">
                          <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:border-primary/20 transition-all">
                             <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                                <Maximize className="w-6 h-6" />
