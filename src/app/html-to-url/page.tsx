@@ -30,7 +30,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v10';
+const HISTORY_KEY = 'htmlToUrlHistory';
 
 interface HistoryItem {
   id: string;
@@ -64,38 +64,56 @@ export default function HtmlToUrlPage() {
     return html;
   }, [html]);
 
-  const handleMakeLink = async () => {
+  const handlePublish = async () => {
     if (!html.trim()) return;
 
     setIsProcessing(true);
     
-    // 1. Generate Absolute Identity
+    // 1. Generate Unique Identity
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const url = `${window.location.origin}/p/${id}`;
+    const link = window.location.origin + (window.location.hash.includes('#') ? "/#/p/" : "/p/") + id;
     const timestamp = Date.now();
+    const finalTitle = title.trim() || 'Untitled';
 
-    // 2. Instant Local Hardware Save (Highest Reliability)
-    localStorage.setItem(`kit_page_${id}`, html);
+    try {
+      // 2. Local Storage Map Sync
+      const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
+      pagesMap[id] = html;
+      localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
 
-    // 3. Fire-and-forget Cloud Sync (Firestore)
-    if (db) {
-      setDoc(doc(db, "pages", id), { 
-        html: html.trim(), 
-        title: title.trim() || 'Untitled', 
-        createdAt: timestamp 
-      }).catch(e => console.warn("Cloud sync deferred:", e.message));
+      // 3. Session Storage Fallback
+      sessionStorage.setItem(`kit_pages_${id}`, html);
+
+      // 4. Update History Registry
+      const historyItem = { id, title: finalTitle, url: link, date: timestamp };
+      const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 50);
+      setLocalHistory(nextHistory);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
+
+      // 5. Cloud Sync (Firestore)
+      if (db) {
+        await setDoc(doc(db, "pages", id), { 
+          html: html.trim(), 
+          title: finalTitle, 
+          createdAt: timestamp 
+        });
+      }
+
+      setPublishedLink(link);
+      toast({ title: "Page Published", description: "Link is active and synchronized." });
+      
+      // 6. Automatic Launch
+      setTimeout(() => {
+        window.location.href = link;
+      }, 800);
+
+    } catch (err: any) {
+      console.warn("Cloud sync deferred:", err.message);
+      setPublishedLink(link);
+      toast({ title: "Local Save Successful", description: "Network restricted. Link works on this device." });
+    } finally {
+      setIsProcessing(false);
     }
-
-    // 4. Update Local History Registry
-    const historyItem = { id, title: title || 'Untitled', url, date: timestamp };
-    const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 50);
-    setLocalHistory(nextHistory);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
-    
-    // 5. Success UI
-    setPublishedLink(url);
-    setIsProcessing(false);
-    toast({ title: "Page Published Locally", description: "URL is active on your device." });
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -111,7 +129,11 @@ export default function HtmlToUrlPage() {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
       return next;
     });
-    localStorage.removeItem(`kit_page_${id}`);
+    
+    const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
+    delete pagesMap[id];
+    localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
+    
     toast({ title: "Removed from history" });
   };
 
@@ -127,7 +149,7 @@ export default function HtmlToUrlPage() {
               Code & <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Convert raw HTML code into a shareable web link. Instant local production with cloud synchronization fallback.
+              Convert raw HTML code into a shareable web link. Instant local production with cloud synchronization fallback for public accessibility.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -171,7 +193,7 @@ export default function HtmlToUrlPage() {
                </div>
 
                <Button 
-                  onClick={handleMakeLink}
+                  onClick={handlePublish}
                   disabled={!html.trim() || isProcessing}
                   className="h-16 w-full bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
                 >
@@ -269,7 +291,7 @@ export default function HtmlToUrlPage() {
                 <div className="space-y-2">
                   <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Instant Activation</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Your page is saved to local hardware memory immediately. This ensures your link works for you even before cloud synchronization is complete.
+                    Your page is saved to local hardware memory and session buffer immediately. This ensures your link works for you even before cloud synchronization is complete.
                   </p>
                 </div>
              </div>
@@ -280,19 +302,13 @@ export default function HtmlToUrlPage() {
                 <div className="space-y-2">
                   <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local Privacy</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All document drafting occurs strictly in your browser session. Cloud hosting is fire-and-forget for public accessibility.
+                    All document drafting occurs strictly in your browser session. Cloud hosting fallback is provided for public accessibility via direct URL.
                   </p>
                 </div>
              </div>
           </div>
         </div>
       </div>
-      
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-      `}</style>
     </div>
   );
 }
