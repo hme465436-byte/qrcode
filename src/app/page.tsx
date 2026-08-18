@@ -87,7 +87,8 @@ import {
   Dices,
   Scale,
   UserCircle,
-  Maximize2
+  Maximize2,
+  Keyboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -121,6 +122,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/keyboard-test', 
+    icon: Keyboard, 
+    title: 'Keyboard Test', 
+    desc: 'Professional hardware integrity matrix. Test every key for response.', 
+    label: 'HARDWARE', 
+    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+    glowClass: 'bg-amber-500/10',
+    keywords: ['keyboard test', 'key test', 'button test', 'typing test', 'hardware check', 'keyboard ghosting'],
+    category: 'utilities'
   },
   { 
     href: '/image-size-increaser', 
@@ -888,7 +900,7 @@ const TOOLS: Tool[] = [
     desc: 'Merge multiple audio files into a single master track.', 
     label: 'PRODUCTION', 
     color: 'text-blue-600 bg-blue-600/10 border-blue-600/20',
-    glowClass: 'bg-blue-600/10',
+    glowClass: 'bg-blue-500/10',
     keywords: ['audio joiner', 'merge mp3', 'combine audio', 'mp3 join', 'merge songs', 'wav', 'sound'],
     category: 'utilities'
   },
@@ -920,7 +932,7 @@ const TOOLS: Tool[] = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
     category: 'utilities'
@@ -942,7 +954,7 @@ const TOOLS: Tool[] = [
     title: 'Text Repeater', 
     desc: 'Professional emoji and text multiplication.', 
     label: 'UTIL', 
-    color: 'text-pink-600 bg-pink-500/10 border-pink-600/20',
+    color: 'text-pink-600 bg-pink-500/10 border-pink-500/20',
     glowClass: 'bg-pink-500/10',
     keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner'],
     category: 'generators'
@@ -975,7 +987,7 @@ const TOOLS: Tool[] = [
     title: 'English Dictionary', 
     desc: 'Professional linguistic analysis and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
