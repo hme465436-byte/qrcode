@@ -88,7 +88,8 @@ import {
   Scale,
   UserCircle,
   Maximize2,
-  Keyboard
+  Keyboard,
+  ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -987,7 +988,7 @@ const TOOLS: Tool[] = [
     title: 'English Dictionary', 
     desc: 'Professional linguistic analysis and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
@@ -1071,6 +1072,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [visibleCount, setVisibleCount] = useState(10);
   
   // Search Placeholder Typing Animation Matrix
   const [placeholder, setPlaceholder] = useState('');
@@ -1161,6 +1163,10 @@ export default function Home() {
     return result;
   }, [searchQuery, selectedCategory]);
 
+  const visibleTools = useMemo(() => {
+    return filteredTools.slice(0, visibleCount);
+  }, [filteredTools, visibleCount]);
+
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
       {/* JSON-LD for Organization & ItemList */}
@@ -1242,7 +1248,10 @@ export default function Home() {
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
+                    onClick={() => {
+                      setSelectedCategory(cat.id);
+                      setVisibleCount(10);
+                    }}
                     className={cn(
                       "flex items-center gap-2 px-6 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
                       selectedCategory === cat.id 
@@ -1288,16 +1297,45 @@ export default function Home() {
           </div>
 
           {/* Unified Tool Matrix Container */}
-          <div className={cn(
-            "w-full transition-all duration-300",
-            viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "flex flex-col gap-4 max-w-4xl mx-auto"
-          )}>
-            {filteredTools.length > 0 ? (
-              filteredTools.map((item) => (
-                <ToolItem key={item.href} item={item} mode={viewMode} />
-              ))
-            ) : (
-              <EmptyState onReset={() => { setSearchQuery(''); setSelectedCategory('all'); }} />
+          <div className="space-y-12">
+            <div className={cn(
+              "w-full transition-all duration-300",
+              viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "flex flex-col gap-4 max-w-4xl mx-auto"
+            )}>
+              {visibleTools.length > 0 ? (
+                visibleTools.map((item) => (
+                  <ToolItem key={item.href} item={item} mode={viewMode} />
+                ))
+              ) : (
+                <EmptyState onReset={() => { setSearchQuery(''); setSelectedCategory('all'); setVisibleCount(10); }} />
+              )}
+            </div>
+
+            {/* See More Controls */}
+            {visibleCount < filteredTools.length && (
+              <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                 <ShadButton 
+                   onClick={() => setVisibleCount(prev => prev + 6)}
+                   variant="outline"
+                   className="h-16 px-12 rounded-[2rem] border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-xs hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all group/see"
+                 >
+                    <ChevronDown className="w-5 h-5 mr-3 group-hover/see:translate-y-1 transition-transform" />
+                    See More Tools
+                 </ShadButton>
+                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/20">
+                    Displaying {visibleCount} of {filteredTools.length} units
+                 </p>
+              </div>
+            )}
+
+            {visibleCount >= filteredTools.length && filteredTools.length > 0 && (
+              <div className="flex flex-col items-center gap-4 py-8 opacity-40">
+                 <div className="flex items-center gap-3">
+                    <div className="h-px w-12 bg-white/10" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em]">All tools shown</span>
+                    <div className="h-px w-12 bg-white/10" />
+                 </div>
+              </div>
             )}
           </div>
         </div>
