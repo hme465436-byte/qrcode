@@ -6,24 +6,21 @@ import { KitPublicPage } from './kit-public-page';
 
 /**
  * KitRouter Component
- * Checks for the 'kit' query parameter OR '#h=' hash and swaps the 
- * entire app content with the hosted page viewer if present.
+ * High-speed interceptor for hosted content payloads.
+ * Checks for the 'kit' query parameter to swap the application
+ * with the sanitized public viewer.
  */
 export function KitRouter({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const [kitId, setKitId] = useState<string | null>(null);
-  const [hasHash, setHasHash] = useState(false);
 
   useEffect(() => {
     const id = searchParams.get('kit');
-    const hash = window.location.hash;
-    
     if (id) setKitId(id);
-    if (hash.startsWith('#h=')) setHasHash(true);
   }, [searchParams]);
 
-  if (kitId || hasHash) {
-    return <KitPublicPage id={kitId || 'hash-encoded'} />;
+  if (kitId) {
+    return <KitPublicPage id={kitId} />;
   }
 
   return <>{children}</>;

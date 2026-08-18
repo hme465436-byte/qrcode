@@ -32,7 +32,7 @@ import { rtdb } from '@/firebase';
 import { ref, set } from 'firebase/database';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v4';
+const HISTORY_KEY = 'htmlToUrlHistory_v5';
 
 interface HistoryItem {
   id: string;
@@ -44,7 +44,8 @@ interface HistoryItem {
 export default function HtmlToUrlPage() {
   const { toast } = useToast();
   
-  const [html, setHtml] = useState('');
+  const [htmlInput, setHtmlInput] = useState('');
+  const [debouncedHtml, setDebouncedHtml] = useState('');
   const [title, setTitle] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [publishedLink, setPublishedLink] = useState<string | null>(null);
@@ -53,6 +54,7 @@ export default function HtmlToUrlPage() {
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem(HISTORY_KEY);
@@ -61,64 +63,62 @@ export default function HtmlToUrlPage() {
     }
   }, []);
 
+  // Debounce Preview Sync (200ms)
+  useEffect(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedHtml(htmlInput);
+    }, 200);
+    return () => { if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current); };
+  }, [htmlInput]);
+
   const previewSrcDoc = useMemo(() => {
-    if (!html.trim()) {
+    if (!debouncedHtml.trim()) {
       return "<html><body style='background:#060608;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#3b82f6;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Input</p></body></html>";
     }
-    return html;
-  }, [html]);
+    return debouncedHtml;
+  }, [debouncedHtml]);
 
   const handlePublish = async () => {
-    if (!html.trim()) return;
+    if (!htmlInput.trim()) return;
 
     setIsProcessing(true);
     setPublishedLink(null);
     setError(null);
     
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    // Short ID Protocol: 8-10 chars
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     const finalTitle = title.trim() || 'Untitled Page';
 
     try {
-      if (!rtdb) throw new Error("Database connection unavailable.");
+      if (!rtdb) throw new Error("Database offline.");
 
-      // 1. Cloud Save Protocol (Realtime Database)
+      // 1. Database Sync Protocol
       await set(ref(rtdb, "pages/" + id), { 
-        html: html.trim(), 
+        html: htmlInput.trim(), 
         title: finalTitle, 
         createdAt: Date.now() 
       });
 
-      // 2. Hybrid Link Construction
-      let link = window.location.origin + window.location.pathname + "?kit=" + id;
-      
-      // If content is small, embed directly as fallback for offline/restricted access
-      if (html.length < 6000) {
-        link += "#h=" + encodeURIComponent(html.trim());
-      }
-
-      // 3. Hardware Persistence (LocalStorage map)
+      // 2. Hardware Persistence (Local Cache)
       const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
-      pagesMap[id] = html.trim();
+      pagesMap[id] = htmlInput.trim();
       localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
 
-      // 4. Update Local History
+      // 3. Short Link Construction
+      const link = window.location.origin + window.location.pathname + "?kit=" + id;
+
+      // 4. Update Registry History
       const historyItem = { id, title: finalTitle, url: link, date: Date.now() };
       const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 20);
       setLocalHistory(nextHistory);
       localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
 
       setPublishedLink(link);
-      toast({ title: "Page Published", description: "Link generated and verified on cloud." });
+      toast({ title: "Page Published", description: "Cloud synchronization verified." });
     } catch (err: any) {
-      // Fallback: If DB fails but HTML is small, we can still provide a hash-only link
-      if (html.length < 6000) {
-        const link = window.location.origin + window.location.pathname + "#h=" + encodeURIComponent(html.trim());
-        setPublishedLink(link);
-        setError(`DB Restricted: ${err.message}. Providing self-contained link fallback.`);
-      } else {
-        setError(`${err.code || 'Error'}: ${err.message}`);
-        toast({ variant: "destructive", title: "Publish Failed", description: "Database rejected payload." });
-      }
+      setError(err.message || "Failed to publish. Check your connection.");
+      toast({ variant: "destructive", title: "Sync Failed" });
     } finally {
       setIsProcessing(false);
     }
@@ -127,7 +127,7 @@ export default function HtmlToUrlPage() {
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(label);
-    toast({ title: "Copied" });
+    toast({ title: "Link Copied" });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -137,19 +137,16 @@ export default function HtmlToUrlPage() {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
       return next;
     });
-    
     const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
     delete pagesMap[id];
     localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
-    
-    toast({ title: "Removed from history" });
   };
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Globe className="w-3.5 h-3.5" /> Web Hosting Studio
+          <Globe className="w-3.5 h-3.5" /> Web Hosting Suite
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="min-w-0">
@@ -157,7 +154,7 @@ export default function HtmlToUrlPage() {
               HTML to <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Convert raw code into a shareable link instantly. Pages are synced via a high-performance database with self-contained fallback protocols.
+              Convert raw code into a professional short-link instantly. Optimized for high-speed cloud synchronization and zero-latency retrieval.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -189,13 +186,13 @@ export default function HtmlToUrlPage() {
                <div className="space-y-4">
                   <div className="flex justify-between items-center px-1">
                     <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">HTML / CSS / JS</Label>
-                    <span className={cn("text-[9px] font-mono", html.length > 6000 ? "text-yellow-500" : "text-primary/60")}>
-                      {html.length.toLocaleString()} Chars {html.length > 6000 ? '(Cloud Only)' : '(Hybrid Protocol)'}
+                    <span className="text-[9px] font-mono text-primary/60">
+                      {htmlInput.length.toLocaleString()} Characters
                     </span>
                   </div>
                   <Textarea 
-                    value={html}
-                    onChange={e => setHtml(e.target.value)}
+                    value={htmlInput}
+                    onChange={e => setHtmlInput(e.target.value)}
                     placeholder="Paste code or text here..."
                     className="min-h-[400px] bg-secondary border-border text-xs font-mono p-8 rounded-[2rem] leading-relaxed resize-none focus:ring-primary/40 shadow-inner"
                   />
@@ -204,19 +201,16 @@ export default function HtmlToUrlPage() {
                <div className="space-y-4">
                   <Button 
                     onClick={handlePublish}
-                    disabled={!html.trim() || isProcessing}
+                    disabled={!htmlInput.trim() || isProcessing}
                     className="h-16 w-full bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
                   >
                     {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                    {isProcessing ? 'Verifying Cloud Sync...' : 'Publish & Make Link'}
+                    {isProcessing ? 'Verifying Sync...' : 'Publish & Create Link'}
                   </Button>
 
                   {error && (
-                    <div className={cn(
-                      "p-4 rounded-xl border flex items-center gap-3 animate-in shake duration-500",
-                      publishedLink ? "bg-amber-500/10 border-amber-500/20 text-amber-500" : "bg-destructive/10 border-destructive/20 text-destructive"
-                    )}>
-                       {publishedLink ? <Info className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
+                       <AlertCircle className="w-4 h-4 text-destructive" />
                        <p className="text-[10px] font-bold uppercase tracking-widest">{error}</p>
                     </div>
                   )}
@@ -227,7 +221,7 @@ export default function HtmlToUrlPage() {
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">
                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                         <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em]">Verified Live Link</p>
+                         <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em]">Verified Sync Link</p>
                        </div>
                        <Button variant="ghost" size="icon" onClick={() => setPublishedLink(null)} className="h-6 w-6 rounded-full text-emerald-500/40 hover:text-emerald-500">
                          <X className="w-4 h-4" />
@@ -239,10 +233,10 @@ export default function HtmlToUrlPage() {
                     <div className="flex gap-3">
                        <Button onClick={() => handleCopy(publishedLink, 'pub')} className="flex-1 h-12 bg-emerald-500 text-white font-black uppercase tracking-widest text-[9px]">
                           {isCopied === 'pub' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                          Copy Link
+                          Copy Short Link
                        </Button>
                        <Button onClick={() => window.open(publishedLink, '_blank')} variant="outline" className="flex-1 h-12 border-emerald-500/20 text-emerald-600 font-black uppercase text-[9px] bg-white/5">
-                          Open Page <ExternalLink className="w-4 h-4 ml-2" />
+                          Launch Page <ExternalLink className="w-4 h-4 ml-2" />
                        </Button>
                     </div>
                   </div>
@@ -253,14 +247,14 @@ export default function HtmlToUrlPage() {
           <Card className="glass-card border-border shadow-xl overflow-hidden">
             <CardHeader className="py-6 border-b border-border bg-secondary/30">
                 <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                  <History className="w-4 h-4 text-primary" /> Recent Publishes
+                  <History className="w-4 h-4 text-primary" /> Studio History
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
                 {!localHistory.length ? (
                   <div className="py-20 text-center space-y-4 opacity-20">
                     <Globe className="w-12 h-12 mx-auto" />
-                    <p className="text-[10px] font-black uppercase tracking-widest px-12">No local history found</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest px-12">No recent sessions found</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
@@ -312,9 +306,9 @@ export default function HtmlToUrlPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hybrid Protocol</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Optimized Encoding</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Small payloads are embedded directly in the link hash. This ensures your hosted page is accessible even if the cloud signal is restricted.
+                    Utilizing the Realtime Database protocol for zero-latency asset synchronization and short-link generation.
                   </p>
                 </div>
              </div>
@@ -323,9 +317,9 @@ export default function HtmlToUrlPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Sandboxed Production</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Sandboxed Logic</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Pages are rendered in a restricted iframe sandbox. Hardware-native memory isolation prevents local scripts from accessing your primary studio environment.
+                    Hosted pages are rendered in a restricted iframe sandbox to maintain hardware-native security.
                   </p>
                 </div>
              </div>
