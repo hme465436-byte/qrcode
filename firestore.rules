@@ -8,8 +8,10 @@ service cloud.firestore {
     match /pages/{id} {
       // Pages are publicly readable by anyone with the link
       allow read: if true;
-      // Anyone can publish and manage pages
-      allow write: if true;
+      // Allow any authenticated user (including anonymous guests) to create pages
+      allow create: if request.auth != null;
+      // Only allow the original creator to delete or update
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
     }
     match /{document=**} {
       allow read, write: if false;

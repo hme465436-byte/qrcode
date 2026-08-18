@@ -36,23 +36,11 @@ export default function HostedPageViewer() {
     if (!id) return;
 
     const fetchPage = async () => {
-      // 1. Priority: Local Hardware Memory Fallback
+      // 1. Hardware Memory Dual-Check (Local Fallback)
       const localKey = "kit_page_" + id;
       const localRaw = localStorage.getItem(localKey);
-      if (localRaw) {
-        try {
-          const parsed = JSON.parse(localRaw);
-          setData(parsed);
-          setSource('local');
-          setLoading(false);
-          // Still try to check cloud in background if needed, but local is sufficient
-          return;
-        } catch (e) {
-          console.warn("Local matrix corrupted, attempting cloud fetch...");
-        }
-      }
-
-      // 2. Secondary: Global Cloud Matrix
+      
+      // 2. Global Registry Check
       if (firestore) {
         try {
           const docRef = doc(firestore, "pages", id as string);
@@ -65,11 +53,21 @@ export default function HostedPageViewer() {
             return;
           }
         } catch (err: any) {
-          console.error("Cloud fetch failed", err);
+          console.error("Fetch failure", err);
         }
       }
 
-      setError("Identity Token Not Found. The link may have expired or was definitively purged.");
+      // 3. Fallback to Local if Cloud absent
+      if (localRaw) {
+        try {
+          setData(JSON.parse(localRaw));
+          setSource('local');
+          setLoading(false);
+          return;
+        } catch (e) {}
+      }
+
+      setError("Page not found in registry.");
       setLoading(false);
     };
 
@@ -80,7 +78,7 @@ export default function HostedPageViewer() {
     if (data?.html) {
       navigator.clipboard.writeText(data.html);
       setIsCopied(true);
-      toast({ title: "Content Copied" });
+      toast({ title: "Copied" });
       setTimeout(() => setIsCopied(false), 2000);
     }
   };
@@ -88,14 +86,8 @@ export default function HostedPageViewer() {
   if (loading) {
     return (
       <div className="fixed inset-0 bg-[#0a0a0c] flex flex-col items-center justify-center gap-8">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-          <Activity className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
-        </div>
-        <div className="text-center space-y-2">
-           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Fetching Identity Matrix...</p>
-           <p className="text-[8px] font-bold text-white/10 uppercase tracking-widest">Negotiating secure handshake</p>
-        </div>
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Fetching Data...</p>
       </div>
     );
   }
@@ -103,15 +95,13 @@ export default function HostedPageViewer() {
   if (error || !data) {
     return (
       <div className="fixed inset-0 bg-[#0a0a0c] flex flex-col items-center justify-center p-6 text-center gap-10">
-        <div className="w-24 h-24 rounded-[2.5rem] bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-xl">
-           <AlertCircle className="w-12 h-12 animate-bounce" />
+        <AlertCircle className="w-12 h-12 text-destructive animate-bounce" />
+        <div className="space-y-2">
+           <h2 className="text-xl font-headline font-black text-white uppercase">Page Not Found</h2>
+           <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{error}</p>
         </div>
-        <div className="space-y-4">
-           <h2 className="text-2xl font-headline font-black text-white uppercase tracking-tight">Signal Not Found</h2>
-           <p className="text-sm text-white/30 font-bold uppercase tracking-widest max-w-sm mx-auto leading-relaxed">{error}</p>
-        </div>
-        <Button asChild variant="outline" className="h-14 px-10 rounded-2xl border-white/10 bg-white/5 text-white font-black uppercase tracking-widest text-[10px]">
-           <Link href="/html-to-url"><ArrowLeft className="w-4 h-4 mr-2" /> Back to Studio</Link>
+        <Button asChild variant="outline" className="h-12 px-8 rounded-xl border-white/10 bg-white/5 text-white font-black uppercase text-[10px]">
+           <Link href="/html-to-url">Back to Studio</Link>
         </Button>
       </div>
     );
@@ -138,47 +128,28 @@ export default function HostedPageViewer() {
                      <FileCode className="w-5 h-5" />
                   </div>
                   <div className="space-y-0.5">
-                     <h2 className="text-sm font-black uppercase text-white tracking-widest truncate max-w-[200px] sm:max-w-md">{data.title}</h2>
-                     <p className="text-[8px] font-bold text-white/20 uppercase tracking-[0.2em]">{data.language || 'text'} content • {source === 'local' ? 'Local Buffer' : 'Cloud Master'}</p>
+                     <h2 className="text-sm font-black uppercase text-white tracking-widest truncate max-w-[200px]">{data.title}</h2>
+                     <p className="text-[8px] font-bold text-white/20 uppercase tracking-[0.2em]">{source === 'local' ? 'Local Memory' : 'Cloud Registry'}</p>
                   </div>
                </div>
-               <div className="flex items-center gap-3">
-                  <Button onClick={handleCopy} className="h-10 px-6 rounded-xl bg-white text-black font-black uppercase text-[9px] tracking-widest shadow-xl">
-                     {isCopied ? <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
-                     Copy Code
-                  </Button>
-               </div>
+               <Button onClick={handleCopy} className="h-10 px-6 rounded-xl bg-white text-black font-black uppercase text-[9px] tracking-widest">
+                  {isCopied ? <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
+                  Copy Code
+               </Button>
             </div>
             
-            <div className="flex-1 overflow-auto custom-scrollbar p-8 sm:p-12 relative">
-               <pre className="max-w-5xl mx-auto font-mono text-xs sm:text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap break-all select-all selection:bg-primary/20 bg-black/40 p-10 rounded-[2.5rem] border border-white/5 shadow-inner">
+            <div className="flex-1 overflow-auto custom-scrollbar p-8 sm:p-12">
+               <pre className="max-w-5xl mx-auto font-mono text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap break-all bg-black/40 p-10 rounded-[2.5rem] border border-white/5 shadow-inner">
                   {data.html}
                </pre>
-               <div className="absolute bottom-12 right-12 pointer-events-none opacity-[0.03]">
-                  <Terminal className="w-96 h-96 text-white" />
-               </div>
             </div>
          </div>
        )}
 
-       {/* Floating Identity Status */}
-       <div className="h-12 bg-[#0a0a0c] border-t border-white/10 px-6 flex items-center justify-between shrink-0 z-50">
-          <div className="flex items-center gap-6">
-             <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">
-                  Live Identity: {id}
-                </span>
-             </div>
-             {source === 'local' && (
-               <div className="flex items-center gap-2 text-primary/60 border-l border-white/5 pl-6 hidden sm:flex">
-                  <ShieldCheck className="w-3 h-3" />
-                  <span className="text-[8px] font-black uppercase tracking-widest">Validated via Hardware Memory</span>
-               </div>
-             )}
-          </div>
-          <Link href="/html-to-url" className="flex items-center gap-2 text-[9px] font-black text-primary uppercase tracking-widest hover:text-white transition-all group">
-             STUDIO HUB <ArrowLeft className="w-3 h-3 rotate-180 group-hover:translate-x-0.5 transition-transform" />
+       <div className="h-10 bg-[#0a0a0c] border-t border-white/10 px-6 flex items-center justify-between shrink-0 z-50">
+          <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">ID: {id}</span>
+          <Link href="/html-to-url" className="flex items-center gap-2 text-[9px] font-black text-primary uppercase tracking-widest hover:text-white transition-all">
+             STUDIO <ArrowLeft className="w-3 h-3 rotate-180" />
           </Link>
        </div>
 

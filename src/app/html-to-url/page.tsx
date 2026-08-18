@@ -25,7 +25,9 @@ import {
   Link as LinkIcon,
   ShieldCheck,
   AlertCircle,
-  Save
+  Save,
+  User,
+  ShieldAlert
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,10 +39,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { signInAnonymously } from 'firebase/auth';
+import { useFirestore, useAuth, useUser } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v2';
+const HISTORY_KEY = 'htmlToUrlHistory_v3';
 
 interface HistoryItem {
   id: string;
@@ -63,6 +66,8 @@ const LANGUAGES = [
 export default function HtmlToUrlPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const auth = useAuth();
+  const { user, loading: authLoading } = useUser();
   
   const [html, setHtml] = useState('');
   const [title, setTitle] = useState('');
@@ -72,13 +77,22 @@ export default function HtmlToUrlPage() {
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
-  const [cloudError, setCloudError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Preview / Execution State
+  // Preview State
   const [previewSrcDoc, setPreviewSrcDoc] = useState('');
-  const [runtimeError, setRuntimeError] = useState<string | null>(null);
 
-  // Load History on Mount
+  // 1. Session Initialization (Anonymous Guest)
+  useEffect(() => {
+    if (!authLoading && !user && auth) {
+      signInAnonymously(auth).catch((err) => {
+        console.error("Auth Error", err);
+        setErrorMessage("Enable Anonymous login in Firebase Console to use this tool.");
+      });
+    }
+  }, [auth, user, authLoading]);
+
+  // 2. Load History
   useEffect(() => {
     const saved = localStorage.getItem(HISTORY_KEY);
     if (saved) {
@@ -99,7 +113,6 @@ export default function HtmlToUrlPage() {
   const purgeLocalItem = async (id: string) => {
     if (!confirm("Confirm definitive removal from this device?")) return;
     
-    // Attempt cloud delete
     if (firestore) {
       try {
         await deleteDoc(doc(firestore, "pages", id));
@@ -125,7 +138,6 @@ export default function HtmlToUrlPage() {
   }, [language, html]);
 
   const syncPreview = useCallback(() => {
-    setRuntimeError(null);
     if (!html.trim()) {
       setPreviewSrcDoc("<html><body style='background:#f1f5f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#64748b;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Visual Signal</p></body></html>");
       return;
@@ -133,28 +145,10 @@ export default function HtmlToUrlPage() {
 
     if (['html', 'css', 'javascript'].includes(effectiveLanguage)) {
       let content = html;
-      const errorCaptureScript = `
-        <script>
-          window.onerror = function(msg, url, line, col, error) {
-            window.parent.postMessage({ type: 'RUNTIME_ERROR', message: msg + ' (Line: ' + line + ')' }, '*');
-            return false;
-          };
-          console.error = function(...args) {
-            window.parent.postMessage({ type: 'RUNTIME_ERROR', message: args.join(' ') }, '*');
-          };
-        </script>
-      `;
-
       if (effectiveLanguage === 'css') {
-        content = `<html><head>${errorCaptureScript}<style>${html}</style></head><body style="background:#f8fafc;padding:40px;font-family:sans-serif;"><div style="max-width:600px;margin:0 auto;background:white;padding:40px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.05);"><h1 class="preview-heading">CSS MASTER</h1><p class="preview-text">Styles applied to canvas.</p><button style="padding:10px 20px;border-radius:8px;cursor:pointer;background:#2563eb;color:white;border:none;font-weight:bold;">ACTION PORT</button></div></body></html>`;
+        content = `<html><head><style>${html}</style></head><body style="background:#f8fafc;padding:40px;font-family:sans-serif;"><div style="max-width:600px;margin:0 auto;background:white;padding:40px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.05);"><h1 class="preview-heading">CSS PREVIEW</h1><p class="preview-text">Styles applied to canvas.</p><button style="padding:10px 20px;border-radius:8px;cursor:pointer;background:#2563eb;color:white;border:none;font-weight:bold;">ACTION PORT</button></div></body></html>`;
       } else if (effectiveLanguage === 'javascript') {
-        content = `<html><body style="background:#0f172a;color:#22d3ee;padding:20px;font-family:monospace;font-size:14px;">${errorCaptureScript}<div id="root">Executing JS Matrix...</div><script>try{ ${html} }catch(e){ console.error(e.message); }</script></body></html>`;
-      } else {
-        if (content.includes('<head>')) {
-          content = content.replace('<head>', '<head>' + errorCaptureScript);
-        } else {
-          content = errorCaptureScript + content;
-        }
+        content = `<html><body style="background:#0f172a;color:#22d3ee;padding:20px;font-family:monospace;font-size:14px;"><div id="root">Executing JS...</div><script>try{ ${html} }catch(e){ document.body.innerHTML += '<div style="color:red;margin-top:20px">' + e.message + '</div>'; }</script></body></html>`;
       }
       setPreviewSrcDoc(content);
     } else {
@@ -175,28 +169,34 @@ export default function HtmlToUrlPage() {
       return;
     }
 
+    if (!user) {
+      toast({ variant: "destructive", title: "Identity Required", description: "Waiting for guest session to initialize." });
+      return;
+    }
+
     const size = new TextEncoder().encode(html).length;
     if (size > 150 * 1024) {
-      toast({ variant: "destructive", title: "Payload Overload", description: "Matrix exceeds 150KB limit." });
+      toast({ variant: "destructive", title: "Payload Overload", description: "Document exceeds 150KB limit." });
       return;
     }
 
     setIsProcessing(true);
-    setCloudError(null);
+    setErrorMessage(null);
     
     // Phase 1: Identity Generation
     const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
     const newUrl = fullUrl(id);
     const createdAt = Date.now();
 
-    // Phase 2: Local Persistence (Priority)
     const payload = { 
       html: html.trim(), 
-      title: title.trim() || 'Untitled Studio Page', 
+      title: title.trim() || 'Untitled Page', 
       language: effectiveLanguage,
+      uid: user.uid,
       createdAt 
     };
     
+    // Phase 2: Local Hardware Memory (Immediate Fallback)
     localStorage.setItem(`kit_page_${id}`, JSON.stringify(payload));
     
     const historyItem: HistoryItem = {
@@ -209,28 +209,27 @@ export default function HtmlToUrlPage() {
     updateLocalHistory(historyItem);
     setGeneratedId(id);
 
-    // Phase 3: Cloud Synchronization
+    // Phase 3: Global Cloud Registry
     if (firestore) {
       try {
         await setDoc(doc(firestore, "pages", id), payload);
-        toast({ title: "Cloud Synced", description: "Identity mapped to global matrix." });
+        toast({ title: "Public Link Created", description: "Successfully hosted in the cloud." });
+        window.open(newUrl, '_blank');
       } catch (err: any) {
-        setCloudError(`Cloud sync failed: ${err.message || 'Check connection'}`);
-        toast({ title: "Local Master Saved", description: "Saved to browser, but cloud sync is pending." });
+        setErrorMessage(err.code || "Cloud saving failed. Page exists in this browser only.");
+        toast({ title: "Local Save Only", description: "Document saved to your browser memory." });
       }
     } else {
-      setCloudError("Database offline. Saved to browser session only.");
+      setErrorMessage("database-unavailable");
     }
 
-    // Phase 4: Launch Master
-    window.open(newUrl, '_blank');
     setIsProcessing(false);
   };
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(label);
-    toast({ title: "Identity Copied" });
+    toast({ title: "Copied" });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -246,11 +245,19 @@ export default function HtmlToUrlPage() {
               Code & <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Synthesize code or text into a permanent hosted link. Professional real-time sandboxed previews with integrated local-first fallback.
+              Synthesize code or text into a permanent hosted link. Fast, anonymous production with hardware-native local fallback.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-             <GetHelp toolId="html-to-url" />
+          <div className="flex flex-col items-end gap-2">
+             <div className="flex items-center gap-4">
+                <GetHelp toolId="html-to-url" />
+                <div className="px-4 py-2 rounded-xl bg-secondary border border-border flex items-center gap-3">
+                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                   <span className="text-[10px] font-black uppercase text-foreground/40 tracking-widest">
+                      {authLoading ? 'Syncing...' : `Guest-${user?.uid.substring(user.uid.length - 6).toUpperCase() || 'Standby'}`}
+                   </span>
+                </div>
+             </div>
           </div>
         </div>
       </div>
@@ -270,7 +277,7 @@ export default function HtmlToUrlPage() {
               <CardHeader className="pb-6 border-b border-border bg-secondary/30">
                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                       <Code2 className="w-5 h-5 text-primary" /> Input Logic
+                       <Code2 className="w-5 h-5 text-primary" /> Input
                     </CardTitle>
                     <div className="flex items-center gap-3">
                        <Select value={language} onValueChange={setLanguage}>
@@ -288,7 +295,7 @@ export default function HtmlToUrlPage() {
               </CardHeader>
               <CardContent className="pt-10 space-y-8">
                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Identity Title</Label>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Page Title</Label>
                     <Input 
                       value={title}
                       onChange={e => setTitle(e.target.value)}
@@ -320,14 +327,14 @@ export default function HtmlToUrlPage() {
                       className="h-16 flex-1 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 active:scale-95"
                     >
                       {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                      Synthesize & Open
+                      Publish Link
                     </Button>
                  </div>
 
-                 {cloudError && (
-                   <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 flex items-start gap-3">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <p className="text-[10px] font-bold leading-relaxed">{cloudError}</p>
+                 {errorMessage && (
+                   <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3">
+                      <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                      <p className="text-[10px] font-bold uppercase tracking-widest">{errorMessage}</p>
                    </div>
                  )}
               </CardContent>
@@ -337,15 +344,15 @@ export default function HtmlToUrlPage() {
             <Card className="glass-card border-border shadow-xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                   <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                    <History className="w-4 h-4 text-primary" /> Local Registry
+                    <History className="w-4 h-4 text-primary" /> Your Local Links
                   </CardTitle>
-                  <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Identifiers</span>
+                  <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Total</span>
               </CardHeader>
               <CardContent className="p-0">
                   {!localHistory.length ? (
                     <div className="py-20 text-center space-y-4 opacity-20">
                       <Globe className="w-12 h-12 mx-auto" />
-                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No links found on this hardware.</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No links in this browser.</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
@@ -393,7 +400,7 @@ export default function HtmlToUrlPage() {
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
                     {['html', 'css', 'javascript'].includes(effectiveLanguage) ? <Eye className="w-3.5 h-3.5" /> : <Terminal className="w-3.5 h-3.5" />}
-                    Visual Master Preview
+                    Preview Matrix
                  </CardTitle>
               </CardHeader>
               
@@ -431,17 +438,15 @@ export default function HtmlToUrlPage() {
               </Card>
             )}
 
-            <div className="grid grid-cols-1 gap-6">
-               <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
-                  <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                     <ShieldCheck className="w-7 h-7" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hardware-Native Sync</h4>
-                    <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                      Links are verified locally on your device before cloud indexing. This ensures zero-latency access for the creator regardless of network status.
-                    </p>
-                  </div>
+            <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+               <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                  <ShieldCheck className="w-7 h-7" />
+               </div>
+               <div className="space-y-2">
+                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hardware-Native Sync</h4>
+                 <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                   Your pages are cached locally before cloud synchronization. This ensures instant access regardless of global network latency.
+                 </p>
                </div>
             </div>
           </div>
