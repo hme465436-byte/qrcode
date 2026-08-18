@@ -27,12 +27,16 @@ import {
   Maximize2,
   AlertCircle,
   FileCode,
-  Braces
+  Braces,
+  FileDown,
+  FileType
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
@@ -42,7 +46,7 @@ import { GetHelp } from '@/components/qr-canvas/get-help';
 const TEMPLATES = {
   blank: {
     html: `<div class="container">\n  <h1>New Project</h1>\n  <p>Start coding...</p>\n</div>`,
-    css: `body { background: #060608; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }\n.container { text-align: center; border: 1px solid #333; padding: 40px; rounded: 20px; }`,
+    css: `body { background: #060608; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }\n.container { text-align: center; border: 1px solid #333; padding: 40px; border-radius: 20px; }`,
     js: `console.log('Studio Initialized');`
   },
   calculator: {
@@ -51,13 +55,13 @@ const TEMPLATES = {
     js: `const disp = document.getElementById('display');\nwindow.append = (v) => disp.innerText = disp.innerText === '0' ? v : disp.innerText + v;\nwindow.clearDisplay = () => disp.innerText = '0';\nwindow.calculate = () => disp.innerText = eval(disp.innerText);`
   },
   profile: {
-    html: `<div class="card">\n  <img src="https://picsum.photos/seed/mykit/150" alt="Avatar">\n  <h2>Studio Developer</h2>\n  <p>Building high-fidelity local tools.</p>\n  <button>Contact Identity</button>\n</div>`,
-    css: `body { background: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }\n.card { background: white; padding: 40px; border-radius: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 280px; }\nimg { border-radius: 50%; margin-bottom: 20px; border: 4px solid #3b82f6; }\nh2 { margin: 0; color: #0f172a; }\np { color: #64748b; font-size: 14px; }\nbutton { margin-top: 20px; background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; }`,
+    html: `<div class="card">\n  <img src="https://picsum.photos/seed/mykit/150/150" alt="Avatar">\n  <h2>Studio Developer</h2>\n  <p>Building high-fidelity local tools.</p>\n  <button>Contact Identity</button>\n</div>`,
+    css: `body { background: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }\n.card { background: white; padding: 40px; border-radius: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 280px; }\nimg { border-radius: 50%; margin-bottom: 20px; border: 4px solid #3b82f6; width: 150px; height: 150px; }\nh2 { margin: 0; color: #0f172a; }\np { color: #64748b; font-size: 14px; }\nbutton { margin-top: 20px; background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; }`,
     js: `document.querySelector('button').onclick = () => alert('Handshake Initiated');`
   },
   landing: {
     html: `<nav>Studio.io</nav>\n<main>\n  <h1>The New Standard</h1>\n  <p>Private. Local. Permanent.</p>\n  <div class="btn-group">\n    <button class="p">Get Started</button>\n    <button class="s">Docs</button>\n  </div>\n</main>`,
-    css: `body { background: #020617; color: white; font-family: system-ui; margin: 0; }\nnav { padding: 20px 40px; font-weight: 900; color: #3b82f6; }\nmain { height: 80vh; display: flex; flex-col; align-items: center; justify-content: center; text-align: center; }\nh1 { font-size: 4rem; margin: 0; letter-spacing: -2px; }\np { opacity: 0.5; font-size: 1.2rem; }\n.btn-group { margin-top: 40px; display: flex; gap: 20px; }\nbutton { padding: 15px 30px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; }\n.p { background: #3b82f6; color: white; }\n.s { background: #1e293b; color: white; }`,
+    css: `body { background: #020617; color: white; font-family: system-ui; margin: 0; }\nnav { padding: 20px 40px; font-weight: 900; color: #3b82f6; }\nmain { height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }\nh1 { font-size: 4rem; margin: 0; letter-spacing: -2px; }\np { opacity: 0.5; font-size: 1.2rem; }\n.btn-group { margin-top: 40px; display: flex; gap: 20px; }\nbutton { padding: 15px 30px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; }\n.p { background: #3b82f6; color: white; }\n.s { background: #1e293b; color: white; }`,
     js: `console.log('Landing Logic Ready');`
   }
 };
@@ -71,12 +75,16 @@ export default function HtmlToUrlPage() {
   const [jsCode, setJsCode] = useState(TEMPLATES.blank.js);
   const [activeEditor, setActiveEditor] = useState<'html' | 'css' | 'js'>('html');
   
+  // Export Settings
+  const [exportName, setExportName] = useState('index');
+  const [exportFormat, setExportFormat] = useState('html');
+  
   // Preview State
   const [debouncedFullHtml, setDebouncedFullHtml] = useState('');
   const [publishedLink, setPublishedLink] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [viewHtml, setViewHtml] = useState<string | null>(null);
-  const [previewWidth, setPreviewWidth] = useState<'100%' | '768px' | '375px'>('100%');
+  const [previewWidth, setPreviewWidth] = useState<'100%' | '768px' | '390px'>('100%');
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -112,6 +120,7 @@ export default function HtmlToUrlPage() {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
+    body { margin: 0; }
     ${cssCode}
   </style>
 </head>
@@ -161,7 +170,7 @@ export default function HtmlToUrlPage() {
   const handlePublish = () => {
     if (!htmlCode.trim() && !cssCode.trim() && !jsCode.trim()) return;
 
-    // LZ-Compression Protocol (Self-Sustaining)
+    // LZ-Compression Protocol
     const code = compressToEncodedURIComponent(fullDocument);
     const link = window.location.origin + window.location.pathname + "#z=" + code;
 
@@ -184,14 +193,46 @@ export default function HtmlToUrlPage() {
     toast({ title: "Template Active", description: `${id.toUpperCase()} protocol loaded.` });
   };
 
-  const downloadHtml = () => {
-    const blob = new Blob([fullDocument], { type: 'text/html' });
+  const executeDownload = () => {
+    let content = '';
+    let mime = 'text/plain';
+    const fileName = `${exportName || 'index'}.${exportFormat}`;
+
+    switch (exportFormat) {
+      case 'html':
+        content = fullDocument;
+        mime = 'text/html';
+        break;
+      case 'css':
+        content = cssCode;
+        mime = 'text/css';
+        break;
+      case 'js':
+        content = jsCode;
+        mime = 'text/javascript';
+        break;
+      case 'json':
+        content = JSON.stringify({ html: htmlCode, css: cssCode, js: jsCode }, null, 2);
+        mime = 'application/json';
+        break;
+      case 'svg':
+        content = htmlCode;
+        mime = 'image/svg+xml';
+        break;
+      case 'txt':
+        content = activeEditor === 'html' ? htmlCode : activeEditor === 'css' ? cssCode : jsCode;
+        mime = 'text/plain';
+        break;
+    }
+
+    const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'studio_export.html';
+    a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
+    toast({ title: "Production Saved", description: `${fileName} saved to local storage.` });
   };
 
   const handleReset = () => {
@@ -201,8 +242,6 @@ export default function HtmlToUrlPage() {
     setPublishedLink(null);
     toast({ title: "Studio Reset" });
   };
-
-  // --- 3. Render Logic ---
 
   if (viewHtml !== null) {
     return (
@@ -237,7 +276,7 @@ export default function HtmlToUrlPage() {
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="min-w-0">
-            <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
+            <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
               HTML to <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
@@ -273,7 +312,7 @@ export default function HtmlToUrlPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             
             <Tabs value={activeEditor} onValueChange={(v: any) => setActiveEditor(v)} className="flex-1 flex flex-col">
-              <CardHeader className="pb-0 border-b border-border bg-secondary/30 pt-4 px-4">
+              <CardHeader className="pb-0 border-b border-border bg-secondary/30 pt-4 px-4 shrink-0">
                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <TabsList className="bg-background/50 border border-white/5 p-1 rounded-xl h-11 w-fit">
                       <TabsTrigger value="html" className="rounded-lg text-[9px] font-black uppercase px-6">HTML</TabsTrigger>
@@ -289,8 +328,8 @@ export default function HtmlToUrlPage() {
                  </div>
               </CardHeader>
               
-              <CardContent className="p-0 flex-1 flex flex-col">
-                <div className="flex-1 relative overflow-hidden flex">
+              <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 relative overflow-hidden flex min-h-[400px]">
                   {/* Line Numbers Simulation */}
                   <div className="w-10 bg-black/20 border-r border-white/5 pt-8 flex flex-col items-center text-[10px] font-mono text-white/10 select-none no-scrollbar overflow-hidden shrink-0">
                     {Array.from({ length: 40 }).map((_, i) => (
@@ -304,7 +343,7 @@ export default function HtmlToUrlPage() {
                       onChange={e => setHtmlCode(e.target.value)}
                       placeholder="<!-- HTML Matrix -->"
                       spellCheck={false}
-                      className="w-full h-full p-8 bg-transparent text-sm font-mono text-foreground leading-6 resize-none focus:outline-none custom-scrollbar min-h-[400px]"
+                      className="w-full h-full p-8 bg-transparent text-sm font-mono text-foreground leading-6 resize-none focus:outline-none custom-scrollbar"
                     />
                   </TabsContent>
                   <TabsContent value="css" className="flex-1 m-0">
@@ -313,7 +352,7 @@ export default function HtmlToUrlPage() {
                       onChange={e => setCssCode(e.target.value)}
                       placeholder="/* CSS Protocol */"
                       spellCheck={false}
-                      className="w-full h-full p-8 bg-transparent text-sm font-mono text-foreground leading-6 resize-none focus:outline-none custom-scrollbar min-h-[400px]"
+                      className="w-full h-full p-8 bg-transparent text-sm font-mono text-foreground leading-6 resize-none focus:outline-none custom-scrollbar"
                     />
                   </TabsContent>
                   <TabsContent value="js" className="flex-1 m-0">
@@ -322,12 +361,12 @@ export default function HtmlToUrlPage() {
                       onChange={e => setJsCode(e.target.value)}
                       placeholder="// JS Logic"
                       spellCheck={false}
-                      className="w-full h-full p-8 bg-transparent text-sm font-mono text-foreground leading-6 resize-none focus:outline-none custom-scrollbar min-h-[400px]"
+                      className="w-full h-full p-8 bg-transparent text-sm font-mono text-foreground leading-6 resize-none focus:outline-none custom-scrollbar"
                     />
                   </TabsContent>
                 </div>
 
-                <div className="p-4 bg-black/20 border-t border-white/5 flex items-center justify-between">
+                <div className="p-4 bg-black/20 border-t border-white/5 flex items-center justify-between shrink-0">
                    <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1.5">
                          <FileCode className="w-3.5 h-3.5 text-primary" />
@@ -336,11 +375,8 @@ export default function HtmlToUrlPage() {
                       <span className="text-[9px] font-mono text-white/10">{fullDocument.length} B</span>
                    </div>
                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={downloadHtml} className="h-8 px-3 text-[8px] font-black uppercase bg-white/5 hover:bg-white/10 rounded-lg">
-                        <Download className="w-3 h-3 mr-2" /> .HTML
-                      </Button>
                       <Button onClick={handlePublish} className="h-8 px-4 rounded-lg bg-primary text-white font-black text-[8px] uppercase tracking-widest shadow-lg">
-                         <Save className="w-3 h-3 mr-2" /> Make Link
+                         <Save className="w-3.5 h-3.5 mr-2" /> Make Link
                       </Button>
                    </div>
                 </div>
@@ -351,8 +387,8 @@ export default function HtmlToUrlPage() {
 
         {/* Monitor Area */}
         <div className="lg:col-span-6 xl:col-span-5 space-y-6">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[400px] lg:min-h-[600px] bg-white">
-            <CardHeader className="py-3 border-b border-border bg-secondary/30 shrink-0 flex flex-row items-center justify-between">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px] bg-black">
+            <CardHeader className="py-3 border-b border-white/10 bg-secondary/30 shrink-0 flex flex-row items-center justify-between">
                <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                      <Eye className="w-4 h-4" />
@@ -362,24 +398,33 @@ export default function HtmlToUrlPage() {
                <div className="flex items-center gap-1.5 p-1 bg-background/50 rounded-lg border border-border">
                   <button onClick={() => setPreviewWidth('100%')} className={cn("p-1.5 rounded-md transition-all", previewWidth === '100%' ? "bg-primary text-white" : "text-foreground/20")}><Monitor className="w-3.5 h-3.5" /></button>
                   <button onClick={() => setPreviewWidth('768px')} className={cn("p-1.5 rounded-md transition-all", previewWidth === '768px' ? "bg-primary text-white" : "text-foreground/20")}><Tablet className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setPreviewWidth('375px')} className={cn("p-1.5 rounded-md transition-all", previewWidth === '375px' ? "bg-primary text-white" : "text-foreground/20")}><Smartphone className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setPreviewWidth('390px')} className={cn("p-1.5 rounded-md transition-all", previewWidth === '390px' ? "bg-primary text-white" : "text-foreground/20")}><Smartphone className="w-3.5 h-3.5" /></button>
                </div>
             </CardHeader>
-            <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col min-h-[360px] items-center bg-[#060608]">
+            <CardContent className="flex-1 p-0 relative overflow-auto custom-scrollbar flex flex-col items-center bg-[#0a0a0c]">
                 <div 
-                  className="bg-white shadow-2xl transition-all duration-500 h-full"
-                  style={{ width: previewWidth }}
+                  className="bg-white shadow-2xl transition-all duration-500 h-full flex-1 flex flex-col items-center"
+                  style={{ width: '100%', padding: previewWidth === '100%' ? '0' : '2rem' }}
                 >
-                  <iframe 
-                    srcDoc={debouncedFullHtml}
-                    title="Live Preview"
-                    sandbox="allow-scripts allow-forms"
-                    className="w-full h-full border-none bg-white block"
-                  />
+                  <div 
+                    className="relative shadow-2xl overflow-hidden rounded-lg border border-white/10 bg-white h-full"
+                    style={{ 
+                      width: previewWidth === '100%' ? '100%' : previewWidth,
+                      minHeight: '420px',
+                      height: '100%'
+                    }}
+                  >
+                    <iframe 
+                      srcDoc={debouncedFullHtml}
+                      title="Live Preview"
+                      sandbox="allow-scripts allow-forms"
+                      className="w-full h-full border-none block bg-white"
+                    />
+                  </div>
                 </div>
 
                 {runtimeError && (
-                  <div className="absolute bottom-4 left-4 right-4 animate-in slide-in-from-bottom-4">
+                  <div className="absolute bottom-4 left-4 right-4 animate-in slide-in-from-bottom-4 z-50">
                      <div className="p-4 rounded-xl bg-red-600/90 backdrop-blur-xl border border-white/20 flex items-center gap-4 text-white shadow-2xl">
                         <AlertCircle className="w-5 h-5 shrink-0 animate-pulse" />
                         <div className="min-w-0">
@@ -391,6 +436,34 @@ export default function HtmlToUrlPage() {
                   </div>
                 )}
             </CardContent>
+            
+            {/* Export Parameters Row */}
+            <div className="p-4 border-t border-white/10 bg-black/40 flex flex-col sm:flex-row items-center gap-3">
+               <div className="flex-1 grid grid-cols-2 gap-2 w-full">
+                  <Input 
+                    value={exportName}
+                    onChange={(e) => setExportName(e.target.value)}
+                    placeholder="Filename"
+                    className="h-10 bg-background/50 border-white/10 text-[10px] font-bold uppercase rounded-xl"
+                  />
+                  <Select value={exportFormat} onValueChange={setExportFormat}>
+                     <SelectTrigger className="h-10 bg-background/50 border-white/10 text-[10px] font-black uppercase rounded-xl">
+                        <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent className="glass-card">
+                        <SelectItem value="html" className="text-[9px] font-black uppercase">.HTML (Combined)</SelectItem>
+                        <SelectItem value="css" className="text-[9px] font-black uppercase">.CSS (Styles)</SelectItem>
+                        <SelectItem value="js" className="text-[9px] font-black uppercase">.JS (Logic)</SelectItem>
+                        <SelectItem value="json" className="text-[9px] font-black uppercase">.JSON (Project)</SelectItem>
+                        <SelectItem value="svg" className="text-[9px] font-black uppercase">.SVG (Vector)</SelectItem>
+                        <SelectItem value="txt" className="text-[9px] font-black uppercase">.TXT (Raw)</SelectItem>
+                     </SelectContent>
+                  </Select>
+               </div>
+               <Button onClick={executeDownload} className="h-10 px-6 rounded-xl bg-primary text-white font-black text-[9px] uppercase tracking-widest w-full sm:w-auto">
+                  <FileDown className="w-3.5 h-3.5 mr-2" /> Download
+               </Button>
+            </div>
           </Card>
 
           {publishedLink && (
@@ -400,7 +473,7 @@ export default function HtmlToUrlPage() {
                     <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg">
                        <CheckCircle2 className="w-5 h-5" />
                     </div>
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em]">Self-Sustaining Protocol</p>
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em]">Self-Sustaining Link</p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => setPublishedLink(null)} className="h-6 w-6 rounded-full text-emerald-500/40 hover:text-emerald-500">
                     <X className="w-4 h-4" />
@@ -420,16 +493,16 @@ export default function HtmlToUrlPage() {
               </div>
             </div>
           )}
-
+          
           <div className="grid grid-cols-1 gap-6">
              <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group hover:bg-secondary/80 transition-all shadow-lg">
                 <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Database-Free Hosting</h4>
+                  <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Permanent Hosting</h4>
                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Your code is compressed and embedded directly into the URL hash. Your content is 100% portable and functions without a backend.
+                    Your code is compressed and embedded directly into the URL hash. Your content is 100% portable and functions without a backend database.
                   </p>
                 </div>
              </div>
@@ -453,3 +526,4 @@ export default function HtmlToUrlPage() {
     </div>
   );
 }
+
