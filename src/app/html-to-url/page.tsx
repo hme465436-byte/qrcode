@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   Layout,
   AlertCircle,
-  Database
+  Database,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,17 +91,17 @@ export default function HtmlToUrlPage() {
       // 2. Hybrid Link Construction
       let link = window.location.origin + window.location.pathname + "?kit=" + id;
       
-      // If content is small, embed directly as fallback
+      // If content is small, embed directly as fallback for offline/restricted access
       if (html.length < 6000) {
         link += "#h=" + encodeURIComponent(html.trim());
       }
 
-      // 3. Hardware Persistence
+      // 3. Hardware Persistence (LocalStorage map)
       const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
       pagesMap[id] = html.trim();
       localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
 
-      // 4. Update History
+      // 4. Update Local History
       const historyItem = { id, title: finalTitle, url: link, date: Date.now() };
       const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 20);
       setLocalHistory(nextHistory);
@@ -189,7 +190,7 @@ export default function HtmlToUrlPage() {
                   <div className="flex justify-between items-center px-1">
                     <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">HTML / CSS / JS</Label>
                     <span className={cn("text-[9px] font-mono", html.length > 6000 ? "text-yellow-500" : "text-primary/60")}>
-                      {html.length.toLocaleString()} Chars {html.length > 6000 ? '(DB Only Mode)' : '(Hybrid Ready)'}
+                      {html.length.toLocaleString()} Chars {html.length > 6000 ? '(Cloud Only)' : '(Hybrid Protocol)'}
                     </span>
                   </div>
                   <Textarea 
@@ -311,9 +312,9 @@ export default function HtmlToUrlPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hybrid Link Protocol</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hybrid Protocol</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Small payloads are embedded directly in the link hash. This ensures your hosted page is accessible even if the database signal is restricted.
+                    Small payloads are embedded directly in the link hash. This ensures your hosted page is accessible even if the cloud signal is restricted.
                   </p>
                 </div>
              </div>
@@ -322,9 +323,9 @@ export default function HtmlToUrlPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">WASM Sandbox Safety</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Sandboxed Production</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Pages are rendered in a restricted iframe sandbox. Browser-native memory isolation prevents local scripts from accessing your primary studio environment.
+                    Pages are rendered in a restricted iframe sandbox. Hardware-native memory isolation prevents local scripts from accessing your primary studio environment.
                   </p>
                 </div>
              </div>
