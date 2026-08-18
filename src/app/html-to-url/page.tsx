@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -17,7 +16,8 @@ import {
   Layout,
   Info,
   ArrowLeft,
-  RotateCcw
+  RotateCcw,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,7 +73,7 @@ export default function HtmlToUrlPage() {
 
   const previewSrcDoc = useMemo(() => {
     if (!debouncedHtml.trim()) {
-      return "<html><body style='background:#060608;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#3b82f6;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Input</p> body></html>";
+      return "<html><body style='background:#060608;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#3b82f6;text-transform:uppercase;font-weight:900;font-size:10px;letter-spacing:2px;'><p>Awaiting Input</p></body></html>";
     }
     return debouncedHtml;
   }, [debouncedHtml]);
@@ -148,7 +148,7 @@ export default function HtmlToUrlPage() {
           <div className="flex items-center gap-3">
              <GetHelp toolId="html-to-url" />
              {htmlInput && (
-                <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
+                <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
                 </Button>
              )}
