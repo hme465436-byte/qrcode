@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -36,8 +35,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { signInAnonymously } from 'firebase/auth';
-import { useFirestore, useAuth, useUser } from '@/firebase';
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { auth, db } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
 const HISTORY_KEY = 'htmlToUrlHistory_v5';
@@ -62,9 +61,6 @@ const LANGUAGES = [
 
 export default function HtmlToUrlPage() {
   const { toast } = useToast();
-  const firestore = useFirestore();
-  const auth = useAuth();
-  const { user } = useUser();
   
   const [html, setHtml] = useState('');
   const [title, setTitle] = useState('');
@@ -75,27 +71,38 @@ export default function HtmlToUrlPage() {
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
   const [guestError, setGuestError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   // Preview State
   const [previewSrcDoc, setPreviewSrcDoc] = useState('');
 
-  // 1. Guest Authentication Protocol (Requested Exact Flow)
+  // Authentication Monitor
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      const statusEl = document.getElementById("guestStatus");
+      if (statusEl) statusEl.textContent = u ? "Guest ready" : "Not logged in";
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleGuestLogin = async () => {
     if (!auth) {
-      setGuestError("Hardware Error: Firebase Auth instance not initialized.");
+      setGuestError("Firebase Auth not connected");
       return;
     }
     setGuestError("Signing in...");
     try {
       const r = await signInAnonymously(auth);
-      setGuestError("OK " + r.user.uid);
-      toast({ title: "Guest identity active" });
+      setGuestError("OK " + r.user.uid.substring(0, 6));
+      toast({ title: "Guest ready" });
     } catch (e: any) {
       setGuestError(String(e.code) + " — " + String(e.message));
     }
   };
 
-  // 2. Load History
+  // Load History
   useEffect(() => {
     const saved = localStorage.getItem(HISTORY_KEY);
     if (saved) {
@@ -116,9 +123,9 @@ export default function HtmlToUrlPage() {
   const purgeLocalItem = async (id: string) => {
     if (!confirm("Confirm removal from this device?")) return;
     
-    if (firestore) {
+    if (db) {
       try {
-        await deleteDoc(doc(firestore, "pages", id));
+        await deleteDoc(doc(db, "pages", id));
       } catch (e) {}
     }
 
@@ -155,7 +162,7 @@ export default function HtmlToUrlPage() {
       }
       setPreviewSrcDoc(content);
     } else {
-      setPreviewSrcDoc("<html><body style='background:#0a0a0c;color:#4ade80;padding:20px;font-family:monospace;'>[Linguistic Preview Not Supported]</body></html>"); 
+      setPreviewSrcDoc("<html><body style='background:#0a0a0c;color:#4ade80;padding:20px;font-family:monospace;'>[Preview Not Available]</body></html>"); 
     }
   }, [html, effectiveLanguage]);
 
@@ -168,11 +175,11 @@ export default function HtmlToUrlPage() {
 
   const handleMakeLink = async () => {
     if (!user) {
-      toast({ variant: "destructive", title: "Access Blocked", description: "Please Login as Guest first to establish session identity." });
+      toast({ variant: "destructive", title: "Login Required", description: "Please Login as Guest first." });
       return;
     }
 
-    if (!html.trim()) return;
+    if (!html.trim() || !db) return;
 
     setIsProcessing(true);
     
@@ -189,12 +196,11 @@ export default function HtmlToUrlPage() {
         createdAt 
       };
 
-      // 1. Hardware Memory Cache
+      // 1. Local Cache
       localStorage.setItem(`kit_page_${id}`, JSON.stringify(payload));
 
-      // 2. Global Cloud Sync
-      if (!firestore) throw new Error("Database reference missing");
-      await setDoc(doc(firestore, "pages", id), payload);
+      // 2. Database Sync
+      await setDoc(doc(db, "pages", id), payload);
       
       const historyItem: HistoryItem = {
         id,
@@ -206,11 +212,11 @@ export default function HtmlToUrlPage() {
       updateLocalHistory(historyItem);
       setGeneratedId(id);
       
-      toast({ title: "Master Published", description: "Page is now live in the global registry." });
+      toast({ title: "Published", description: "Your page is live." });
       window.open(newUrl, '_blank');
     } catch (err: any) {
       setGuestError(String(err.code) + " — " + String(err.message));
-      toast({ variant: "destructive", title: "Publishing Failed", description: err.message });
+      toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
       setIsProcessing(false);
     }
@@ -219,7 +225,7 @@ export default function HtmlToUrlPage() {
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(label);
-    toast({ title: "Protocol Copied" });
+    toast({ title: "Copied" });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -248,14 +254,13 @@ export default function HtmlToUrlPage() {
         {/* Editor Column */}
         <div className="lg:col-span-6 xl:col-span-6 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           
-          {/* Exact Guest Auth Implementation */}
           <Card className="glass-card border-border shadow-xl overflow-hidden">
              <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground">
-                  <ShieldCheck className="w-4 h-4 text-primary" /> Identity Hub
+                  <ShieldCheck className="w-4 h-4 text-primary" /> Session
                 </CardTitle>
                 <div id="guestStatus" className="text-[9px] font-black uppercase text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-                  {user ? `Guest: ${user.uid}` : "Not logged in"}
+                  Not logged in
                 </div>
              </CardHeader>
              <CardContent className="pt-8 space-y-6">
@@ -264,17 +269,14 @@ export default function HtmlToUrlPage() {
                     id="guestBtn"
                     type="button" 
                     onClick={handleGuestLogin}
-                    className="h-14 flex-1 bg-primary text-white font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-xl shadow-primary/20"
+                    className="h-14 flex-1 bg-primary text-white font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-xl shadow-primary/30"
                   >
-                    <LogIn className="w-4 h-4 mr-2" /> Login as Guest
+                    Login as Guest
                   </Button>
                   <div id="guestErr" className="flex-1 h-14 bg-secondary/50 border border-border rounded-2xl flex items-center px-4 font-mono text-[9px] text-red-500 font-bold overflow-auto custom-scrollbar">
-                    {guestError || "Protocol Status: Standby"}
+                    {guestError || "Status: Standby"}
                   </div>
                 </div>
-                <p className="text-[9px] text-foreground/30 font-bold uppercase tracking-widest leading-relaxed">
-                  Required to establish document ownership in the global registry.
-                </p>
              </CardContent>
           </Card>
 
@@ -351,7 +353,7 @@ export default function HtmlToUrlPage() {
             <Card className="glass-card border-border shadow-xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                   <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                    <History className="w-4 h-4 text-primary" /> My Local Links
+                    <History className="w-4 h-4 text-primary" /> Local Links
                   </CardTitle>
                   <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Saved</span>
               </CardHeader>
@@ -404,7 +406,7 @@ export default function HtmlToUrlPage() {
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
                     <Eye className="w-3.5 h-3.5" />
-                    Live Monitor
+                    Live Preview
                  </CardTitle>
               </CardHeader>
               
@@ -423,7 +425,7 @@ export default function HtmlToUrlPage() {
               <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden relative animate-in zoom-in duration-500">
                  <CardHeader className="py-8 border-b border-primary/10">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.5em] flex items-center gap-3 text-primary">
-                      <CheckCircle2 className="w-4 h-4" /> Synthesis Complete
+                      <CheckCircle2 className="w-4 h-4" /> Published
                     </CardTitle>
                  </CardHeader>
                  <CardContent className="pt-10 space-y-8 text-center">

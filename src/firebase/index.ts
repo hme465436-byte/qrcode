@@ -11,29 +11,32 @@ import { firebaseConfig } from './config';
  * Synchronizes the local browser with the production signaling matrix.
  * Hardened to prevent crashes if environment variables are missing.
  */
-export function initializeFirebase() {
-  const isConfigValid = 
-    firebaseConfig.apiKey && 
-    firebaseConfig.apiKey !== "undefined" && 
-    firebaseConfig.projectId && 
-    firebaseConfig.projectId !== "undefined";
+const isConfigValid = 
+  firebaseConfig.apiKey && 
+  firebaseConfig.apiKey !== "undefined" && 
+  firebaseConfig.projectId && 
+  firebaseConfig.projectId !== "undefined";
 
-  if (!isConfigValid) {
-    console.warn("Firebase: Inbound configuration is incomplete. Signaling services are inactive.");
-    return { firebaseApp: null, firestore: null, auth: null, storage: null };
-  }
+let app: FirebaseApp | null = null;
+let db: Firestore | null = null;
+let auth: Auth | null = null;
+let storage: FirebaseStorage | null = null;
 
+if (isConfigValid && typeof window !== 'undefined') {
   try {
-    const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    const firestore = getFirestore(firebaseApp);
-    const auth = getAuth(firebaseApp);
-    const storage = getStorage(firebaseApp);
-
-    return { firebaseApp, firestore, auth, storage };
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    storage = getStorage(app);
   } catch (err) {
     console.error("Firebase: Hardware handshake failed.", err);
-    return { firebaseApp: null, firestore: null, auth: null, storage: null };
   }
+}
+
+export { app, db, auth, storage };
+
+export function initializeFirebase() {
+  return { firebaseApp: app, firestore: db, auth, storage };
 }
 
 export * from './provider';
