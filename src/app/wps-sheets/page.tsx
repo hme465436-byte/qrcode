@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -31,7 +32,14 @@ import {
   Copy,
   Hash,
   ChevronDown,
-  Sigma
+  Sigma,
+  Eraser,
+  Split,
+  FileSearch,
+  AlertCircle,
+  Loader2,
+  Check,
+  History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +50,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import * as XLSX from 'xlsx';
 
 // --- Production Templates ---
 const TEMPLATES = {
@@ -83,7 +92,14 @@ export default function WpsSheetsAdvancedPage() {
   const [showTotals, setShowTotals] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Clean & Arrange State
+  const [showCleaningLab, setShowCleaningLab] = useState(false);
+  const [rawUploadData, setRawUploadData] = useState<string[][]>([]);
+  const [cleanedResult, setCleanedResult] = useState<{ headers: string[], rows: string[][] } | null>(null);
+  const [removeDuplicates, setRemoveDuplicates] = useState(true);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cleanupInputRef = useRef<HTMLInputElement>(null);
 
   // --- Persistence Matrix ---
   useEffect(() => {
@@ -189,12 +205,11 @@ export default function WpsSheetsAdvancedPage() {
   };
 
   const evaluateFormula = (cellVal: string, currentRows: string[][]) => {
-    if (!cellVal.startsWith('=')) return cellVal;
+    if (!cellVal || typeof cellVal !== 'string' || !cellVal.startsWith('=')) return cellVal;
     
     const formula = cellVal.substring(1).toUpperCase();
     
     try {
-      // 1. Basic SUM(A1:A5)
       if (formula.startsWith('SUM(')) {
         const range = formula.match(/\((.*?)\)/)?.[1];
         if (!range) return '#ERR';
@@ -216,12 +231,10 @@ export default function WpsSheetsAdvancedPage() {
         }
       }
       
-      // 2. Direct Reference A1 + B2
       const resolved = formula.replace(/[A-Z]+\d+/g, (match) => {
         return getCellValue(match, currentRows).toString();
       });
       
-      // Safety check for eval
       if (/^[0-9+\-*/().\s]+$/.test(resolved)) {
         return eval(resolved).toString();
       }
@@ -247,7 +260,112 @@ export default function WpsSheetsAdvancedPage() {
     toast({ title: "Column Sorted" });
   };
 
-  // --- Export/Import ---
+  // --- Clean & Arrange Logic ---
+  const handleCleanupUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessing(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
+        
+        setRawUploadData(json);
+        setShowCleaningLab(true);
+        executeClean(json);
+      } catch (err) {
+        toast({ variant: "destructive", title: "Read Error", description: "Failed to parse document matrix." });
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const executeClean = (data: string[][]) => {
+    setIsProcessing(true);
+    
+    // 1. Remove entirely empty rows
+    let workingRows = data.filter(row => row.some(cell => cell && cell.toString().trim() !== ""));
+    
+    // 2. Detect Header (Row with max non-empty cells in first 3 rows)
+    let headerIdx = 0;
+    let maxFilled = -1;
+    for (let i = 0; i < Math.min(3, workingRows.length); i++) {
+      const filled = workingRows[i].filter(c => c).length;
+      if (filled > maxFilled) {
+        maxFilled = filled;
+        headerIdx = i;
+      }
+    }
+    
+    const headersRaw = workingRows[headerIdx];
+    workingRows = workingRows.slice(headerIdx + 1);
+
+    // 3. Trim and Clean values
+    let processed = workingRows.map(row => {
+      return row.map(cell => {
+        let val = (cell || "").toString().trim();
+        
+        // Fix Phone Numbers: if mostly digits, keep only digits
+        if (val.length > 5 && (val.match(/\d/g)?.length || 0) > val.length * 0.7) {
+          val = val.replace(/[^0-9+]/g, '');
+        }
+
+        return val;
+      });
+    });
+
+    // 4. Remove empty columns
+    const colsToKeep: number[] = [];
+    headersRaw.forEach((_, cIdx) => {
+      const hasData = processed.some(row => row[cIdx] && row[cIdx] !== "");
+      if (hasData || headersRaw[cIdx]) colsToKeep.push(cIdx);
+    });
+
+    const finalHeaders = colsToKeep.map(i => headersRaw[i] || `Column_${i + 1}`);
+    let finalRows = processed.map(row => colsToKeep.map(i => row[i] || ""));
+
+    // 5. Duplicate Removal
+    if (removeDuplicates) {
+      const seen = new Set();
+      finalRows = finalRows.filter(row => {
+        const key = JSON.stringify(row);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    // 6. Initial Sort (First Column)
+    finalRows.sort((a, b) => (a[0] || "").localeCompare(b[0] || ""));
+
+    setCleanedResult({ headers: finalHeaders, rows: finalRows });
+    setIsProcessing(false);
+  };
+
+  const applyCleanedData = () => {
+    if (!cleanedResult) return;
+    pushHistory();
+    setHeaders(cleanedResult.headers);
+    setRows(cleanedResult.rows);
+    setShowCleaningLab(false);
+    toast({ title: "Matrix Synchronized", description: "Cleaned data injected into workspace." });
+  };
+
+  const downloadXlsx = () => {
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows.map(r => r.map(c => evaluateFormula(c, rows)))]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "StudioMaster");
+    XLSX.writeFile(wb, `${title}.xlsx`);
+    toast({ title: "Excel Master Exported" });
+  };
+
   const handleExportCsv = () => {
     setIsProcessing(true);
     const escape = (v: string) => `"${(v || '').replace(/"/g, '""')}"`;
@@ -264,23 +382,6 @@ export default function WpsSheetsAdvancedPage() {
     a.click();
     setIsProcessing(false);
     toast({ title: "WPS Master Exported" });
-  };
-
-  const handleImportCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-      if (lines.length > 0) {
-        const parseLine = (l: string) => l.split(',').map(v => v.replace(/^"|"$/g, '').replace(/""/g, '"'));
-        setHeaders(parseLine(lines[0]));
-        setRows(lines.slice(1).map(parseLine));
-        setTitle(file.name.replace(/\.[^/.]+$/, ""));
-      }
-    };
-    reader.readAsText(file);
   };
 
   // --- Totals Calc ---
@@ -321,20 +422,31 @@ export default function WpsSheetsAdvancedPage() {
         </div>
       </div>
 
-      {/* Templates Row */}
-      <div className="mb-6 flex gap-2 overflow-x-auto no-scrollbar py-2 px-1">
-         {Object.keys(TEMPLATES).map((t) => (
-            <button key={t} onClick={() => loadTemplate(t as any)} className="px-5 py-2.5 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest hover:border-primary/40 hover:text-primary transition-all whitespace-nowrap">
-               {t} Matrix
-            </button>
-         ))}
+      {/* Templates & Core Actions */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-6">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar py-2 px-1">
+          {Object.keys(TEMPLATES).map((t) => (
+              <button key={t} onClick={() => loadTemplate(t as any)} className="px-5 py-2.5 rounded-xl bg-secondary/50 border border-border text-[9px] font-black uppercase tracking-widest hover:border-primary/40 hover:text-primary transition-all whitespace-nowrap">
+                {t} Matrix
+              </button>
+          ))}
+        </div>
+        
+        <div className="flex items-center gap-3">
+           <Button 
+            onClick={() => cleanupInputRef.current?.click()}
+            className="h-11 px-6 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-black text-[9px] uppercase tracking-widest shadow-lg shadow-indigo-500/20"
+           >
+              <Eraser className="w-4 h-4 mr-2" /> Clean & Arrange
+           </Button>
+           <input type="file" ref={cleanupInputRef} accept=".csv,.xlsx,.xls" onChange={handleCleanupUpload} className="hidden" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
         <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[650px]">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
           
-          {/* Advanced Toolbar */}
           <CardHeader className="pb-4 border-b border-border bg-secondary/30 flex flex-col gap-6">
              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div className="flex-1 max-w-md group/title">
@@ -363,7 +475,10 @@ export default function WpsSheetsAdvancedPage() {
                 <div className="w-[1px] h-6 bg-border mx-1" />
                 <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="h-9 px-4 rounded-xl border-border bg-background text-[9px] font-black uppercase"><Upload className="w-3.5 h-3.5 mr-2" /> Import</Button>
                 <input type="file" ref={fileInputRef} accept=".csv" onChange={handleImportCsv} className="hidden" />
-                <Button onClick={handleExportCsv} className="h-9 px-6 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-lg"><Download className="w-3.5 h-3.5 mr-2" /> Export CSV</Button>
+                <div className="flex gap-2">
+                   <Button onClick={handleExportCsv} variant="outline" className="h-9 px-4 border-border bg-background text-foreground font-black text-[9px] uppercase tracking-widest rounded-xl">CSV</Button>
+                   <Button onClick={downloadXlsx} className="h-9 px-6 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20">Download XLSX</Button>
+                </div>
              </div>
           </CardHeader>
 
@@ -400,9 +515,9 @@ export default function WpsSheetsAdvancedPage() {
                               </div>
                            </td>
                            {row.map((cell, cIdx) => {
-                             const isFormula = cell.startsWith('=');
+                             const isFormula = cell && typeof cell === 'string' && cell.startsWith('=');
                              const displayValue = isFormula ? evaluateFormula(cell, rows) : cell;
-                             const isHighlighted = searchQuery && displayValue.toLowerCase().includes(searchQuery.toLowerCase());
+                             const isHighlighted = searchQuery && displayValue?.toString().toLowerCase().includes(searchQuery.toLowerCase());
                              
                              return (
                                <td key={cIdx} className={cn("p-0 border-r border-border h-full relative", isHighlighted && "bg-primary/10")}>
@@ -465,15 +580,145 @@ export default function WpsSheetsAdvancedPage() {
            </div>
            <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:border-primary/20 transition-all">
               <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                 <Zap className="w-6 h-6" />
+                 <Eraser className="w-6 h-6" />
               </div>
               <div className="space-y-2">
-                 <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Instant Matrix</h4>
-                 <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">High-performance grid rendering ensures zero-latency interaction even with large data structures.</p>
+                 <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Matrix Sanitization</h4>
+                 <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">Advanced Clean & Arrange protocol for re-structuring messy CSV/Excel datasets automatically.</p>
               </div>
            </div>
         </div>
       </div>
+
+      {/* Cleaning Lab Modal Overlay */}
+      {showCleaningLab && (
+        <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-6 animate-in fade-in duration-500 overflow-hidden">
+           <div className="w-full max-w-7xl h-full max-h-[90vh] bg-card rounded-[3rem] border border-white/10 shadow-2xl flex flex-col relative">
+              <CardHeader className="py-8 px-10 border-b border-white/5 bg-secondary/30 flex flex-row items-center justify-between shrink-0">
+                 <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
+                       <Eraser className="w-7 h-7" />
+                    </div>
+                    <div>
+                       <h2 className="text-3xl font-headline font-black text-white uppercase tracking-tighter">Cleaning Lab</h2>
+                       <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">Protocol Execution Matrix</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowCleaningLab(false)} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-all"><X className="w-6 h-6" /></button>
+              </CardHeader>
+
+              <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+                 {/* Parameter Controls - Left */}
+                 <aside className="w-full lg:w-80 border-r border-white/5 p-8 space-y-10 bg-secondary/10 shrink-0">
+                    <div className="space-y-6">
+                       <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Sanitization Rules</Label>
+                       <div className="space-y-4">
+                          <div className="flex items-center justify-between p-4 rounded-2xl bg-black/20 border border-white/5 group hover:border-primary/20 transition-all">
+                             <span className="text-[9px] font-black text-white/60 uppercase">Deduplicate</span>
+                             <Switch checked={removeDuplicates} onCheckedChange={(v) => { setRemoveDuplicates(v); executeClean(rawUploadData); }} />
+                          </div>
+                          <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-2">
+                             <div className="flex items-center gap-2 text-indigo-400">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span className="text-[9px] font-black uppercase">Auto-Trim</span>
+                             </div>
+                             <p className="text-[8px] text-white/20 font-bold uppercase">Active: Removing padding</p>
+                          </div>
+                          <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-2">
+                             <div className="flex items-center gap-2 text-indigo-400">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span className="text-[9px] font-black uppercase">Null Filter</span>
+                             </div>
+                             <p className="text-[8px] text-white/20 font-bold uppercase">Active: Removing empty nodes</p>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="space-y-4 pt-10 border-t border-white/5">
+                       <Button onClick={applyCleanedData} className="w-full h-16 bg-primary text-white font-black rounded-2xl uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30">
+                          <Zap className="w-4 h-4 mr-2" /> Apply to Sheet
+                       </Button>
+                       <div className="grid grid-cols-2 gap-2">
+                          <Button variant="outline" onClick={() => {
+                            if (!cleanedResult) return;
+                            const ws = XLSX.utils.aoa_to_sheet([cleanedResult.headers, ...cleanedResult.rows]);
+                            const wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, "Sanitized");
+                            XLSX.writeFile(wb, "cleaned_data.xlsx");
+                          }} className="h-10 text-[8px] font-black uppercase border-white/10 bg-white/5">XLSX</Button>
+                          <Button variant="outline" onClick={() => {
+                            if (!cleanedResult) return;
+                            const escape = (v: string) => `"${(v || '').replace(/"/g, '""')}"`;
+                            const content = [cleanedResult.headers.map(escape).join(','), ...cleanedResult.rows.map(r => r.map(escape).join(','))].join('\n');
+                            const b = new Blob([content], { type: 'text/csv' });
+                            const u = URL.createObjectURL(b);
+                            const a = document.createElement('a'); a.href = u; a.download = "cleaned.csv"; a.click();
+                          }} className="h-10 text-[8px] font-black uppercase border-white/10 bg-white/5">CSV</Button>
+                       </div>
+                    </div>
+                 </aside>
+
+                 {/* Comparison Matrix - Right */}
+                 <div className="flex-1 p-10 overflow-hidden flex flex-col gap-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-full">
+                       {/* Before View */}
+                       <div className="flex flex-col h-full space-y-4">
+                          <div className="flex items-center justify-between px-2">
+                             <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest flex items-center gap-2">
+                                <History className="w-3.5 h-3.5" /> Source Stream (Dirty)
+                             </h4>
+                             <span className="text-[8px] font-mono text-red-400">{rawUploadData.length} Rows</span>
+                          </div>
+                          <div className="flex-1 rounded-[2.5rem] bg-black/40 border border-white/5 overflow-auto custom-scrollbar p-6">
+                             <table className="w-full border-collapse opacity-40">
+                                <tbody>
+                                   {rawUploadData.slice(0, 20).map((row, i) => (
+                                     <tr key={i} className="border-b border-white/5 h-8">
+                                        {row.slice(0, 4).map((c, j) => (
+                                          <td key={j} className="text-[9px] font-mono text-white/40 px-2 truncate max-w-[100px]">{c}</td>
+                                        ))}
+                                     </tr>
+                                   ))}
+                                </tbody>
+                             </table>
+                          </div>
+                       </div>
+
+                       {/* After View */}
+                       <div className="flex flex-col h-full space-y-4">
+                          <div className="flex items-center justify-between px-2">
+                             <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                                <ShieldCheck className="w-3.5 h-3.5" /> Optimized Matrix (Clean)
+                             </h4>
+                             <span className="text-[8px] font-mono text-green-500">{cleanedResult?.rows.length || 0} Rows Sanitized</span>
+                          </div>
+                          <div className="flex-1 rounded-[2.5rem] bg-black/40 border border-primary/20 overflow-auto custom-scrollbar p-6 shadow-2xl">
+                             <table className="w-full border-collapse">
+                                <thead className="border-b border-white/10">
+                                   <tr>
+                                      {cleanedResult?.headers.slice(0, 4).map((h, i) => (
+                                        <th key={i} className="text-[9px] font-black text-primary uppercase tracking-tighter p-2">{h}</th>
+                                      ))}
+                                   </tr>
+                                </thead>
+                                <tbody>
+                                   {cleanedResult?.rows.slice(0, 20).map((row, i) => (
+                                     <tr key={i} className="border-b border-white/5 h-10 hover:bg-primary/5 transition-colors">
+                                        {row.slice(0, 4).map((c, j) => (
+                                          <td key={j} className="text-[10px] font-medium text-white/80 px-2 truncate max-w-[120px]">{c}</td>
+                                        ))}
+                                     </tr>
+                                   ))}
+                                </tbody>
+                             </table>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
       
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
