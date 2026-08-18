@@ -15,7 +15,9 @@ import {
   Loader2,
   Save,
   Plus,
-  FileText
+  FileText,
+  ShieldCheck,
+  Layout
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,7 +30,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v8';
+const HISTORY_KEY = 'htmlToUrlHistory_v10';
 
 interface HistoryItem {
   id: string;
@@ -67,12 +69,12 @@ export default function HtmlToUrlPage() {
 
     setIsProcessing(true);
     
-    // 1. Generate Unique ID
+    // 1. Generate Absolute Identity
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const url = `${window.location.origin}/p/${id}`;
     const timestamp = Date.now();
 
-    // 2. Instant Local Save (Hardware Persistence)
+    // 2. Instant Local Hardware Save (Highest Reliability)
     localStorage.setItem(`kit_page_${id}`, html);
 
     // 3. Fire-and-forget Cloud Sync (Firestore)
@@ -84,16 +86,16 @@ export default function HtmlToUrlPage() {
       }).catch(e => console.warn("Cloud sync deferred:", e.message));
     }
 
-    // 4. Update History
+    // 4. Update Local History Registry
     const historyItem = { id, title: title || 'Untitled', url, date: timestamp };
     const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 50);
     setLocalHistory(nextHistory);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
     
-    // 5. Show Result
+    // 5. Success UI
     setPublishedLink(url);
     setIsProcessing(false);
-    toast({ title: "Page Published" });
+    toast({ title: "Page Published Locally", description: "URL is active on your device." });
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -227,7 +229,7 @@ export default function HtmlToUrlPage() {
                                 {isCopied === `list-${page.id}` ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                               </Button>
                               <Button asChild size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
-                                <a href={`/p/${page.id}`} target="_blank"><ExternalLink className="w-4 h-4" /></a>
+                                <a href={page.url} target="_blank"><ExternalLink className="w-4 h-4" /></a>
                               </Button>
                               <Button size="icon" variant="ghost" onClick={() => purgeLocalItem(page.id)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-destructive">
                                 <Trash2 className="w-4 h-4" />
@@ -243,10 +245,10 @@ export default function HtmlToUrlPage() {
 
         {/* Preview Column */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col h-[320px] bg-white">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col h-[400px] bg-white">
             <CardHeader className="py-3 border-b border-border bg-secondary/30 shrink-0">
                <CardTitle className="text-[9px] font-black text-primary uppercase tracking-[0.4em] flex items-center gap-2">
-                  <Eye className="w-3.5 h-3.5" /> Visual Preview
+                  <Eye className="w-3.5 h-3.5" /> Live Monitor
                </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col">
@@ -265,20 +267,20 @@ export default function HtmlToUrlPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Instant Delivery</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Instant Activation</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Links are generated immediately. The studio uses your local hardware memory to ensure 100% link accessibility on your device.
+                    Your page is saved to local hardware memory immediately. This ensures your link works for you even before cloud synchronization is complete.
                   </p>
                 </div>
              </div>
              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <Save className="w-7 h-7" />
+                   <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Permanent Storage</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local Privacy</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Published pages are saved to the global database. They can be accessed by anyone with the link from any location.
+                    All document drafting occurs strictly in your browser session. Cloud hosting is fire-and-forget for public accessibility.
                   </p>
                 </div>
              </div>
