@@ -24,7 +24,8 @@ import {
   Phone,
   Clock,
   ExternalLink,
-  FileText
+  FileText,
+  Copy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -134,6 +135,7 @@ export default function CountryPage() {
   const formatList = (val: any) => {
     if (!val) return '—';
     if (Array.isArray(val)) return val.join(', ');
+    if (typeof val === 'string') return val;
     if (typeof val === 'object') return Object.values(val).join(', ');
     return String(val);
   };
@@ -383,4 +385,3 @@ export default function CountryPage() {
     </div>
   );
 }
-
