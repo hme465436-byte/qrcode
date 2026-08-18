@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -14,13 +13,14 @@ import {
   TrendingUp, 
   ArrowRight,
   Heart,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck,
+  Copy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -119,7 +119,7 @@ export default function BmiCalculatorPage() {
               BMI <span className="text-primary italic">Calculator Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
-              Professional health-metrics matrix. Determine body mass index and healthy weight targets locally using clinical WH0 protocols.
+              Professional health-metrics matrix. Determine body mass index and healthy weight targets locally using clinical WHO protocols.
             </p>
           </div>
           <div className="flex items-center gap-3">
