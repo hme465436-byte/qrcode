@@ -28,6 +28,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     ],
     privacy: 'All rendering occurs on your device. Your URLs and brand logos never leave your browser.'
   },
+  'currency-converter': {
+    title: 'Currency Converter Studio',
+    description: 'Professional exchange rate translation unit. Convert between global currencies using real-time market data.',
+    steps: [
+      'Enter the numeric amount you wish to convert in the primary input.',
+      'Select the "From" currency (source) and "To" currency (target).',
+      'Execute the conversion protocol by clicking the primary action button.',
+      'Review the calculated total, current exchange rate, and temporal sync data.',
+      'Use the swap button to instantly invert the conversion direction.'
+    ],
+    tips: [
+      'The studio utilizes a dual-node API fallback system to ensure maximum uptime.',
+      'Rates are updated at various intervals depending on the active node (Cloudflare Edge sync).'
+    ],
+    privacy: 'Linguistic and financial data is held in volatile memory only. No conversion history is logged to our servers.'
+  },
   'ip-finder': {
     title: 'IP Finder Studio',
     description: 'Advanced network identity extraction. Isolate your public IP and ISP node information.',

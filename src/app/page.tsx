@@ -90,7 +90,8 @@ import {
   Keyboard,
   ChevronDown,
   Gauge,
-  MapPin
+  MapPin,
+  Banknote
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -134,6 +135,17 @@ const TOOLS: Tool[] = [
     color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['speed test', 'internet speed', 'mbps', 'ping', 'download speed', 'upload speed', 'wifi test'],
+    category: 'utilities'
+  },
+  { 
+    href: '/currency-converter', 
+    icon: Banknote, 
+    title: 'Currency Converter', 
+    desc: 'Real-time global exchange rates with local-only processing.', 
+    label: 'FISCAL', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['currency', 'exchange rate', 'usd to pkr', 'money converter', 'forex', 'finance'],
     category: 'utilities'
   },
   { 
@@ -1116,7 +1128,8 @@ export default function Home() {
       'Hide text in image', 'Secret photo', 'Stenography', 'Temp Room', 'Clipboard share', 
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
       'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
-      'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP'
+      'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP', 'Currency Converter',
+      'Exchange rate', 'USD to PKR', 'SAR conversion'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
