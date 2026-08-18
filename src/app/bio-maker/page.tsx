@@ -95,39 +95,39 @@ const FONT_MAPS: Record<string, (text: string) => string> = {
 
 const PHRASE_BANK: Record<Mood, { en: string[], urdu: string[], emojis: string[] }> = {
   Aesthetic: {
-    en: ['Lost in stars.', 'Creating magic.', 'Chasing horizons.', 'Whispers of soul.', 'Art in motion.', 'Dreaming wide.', 'Soft light.', 'Ethereal vibes.', 'Vintage soul.', 'Pure intentions.', 'Golden state of mind.', 'Bloom where planted.', 'Minimalist heart.', 'Poetry in pixels.', 'Silent observer.'],
-    urdu: ['Khuwabon ki dunya.', 'Sukoon ki talash.', 'Bikhray moti.', 'Tanhayi ka musafir.', 'Dill ki awaz.', 'Pakeeza khayal.', 'Rooh ki shanti.', 'Zindagi ek fan.', 'Aesthetic mizaaj.', 'Narm lehja.'],
-    emojis: ['✨', '🕊️', '☁️', '🦢', '🎐', '🕯️', '🎞️', '🪐', '🕰️', '🌸', '🌊']
+    en: ['Quiet nights, city lights.', 'Vibing in the shadows.', 'Lost in ethereal stars.', 'Whispers of a silent soul.', 'Art in constant motion.', 'Ethereal state of mind.', 'Golden thoughts only.', 'Bloom where you are planted.', 'Minimalist at heart.', 'Poetry in every pixel.'],
+    urdu: ['Khuwabon ki haseen dunya.', 'Sukoon ki talash.', 'Bikhray huway moti.', 'Tanhayi ka musafir.', 'Dill ki gehri awaz.', 'Pakeeza khayal.', 'Rooh ki shanti.', 'Zindagi ek haseen fan.', 'Aesthetic mizaaj.', 'Narm lehja, sakht faislay.'],
+    emojis: ['✨', '🌙', '☁️', '🤍', '🎐', '🕯️', '🎞️', '🪐', '🕰️', '🌸']
   },
   Real: {
-    en: ['Authentic energy.', 'Keeping it 100.', 'No filters needed.', 'Just me.', 'Ground level.', 'Reality check.', 'Raw and unfiltered.', 'Strictly business.', 'Work hard, stay humble.', 'Learning every day.', 'Built, not bought.', 'Mindset is everything.', 'Progress over perfection.', 'Truth seeker.', 'Original identity.'],
-    urdu: ['Asli pehchan.', 'Saaf dil.', 'Bina kisi dikhawe k.', 'Apni dunya.', 'Zameeni haqeeqat.', 'Mehnat shart hai.', 'Sachi batain.', 'Waqt ki qadar.', 'Imaandari pehchan.', 'Kudrat ka karishma.'],
-    emojis: ['💯', '🔋', '🏆', '⛓️', '📈', '🧿', '♟️', '⚖️', '🦾', '🤝']
+    en: ['Authentic energy always.', 'Keeping it 100.', 'No filters, just reality.', 'Built, not bought.', 'Mindset is everything.', 'Progress over perfection.', 'Truth seeker.', 'Original identity.', 'Reality check: Active.', 'Ground level living.'],
+    urdu: ['Asli pehchan, sacha rasta.', 'Saaf dil, seedhi baat.', 'Bina kisi dikhawe k.', 'Apni dunya ka raja.', 'Zameeni haqeeqat.', 'Mehnat hi aslool hai.', 'Sachi batain, kamosh mizaaj.', 'Waqt ki qadar.', 'Imaandari pehchan.', 'Kudrat ka karishma.'],
+    emojis: ['☕', '📍', '💼', '💯', '🔋', '🏆', '⛓️', '📈', '🧿', '⚖️']
   },
   Ego: {
-    en: ['Main character.', 'The one & only.', 'Born to lead.', 'Rare breed.', 'High frequency.', 'Game changer.', 'Elite protocol.', 'God tier.', 'Winning by default.', 'Success is my logic.', 'Making my own rules.', 'Fearless soul.', 'Ice in veins.', 'Top of the food chain.', 'Watch me work.', 'King status.'],
-    urdu: ['Apni marzi.', 'Sab se alag.', 'Maidan mera hai.', 'Sher ki dilli.', 'Nawabi mizaaj.', 'Raaj mera.', 'Elite soch.', 'Zid hi junoon.', 'Mera muqabla nahi.', 'God level protocol.'],
-    emojis: ['👑', '🦁', '🗡️', '🏎️', '💎', '🌪️', '🔱', '🦅', '💣', '🚩']
+    en: ['Main character energy.', 'Born to lead, not follow.', 'Rare breed, high frequency.', 'Elite protocol initiated.', 'God tier confidence.', 'Winning by default.', 'Success is my logic.', 'Making my own rules.', 'Fearless soul.', 'Top of the food chain.'],
+    urdu: ['Apni marzi ka malik.', 'Sab se alag, sab se behtareen.', 'Maidan mera hai.', 'Sher jaisa dil.', 'Nawabi mizaaj.', 'Raaj mera, asool meray.', 'Elite soch.', 'Zid hi junoon hai.', 'Mera muqabla sirf mujh se.', 'God level protocol.'],
+    emojis: ['👑', '🔥', '⚡', '💎', '🦁', '🗡️', '🏎️', '🌪️', '🔱', '🦅']
   },
   Love: {
-    en: ['Heart full.', 'Kindness always.', 'Spreading warmth.', 'Love advocate.', 'Soul deep.', 'Gentle spirit.', 'Compassion first.', 'Pure intention.', 'Grateful for everything.', 'Making hearts happy.', 'Blessed beyond measure.', 'Sunshine state of mind.', 'Radiating love.', 'Soft heart.', 'Yours truly.'],
-    urdu: ['Dil e nadaan.', 'Mohabbat hi sab kuch.', 'Pyar banto.', 'Naram mizaaj.', 'Duaon ka sath.', 'Dil ki dharkan.', 'Sukoon e qalb.', 'Khushi ki wajah.', 'Sacha sath.', 'Bas tera intezar.'],
-    emojis: ['❤️', '💍', '🧸', '💌', '🌸', '🏹', '🕊️', '🦋', '🎈', '🍫']
+    en: ['Heart full of whispers.', 'Late night thoughts of you.', 'Soft soul, loud heart.', 'Kindness always.', 'Spreading warmth.', 'Soul deep connections.', 'Grateful for every second.', 'Sunshine state of mind.', 'Radiating love.', 'Yours truly, forever.'],
+    urdu: ['Dil-e-nadaan ka sukoon.', 'Mohabbat hi sab kuch hai.', 'Pyar banto, khush raho.', 'Naram mizaaj, gehra pyar.', 'Duaon ka sath.', 'Dil ki dharkan.', 'Sukoon-e-qalb.', 'Khushi ki sachi wajah.', 'Sacha sath, haseen safar.', 'Bas tera intezar.'],
+    emojis: ['🤍', '💕', '✨', '🌙', '❤️', '💍', '🧸', '💌', '🌸', '🏹']
   },
   Angry: {
-    en: ['Not your friend.', 'Zero tolerance.', 'Dark energy.', 'Vengeful spirit.', 'Silent storm.', 'Broken trust.', 'Cold blooded.', 'Shadow self.', 'Expect nothing.', 'Trust nobody.', 'Living in the dark.', 'Chaos theory.', 'No mercy.', 'Silent but deadly.', 'End of the line.'],
-    urdu: ['Akela hi kafi.', 'Bharosa khatam.', 'Andheri raah.', 'Sab jhoot.', 'Badla zaroor.', 'Kamosh toofan.', 'Khatarnak soch.', 'Zulmat ka saya.', 'Koi umeed nahi.', 'Dunya matlabi.'],
-    emojis: ['🔪', '💀', '🥀', '🖤', '🩸', '🌪️', '🌑', '⛓️', '☣️', '🔥']
+    en: ['Cold as ice.', 'Sharp mind, silent storm.', 'Broken trust, zero noise.', 'Expect nothing.', 'Shadow self active.', 'Chaos theory.', 'No mercy for fakes.', 'End of the line.', 'Silent but deadly.', 'Living in the dark.'],
+    urdu: ['Akela hi kafi hoon.', 'Bharosa ab khatam.', 'Andheri raah, sacha rasta.', 'Sab jhoot hai.', 'Badla zaroor milay ga.', 'Kamosh toofan.', 'Khatarnak soch.', 'Zulmat ka saya.', 'Koi umeed nahi.', 'Dunya matlabi hai.'],
+    emojis: ['🖤', '⚡', '🧊', '🌑', '🥀', '🔪', '💀', '🩸', '🌪️', '⛓️']
   },
   Funny: {
-    en: ['Professional sleeper.', 'Life is a joke.', 'Send snacks.', 'Error 404: Bio not found.', 'CEO of procrastination.', 'Sarcastic logic.', 'I need coffee.', 'Eating my feelings.', 'Just here for the memes.', 'Making bad choices look good.', 'Unsubscribed from reality.', 'Call my lawyer.', 'Brb, taking a nap.', 'Smart in a dumb way.'],
-    urdu: ['Bas sona hai.', 'Zindagi tanz hai.', 'Khana peena aur sona.', 'Nalayak par intelligent.', 'Sasti masti.', 'Hum nahi sudhrain gy.', 'Pehly chai.', 'Memes ka badshah.', 'Vaila bandah.', 'Error in system.'],
-    emojis: ['🍕', '🤡', '☕', '🛌', '🐒', '🧊', '🍟', '🧀', '🍔', '👻']
+    en: ['Professional sleeper.', 'Life is a joke, I’m the punchline.', 'Send snacks, not drama.', 'Error 404: Bio not found.', 'CEO of procrastination.', 'I need coffee to exist.', 'Eating my feelings.', 'Just here for the memes.', 'Making bad choices look good.', 'Unsubscribed from reality.'],
+    urdu: ['Bas sona hai.', 'Zindagi ek tanz hai.', 'Khana peena aur sona.', 'Nalayak par intelligent.', 'Sasti masti, mehngay khuwab.', 'Hum nahi sudhrain gy.', 'Pehly chai, phir baat.', 'Memes ka badshah.', 'Vaila bandah.', 'Error in system.'],
+    emojis: ['😂', '🫠', '✌️', '🍕', '🤡', '☕', '🛌', '🐒', '🍟', '👻']
   },
   Simple: {
-    en: ['Just a person.', 'Living life.', 'Simple soul.', 'Minimal.', 'Basic identity.', 'Neutral energy.', 'Clear mind.', 'Plain text.', 'Doing my best.', 'Happy enough.', 'Existing.', 'Day by day.', 'Quiet life.', 'Small wins.', 'Constant state.'],
-    urdu: ['Sada zindagi.', 'Bas guzar rahi hai.', 'Shukar alhumdulillah.', 'Kam goi.', 'Sukoon e dil.', 'Normal insaan.', 'Seedhi baat.', 'Choti khushiyan.', 'Asan zindagi.', 'Khuda ka sath.'],
-    emojis: ['📍', '📌', '📎', '🌑', '⚪', '⚫', '◼️', '◻️', '🕯️', '☕']
+    en: ['Just a person.', 'Living day by day.', 'Simple soul.', 'Minimalist identity.', 'Clear mind, simple life.', 'Existing peacefully.', 'Doing my best.', 'Happy enough.', 'Constant state of calm.', 'Quiet life, loud mind.'],
+    urdu: ['Sada zindagi, sacha mizaaj.', 'Bas guzar rahi hai.', 'Shukar alhumdulillah.', 'Kam goi, behtari.', 'Sukoon e dil.', 'Normal insaan.', 'Seedhi baat.', 'Choti khushiyan.', 'Asan zindagi.', 'Khuda ka sath.'],
+    emojis: ['📍', '📌', '🌑', '⚪', '⚫', '◼️', '◻️', '🕯️', '☕', '📎']
   }
 };
 
@@ -161,9 +161,10 @@ export default function AdvancedBioMakerPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedBioId, setSelectedBioId] = useState<string | null>(null);
 
-  const getEmojiSet = useCallback((m: Mood, density: EmojiDensity) => {
-    const count = density === 'none' ? 0 : density === 'low' ? 1 : density === 'normal' ? 2 : 4;
+  const getEmojis = useCallback((m: Mood, density: EmojiDensity, forceCount?: number) => {
+    if (density === 'none') return '';
     const pool = PHRASE_BANK[m].emojis;
+    const count = forceCount || (density === 'low' ? 1 : density === 'normal' ? 2 : 4);
     return Array.from({length: count}, () => pool[Math.floor(Math.random() * pool.length)]).join(' ');
   }, []);
 
@@ -180,31 +181,49 @@ export default function AdvancedBioMakerPage() {
     const hobbyLine = options.hobby ? inputs.hobby : '';
     const locLine = options.location ? inputs.location : '';
 
-    // Structure logic
-    if (lineCount === 1) {
-      const parts = [nameLine, pick(pool), getEmojiSet(targetMood, emojiDensity)].filter(Boolean);
-      lines.push(parts.join(' | '));
+    // Advanced Structure Logic
+    const archetype = Math.floor(Math.random() * 3); // 0: Stack, 1: Minimal, 2: Pro
+
+    if (archetype === 0 || lineCount > 1) {
+      // Line 1: Identity or Opening
+      if (nameLine) {
+        const emo = emojiDensity !== 'none' ? getEmojis(targetMood, emojiDensity, 1) : '';
+        lines.push(`${emo} ${nameLine}`);
+      } else {
+        lines.push(pick(pool));
+      }
+
+      // Line 2: Context or Middle
+      if (jobLine || expertLine) {
+        lines.push(`${jobLine || expertLine} • ${getEmojis(targetMood, emojiDensity, 1)}`);
+      } else if (lineCount > 1) {
+        lines.push(pick(pool));
+      }
+
+      // Line 3: Closing or Hobby/Loc
+      if (lineCount > 2) {
+        if (locLine || hobbyLine) {
+           const emo = emojiDensity !== 'none' ? getEmojis(targetMood, emojiDensity, 1) : '';
+           lines.push(`${locLine ? '📍 ' + locLine : hobbyLine} ${emo}`);
+        } else {
+           lines.push(`${getEmojis(targetMood, emojiDensity, 1)} ${pick(pool)}`);
+        }
+      }
     } else {
-      if (nameLine) lines.push(nameLine);
-      
-      const fillerLines = lineCount - (nameLine ? 1 : 0);
-      for (let i = 0; i < fillerLines; i++) {
-        let content = '';
-        if (i === 0 && (jobLine || expertLine)) content = jobLine || expertLine;
-        else if (i === 1 && hobbyLine) content = hobbyLine;
-        else if (i === 1 && locLine) content = '📍 ' + locLine;
-        else content = pick(pool);
-        
-        lines.push(content);
-      }
-      
-      if (emojiDensity !== 'none') {
-        lines[lines.length - 1] += ' ' + getEmojiSet(targetMood, emojiDensity);
-      }
+      // Minimalist Single Line
+      const parts = [
+        nameLine, 
+        jobLine, 
+        pick(pool), 
+        getEmojis(targetMood, emojiDensity, 2)
+      ].filter(Boolean);
+      lines.push(parts.join(' | '));
     }
 
+    // Blend in "My Style" if provided
     if (myStyle.trim()) {
-      lines.splice(1, 0, myStyle.trim());
+      const idx = Math.min(lines.length - 1, 1);
+      lines.splice(idx, 0, myStyle.trim());
     }
 
     const finalRaw = lines.slice(0, lineCount).join('\n');
@@ -215,32 +234,38 @@ export default function AdvancedBioMakerPage() {
       font: 'Normal' as FontStyle,
       mood: targetMood
     };
-  }, [inputs, options, lineCount, emojiDensity, languageMode, myStyle, getEmojiSet]);
+  }, [inputs, options, lineCount, emojiDensity, languageMode, myStyle, getEmojis]);
 
   const generateBatch = useCallback((append = false) => {
     setIsGenerating(true);
     const newBatch: BioResult[] = [];
-    for (let i = 0; i < 8; i++) {
-      newBatch.push(generateSingleBio(mood));
+    const usedRaw = new Set(bios.map(b => b.raw));
+
+    let attempts = 0;
+    while (newBatch.length < 8 && attempts < 50) {
+      const b = generateSingleBio(mood);
+      if (!usedRaw.has(b.raw)) {
+        newBatch.push(b);
+        usedRaw.add(b.raw);
+      }
+      attempts++;
     }
     
     setBios(prev => append ? [...prev, ...newBatch] : newBatch);
-    if (!append) setSelectedBioId(newBatch[0].id);
+    if (!append && newBatch.length > 0) setSelectedBioId(newBatch[0].id);
     setIsGenerating(false);
-    toast({ title: append ? "Added 8 new variations" : "8 New Bios Synthesized" });
-  }, [generateSingleBio, mood, toast]);
+    toast({ title: append ? "Batch Extended" : "8 New Bios Synthesized" });
+  }, [generateSingleBio, mood, toast, bios]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('mykit_bio_favs_pro');
+    const saved = localStorage.getItem('mykit_bio_favs_pro_v2');
     if (saved) try { setFavorites(JSON.parse(saved)); } catch(e) {}
-    
-    // Initial batch
     generateBatch(false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveFavs = (newFavs: BioResult[]) => {
     setFavorites(newFavs);
-    localStorage.setItem('mykit_bio_favs_pro', JSON.stringify(newFavs));
+    localStorage.setItem('mykit_bio_favs_pro_v2', JSON.stringify(newFavs));
   };
 
   const remixBio = (id: string) => {
@@ -254,6 +279,7 @@ export default function AdvancedBioMakerPage() {
         if (font === 'Normal') return { ...b, font, styled: b.raw };
         const mapper = FONT_MAPS[font as keyof typeof FONT_MAPS];
         const lines = b.raw.split('\n');
+        // Only style the name or the first line for professional look
         lines[0] = mapper(lines[0]);
         return { ...b, font, styled: lines.join('\n') };
       }
@@ -269,12 +295,12 @@ export default function AdvancedBioMakerPage() {
     const isFav = favorites.some(f => f.id === bio.id);
     if (isFav) saveFavs(favorites.filter(f => f.id !== bio.id));
     else saveFavs([...favorites, bio]);
-    toast({ title: isFav ? "Removed from favorites" : "Added to favorites" });
+    toast({ title: isFav ? "Removed from Favorites" : "Saved to Repository" });
   };
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: "Identity Copied" });
+    toast({ title: "Content Copied", description: "Bio saved to clipboard." });
   };
 
   const selectedBio = useMemo(() => bios.find(b => b.id === selectedBioId) || bios[0], [bios, selectedBioId]);
@@ -291,7 +317,7 @@ export default function AdvancedBioMakerPage() {
               Bio Maker <span className="text-primary italic">Studio Pro</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
-              Advanced identity synthesis matrix. Generate unique, high-entropy social bios with localized linguistic support and real-time profile rendering.
+              Advanced identity synthesis matrix. Generate unique, high-entropy social bios with mood-accurate emoji protocols and real-time profile rendering.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -307,13 +333,13 @@ export default function AdvancedBioMakerPage() {
            <Card className="glass-card border-border shadow-2xl overflow-hidden sticky top-24">
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Settings2 className="w-5 h-5 text-primary" /> Matrix Parameters
+                    <Settings2 className="w-5 h-5 text-primary" /> Parameters
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-10">
                  {/* Step 1: Platforms */}
                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Platform Protocol</Label>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Platform Target</Label>
                     <div className="grid grid-cols-2 gap-2">
                        {Object.keys(PLATFORM_LIMITS).map((p) => (
                          <button
@@ -334,7 +360,7 @@ export default function AdvancedBioMakerPage() {
                  {/* Step 2: Advanced Controls */}
                  <div className="space-y-6 pt-2 border-t border-white/5">
                     <div className="space-y-3">
-                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Vibe & Mood</Label>
+                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Atmospheric Mood</Label>
                        <Select value={mood} onValueChange={(v: Mood) => setMood(v)}>
                           <SelectTrigger className="h-12 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px]">
                              <SelectValue />
@@ -349,7 +375,7 @@ export default function AdvancedBioMakerPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-3">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Lines</Label>
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Line Count</Label>
                           <div className="grid grid-cols-3 bg-secondary/50 p-1 rounded-xl border border-border h-11">
                              {[1, 2, 3].map(l => (
                                <button key={l} onClick={() => setLineCount(l)} className={cn("rounded-lg text-[10px] font-black transition-all", lineCount === l ? "bg-primary text-white" : "text-foreground/40")}>{l}</button>
@@ -357,7 +383,7 @@ export default function AdvancedBioMakerPage() {
                           </div>
                        </div>
                        <div className="space-y-3">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Language</Label>
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Language Matrix</Label>
                           <Select value={languageMode} onValueChange={(v: any) => setLanguageMode(v)}>
                              <SelectTrigger className="h-11 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[9px]">
                                 <SelectValue />
@@ -372,7 +398,7 @@ export default function AdvancedBioMakerPage() {
                     </div>
 
                     <div className="space-y-4">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Emoji Density</Label>
+                       <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Emoji Frequency</Label>
                        <div className="grid grid-cols-2 gap-2">
                           {(['none', 'low', 'normal', 'extra'] as EmojiDensity[]).map(d => (
                             <button key={d} onClick={() => setEmojiDensity(d)} className={cn("h-10 rounded-xl border text-[9px] font-black uppercase transition-all", emojiDensity === d ? "bg-primary text-white border-primary" : "bg-secondary/30 border-border text-foreground/40")}>{d}</button>
@@ -381,11 +407,11 @@ export default function AdvancedBioMakerPage() {
                     </div>
 
                     <div className="space-y-3">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">"My Style" Integration</Label>
+                       <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">"My Style" Hook</Label>
                        <Input 
                         value={myStyle}
                         onChange={e => setMyStyle(e.target.value)}
-                        placeholder="Add your own catchphrase..."
+                        placeholder="Paste your own catchphrase..."
                         className="h-12 bg-primary/5 border-primary/20 rounded-xl text-xs italic font-medium focus:ring-primary/40"
                        />
                     </div>
@@ -434,12 +460,12 @@ export default function AdvancedBioMakerPage() {
         {/* RIGHT: Results Matrix */}
         <div className="lg:col-span-8 xl:col-span-9 space-y-12 animate-in fade-in slide-in-from-right-8 duration-1000">
            
-           {/* Dynamic Profile Preview Header */}
+           {/* Platform Monitor */}
            {bios.length > 0 && selectedBio && (
              <div className="space-y-6 animate-reveal">
                 <div className="flex items-center gap-3">
                    <Eye className="w-4 h-4 text-primary" />
-                   <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground/40">Real-Time Platform Monitor</h3>
+                   <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground/40">Platform Monitor</h3>
                 </div>
                 
                 <Card className="glass-card border-border shadow-2xl p-8 sm:p-12 relative overflow-hidden bg-white dark:bg-black/60">
@@ -452,13 +478,13 @@ export default function AdvancedBioMakerPage() {
                          </div>
                          <div className="flex-1 space-y-4">
                             <div className="flex items-center justify-between gap-4">
-                               <h4 className="text-xl font-bold text-foreground">@{inputs.name.toLowerCase().replace(/\s/g, '_')}</h4>
+                               <h4 className="text-xl font-bold text-foreground">@{inputs.name.toLowerCase().replace(/\s/g, '_') || 'user'}</h4>
                                <button className="p-2 rounded-lg bg-secondary text-foreground/40"><MoreVertical className="w-4 h-4" /></button>
                             </div>
                             <div className="flex gap-6 text-center">
                                {[
                                  { l: 'Posts', v: '12' },
-                                 { l: 'Followers', v: '42.1k' },
+                                 { l: 'Followers', v: '4.2k' },
                                  { l: 'Following', v: '184' }
                                ].map(s => (
                                  <div key={s.l} className="space-y-0.5">
@@ -470,8 +496,8 @@ export default function AdvancedBioMakerPage() {
                          </div>
                       </div>
                       
-                      <div className="space-y-2 pt-4">
-                         <h5 className="font-bold text-sm text-foreground">{inputs.name}</h5>
+                      <div className="space-y-2 pt-4 border-t border-black/5 dark:border-white/5">
+                         <h5 className="font-bold text-sm text-foreground">{inputs.name || 'User'}</h5>
                          <div className="text-sm font-medium text-foreground/80 leading-relaxed whitespace-pre-wrap">
                             {selectedBio.styled}
                          </div>
@@ -479,7 +505,7 @@ export default function AdvancedBioMakerPage() {
 
                       <div className="grid grid-cols-2 gap-3 pt-2">
                          <Button className="h-10 rounded-xl bg-secondary text-foreground text-[10px] font-black uppercase">Edit Profile</Button>
-                         <Button className="h-10 rounded-xl bg-secondary text-foreground text-[10px] font-black uppercase">Share Protocol</Button>
+                         <Button className="h-10 rounded-xl bg-secondary text-foreground text-[10px] font-black uppercase">Share Profile</Button>
                       </div>
                    </div>
                 </Card>
@@ -564,18 +590,18 @@ export default function AdvancedBioMakerPage() {
                 
                 <div className="flex justify-center pt-8">
                    <Button onClick={() => generateBatch(true)} variant="outline" className="h-16 px-12 rounded-[2rem] border-dashed border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.4em] text-xs hover:bg-primary/10 transition-all">
-                      <Plus className="w-5 h-5 mr-4" /> Load 8 more variations
+                      <Plus className="w-5 h-5 mr-4" /> Load 8 More Variants
                    </Button>
                 </div>
              </div>
            )}
 
-           {/* Favorites Section */}
+           {/* Repository Section */}
            {favorites.length > 0 && (
              <div className="space-y-6 pt-12 border-t border-white/5">
                 <div className="flex items-center gap-3">
                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                   <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground/40">Active Favorites Pool</h3>
+                   <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground/40">Identity Repository</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                    {favorites.map(fav => (
