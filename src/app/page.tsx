@@ -84,7 +84,8 @@ import {
   Coins,
   Receipt,
   Trophy,
-  Dices
+  Dices,
+  Scale
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -118,6 +119,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/bmi-calculator', 
+    icon: Scale, 
+    title: 'BMI Calculator', 
+    desc: 'Calculate body mass index and healthy weight ranges.', 
+    label: 'HEALTH', 
+    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
+    glowClass: 'bg-rose-500/10',
+    keywords: ['bmi', 'weight calculator', 'health', 'body mass', 'overweight', 'obesity', 'fitness'],
+    category: 'utilities'
   },
   { 
     href: '/lucky-draw', 
@@ -928,7 +940,7 @@ const TOOLS: Tool[] = [
     title: 'English Dictionary', 
     desc: 'Professional linguistic analysis and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
@@ -1030,7 +1042,8 @@ export default function Home() {
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
       'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 
-      'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel'
+      'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
+      'BMI Calculator', 'Body Mass Index', 'Healthy weight'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1065,12 +1078,12 @@ export default function Home() {
     }, typingSpeed);
 
     return () => clearTimeout(timeout);
-  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, isFocused, searchQuery]);
+  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, iFocused, searchQuery]);
 
   const dynamicPlaceholder = useMemo(() => {
     if (isFocused || searchQuery) return 'Search tools...';
     return `${placeholder}|`;
-  }, [placeholder, isFocused, searchQuery]);
+  }, [placeholder, iFocused, searchQuery]);
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_MODE_KEY) as 'grid' | 'list' | null;

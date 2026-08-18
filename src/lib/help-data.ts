@@ -29,6 +29,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     ],
     privacy: 'All rendering occurs on your device. Your URLs and brand logos never leave your browser.'
   },
+  'bmi-calculator': {
+    title: 'BMI Calculator Studio',
+    description: 'Biometric analysis tool for Body Mass Index (BMI) and healthy weight targets.',
+    steps: [
+      'Select your preferred measurement protocol: Metric (cm/kg) or Imperial (ft/lb).',
+      'Input your current stature and mass into the designated fields.',
+      'Optionally provide age and gender for a more comprehensive context.',
+      'Review your BMI index score and clinical category in real-time.',
+      'Analyze the healthy weight range projected for your specific height matrix.'
+    ],
+    tips: [
+      'For athletes, the healthy weight range may vary due to high muscle density.',
+      'Use the copy button to save a text-based summary of your biometrics.'
+    ],
+    privacy: 'All biometric data is volatile and processed strictly in local browser memory. No records are stored.'
+  },
   'tax-calculator': {
     title: 'Tax Calculator Studio',
     description: 'Professional fiscal utility for calculating GST, VAT, and sales taxes with dual-mode reverse logic.',
