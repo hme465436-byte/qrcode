@@ -276,7 +276,11 @@ export default function CountryPage() {
                       {/* Data Grid */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {[
-                          { icon: MapPin, label: 'Capital Protocol', val: result.capital?.join(', ') || '—' },
+                          { 
+                            icon: MapPin, 
+                            label: 'Capital Protocol', 
+                            val: Array.isArray(result.capital) ? result.capital.join(', ') : (result.capital || '—') 
+                          },
                           { icon: Navigation, label: 'Region Identity', val: result.region || '—' },
                           { icon: Users, label: 'Population Density', val: result.population?.toLocaleString() || '—' },
                           { icon: Coins, label: 'Fiscal Protocol', val: result.currencies ? Object.values(result.currencies).map((c: any) => `${c.name} (${c.symbol})`).join(', ') : '—' },
