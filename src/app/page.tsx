@@ -134,17 +134,6 @@ const TOOLS: Tool[] = [
     category: 'image'
   },
   { 
-    href: '/watermark-cleaner', 
-    icon: Eraser, 
-    title: 'Watermark Cleaner', 
-    desc: 'Remove text and watermarks using pixel diffusion matrix.', 
-    label: 'RESTORATION', 
-    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
-    glowClass: 'bg-indigo-500/10',
-    keywords: ['remove watermark', 'remove text', 'clean image', 'inpaint', 'erase text from photo', 'restore'],
-    category: 'image'
-  },
-  { 
     href: '/wps-sheets', 
     icon: Table, 
     title: 'WPS Sheets', 
@@ -192,7 +181,7 @@ const TOOLS: Tool[] = [
     href: '/tax-calculator', 
     icon: Coins, 
     title: 'Tax Calculator', 
-    desc: 'Calculate GST, VAT, and sales taxes with reverse logic.', 
+    desc: 'Calculate extra % or reverse-lookup original prices instantly.', 
     label: 'FISCAL', 
     color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
@@ -931,7 +920,7 @@ const TOOLS: Tool[] = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
     category: 'utilities'
@@ -986,7 +975,7 @@ const TOOLS: Tool[] = [
     title: 'English Dictionary', 
     desc: 'Professional linguistic analysis and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
@@ -1090,7 +1079,7 @@ export default function Home() {
       'Hide text in image', 'Secret photo', 'Stenography', 'Temp Room', 'Clipboard share', 
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
       'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
-      'Watermark Cleaner', 'Remove text from photo', 'Enlarge image', 'KB size increaser'
+      'Enlarge image', 'KB size increaser'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1357,10 +1346,10 @@ export default function Home() {
              Join thousands of designers and engineers using the world's premier local utility matrix.
            </p>
            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-             <Link href="/single" className="w-full sm:w-auto px-12 py-5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
+             <Link href="/single" className="w-full sm:auto px-12 py-5 bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.3em] rounded-xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
                Open Studio
              </Link>
-             <Link href="/about" className="w-full sm:w-auto px-12 py-5 bg-white/5 border border-white/10 text-foreground/40 font-black text-xs uppercase tracking-[0.3em] rounded-xl hover:bg-white/10 transition-all">
+             <Link href="/about" className="w-full sm:auto px-12 py-5 bg-white/5 border border-white/10 text-foreground/40 font-black text-xs uppercase tracking-[0.3em] rounded-xl hover:bg-white/10 transition-all">
                Documentation
              </Link>
            </div>
