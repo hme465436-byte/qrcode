@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -31,7 +30,8 @@ import {
   Tv,
   Check,
   Signal,
-  Video
+  Video,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
