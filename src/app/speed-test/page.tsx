@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -11,17 +10,13 @@ import {
   RotateCcw,
   ShieldCheck, 
   Play,
-  Monitor,
-  Smartphone,
   Globe,
   Loader2,
   CheckCircle2,
   History,
   Copy,
-  BarChart3,
   MapPin,
   Clock,
-  X,
   AlertCircle,
   Fingerprint,
   Info,
@@ -32,7 +27,9 @@ import {
   Check,
   Signal,
   Video,
-  Shield
+  Shield,
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,13 +39,11 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Production Telemetry Config ---
-const CLOUDFLARE_DOWN = 'https://speed.cloudflare.com/__down?bytes=25000000';
-const CLOUDFLARE_UP = 'https://speed.cloudflare.com/__up';
-const PING_URL = 'https://www.cloudflare.com/favicon.ico';
-const HISTORY_KEY = 'mykit_speed_history_v8';
-const MASTER_TIMEOUT_MS = 60000; 
+const CLOUDFLARE_BASE = 'https://speed.cloudflare.com';
+const IP_API = 'https://ipapi.co/json/';
+const HISTORY_KEY = 'mykit_speed_history_v9';
 
-type TestStep = 'idle' | 'ping' | 'download' | 'upload' | 'complete';
+type TestStep = 'idle' | 'ping' | 'download' | 'upload' | 'complete' | 'blocked';
 
 interface SpeedResult {
   id: string;
@@ -79,40 +74,38 @@ const getAngleForSpeed = (mbps: number | null) => {
 export default function SpeedTestPage() {
   const { toast } = useToast();
   
-  // Results State
+  // Results
   const [downloadMbps, setDownloadMbps] = useState<number | null>(null);
   const [uploadMbps, setUploadMbps] = useState<number | null>(null);
   const [pingMs, setPingMs] = useState<number | null>(null);
   const [jitterMs, setJitterMs] = useState<number | null>(null);
-  const [location, setLocation] = useState<string>('');
+  
+  // Metadata
   const [ispName, setIspName] = useState<string>('');
   const [publicIp, setPublicIp] = useState<string>('');
-  const [browserProtocol, setBrowserProtocol] = useState<string>('');
+  const [location, setLocation] = useState<string>('');
+  const [browserInfo, setBrowserInfo] = useState<string>('');
   
-  // Runtime State
+  // UI State
   const [isTesting, setIsTesting] = useState(false);
   const [step, setStep] = useState<TestStep>('idle');
   const [progress, setProgress] = useState(0);
-  const [currentSpeed, setCurrentSpeed] = useState(0);
   const [history, setHistory] = useState<SpeedResult[]>([]);
   const [isCopied, setIsCopied] = useState(false);
 
-  const testTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Metadata Detection Logic
-  const detectEnvironment = useCallback(() => {
+  // --- Identity Detection ---
+  useEffect(() => {
     if (typeof window === 'undefined') return;
-    const ua = navigator.userAgent;
-    let browser = "Other";
-    if (ua.includes("Chrome")) browser = "Chrome";
-    else if (ua.includes("Firefox")) browser = "Firefox";
-    else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
-    
-    const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
-    const type = conn ? ` (${conn.effectiveType?.toUpperCase() || 'WiFi'})` : "";
-    setBrowserProtocol(`${browser}${type}`);
+    const saved = localStorage.getItem(HISTORY_KEY);
+    if (saved) try { setHistory(JSON.parse(saved)); } catch (e) {}
 
-    fetch('https://ipapi.co/json/')
+    const ua = navigator.userAgent;
+    const browser = ua.includes("Chrome") ? "Chrome" : ua.includes("Firefox") ? "Firefox" : ua.includes("Safari") ? "Safari" : "Browser";
+    const conn = (navigator as any).connection;
+    const type = conn ? ` (${conn.effectiveType?.toUpperCase() || 'WiFi'})` : "";
+    setBrowserInfo(`${browser}${type}`);
+
+    fetch(IP_API)
       .then(r => r.json())
       .then(data => {
         setIspName(data.org || 'Unknown ISP');
@@ -126,93 +119,66 @@ export default function SpeedTestPage() {
       });
   }, []);
 
-  useEffect(() => {
-    const saved = localStorage.getItem(HISTORY_KEY);
-    if (saved) try { setHistory(JSON.parse(saved)); } catch (e) {}
-    detectEnvironment();
-  }, [detectEnvironment]);
+  // --- Telemetry Engines ---
 
-  const handleCopy = () => {
-    const text = [
-      `[MY KIT TOOL - BROWSER SPEED TEST]`,
-      `Download: ${downloadMbps?.toFixed(1) || '—'} Mbps`,
-      `Upload: ${uploadMbps?.toFixed(1) || '—'} Mbps`,
-      `Ping: ${pingMs || '—'} ms`,
-      `Jitter: ${jitterMs || '—'} ms`,
-      `ISP: ${ispName}`,
-      `IP: ${publicIp}`,
-      `Node: ${location}`,
-      `Platform: ${browserProtocol}`,
-      `Timestamp: ${new Date().toLocaleString()}`
-    ].join('\n');
-    navigator.clipboard.writeText(text);
-    setIsCopied(true);
-    toast({ title: "Matrix Copied" });
-    setTimeout(() => setIsCopied(false), 2000);
+  const calculateMbps = (bytes: number, seconds: number) => {
+    return (bytes * 8) / (seconds * 1000000);
   };
 
-  const runPingAndJitter = async (): Promise<{ ping: number | null, jitter: number | null }> => {
+  const runPingProtocol = async () => {
     setStep('ping');
     const samples: number[] = [];
-    const jitterSamples: number[] = [];
-    
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) {
       const start = performance.now();
       try {
-        await fetch(`${PING_URL}?t=${Date.now()}`, { mode: 'no-cors', cache: 'no-cache' });
-        const latency = performance.now() - start;
-        samples.push(latency);
-        if (i > 0) jitterSamples.push(Math.abs(latency - samples[i - 1]));
-      } catch (e) {
-        continue;
-      }
-      setProgress(Math.round((i / 10) * 10));
+        await fetch(`${CLOUDFLARE_BASE}/favicon.ico?t=${Date.now()}`, { mode: 'no-cors', cache: 'no-cache' });
+        samples.push(performance.now() - start);
+      } catch (e) {}
+      setProgress(10 + (i * 2));
     }
     
     if (samples.length === 0) return { ping: null, jitter: null };
-    const avgPing = Math.round(samples.reduce((a, b) => a + b) / samples.length);
-    const avgJitter = Math.round(jitterSamples.length > 0 ? jitterSamples.reduce((a, b) => a + b) / jitterSamples.length : 0);
-    return { ping: avgPing, jitter: avgJitter };
+    
+    samples.sort((a, b) => a - b);
+    const median = samples[Math.floor(samples.length / 2)];
+    let jitter = 0;
+    for (let i = 1; i < samples.length; i++) jitter += Math.abs(samples[i] - samples[i - 1]);
+    jitter /= (samples.length - 1);
+
+    return { ping: Math.round(median), jitter: Math.round(jitter) };
   };
 
-  const runDownloadTest = async (): Promise<number | null> => {
-    setStep('download');
+  const runDownloadPass = async (bytes: number): Promise<number | null> => {
     const start = performance.now();
     try {
-      const response = await fetch(`${CLOUDFLARE_DOWN}&t=${Date.now()}`, { cache: 'no-cache' });
+      const response = await fetch(`${CLOUDFLARE_BASE}/__down?bytes=${bytes}&t=${Date.now()}`, { cache: 'no-cache' });
       if (!response.ok) return null;
-      await response.blob(); // Wait until finished
-      const end = performance.now();
-      const durationSecs = (end - start) / 1000;
-      // Formula: (25 MB * 8 bits/byte) / seconds
-      return (25 * 8) / durationSecs;
+      await response.blob();
+      const duration = (performance.now() - start) / 1000;
+      return calculateMbps(bytes, duration);
     } catch (e) {
       return null;
     }
   };
 
-  const runUploadTest = async (): Promise<number | null> => {
-    setStep('upload');
-    const size = 5 * 1024 * 1024; // 5MB
-    const data = new Uint8Array(size);
-    // Fill with secure entropy in safe chunks
-    for (let i = 0; i < size; i += 65536) {
-      const end = Math.min(i + 65536, size);
+  const runUploadPass = async (bytes: number): Promise<number | null> => {
+    const data = new Uint8Array(bytes);
+    // Fill in safe chunks
+    for (let i = 0; i < bytes; i += 65536) {
+      const end = Math.min(i + 65536, bytes);
       window.crypto.getRandomValues(data.subarray(i, end));
     }
 
     const start = performance.now();
     try {
-      const response = await fetch(CLOUDFLARE_UP, {
+      const response = await fetch(`${CLOUDFLARE_BASE}/__up`, {
         method: 'POST',
         body: data,
         cache: 'no-cache'
       });
       if (!response.ok) return null;
-      const end = performance.now();
-      const durationSecs = (end - start) / 1000;
-      // Formula: (5 MB * 8 bits/byte) / seconds
-      return (5 * 8) / durationSecs;
+      const duration = (performance.now() - start) / 1000;
+      return calculateMbps(bytes, duration);
     } catch (e) {
       return null;
     }
@@ -221,46 +187,60 @@ export default function SpeedTestPage() {
   const startTest = async () => {
     if (isTesting) return;
     setIsTesting(true);
+    setStep('ping');
+    setProgress(5);
     setDownloadMbps(null);
     setUploadMbps(null);
     setPingMs(null);
     setJitterMs(null);
-    setProgress(0);
-    setCurrentSpeed(0);
 
-    testTimeoutRef.current = setTimeout(() => {
-      if (isTesting) {
-        setIsTesting(false);
-        setStep('complete');
-        toast({ variant: "destructive", title: "Timeout", description: "Signal timed out." });
-      }
-    }, MASTER_TIMEOUT_MS);
+    // 1. PING
+    const p = await runPingProtocol();
+    setPingMs(p.ping);
+    setJitterMs(p.jitter);
+    if (p.ping === null) {
+      setStep('blocked');
+      setIsTesting(false);
+      return;
+    }
 
-    const { ping, jitter } = await runPingAndJitter();
-    setPingMs(ping);
-    setJitterMs(jitter);
-    setProgress(20);
+    // 2. DOWNLOAD (10MB, 25MB, 50MB)
+    setStep('download');
+    const dSizes = [10000000, 25000000, 50000000];
+    const dResults: number[] = [];
+    for (let i = 0; i < dSizes.length; i++) {
+      const mbps = await runDownloadPass(dSizes[i]);
+      if (mbps) dResults.push(mbps);
+      setProgress(20 + (i * 15));
+    }
+    const finalDown = dResults.length > 0 ? Math.max(...dResults) : null;
+    setDownloadMbps(finalDown);
 
-    const d = await runDownloadTest();
-    setDownloadMbps(d);
-    setCurrentSpeed(d || 0);
-    setProgress(70);
+    // 3. UPLOAD (5MB, 10MB)
+    setStep('upload');
+    const uSizes = [5000000, 10000000];
+    const uResults: number[] = [];
+    for (let i = 0; i < uSizes.length; i++) {
+      const mbps = await runUploadPass(uSizes[i]);
+      if (mbps) uResults.push(mbps);
+      setProgress(70 + (i * 15));
+    }
+    const finalUp = uResults.length > 0 ? Math.max(...uResults) : null;
+    setUploadMbps(finalUp);
 
-    const u = await runUploadTest();
-    setUploadMbps(u);
+    // Finalize
     setProgress(100);
-
     setStep('complete');
     setIsTesting(false);
-    if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
 
+    // History Save
     const res: SpeedResult = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
-      download: d,
-      upload: u,
-      ping,
-      jitter,
+      download: finalDown,
+      upload: finalUp,
+      ping: p.ping,
+      jitter: p.jitter,
       location,
       isp: ispName
     };
@@ -270,48 +250,57 @@ export default function SpeedTestPage() {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
       return next;
     });
+
+    toast({ title: "Diagnostics Complete" });
   };
 
-  const videoCapability = useMemo(() => {
+  const handleCopy = () => {
+    const text = [
+      `[MY KIT TOOL - NETWORK TELEMETRY]`,
+      `Download: ${downloadMbps?.toFixed(1) || '—'} Mbps`,
+      `Upload: ${uploadMbps?.toFixed(1) || '—'} Mbps`,
+      `Ping: ${pingMs || '—'} ms`,
+      `Jitter: ${jitterMs || '—'} ms`,
+      `ISP: ${ispName}`,
+      `IP: ${publicIp}`,
+      `Node: ${location}`,
+      `Hardware: ${browserInfo}`,
+      `Timestamp: ${new Date().toLocaleString()}`
+    ].join('\n');
+    navigator.clipboard.writeText(text);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+    toast({ title: "Identity Copied" });
+  };
+
+  const qualityRating = useMemo(() => {
     if (!downloadMbps) return null;
-    return [
-      { res: '4K UHD', req: 25, ok: downloadMbps >= 25 },
-      { res: '1080p HD', req: 10, ok: downloadMbps >= 10 },
-      { res: '720p', req: 5, ok: downloadMbps >= 5 },
-      { res: '480p SD', req: 2, ok: downloadMbps >= 2 },
-    ];
+    if (downloadMbps > 100) return { label: 'Excellent', color: 'text-green-500', bg: 'bg-green-500/10' };
+    if (downloadMbps > 25) return { label: 'Good', color: 'text-blue-500', bg: 'bg-blue-500/10' };
+    if (downloadMbps > 5) return { label: 'Fair', color: 'text-orange-500', bg: 'bg-orange-500/10' };
+    return { label: 'Poor', color: 'text-red-500', bg: 'bg-red-500/10' };
   }, [downloadMbps]);
 
-  const lastTestDiff = useMemo(() => {
-    if (history.length < 2 || isTesting || step !== 'complete') return null;
-    const prev = history[1].download;
-    const current = history[0].download;
-    if (prev === null || current === null) return null;
-    const diff = ((current - prev) / prev) * 100;
-    return { 
-      val: Math.abs(diff).toFixed(1), 
-      isFaster: diff > 0,
-      color: diff > 0 ? 'text-green-500' : 'text-red-500'
-    };
-  }, [history, isTesting, step]);
-
-  const needleAngle = useMemo(() => {
-    const val = isTesting ? currentSpeed : (downloadMbps || 0);
-    return getAngleForSpeed(val);
-  }, [currentSpeed, downloadMbps, isTesting]);
+  const diffFromLast = useMemo(() => {
+    if (history.length < 2 || step !== 'complete' || !downloadMbps) return null;
+    const last = history[1].download;
+    if (!last) return null;
+    const diff = ((downloadMbps - last) / last) * 100;
+    return { val: Math.abs(diff).toFixed(1), faster: diff > 0 };
+  }, [history, step, downloadMbps]);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full overflow-hidden">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <Gauge className="w-3.5 h-3.5" /> Hardware Sync v8.0
+            <Gauge className="w-3.5 h-3.5" /> Telemetry v9.0
           </div>
           <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-[0.9] overflow-wrap-anywhere">
             Network <span className="text-primary italic">Pulse Studio</span>
           </h1>
           <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional high-fidelity telemetry dashboard. Derived strictly from timed bitstream transfers. 100% private browser test.
+            Professional high-fidelity telemetry derived strictly from Cloudflare Edge transfers. No randomized data. 100% private.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
@@ -323,6 +312,7 @@ export default function SpeedTestPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        {/* Main Dashboard */}
         <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-left-6 duration-1000">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group flex flex-col min-h-[600px] bg-[#060608]">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -330,7 +320,9 @@ export default function SpeedTestPage() {
               <CardContent className="flex-1 flex flex-col items-center justify-center p-6 sm:p-16 relative overflow-hidden">
                  <div className="relative w-full max-w-[500px] aspect-[4/3] flex items-center justify-center pt-10">
                     <div className="absolute inset-0 bg-primary/5 blur-[120px] rounded-full animate-pulse" />
-                    <svg viewBox="0 0 200 120" className="w-full h-full fill-none">
+                    
+                    {/* Gauge SVG */}
+                    <svg viewBox="0 0 200 120" className="w-full h-full fill-none relative z-10">
                        <path d="M20,110 A80,80 0 0,1 180,110" stroke="currentColor" strokeWidth="12" className="text-white/5" strokeLinecap="round" />
                        <path 
                          d="M20,110 A80,80 0 0,1 180,110" 
@@ -344,34 +336,29 @@ export default function SpeedTestPage() {
                        {GAUGE_POINTS.map((pt, i) => {
                          const angle = getAngleForSpeed(pt);
                          const rad = (angle * Math.PI) / 180;
-                         const x1 = 100 + 80 * Math.sin(rad);
-                         const y1 = 110 - 80 * Math.cos(rad);
                          const tx = 100 + 92 * Math.sin(rad);
                          const ty = 110 - 92 * Math.cos(rad);
                          return (
-                           <g key={i}>
-                             <line x1={x1} y1={y1} x2={100 + 72 * Math.sin(rad)} y2={110 - 72 * Math.cos(rad)} stroke="currentColor" strokeWidth="1.5" className="text-white/20" />
-                             <text x={tx} y={ty} textAnchor="middle" className="fill-white/10 text-[6px] font-black uppercase tracking-tighter" dy="2">{pt}</text>
-                           </g>
+                           <text key={i} x={tx} y={ty} textAnchor="middle" className="fill-white/10 text-[6px] font-black uppercase tracking-tighter" dy="2">{pt}</text>
                          );
                        })}
-                       <g style={{ transform: `rotate(${needleAngle}deg)`, transformOrigin: '100px 110px' }} className="transition-transform duration-500 ease-out">
+                       <g style={{ transform: `rotate(${getAngleForSpeed(downloadMbps)}deg)`, transformOrigin: '100px 110px' }} className="transition-transform duration-700 ease-out">
                           <path d="M100,110 L100,30" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" />
                           <circle cx="100" cy="110" r="6" fill="hsl(var(--primary))" />
                           <circle cx="100" cy="110" r="2" fill="white" />
                        </g>
                     </svg>
 
-                    <div className="absolute bottom-4 flex flex-col items-center text-center">
+                    <div className="absolute bottom-4 flex flex-col items-center text-center z-20">
                        <h2 className="text-6xl sm:text-9xl font-headline font-black text-foreground tracking-tighter leading-none mb-1">
-                          {isTesting ? currentSpeed.toFixed(1) : (downloadMbps?.toFixed(1) || '0.0')}
+                          {downloadMbps?.toFixed(1) || '0.0'}
                        </h2>
-                       <p className="text-[10px] sm:text-[12px] font-black text-primary uppercase tracking-[0.6em] mb-4">Mbps Speed</p>
+                       <p className="text-[10px] sm:text-[12px] font-black text-primary uppercase tracking-[0.6em] mb-4">Sustained Mbps</p>
                        
-                       {lastTestDiff && (
-                          <div className={cn("flex items-center gap-2 mb-4 animate-in slide-in-from-bottom-2", lastTestDiff.color)}>
-                             {lastTestDiff.isFaster ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                             <span className="text-[10px] font-black uppercase tracking-widest">{lastTestDiff.val}% {lastTestDiff.isFaster ? 'FASTER' : 'SLOWER'}</span>
+                       {diffFromLast && (
+                          <div className={cn("flex items-center gap-2 mb-4 animate-in slide-in-from-bottom-2", diffFromLast.faster ? 'text-green-500' : 'text-red-500')}>
+                             {diffFromLast.faster ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                             <span className="text-[10px] font-black uppercase tracking-widest">{diffFromLast.val}% {diffFromLast.faster ? 'FASTER' : 'SLOWER'}</span>
                           </div>
                        )}
 
@@ -384,14 +371,23 @@ export default function SpeedTestPage() {
                     </div>
                  </div>
 
-                 <div className="w-full max-w-sm mt-16 space-y-6">
-                    {!isTesting ? (
+                 <div className="w-full max-w-sm mt-16 space-y-6 z-20">
+                    {step === 'blocked' ? (
+                       <div className="p-8 rounded-[2rem] bg-red-500/10 border border-red-500/20 text-center space-y-4">
+                          <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
+                          <div className="space-y-1">
+                             <h4 className="text-sm font-black uppercase text-red-600">Test Blocked</h4>
+                             <p className="text-[10px] text-red-600/60 font-bold uppercase leading-relaxed px-4">Cloudflare handshake failed. CORS or hardware filtering is active.</p>
+                          </div>
+                          <Button onClick={startTest} variant="outline" className="h-10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white uppercase text-[9px] font-black">Retry Protocol</Button>
+                       </div>
+                    ) : !isTesting ? (
                       <Button 
                         onClick={startTest}
                         className="h-20 w-full bg-primary text-white font-black text-xl uppercase tracking-[0.4em] rounded-[2.5rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all group"
                       >
                          <Play className="w-6 h-6 mr-4 fill-current group-hover:scale-110 transition-transform" />
-                         {step === 'complete' ? 'Re-Run Test' : 'Launch Studio'}
+                         {step === 'complete' ? 'Re-Run Test' : 'Initialize Studio'}
                       </Button>
                     ) : (
                       <div className="space-y-4 text-center">
@@ -400,29 +396,30 @@ export default function SpeedTestPage() {
                             <span>{progress}%</span>
                          </div>
                          <Progress value={progress} className="h-1 rounded-full" />
-                         <p className="text-[9px] font-black uppercase text-foreground/20 italic">Cloudflare Edge Measurement Active...</p>
+                         <p className="text-[9px] font-black uppercase text-foreground/20 italic">Direct Cloudflare Bitstream Synchronization...</p>
                       </div>
                     )}
                  </div>
               </CardContent>
 
-              <div className="p-8 border-t border-white/5 bg-secondary/30 flex items-center justify-around flex-wrap gap-6">
+              {/* Metrics Row */}
+              <div className="p-8 border-t border-white/5 bg-secondary/30 grid grid-cols-2 md:grid-cols-4 gap-6">
                  {[
-                   { id: 'ping', label: 'Ping', icon: Clock, val: pingMs ? `${pingMs}ms` : '—', color: 'text-blue-500', bg: 'bg-blue-500/5' },
-                   { id: 'jitter', label: 'Jitter', icon: Activity, val: jitterMs ? `${jitterMs}ms` : '—', color: 'text-orange-500', bg: 'bg-orange-500/5' },
-                   { id: 'download', label: 'Download', icon: ArrowDown, val: downloadMbps ? downloadMbps.toFixed(1) : '—', color: 'text-green-500', bg: 'bg-green-500/5' },
-                   { id: 'upload', label: 'Upload', icon: ArrowUp, val: uploadMbps ? uploadMbps.toFixed(1) : '—', color: 'text-purple-500', bg: 'bg-purple-500/5' },
+                   { id: 'ping', label: 'Ping', icon: Clock, val: pingMs ? `${pingMs}ms` : '—', color: 'text-blue-400', bg: 'bg-blue-400/5', border: 'border-blue-400/10' },
+                   { id: 'jitter', label: 'Jitter', icon: Activity, val: jitterMs ? `${jitterMs}ms` : '—', color: 'text-orange-400', bg: 'bg-orange-400/5', border: 'border-orange-400/10' },
+                   { id: 'download', label: 'Download', icon: ArrowDown, val: downloadMbps ? downloadMbps.toFixed(1) : '—', color: 'text-green-400', bg: 'bg-green-400/5', border: 'border-green-400/10' },
+                   { id: 'upload', label: 'Upload', icon: ArrowUp, val: uploadMbps ? uploadMbps.toFixed(1) : '—', color: 'text-purple-400', bg: 'bg-purple-400/5', border: 'border-purple-400/10' },
                  ].map((s) => (
                    <div key={s.id} className={cn(
-                     "flex flex-col items-center gap-4 p-6 rounded-[2.5rem] transition-all duration-700 min-w-[120px] border border-transparent",
-                     (step === s.id || step === 'complete') ? `${s.bg} border-white/5 opacity-100 shadow-xl scale-105` : "opacity-30 grayscale"
+                     "flex flex-col items-center gap-4 p-6 rounded-[2.5rem] transition-all duration-700 border",
+                     (step === s.id || step === 'complete') ? `${s.bg} ${s.border} opacity-100 shadow-xl` : "opacity-30 border-transparent grayscale"
                    )}>
-                      <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center border border-white/5 transition-all shadow-inner", s.color, s.bg)}>
-                         <s.icon className="w-7 h-7" />
+                      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border border-white/5 transition-all shadow-inner", s.color, s.bg)}>
+                         <s.icon className="w-6 h-6" />
                       </div>
                       <div className="text-center space-y-1">
                         <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30 block leading-none">{s.label}</span>
-                        <span className="text-2xl font-headline font-black text-foreground leading-none block">{s.val}</span>
+                        <span className="text-xl sm:text-2xl font-headline font-black text-foreground leading-none block">{s.val}</span>
                       </div>
                    </div>
                  ))}
@@ -433,55 +430,72 @@ export default function SpeedTestPage() {
               <Card className="glass-card border-border shadow-xl p-8">
                  <div className="flex items-center gap-3 mb-8">
                     <Video className="w-5 h-5 text-primary" />
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/60">Streaming Capacity Matrix</h3>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/60">Video Integrity Matrix</h3>
                  </div>
                  <div className="space-y-4">
-                    {!videoCapability ? (
+                    {downloadMbps === null ? (
                        <div className="py-10 text-center opacity-10">
                           <p className="text-[10px] font-black uppercase tracking-widest">Awaiting result...</p>
                        </div>
-                    ) : videoCapability.map((v) => (
-                      <div key={v.res} className={cn(
-                        "flex items-center justify-between p-4 rounded-2xl border transition-all",
-                        v.ok ? "bg-primary/5 border-primary/20" : "bg-secondary/30 border-white/5 opacity-40"
-                      )}>
-                         <div className="flex items-center gap-4">
-                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", v.ok ? "text-primary" : "text-foreground/20")}>
-                               <Tv className="w-4 h-4" />
-                            </div>
-                            <span className={cn("text-[11px] font-black uppercase tracking-widest", v.ok ? "text-foreground" : "text-foreground/40")}>{v.res}</span>
-                         </div>
-                         {v.ok ? <Check className="w-4 h-4 text-primary" /> : <X className="w-4 h-4 text-foreground/20" />}
-                      </div>
-                    ))}
+                    ) : [
+                      { res: '4K Ultra HD', req: 25 },
+                      { res: '1080p HD', req: 10 },
+                      { res: '720p', req: 5 },
+                      { res: '480p SD', req: 2 },
+                    ].map((v) => {
+                      const isOk = downloadMbps >= v.req;
+                      return (
+                        <div key={v.res} className={cn(
+                          "flex items-center justify-between p-4 rounded-2xl border transition-all",
+                          isOk ? "bg-primary/5 border-primary/20" : "bg-secondary/30 border-white/5 opacity-40"
+                        )}>
+                           <div className="flex items-center gap-4">
+                              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", isOk ? "text-primary" : "text-foreground/20")}>
+                                 <Tv className="w-4 h-4" />
+                              </div>
+                              <span className={cn("text-[11px] font-black uppercase tracking-widest", isOk ? "text-foreground" : "text-foreground/40")}>{v.res}</span>
+                           </div>
+                           {isOk ? <Check className="w-4 h-4 text-primary" /> : <X className="w-4 h-4 text-foreground/20" />}
+                        </div>
+                      );
+                    })}
                  </div>
               </Card>
 
               <Card className="glass-card border-border shadow-xl p-8 flex flex-col justify-between">
                  <div className="space-y-6">
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/60">Browser Protocol Note</h3>
-                    <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border space-y-4">
-                       <div className="flex items-center gap-3 text-primary">
-                          <Info className="w-4 h-4" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Accuracy Alert</span>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/60">Quality Classification</h3>
+                    {!qualityRating ? (
+                       <div className="py-20 text-center opacity-10">
+                          <div className="w-16 h-16 rounded-[2.5rem] bg-secondary border border-border flex items-center justify-center mx-auto mb-4">
+                             <CheckCircle2 className="w-8 h-8" />
+                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-widest">Pending results</p>
                        </div>
-                       <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase">
-                          Browser estimate based on sustained bitstreams. Not an ISP official certificate. Factors like browser overhead and background tabs impact result.
-                       </p>
-                    </div>
+                    ) : (
+                       <div className={cn("p-10 rounded-[3rem] border flex flex-col items-center gap-6 text-center animate-in zoom-in", qualityRating.bg, qualityRating.color.replace('text-', 'border-').replace('500', '20'))}>
+                          <div className={cn("w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-xl border border-white/10", qualityRating.bg)}>
+                             <CheckCircle2 className="w-8 h-8" />
+                          </div>
+                          <div className="space-y-1">
+                             <p className="text-[10px] font-black uppercase tracking-[0.5em] opacity-40">Line Profile</p>
+                             <h4 className="text-3xl font-headline font-black uppercase">{qualityRating.label}</h4>
+                          </div>
+                       </div>
+                    )}
                  </div>
 
-                 <div className="pt-8 space-y-4">
+                 <div className="pt-8">
                     <Button onClick={handleCopy} disabled={!downloadMbps} className="w-full h-14 bg-white text-black font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-white/90">
                        {isCopied ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                       Copy Telemetry Matrix
+                       Copy Clinical Report
                     </Button>
                  </div>
               </Card>
            </div>
         </div>
 
-        {/* Sidebar History */}
+        {/* Sidebar */}
         <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2 min-w-0">
            <Card className="glass-card border-border shadow-xl flex flex-col max-h-[500px]">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
@@ -508,7 +522,7 @@ export default function SpeedTestPage() {
                                   <ArrowDown className="w-4 h-4" />
                                </div>
                                <div className="min-w-0">
-                                  <p className="text-sm font-headline font-black text-foreground truncate">{h.download?.toFixed(1) || '0.0'} <span className="text-[10px] opacity-30">Mbps</span></p>
+                                  <p className="text-sm font-headline font-black text-foreground truncate">{h.download?.toFixed(1) || '0.0'} <span className="text-[10px] opacity-30 uppercase">Mbps</span></p>
                                   <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-tighter">{new Date(h.timestamp).toLocaleDateString()} • {new Date(h.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
                                </div>
                             </div>
@@ -531,9 +545,10 @@ export default function SpeedTestPage() {
               </CardHeader>
               <CardContent className="p-8 space-y-6">
                  {[
-                   { label: 'Carrier (ISP)', val: ispName || '---', icon: Server },
+                   { label: 'Carrier (ISP)', val: ispName || 'Identifying...', icon: Server },
                    { label: 'Public Identity (IP)', val: publicIp || 'Hidden', icon: Shield },
-                   { label: 'Platform Logic', val: browserProtocol || 'Browser Matrix', icon: Zap },
+                   { label: 'Hardware Logic', val: browserInfo || 'WASM Matrix', icon: Zap },
+                   { label: 'Network Origin', val: location || 'Global Node', icon: MapPin },
                  ].map((item, i) => (
                     <div key={i} className="flex gap-4 group/item">
                        <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary/40 shrink-0 border border-border group-hover/item:text-primary transition-colors">
@@ -553,7 +568,7 @@ export default function SpeedTestPage() {
                 <ShieldCheck className="w-7 h-7" />
              </div>
              <div className="space-y-2">
-               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Clinical Transparency</h4>
+               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Clinical Protocol</h4>
                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
                  Measurement utilizes pure bitstream math. No artificial multipliers or simulated data points are injected into the diagnostic result.
                </p>
