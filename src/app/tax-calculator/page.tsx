@@ -30,7 +30,8 @@ import {
   TrendingUp,
   Tag,
   Ban,
-  X
+  X,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -115,7 +116,6 @@ export default function TaxCalculatorPage() {
       tax2 = taxable * (p2 / 100);
       total = taxable + tax1 + tax2;
     } else {
-      // included: total = taxable * (1 + p1/100 + p2/100)
       const combinedRate = p1 + p2;
       taxable = netTotal / (1 + combinedRate / 100);
       tax1 = taxable * (p1 / 100);
@@ -136,6 +136,17 @@ export default function TaxCalculatorPage() {
   }, [amount, qty, discount, compareRate, mode, showCompare, calculateResult]);
 
   // --- Actions ---
+  const handleClear = () => {
+    setAmount('0');
+    setQty('1');
+    setDiscount('0');
+    setRate1('15');
+    setRate2('0');
+    setMode('add');
+    setShowCompare(false);
+    toast({ title: "Studio Reset" });
+  };
+
   const saveRateProtocol = () => {
     if (!newRateName.trim() || !rate1) return;
     const newRate: SavedRate = {
@@ -223,7 +234,7 @@ export default function TaxCalculatorPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full overflow-hidden">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl overflow-hidden">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Coins className="w-3.5 h-3.5" /> Fiscal Suite Pro
