@@ -91,7 +91,8 @@ import {
   ChevronDown,
   Gauge,
   MapPin,
-  Banknote
+  Banknote,
+  Cloud
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -125,6 +126,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/weather', 
+    icon: Cloud, 
+    title: 'Weather Intel', 
+    desc: 'Real-time global forecast with 3-day projection matrix.', 
+    label: 'ENV', 
+    color: 'text-sky-400 bg-sky-400/10 border-sky-400/20',
+    glowClass: 'bg-sky-400/10',
+    keywords: ['weather', 'forecast', 'temperature', 'rain', 'humidity', 'cloud', 'env'],
+    category: 'utilities'
   },
   { 
     href: '/speed-test', 
@@ -1021,7 +1033,7 @@ const TOOLS: Tool[] = [
     href: '/dictionary', 
     icon: Book, 
     title: 'Dictionary', 
-    desc: 'Professional linguistic analysis and definitions.', 
+    desc: 'Professional English word search and definitions.', 
     label: 'LANG', 
     color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
@@ -1129,7 +1141,7 @@ export default function Home() {
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
       'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
       'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP', 'Currency Converter',
-      'Exchange rate', 'USD to PKR', 'SAR conversion'
+      'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1364,6 +1376,7 @@ export default function Home() {
               </div>
             )}
 
+            {/* All Tools Shown Footer */}
             {visibleCount >= filteredTools.length && filteredTools.length > 0 && (
               <div className="flex flex-col items-center gap-4 py-8 opacity-40">
                  <div className="flex items-center gap-3">

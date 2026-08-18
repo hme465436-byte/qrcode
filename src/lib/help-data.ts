@@ -28,6 +28,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     ],
     privacy: 'All rendering occurs on your device. Your URLs and brand logos never leave your browser.'
   },
+  'weather': {
+    title: 'Weather Intelligence Studio',
+    description: 'Professional environmental diagnostic unit. Access real-time atmospheric data and projections for any global node.',
+    steps: [
+      'Enter a city name in the search matrix to initialize geocoding.',
+      'Select the specific location node from the discovered results.',
+      'The engine will synchronize with atmospheric nodes to retrieve current telemetry.',
+      'Analyze the current temperature, wind flow, and humidity matrix.',
+      'Review the 3-day projected high/low temperature vectors.'
+    ],
+    tips: [
+      'If your city isn\'t identified, try adding the country name for more precise geocoding.',
+      'Refresh the matrix to re-calibrate real-time telemetry if you keep the studio open.'
+    ],
+    privacy: 'Environmental lookups are volatile and held strictly in local memory. The studio does not track or store your location history.'
+  },
   'currency-converter': {
     title: 'Currency Converter Studio',
     description: 'Professional exchange rate translation unit. Convert between global currencies using real-time market data.',
