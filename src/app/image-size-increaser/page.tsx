@@ -66,6 +66,7 @@ interface ImageAsset {
   originalSize: number;
   processedUrl: string | null;
   processedSize: number | null;
+  processedBlob: Blob | null;
   status: 'idle' | 'processing' | 'completed' | 'error';
 }
 
@@ -133,6 +134,7 @@ export default function ImageSizeIncreaserPage() {
             originalSize: file.size,
             processedUrl: null,
             processedSize: null,
+            processedBlob: null,
             status: 'idle'
           });
         };
@@ -175,7 +177,7 @@ export default function ImageSizeIncreaserPage() {
     setState(prev);
   };
 
-  const applyPreset = (type: string) => {
+  const applyScale = (type: string) => {
     if (!activeAsset) return;
     switch(type) {
       case '2x': updateParam({ targetW: activeAsset.originalW * 2, targetH: activeAsset.originalH * 2 }); break;
@@ -186,6 +188,31 @@ export default function ImageSizeIncreaserPage() {
       case 'ig': updateParam({ targetW: 1080, targetH: 1080, lockRatio: false, fitMode: 'blur-fill' }); break;
     }
     toast({ title: "Preset Applied" });
+  };
+
+  const removeAsset = (id: string) => {
+    setAssets(prev => {
+      const item = prev.find(a => a.id === id);
+      if (item) {
+        URL.revokeObjectURL(item.originalUrl);
+        if (item.processedUrl) URL.revokeObjectURL(item.processedUrl);
+      }
+      const next = prev.filter(a => a.id !== id);
+      if (activeId === id) setActiveId(next[0]?.id || null);
+      return next;
+    });
+  };
+
+  const handleClear = () => {
+    assets.forEach(a => {
+      URL.revokeObjectURL(a.originalUrl);
+      if (a.processedUrl) URL.revokeObjectURL(a.processedUrl);
+    });
+    setAssets([]);
+    setActiveId(null);
+    setState(INITIAL_STUDIO);
+    setHistory([]);
+    toast({ title: "Studio Reset", description: "Buffers cleared." });
   };
 
   // --- Synthesis Engine ---
@@ -266,7 +293,7 @@ export default function ImageSizeIncreaserPage() {
       processedUrl: URL.createObjectURL(finalBlob),
       processedSize: finalBlob.size,
       processedBlob: finalBlob
-    } as any;
+    };
   };
 
   const runProduction = async () => {
@@ -561,7 +588,7 @@ export default function ImageSizeIncreaserPage() {
                   <Button 
                     onClick={handleDownload} 
                     disabled={!assets.some(a => a.processedUrl)} 
-                    className="h-16 px-12 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-sm shadow-xl active:scale-95 transition-all"
+                    className="h-16 px-12 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-sm shadow-2xl active:scale-95 transition-all"
                   >
                      <Download className="w-6 h-6" />
                      {assets.filter(a => a.status === 'completed').length > 1 ? 'Download Bundle ZIP' : 'Save Master'}
@@ -615,18 +642,4 @@ export default function ImageSizeIncreaserPage() {
       `}</style>
     </div>
   );
-
-  function removeAsset(id: string) {
-    setAssets(prev => {
-      const item = prev.find(a => a.id === id);
-      if (item) {
-        URL.revokeObjectURL(item.originalUrl);
-        if (item.processedUrl) URL.revokeObjectURL(item.processedUrl);
-      }
-      const next = prev.filter(a => a.id !== id);
-      if (activeId === id) setActiveId(next[0]?.id || null);
-      return next;
-    });
-  }
 }
-
