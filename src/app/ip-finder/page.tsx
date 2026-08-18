@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -40,6 +39,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -484,8 +484,8 @@ export default function IpFinderPage() {
                                <button 
                                 onClick={() => handleCopy(item.val, item.label)} 
                                 className={cn(
-                                  "p-2 rounded-lg text-foreground/10 hover:text-primary transition-colors",
-                                  isCopied === item.label && "text-primary"
+                                  "p-2 rounded-lg transition-colors",
+                                  isCopied === item.label ? "text-primary" : "text-foreground/10 hover:text-primary"
                                 )}
                                >
                                   <Copy className="w-3.5 h-3.5" />
