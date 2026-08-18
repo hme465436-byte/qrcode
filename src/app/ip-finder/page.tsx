@@ -9,8 +9,8 @@ import {
   Copy, 
   CheckCircle2, 
   Info,
-  ShieldCheck,
-  Zap,
+  ShieldCheck, 
+  Zap, 
   Activity,
   Server,
   Clock,
@@ -25,7 +25,10 @@ import {
   Hash,
   Database,
   History,
-  Target
+  Target,
+  Smartphone,
+  ChevronRight,
+  Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -264,7 +267,7 @@ export default function IpFinderPage() {
 
           {/* History Tracker */}
           <Card className="glass-card border-border shadow-xl overflow-hidden flex flex-col min-h-[300px]">
-             <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between">
+             <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                    <History className="w-4 h-4 text-primary" />
                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Archive Matrix</CardTitle>
@@ -428,14 +431,7 @@ export default function IpFinderPage() {
       </div>
       
       <style jsx global>{`
-        .bg-checkered {
-          background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #111113 75%), 
-                            linear-gradient(-45deg, transparent 75%, #111113 75%);
-          background-size: 20px 20px;
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
