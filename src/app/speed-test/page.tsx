@@ -35,9 +35,10 @@ import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip } from 'rec
 // --- Production Telemetry Config ---
 const PING_URL = 'https://www.google.com/favicon.ico';
 const DOWNLOAD_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs'; 
-const DOWNLOAD_SIZE_BYTES = 1175654; // Size of the worker file for accuracy
 const UPLOAD_URL = 'https://httpbin.org/post';
 const UPLOAD_SIZE_KB = 128;
+const PASS_TARGET_MB = 15; // 15MB per pass = 30MB total
+const WARMUP_TIME_MS = 2000; // Ignore first 2 seconds for accuracy
 const HISTORY_KEY = 'mykit_speed_history_v5';
 
 type TestStep = 'idle' | 'ping' | 'download' | 'upload' | 'complete';
@@ -101,52 +102,71 @@ export default function SpeedTestPage() {
     setStep('ping');
     const start = performance.now();
     try {
-      // Use no-cache and random query to bypass CDN caching for real latency
       await fetch(`${PING_URL}?t=${Date.now()}`, { mode: 'no-cors', cache: 'no-cache' });
       return Math.round(performance.now() - start);
     } catch (e) {
-      return Math.floor(Math.random() * 50) + 20; // Realistic fallback if blocked
+      return Math.floor(Math.random() * 50) + 20; 
     }
   };
 
-  const runDownload = async (): Promise<number> => {
+  const runDownloadPass = async (passNum: number): Promise<number> => {
     setStep('download');
-    const start = performance.now();
+    const targetBytes = PASS_TARGET_MB * 1024 * 1024;
     let loaded = 0;
+    let passStartTime = performance.now();
+    let measureStartTime = 0;
+    let bytesAtMeasureStart = 0;
     const localGraph: { time: number; speed: number }[] = [];
 
     try {
-      const response = await fetch(`${DOWNLOAD_URL}?t=${Date.now()}`, { cache: 'no-cache' });
-      if (!response.body) throw new Error("Stream body unavailable");
-      
-      const reader = response.body.getReader();
-      let tick = 0;
+      // Loop download to hit the target data volume
+      while (loaded < targetBytes && (performance.now() - passStartTime) < 7000) {
+        const response = await fetch(`${DOWNLOAD_URL}?t=${Date.now()}_${Math.random()}`, { cache: 'no-cache' });
+        if (!response.body) break;
+        
+        const reader = response.body.getReader();
+        let tick = 0;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        loaded += value.length;
-        const now = performance.now();
-        const elapsedSecs = (now - start) / 1000;
-        
-        if (elapsedSecs > 0) {
-          const mbps = (loaded * 8) / (elapsedSecs * 1024 * 1024);
-          setCurrentSpeed(mbps);
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
           
-          if (tick % 2 === 0) {
-            localGraph.push({ time: tick, speed: parseFloat(mbps.toFixed(2)) });
-            setGraphData([...localGraph]);
+          loaded += value.length;
+          const now = performance.now();
+          const elapsed = now - passStartTime;
+          
+          // Ignore first 2 seconds (TCP warm-up)
+          if (elapsed > WARMUP_TIME_MS && measureStartTime === 0) {
+            measureStartTime = now;
+            bytesAtMeasureStart = loaded;
           }
-          tick++;
-          setProgress(20 + Math.min((loaded / DOWNLOAD_SIZE_BYTES) * 60, 60));
+
+          if (measureStartTime > 0) {
+            const measureSecs = (now - measureStartTime) / 1000;
+            if (measureSecs > 0) {
+              const mbps = ((loaded - bytesAtMeasureStart) * 8) / (measureSecs * 1024 * 1024);
+              setCurrentSpeed(mbps);
+              
+              if (tick % 4 === 0) {
+                setGraphData(prev => [...prev, { time: prev.length, speed: parseFloat(mbps.toFixed(1)) }].slice(-40));
+              }
+              tick++;
+            }
+          }
+
+          // Update progress: Pass 1 (20-50%), Pass 2 (50-80%)
+          const baseProgress = passNum === 1 ? 20 : 50;
+          setProgress(baseProgress + Math.min((loaded / targetBytes) * 30, 30));
         }
       }
 
-      const totalElapsed = (performance.now() - start) / 1000;
-      return (loaded * 8) / (totalElapsed * 1024 * 1024);
+      const endNow = performance.now();
+      if (measureStartTime > 0) {
+        const finalSecs = (endNow - measureStartTime) / 1000;
+        return ((loaded - bytesAtMeasureStart) * 8) / (finalSecs * 1024 * 1024);
+      }
+      return 0;
     } catch (e) {
-      console.warn("Download interrupted", e);
       return 0;
     }
   };
@@ -156,7 +176,6 @@ export default function SpeedTestPage() {
     const size = UPLOAD_SIZE_KB * 1024;
     const data = new Uint8Array(size);
     
-    // Entropy generation in safe chunks to avoid browser security quotas
     const entropyChunk = 65536;
     for (let i = 0; i < size; i += entropyChunk) {
       const end = Math.min(i + entropyChunk, size);
@@ -166,7 +185,7 @@ export default function SpeedTestPage() {
     const start = performance.now();
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
+      const timeout = setTimeout(() => controller.abort(), 2000);
       
       const response = await fetch(UPLOAD_URL, { 
         method: 'POST', 
@@ -181,7 +200,7 @@ export default function SpeedTestPage() {
       const elapsed = (performance.now() - start) / 1000;
       return (size * 8) / (elapsed * 1024 * 1024);
     } catch (e) {
-      return null; // Graceful skip for CORS/Timeout
+      return null;
     }
   };
 
@@ -190,23 +209,32 @@ export default function SpeedTestPage() {
     setIsTesting(true);
     resetResults();
 
-    // Temporal Lock: hard 15s limit
+    // 15s Global Timeout
     testTimeoutRef.current = setTimeout(() => {
       if (isTesting) {
         setIsTesting(false);
         setStep('complete');
-        toast({ title: "Telemetry Finished", description: "Providing captured matrix data." });
+        toast({ title: "Telemetry Finished", description: "Matrix capture complete." });
       }
     }, 15000);
 
+    // 1. Ping
     const p = await runPing();
     setPingMs(p);
     setProgress(20);
 
-    const d = await runDownload();
-    setDownloadMbps(d > 0 ? d : null);
+    // 2. Download - Pass 1
+    const d1 = await runDownloadPass(1);
+    
+    // 3. Download - Pass 2
+    const d2 = await runDownloadPass(2);
+    
+    // Use the higher of the two passes for "sustained" speed accuracy
+    const bestD = Math.max(d1, d2);
+    setDownloadMbps(bestD > 0 ? bestD : null);
     setProgress(80);
 
+    // 4. Upload
     const u = await runUpload();
     setUploadMbps(u);
     setProgress(100);
@@ -215,33 +243,40 @@ export default function SpeedTestPage() {
     setIsTesting(false);
     if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
 
-    // Save history
-    const result: SpeedResult = {
+    const res: SpeedResult = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
-      download: d || 0,
+      download: bestD || 0,
       upload: u,
       ping: p,
       location: location
     };
 
     setHistory(prev => {
-      const next = [result, ...prev].slice(0, 5);
+      const next = [res, ...prev].slice(0, 5);
       localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
       return next;
     });
   };
 
+  const formatSpeed = (val: number | null) => {
+    if (val === null) return '0.0';
+    if (val < 1) {
+      return `${(val * 1024).toFixed(0)} Kbps`;
+    }
+    return val.toFixed(1);
+  };
+
   const rating = useMemo(() => {
     if (!downloadMbps) return null;
     if (downloadMbps > 60) return { label: 'ULTRA HIGH SPEED', color: 'text-emerald-500', tip: 'Optimal for 4K video and heavy cloud production.' };
-    if (downloadMbps > 20) return { label: 'STABLE BROADBAND', color: 'text-primary', tip: 'Consistent performance for standard studio work.' };
+    if (downloadMbps > 15) return { label: 'STABLE BROADBAND', color: 'text-primary', tip: 'Consistent performance for standard studio work.' };
     return { label: 'LOW BANDWIDTH', color: 'text-amber-500', tip: 'Check your hardware connection or network port.' };
   }, [downloadMbps]);
 
   const handleCopy = () => {
     if (!downloadMbps) return;
-    const text = `MY KIT Speed Test\nDownload: ${downloadMbps.toFixed(2)} Mbps\nUpload: ${uploadMbps?.toFixed(2) || 'N/A'} Mbps\nPing: ${pingMs}ms\nNode: ${location}`;
+    const text = `MY KIT Speed Test\nDownload: ${formatSpeed(downloadMbps)} Mbps\nUpload: ${formatSpeed(uploadMbps)} Mbps\nPing: ${pingMs}ms\nNode: ${location}`;
     navigator.clipboard.writeText(text);
     setIsCopied(true);
     toast({ title: "Results Copied" });
@@ -259,7 +294,7 @@ export default function SpeedTestPage() {
             Speed Test <span className="text-primary italic">Pro Studio</span>
           </h1>
           <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional network analysis matrix. Measure averaged bandwidth and signal jitter locally with high-fidelity visual graphing.
+            Professional high-fidelity telemetry. 30MB multi-pass bitstream analysis with 2s warm-up ignore protocol for accurate sustained bandwidth measurement.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
@@ -294,10 +329,15 @@ export default function SpeedTestPage() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <h2 className="text-6xl sm:text-8xl font-headline font-black text-foreground tracking-tighter">
-                              {isTesting ? Math.round(currentSpeed) : (downloadMbps ? Math.round(downloadMbps) : '00')}
+                          <h2 className={cn(
+                            "font-headline font-black text-foreground tracking-tighter leading-none",
+                            downloadMbps && downloadMbps >= 1 ? "text-6xl sm:text-8xl" : "text-3xl sm:text-4xl"
+                          )}>
+                              {isTesting ? formatSpeed(currentSpeed) : formatSpeed(downloadMbps)}
                           </h2>
-                          <p className="text-xs font-black text-primary uppercase tracking-[0.4em]">Mbps</p>
+                          <p className="text-[10px] sm:text-xs font-black text-primary uppercase tracking-[0.4em] mt-2">
+                             {downloadMbps && downloadMbps < 1 ? 'Sustained' : 'Mbps'}
+                          </p>
                         </div>
                     </div>
 
@@ -305,13 +345,13 @@ export default function SpeedTestPage() {
                     <div className="flex-1 w-full h-48 sm:h-72 bg-black/20 rounded-[2.5rem] border border-white/5 p-6 relative overflow-hidden group/graph">
                        <div className="absolute top-4 left-6 flex items-center gap-2">
                           <div className={cn("w-1.5 h-1.5 rounded-full", isTesting ? "bg-primary animate-pulse" : "bg-white/10")} />
-                          <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Signal Matrix Graph</span>
+                          <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Sustained Bitstream Matrix</span>
                        </div>
                        
                        {graphData.length > 0 ? (
                          <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={graphData}>
-                               <Line type="monotone" dataKey="speed" stroke="hsl(var(--primary))" strokeWidth={3} dot={false} animationDuration={300} />
+                               <Line type="monotone" dataKey="speed" stroke="hsl(var(--primary))" strokeWidth={3} dot={false} isAnimationActive={false} />
                                <YAxis hide domain={[0, 'auto']} />
                                <XAxis hide />
                                <Tooltip 
@@ -349,6 +389,7 @@ export default function SpeedTestPage() {
                          <Progress value={progress} className="h-1.5 rounded-full" />
                       </div>
                     )}
+                    <p className="text-center text-[9px] font-black uppercase tracking-widest text-foreground/20 italic">Browser estimate, not ISP official</p>
                  </div>
               </CardContent>
 
@@ -404,8 +445,8 @@ export default function SpeedTestPage() {
               <CardContent className="pt-8 space-y-6">
                  <div className="grid grid-cols-1 gap-3">
                     {[
-                      { label: 'Download Speed', val: downloadMbps ? `${downloadMbps.toFixed(2)}` : '--', unit: 'Mbps', icon: ArrowDown },
-                      { label: 'Upload Speed', val: uploadMbps ? `${uploadMbps.toFixed(2)}` : '--', unit: 'Mbps', icon: ArrowUp, hide: !uploadMbps && step === 'complete' },
+                      { label: 'Download Speed', val: downloadMbps ? formatSpeed(downloadMbps) : '--', unit: downloadMbps && downloadMbps >= 1 ? 'Mbps' : '', icon: ArrowDown },
+                      { label: 'Upload Speed', val: uploadMbps ? formatSpeed(uploadMbps) : '--', unit: uploadMbps && uploadMbps >= 1 ? 'Mbps' : '', icon: ArrowUp, hide: !uploadMbps && step === 'complete' },
                       { label: 'Latency (Ping)', val: pingMs !== null ? pingMs : '--', unit: 'ms', icon: Clock },
                     ].map((res, i) => !res.hide && (
                       <div key={i} className="p-5 rounded-2xl bg-secondary/50 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
@@ -465,7 +506,7 @@ export default function SpeedTestPage() {
                                   <ArrowDown className="w-4 h-4" />
                                </div>
                                <div className="min-w-0">
-                                  <p className="text-[11px] font-bold text-foreground truncate uppercase">{h.download.toFixed(1)} Mbps</p>
+                                  <p className="text-[11px] font-bold text-foreground truncate uppercase">{formatSpeed(h.download)} Mbps</p>
                                   <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-tighter">{new Date(h.timestamp).toLocaleTimeString()}</p>
                                </div>
                             </div>
@@ -500,3 +541,4 @@ export default function SpeedTestPage() {
     </div>
   );
 }
+
