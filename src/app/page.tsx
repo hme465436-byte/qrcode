@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -119,6 +120,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/watermark-cleaner', 
+    icon: Eraser, 
+    title: 'Watermark Cleaner', 
+    desc: 'Remove text and watermarks using pixel diffusion matrix.', 
+    label: 'RESTORATION', 
+    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
+    glowClass: 'bg-indigo-500/10',
+    keywords: ['remove watermark', 'remove text', 'clean image', 'inpaint', 'erase text from photo', 'restore'],
+    category: 'image'
   },
   { 
     href: '/wps-sheets', 
@@ -1065,7 +1077,8 @@ export default function Home() {
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
       'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
-      'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table'
+      'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
+      'Watermark Cleaner', 'Remove text from photo'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

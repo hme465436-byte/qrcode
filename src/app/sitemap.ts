@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/rename-file', '/lorem-ipsum-generator', '/nickname-generator', '/donate',
     '/image-border-frame', '/custom-watermark', '/direct-file-share', '/wifi-qr-decoder',
     '/hide-message-photo', '/temp-room', '/sim-data', '/html-to-url', '/tax-calculator', '/lucky-draw',
-    '/bmi-calculator'
+    '/bmi-calculator', '/watermark-cleaner'
   ];
 
   const routes = tools.map(tool => ({
