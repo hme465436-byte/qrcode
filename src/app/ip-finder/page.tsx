@@ -20,7 +20,8 @@ import {
   MousePointer2,
   Fingerprint,
   Maximize2,
-  Lock
+  Lock,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,49 +53,81 @@ export default function IpFinderPage() {
     setError(null);
     setData(null);
 
-    try {
-      // Protocol 1: ipapi.co (Primary)
-      const res1 = await fetch('https://ipapi.co/json/');
-      if (!res1.ok) throw new Error('Primary node restricted');
-      const d1 = await res1.json();
-      
+    const endpoints = [
+      { url: 'https://api.ipify.org?format=json', transform: (d: any) => ({ ip: d.ip }) },
+      { url: 'https://ipwho.is/', transform: (d: any) => ({ 
+          ip: d.ip, 
+          isp: d.connection?.isp, 
+          city: d.city, 
+          region: d.region, 
+          country: d.country, 
+          timezone: d.timezone?.id, 
+          lat: d.latitude, 
+          lon: d.longitude 
+      })},
+      { url: 'https://ipapi.co/json/', transform: (d: any) => ({ 
+          ip: d.ip, 
+          isp: d.org, 
+          city: d.city, 
+          region: d.region, 
+          country: d.country_name, 
+          timezone: d.timezone, 
+          lat: d.latitude, 
+          lon: d.longitude 
+      })},
+      { url: 'https://ip-api.com/json/', transform: (d: any) => ({ 
+          ip: d.query, 
+          isp: d.isp, 
+          city: d.city, 
+          region: d.regionName, 
+          country: d.country, 
+          timezone: d.timezone, 
+          lat: d.lat, 
+          lon: d.lon 
+      })}
+    ];
+
+    let success = false;
+    let accumulatedData: Partial<IPData> = {};
+
+    for (const node of endpoints) {
+      try {
+        const response = await fetch(node.url);
+        if (!response.ok) continue;
+        const raw = await response.json();
+        const mapped = node.transform(raw);
+        
+        // Merge data. If we got IP from ipify, we still want geo from others.
+        accumulatedData = { ...accumulatedData, ...mapped };
+
+        // If we have at least IP, ISP, and Country, we consider it a success
+        if (accumulatedData.ip && accumulatedData.isp && accumulatedData.country) {
+          success = true;
+          break;
+        }
+      } catch (err) {
+        console.warn(`Node ${node.url} restricted.`);
+      }
+    }
+
+    if (accumulatedData.ip) {
       setData({
-        ip: d1.ip,
-        isp: d1.org,
-        city: d1.city,
-        region: d1.region,
-        country: d1.country_name,
-        timezone: d1.timezone,
-        lat: d1.latitude,
-        lon: d1.longitude
+        ip: accumulatedData.ip,
+        isp: accumulatedData.isp || 'Identifying...',
+        city: accumulatedData.city || 'Unknown',
+        region: accumulatedData.region || 'Unknown',
+        country: accumulatedData.country || 'Unknown',
+        timezone: accumulatedData.timezone || 'UTC',
+        lat: accumulatedData.lat || 0,
+        lon: accumulatedData.lon || 0
       });
       toast({ title: "Identity Isolated", description: "Network matrix successfully mapped." });
-    } catch (err) {
-      console.warn("Primary uplink failed, engaging fallback...");
-      try {
-        // Protocol 2: ip-api.com (Fallback)
-        const res2 = await fetch('http://ip-api.com/json/');
-        if (!res2.ok) throw new Error('Fallback node restricted');
-        const d2 = await res2.json();
-        
-        setData({
-          ip: d2.query,
-          isp: d2.isp,
-          city: d2.city,
-          region: d2.regionName,
-          country: d2.country,
-          timezone: d2.timezone,
-          lat: d2.lat,
-          lon: d2.lon
-        });
-        toast({ title: "Fallback Active", description: "Identity mapped via secondary node." });
-      } catch (err2) {
-        setError("Network Identity Blocked: All discovery nodes are currently restricted by your firewall or ISP.");
-        toast({ variant: "destructive", title: "Handshake Failed" });
-      }
-    } finally {
-      setIsLoading(false);
+    } else {
+      setError("Could not load. Try again.");
+      toast({ variant: "destructive", title: "Handshake Failed" });
     }
+    
+    setIsLoading(false);
   }, [toast]);
 
   useEffect(() => {
@@ -135,7 +168,7 @@ export default function IpFinderPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* Main Display - Left */}
         <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-left-6 duration-1000">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[450px] bg-black/10">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group flex flex-col min-h-[450px] bg-black/10">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-white/5 bg-white/5 flex flex-row items-center justify-between shrink-0">
                <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.4em] flex items-center gap-3">
@@ -160,7 +193,7 @@ export default function IpFinderPage() {
                  <div className="flex flex-col items-center gap-8 py-20 text-center animate-in shake duration-500">
                     <ShieldAlert className="w-16 h-16 text-destructive animate-bounce" />
                     <div className="space-y-2">
-                       <h3 className="text-xl font-headline font-black text-destructive uppercase">Discovery Blocked</h3>
+                       <h3 className="text-xl font-headline font-black text-destructive uppercase">Network Restriction</h3>
                        <p className="text-[11px] text-foreground/40 font-bold uppercase max-w-sm mx-auto leading-relaxed">{error}</p>
                     </div>
                     <Button onClick={fetchIdentity} className="h-14 px-10 bg-secondary border-border text-foreground font-black uppercase text-[10px] rounded-2xl">
@@ -244,9 +277,9 @@ export default function IpFinderPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Direct Edge Discovery</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Waterfall Discovery</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Utilizing high-performance edge APIs for zero-latency identity extraction and hardware signature mapping.
+                    Utilizing a multi-node discovery protocol to bypass local signal restrictions and ensure 100% identity isolation uptime.
                   </p>
                 </div>
              </div>
@@ -254,7 +287,7 @@ export default function IpFinderPage() {
         </div>
 
         {/* Sidebar - Mapping */}
-        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2 min-w-0">
            <Card className="glass-card border-border shadow-xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-primary">
@@ -267,11 +300,11 @@ export default function IpFinderPage() {
                        <div className="grid grid-cols-2 gap-4">
                           <div className="p-5 rounded-2xl bg-secondary/50 border border-border text-center space-y-1">
                              <p className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Latitude</p>
-                             <p className="text-sm font-mono font-bold text-foreground">{data.lat.toFixed(4)}°</p>
+                             <p className="text-sm font-mono font-bold text-foreground">{data.lat?.toFixed(4) || '0.0000'}°</p>
                           </div>
                           <div className="p-5 rounded-2xl bg-secondary/50 border border-border text-center space-y-1">
                              <p className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Longitude</p>
-                             <p className="text-sm font-mono font-bold text-foreground">{data.lon.toFixed(4)}°</p>
+                             <p className="text-sm font-mono font-bold text-foreground">{data.lon?.toFixed(4) || '0.0000'}°</p>
                           </div>
                        </div>
 
@@ -282,11 +315,13 @@ export default function IpFinderPage() {
                                 <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
                                 <MapPin className="w-12 h-12 text-primary relative z-10" />
                              </div>
-                             <Button asChild className="h-14 px-8 bg-primary text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                                <a href={`https://www.google.com/maps?q=${data.lat},${data.lon}`} target="_blank" rel="noopener noreferrer">
-                                   <ExternalLink className="w-4 h-4 mr-2" /> Launch Map Protocol
-                                </a>
-                             </Button>
+                             {data.lat !== 0 && (
+                               <Button asChild className="h-14 px-8 bg-primary text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                                  <a href={`https://www.google.com/maps?q=${data.lat},${data.lon}`} target="_blank" rel="noopener noreferrer">
+                                     <ExternalLink className="w-4 h-4 mr-2" /> Launch Map Protocol
+                                  </a>
+                               </Button>
+                             )}
                           </div>
                        </div>
 
