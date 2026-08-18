@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -139,6 +138,38 @@ export default function WpsSheetsAdvancedPage() {
     pushHistory();
     setHeaders(prev => prev.filter((_, i) => i !== idx));
     setRows(prev => prev.map(r => r.filter((_, i) => i !== idx)));
+  };
+
+  const handleHeaderChange = (index: number, val: string) => {
+    pushHistory();
+    const next = [...headers];
+    next[index] = val;
+    setHeaders(next);
+  };
+
+  const handleCellChange = (rowIdx: number, colIdx: number, val: string) => {
+    pushHistory();
+    const nextRows = rows.map((row, rIdx) => 
+      rIdx === rowIdx ? row.map((cell, cIdx) => cIdx === colIdx ? val : cell) : [...row]
+    );
+    setRows(nextRows);
+  };
+
+  const loadTemplate = (id: keyof typeof TEMPLATES) => {
+    pushHistory();
+    const t = TEMPLATES[id];
+    setHeaders([...t.headers]);
+    setRows(t.rows.map(r => [...r]));
+    setTitle(`${id.charAt(0).toUpperCase() + id.slice(1)} Matrix`);
+    toast({ title: "Template Active", description: `${id.toUpperCase()} protocol loaded.` });
+  };
+
+  const handleClear = () => {
+    setHeaders(['A', 'B', 'C', 'D']);
+    setRows([['', '', '', ''], ['', '', '', ''], ['', '', '', '']]);
+    setTitle('New Spreadsheet');
+    setHistory([]);
+    toast({ title: "Studio Reset", description: "All parameters cleared." });
   };
 
   // --- Formula Engine ---
@@ -415,27 +446,27 @@ export default function WpsSheetsAdvancedPage() {
         {/* Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-12">
            <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:border-primary/20 transition-all">
-              <ShieldCheck className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                  <ShieldCheck className="w-6 h-6" />
-              </div >
+              </div>
               <div className="space-y-2">
                  <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">100% local synthesis. Spreadsheet payloads are held strictly in browser memory and never transmitted.</p>
               </div>
            </div>
            <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:border-primary/20 transition-all">
-              <Calculator className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                  <Calculator className="w-6 h-6" />
-              </div >
+              </div>
               <div className="space-y-2">
                  <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Formula Intelligence</h4>
                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">Supports standard arithmetic and range operators including =SUM(A1:A5) for clinical data modeling.</p>
               </div>
            </div>
            <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:border-primary/20 transition-all">
-              <Zap className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                  <Zap className="w-6 h-6" />
-              </div >
+              </div>
               <div className="space-y-2">
                  <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Instant Matrix</h4>
                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">High-performance grid rendering ensures zero-latency interaction even with large data structures.</p>
@@ -453,4 +484,3 @@ export default function WpsSheetsAdvancedPage() {
     </div>
   );
 }
-    
