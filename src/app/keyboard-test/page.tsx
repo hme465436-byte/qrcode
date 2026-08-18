@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -11,10 +10,12 @@ import {
   Zap, 
   Activity,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -247,7 +248,7 @@ export default function KeyboardTestPage() {
                     <Activity className="w-5 h-5 text-primary/40 shrink-0" />
                     <div className="space-y-1">
                        <h4 className="text-[11px] font-black uppercase text-foreground">Zero Latency</h4>
-                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Direct hardware event mapping for 1:1 input speed verification.</p>
+                       <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase">Direct hardware event mapping for 1:1 input speed verification.</p>
                     </div>
                  </div>
               </CardContent>
