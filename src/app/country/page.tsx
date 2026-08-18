@@ -18,7 +18,13 @@ import {
   History,
   Trash2,
   Activity,
-  RotateCcw
+  RotateCcw,
+  Maximize,
+  Languages,
+  Phone,
+  Clock,
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,6 +57,7 @@ export default function CountryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isCopied, setIsCopied] = useState<string | null>(null);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -117,8 +124,27 @@ export default function CountryPage() {
     toast({ title: "Studio Reset" });
   };
 
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setIsCopied(label);
+    toast({ title: "Copied", description: `${label} saved to clipboard.` });
+    setTimeout(() => setIsCopied(null), 2000);
+  };
+
+  const formatList = (val: any) => {
+    if (!val) return '—';
+    if (Array.isArray(val)) return val.join(', ');
+    if (typeof val === 'object') return Object.values(val).join(', ');
+    return String(val);
+  };
+
+  const getCallingCode = (idd: any) => {
+    if (!idd || !idd.root) return '—';
+    return `${idd.root}${idd.suffixes?.[0] || ''}`;
+  };
+
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-5xl">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Globe className="w-3.5 h-3.5" /> Discovery Node
@@ -226,7 +252,7 @@ export default function CountryPage() {
                  </div>
               </CardHeader>
               
-              <CardContent className="flex-1 p-8 sm:p-16 flex flex-col items-center justify-center relative overflow-hidden">
+              <CardContent className="flex-1 p-8 sm:p-12 flex flex-col items-center justify-center relative overflow-hidden">
                  {!result && !isLoading && !error && (
                    <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-20">
                       <Globe className="w-24 h-24 text-primary" />
@@ -257,11 +283,20 @@ export default function CountryPage() {
                               <Globe className="w-10 h-10" />
                            </div>
                          )}
-                         <div className="text-center md:text-left space-y-2">
-                            <h2 className="text-4xl sm:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-none">
-                              {result.name.common}
-                            </h2>
-                            <p className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.4em]">{result.name.official || 'Sovereign Identity'}</p>
+                         <div className="text-center md:text-left space-y-4">
+                            <div className="space-y-1">
+                               <h2 className="text-4xl sm:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-[0.9]">
+                                 {result.name.common}
+                               </h2>
+                               <p className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.4em]">{result.name.official || 'Sovereign Identity'}</p>
+                            </div>
+                            <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                               <Button onClick={() => handleCopy(result.name.common, 'name')} variant="outline" className="h-8 px-4 rounded-lg bg-white/5 border-white/10 text-[8px] font-black uppercase tracking-widest transition-all">
+                                  {isCopied === 'name' ? <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
+                                  Copy Name
+                               </Button>
+                               <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">Code: {result.cca2 || '??'}</Badge>
+                            </div>
                          </div>
                       </div>
 
@@ -273,17 +308,21 @@ export default function CountryPage() {
                         </div>
                       )}
 
-                      {/* Data Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      {/* Clinical Data Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {[
                           { 
                             icon: MapPin, 
                             label: 'Capital Protocol', 
-                            val: Array.isArray(result.capital) ? result.capital.join(', ') : (result.capital || '—') 
+                            val: formatList(result.capital)
                           },
-                          { icon: Navigation, label: 'Region Identity', val: result.region || '—' },
+                          { icon: Navigation, label: 'Region & Subregion', val: `${result.region || '—'} / ${result.subregion || '—'}` },
                           { icon: Users, label: 'Population Density', val: result.population?.toLocaleString() || '—' },
+                          { icon: Maximize, label: 'Land Mass (sq km)', val: result.area?.toLocaleString() || '—' },
                           { icon: Coins, label: 'Fiscal Protocol', val: result.currencies ? Object.values(result.currencies).map((c: any) => `${c.name} (${c.symbol})`).join(', ') : '—' },
+                          { icon: Languages, label: 'Linguistic Stream', val: formatList(result.languages) },
+                          { icon: Phone, label: 'International IDD', val: getCallingCode(result.idd) },
+                          { icon: Clock, label: 'Temporal Matrix', val: formatList(result.timezones) },
                         ].map((item, i) => (
                           <div key={i} className="p-6 rounded-3xl bg-secondary/50 border border-border group hover:border-primary/20 transition-all flex items-center gap-6">
                             <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all shadow-inner shrink-0">
@@ -291,19 +330,39 @@ export default function CountryPage() {
                             </div>
                             <div className="min-w-0">
                                <p className="text-[8px] font-black uppercase text-foreground/30 tracking-widest mb-0.5">{item.label}</p>
-                               <p className="text-[13px] font-bold text-foreground truncate uppercase">{item.val}</p>
+                               <p className="text-[12px] font-bold text-foreground truncate uppercase">{item.val}</p>
                             </div>
                           </div>
                         ))}
                       </div>
 
+                      {/* Borders Matrix */}
+                      {result.borders && result.borders.length > 0 && (
+                        <div className="space-y-4 pt-6 border-t border-white/5">
+                           <div className="flex items-center gap-3">
+                              <ShieldCheck className="w-4 h-4 text-primary" />
+                              <Label className="text-[10px] font-black uppercase text-foreground/40 tracking-[0.2em]">Sovereign Borders</Label>
+                           </div>
+                           <div className="flex flex-wrap gap-2">
+                              {result.borders.map((b: string) => (
+                                <Badge key={b} variant="outline" className="h-8 px-4 rounded-xl bg-background/50 border-white/10 text-[10px] font-bold text-foreground/60 uppercase">
+                                   {b}
+                                </Badge>
+                              ))}
+                           </div>
+                        </div>
+                      )}
+
                       {/* Maps Protocol */}
                       {result.maps?.googleMaps && (
-                        <div className="pt-6 border-t border-white/5">
-                           <Button asChild className="h-16 w-full bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl">
+                        <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row gap-4">
+                           <Button asChild className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl">
                               <a href={result.maps.googleMaps} target="_blank" rel="noopener noreferrer">
                                  <Navigation className="w-5 h-5 mr-1" /> Launch Map Protocol
                               </a>
+                           </Button>
+                           <Button onClick={() => handleCopy(JSON.stringify(result, null, 2), 'report')} variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                              <FileText className="w-5 h-5" />
                            </Button>
                         </div>
                       )}
@@ -324,3 +383,4 @@ export default function CountryPage() {
     </div>
   );
 }
+
