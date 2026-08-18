@@ -170,7 +170,7 @@ export default function SpeedTestPage() {
     }
     
     const avgPing = Math.round(samples.reduce((a, b) => a + b) / samples.length);
-    const avgJitter = Math.round(jitterSamples.reduce((a, b) => a + b) / jitterSamples.length);
+    const avgJitter = Math.round(jitterSamples.length > 0 ? jitterSamples.reduce((a, b) => a + b) / jitterSamples.length : 0);
     return { ping: avgPing, jitter: avgJitter };
   };
 
@@ -429,7 +429,7 @@ export default function SpeedTestPage() {
 
                        {ispName && (
                          <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-white/5 border border-white/10 animate-in fade-in">
-                            <Signal className="w-3 h-3 text-primary animate-pulse" />
+                            <Signal className="w-3 3 text-primary animate-pulse" />
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">{ispName}</span>
                          </div>
                        )}
@@ -458,24 +458,25 @@ export default function SpeedTestPage() {
                  </div>
               </CardContent>
 
-              {/* Status Tracking Bar */}
-              <div className="p-8 border-t border-white/5 bg-secondary/30 flex items-center justify-around flex-wrap gap-y-6">
+              {/* Status Tracking Bar - REFINED COLOR MATRIX */}
+              <div className="p-8 border-t border-white/5 bg-secondary/30 flex items-center justify-around flex-wrap gap-6">
                  {[
-                   { id: 'ping', label: 'Ping', icon: Clock, val: pingMs ? `${pingMs}ms` : '--' },
-                   { id: 'jitter', label: 'Jitter', icon: Activity, val: jitterMs ? `${jitterMs}ms` : '--' },
-                   { id: 'download', label: 'Download', icon: ArrowDown, val: downloadMbps ? `${downloadMbps.toFixed(1)}` : '--' },
-                   { id: 'upload', label: 'Upload', icon: ArrowUp, val: uploadMbps ? `${uploadMbps.toFixed(1)}` : '--' },
+                   { id: 'ping', label: 'Ping', icon: Clock, val: pingMs ? `${pingMs}ms` : '--', color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+                   { id: 'jitter', label: 'Jitter', icon: Activity, val: jitterMs ? `${jitterMs}ms` : '--', color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+                   { id: 'download', label: 'Download', icon: ArrowDown, val: downloadMbps ? `${downloadMbps.toFixed(1)}` : '--', color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
+                   { id: 'upload', label: 'Upload', icon: ArrowUp, val: uploadMbps ? `${uploadMbps.toFixed(1)}` : '--', color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
                  ].map((s) => (
                    <div key={s.id} className={cn(
-                     "flex flex-col items-center gap-3 transition-all duration-700 min-w-[80px]",
-                     step === s.id ? "scale-110 opacity-100" : "opacity-30"
+                     "flex flex-col items-center gap-4 p-5 rounded-[2.5rem] transition-all duration-700 min-w-[100px] border",
+                     s.bg, s.border,
+                     (step === s.id || step === 'complete') ? "scale-105 opacity-100 shadow-xl" : "opacity-30 grayscale"
                    )}>
-                      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border transition-all", step === s.id ? "bg-primary/20 border-primary text-primary shadow-lg" : "bg-white/5 border-white/10 text-white/10")}>
-                         <s.icon className="w-5 h-5" />
+                      <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center border transition-all shadow-inner", s.color, s.bg, s.border)}>
+                         <s.icon className="w-7 h-7" />
                       </div>
-                      <div className="text-center space-y-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest block">{s.label}</span>
-                        <span className="text-sm font-headline font-black text-foreground leading-none">{s.val}</span>
+                      <div className="text-center space-y-1.5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40 block leading-none">{s.label}</span>
+                        <span className="text-2xl font-headline font-black text-foreground leading-none block">{s.val}</span>
                       </div>
                    </div>
                  ))}
@@ -487,7 +488,7 @@ export default function SpeedTestPage() {
               <Card className="glass-card border-border shadow-xl p-8">
                  <div className="flex items-center gap-3 mb-8">
                     <Video className="w-5 h-5 text-primary" />
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground">Video Capability Matrix</h3>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/60">Streaming Capacity Matrix</h3>
                  </div>
                  <div className="space-y-4">
                     {!videoCapability ? (
@@ -514,7 +515,7 @@ export default function SpeedTestPage() {
               <Card className="glass-card border-border shadow-xl p-8 flex flex-col justify-between">
                  <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                       <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground">Quality Analytics</h3>
+                       <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/60">Quality Analytics</h3>
                        <div className={cn("px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest", connectionQuality.color)}>
                           {connectionQuality.label}
                        </div>
@@ -552,7 +553,7 @@ export default function SpeedTestPage() {
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
                     <History className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Archive Matrix</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/60">Archive Matrix</CardTitle>
                  </div>
                  {history.length > 0 && (
                    <button onClick={() => { setHistory([]); localStorage.removeItem(HISTORY_KEY); }} className="text-[8px] font-black text-foreground/20 hover:text-red-500 uppercase transition-colors">Purge Log</button>
@@ -590,7 +591,7 @@ export default function SpeedTestPage() {
 
            <Card className="glass-card border-border shadow-xl">
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
+                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground/60">
                     <Fingerprint className="w-5 h-5 text-primary" /> Session Metadata
                  </CardTitle>
               </CardHeader>
