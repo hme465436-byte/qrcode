@@ -39,7 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { signInAnonymously } from 'firebase/auth';
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { useFirestore, useAuth, useUser } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
@@ -78,19 +78,36 @@ export default function HtmlToUrlPage() {
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   // Preview State
   const [previewSrcDoc, setPreviewSrcDoc] = useState('');
 
-  // 1. Session Initialization (Anonymous Guest)
+  // 1. Session Initialization (Resilient Handshake)
   useEffect(() => {
-    if (!authLoading && !user && auth) {
-      signInAnonymously(auth).catch((err) => {
-        console.error("Auth Error", err);
-        setErrorMessage("Enable Anonymous login in Firebase Console to use this tool.");
-      });
-    }
-  }, [auth, user, authLoading]);
+    if (!auth) return;
+
+    // Safety Timeout: Unlock UI after 4 seconds regardless of network
+    const timeout = setTimeout(() => setIsReady(true), 4000);
+
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (u) {
+        setIsReady(true);
+        clearTimeout(timeout);
+      } else {
+        signInAnonymously(auth).catch((err) => {
+          setErrorMessage(err.code);
+          setIsReady(true); // Still unlock for local-only use
+          clearTimeout(timeout);
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timeout);
+    };
+  }, [auth]);
 
   // 2. Load History
   useEffect(() => {
@@ -125,7 +142,7 @@ export default function HtmlToUrlPage() {
       return next;
     });
     localStorage.removeItem(`kit_page_${id}`);
-    toast({ title: "Purged", description: "Identity removed from local registry." });
+    toast({ title: "Purged", description: "Document removed from local registry." });
   };
 
   const effectiveLanguage = useMemo(() => {
@@ -169,11 +186,6 @@ export default function HtmlToUrlPage() {
       return;
     }
 
-    if (!user) {
-      toast({ variant: "destructive", title: "Identity Required", description: "Waiting for guest session to initialize." });
-      return;
-    }
-
     const size = new TextEncoder().encode(html).length;
     if (size > 150 * 1024) {
       toast({ variant: "destructive", title: "Payload Overload", description: "Document exceeds 150KB limit." });
@@ -192,11 +204,11 @@ export default function HtmlToUrlPage() {
       html: html.trim(), 
       title: title.trim() || 'Untitled Page', 
       language: effectiveLanguage,
-      uid: user.uid,
+      uid: user?.uid || 'guest',
       createdAt 
     };
     
-    // Phase 2: Local Hardware Memory (Immediate Fallback)
+    // Phase 2: Local Hardware Memory (Immediate Access)
     localStorage.setItem(`kit_page_${id}`, JSON.stringify(payload));
     
     const historyItem: HistoryItem = {
@@ -209,20 +221,20 @@ export default function HtmlToUrlPage() {
     updateLocalHistory(historyItem);
     setGeneratedId(id);
 
-    // Phase 3: Global Cloud Registry
-    if (firestore) {
+    // Phase 3: Global Cloud Sync
+    if (firestore && user) {
       try {
         await setDoc(doc(firestore, "pages", id), payload);
-        toast({ title: "Public Link Created", description: "Successfully hosted in the cloud." });
-        window.open(newUrl, '_blank');
+        toast({ title: "Public Link Created" });
       } catch (err: any) {
-        setErrorMessage(err.code || "Cloud saving failed. Page exists in this browser only.");
-        toast({ title: "Local Save Only", description: "Document saved to your browser memory." });
+        console.warn("Cloud save failed", err);
+        setErrorMessage(err.code || "Cloud sync restricted. Page exists in this browser only.");
       }
     } else {
-      setErrorMessage("database-unavailable");
+      setErrorMessage("No active account session. Link saved locally.");
     }
 
+    window.open(newUrl, '_blank');
     setIsProcessing(false);
   };
 
@@ -245,16 +257,16 @@ export default function HtmlToUrlPage() {
               Code & <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Synthesize code or text into a permanent hosted link. Fast, anonymous production with hardware-native local fallback.
+              Synthesize code or text into a shareable web link. Fast, anonymous production with hardware-native local fallback.
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
              <div className="flex items-center gap-4">
                 <GetHelp toolId="html-to-url" />
                 <div className="px-4 py-2 rounded-xl bg-secondary border border-border flex items-center gap-3">
-                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                   <div className={cn("w-2 h-2 rounded-full", user ? "bg-green-500 animate-pulse" : "bg-white/10")} />
                    <span className="text-[10px] font-black uppercase text-foreground/40 tracking-widest">
-                      {authLoading ? 'Syncing...' : `Guest-${user?.uid.substring(user.uid.length - 6).toUpperCase() || 'Standby'}`}
+                      {user ? `Guest-${user.uid.substring(user.uid.length - 6).toUpperCase()}` : 'Initializing...'}
                    </span>
                 </div>
              </div>
@@ -277,7 +289,7 @@ export default function HtmlToUrlPage() {
               <CardHeader className="pb-6 border-b border-border bg-secondary/30">
                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                       <Code2 className="w-5 h-5 text-primary" /> Input
+                       <Code2 className="w-5 h-5 text-primary" /> Workspace
                     </CardTitle>
                     <div className="flex items-center gap-3">
                        <Select value={language} onValueChange={setLanguage}>
@@ -295,7 +307,7 @@ export default function HtmlToUrlPage() {
               </CardHeader>
               <CardContent className="pt-10 space-y-8">
                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Page Title</Label>
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Document Title</Label>
                     <Input 
                       value={title}
                       onChange={e => setTitle(e.target.value)}
@@ -306,7 +318,7 @@ export default function HtmlToUrlPage() {
 
                  <div className="space-y-4">
                     <div className="flex justify-between items-center px-1">
-                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Code Content</Label>
+                      <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Source Code</Label>
                       <span className={cn("text-[9px] font-mono", html.length > 150000 ? "text-red-500" : "text-primary/60")}>
                         {Math.round(html.length / 1024)} KB / 150 KB
                       </span>
@@ -334,7 +346,10 @@ export default function HtmlToUrlPage() {
                  {errorMessage && (
                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3">
                       <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-                      <p className="text-[10px] font-bold uppercase tracking-widest">{errorMessage}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                        Cloud Error: {errorMessage} <br />
+                        <span className="text-[8px] opacity-60">Identity is preserved in your browser only.</span>
+                      </p>
                    </div>
                  )}
               </CardContent>
@@ -344,7 +359,7 @@ export default function HtmlToUrlPage() {
             <Card className="glass-card border-border shadow-xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                   <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                    <History className="w-4 h-4 text-primary" /> Your Local Links
+                    <History className="w-4 h-4 text-primary" /> Local Registry
                   </CardTitle>
                   <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded leading-none">{localHistory.length} Total</span>
               </CardHeader>
@@ -352,7 +367,7 @@ export default function HtmlToUrlPage() {
                   {!localHistory.length ? (
                     <div className="py-20 text-center space-y-4 opacity-20">
                       <Globe className="w-12 h-12 mx-auto" />
-                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No links in this browser.</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest px-12">No links found on this device.</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
@@ -400,7 +415,7 @@ export default function HtmlToUrlPage() {
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
                     {['html', 'css', 'javascript'].includes(effectiveLanguage) ? <Eye className="w-3.5 h-3.5" /> : <Terminal className="w-3.5 h-3.5" />}
-                    Preview Matrix
+                    Live Monitor
                  </CardTitle>
               </CardHeader>
               
@@ -419,7 +434,7 @@ export default function HtmlToUrlPage() {
               <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden relative animate-in zoom-in duration-500">
                  <CardHeader className="py-8 border-b border-primary/10">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.5em] flex items-center gap-3 text-primary">
-                      <CheckCircle2 className="w-4 h-4" /> Identity Signal Locked
+                      <CheckCircle2 className="w-4 h-4" /> Destination Signal Ready
                     </CardTitle>
                  </CardHeader>
                  <CardContent className="pt-10 space-y-8 text-center">
@@ -431,7 +446,7 @@ export default function HtmlToUrlPage() {
                           {isCopied === 'link' ? 'Copied' : 'Copy Link'}
                        </Button>
                        <Button asChild variant="outline" className="h-14 px-8 rounded-2xl border-white/10 bg-white/5 text-white">
-                          <a href={`/p/${generatedId}`} target="_blank"><ExternalLink className="w-4 h-4 mr-2" /> View Live</a>
+                          <a href={`/p/${generatedId}`} target="_blank"><ExternalLink className="w-4 h-4 mr-2" /> Open Live</a>
                        </Button>
                     </div>
                  </CardContent>
@@ -443,9 +458,9 @@ export default function HtmlToUrlPage() {
                   <ShieldCheck className="w-7 h-7" />
                </div>
                <div className="space-y-2">
-                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hardware-Native Sync</h4>
+                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local-First Recovery</h4>
                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                   Your pages are cached locally before cloud synchronization. This ensures instant access regardless of global network latency.
+                   Documents are cached to hardware memory immediately. This ensures your links work on your device even if cloud synchronization experiences latency.
                  </p>
                </div>
             </div>
