@@ -132,6 +132,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/country-info', 
+    icon: Globe, 
+    title: 'Country Info', 
+    desc: 'Isolate clinical profiles, flags, and geographic matrices of global nations.', 
+    label: 'INTEL', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['country', 'info', 'flag', 'population', 'capital', 'maps', 'geography', 'world'],
+    category: 'utilities'
+  },
+  { 
     href: '/crypto-prices', 
     icon: Coins, 
     title: 'Crypto Prices', 
@@ -1180,7 +1191,7 @@ export default function Home() {
       'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP', 'Currency Converter',
       'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection',
       'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
-      'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL'
+      'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

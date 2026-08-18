@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -12,6 +13,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'country-info': {
+    title: 'Country Info Studio',
+    description: 'Professional geographic discovery engine. Isolate flags, demographics, and fiscal protocols of global nations.',
+    steps: [
+      'Enter a country name in the search matrix to initialize discovery.',
+      'Select a specific nation from the 5-row live suggestion dropdown.',
+      'The engine will synchronize with the REST Countries registry to retrieve current data.',
+      'Review the demographic, political, and fiscal modules in the result matrix.',
+      'Click "Launch Map Protocol" to see the coordinates on Google Maps.'
+    ],
+    tips: [
+      'Enter partial names (e.g. "Pak") to see rapid identity matches.',
+      'Population and Area values are synchronized with standard geographic databases.'
+    ],
+    privacy: 'All geographic queries are volatile and processed locally. No data intent is logged.'
+  },
   'quran-ayah': {
     title: 'Quran Ayah Studio',
     description: 'Professional linguistic discovery engine for Quranic verses with original script and English translations.',
