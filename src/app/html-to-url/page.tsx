@@ -21,7 +21,10 @@ import {
   Save,
   User,
   ShieldAlert,
-  LogIn
+  LogIn,
+  AlertCircle,
+  Shield,
+  KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,7 +40,7 @@ import { signInAnonymously } from 'firebase/auth';
 import { useFirestore, useAuth, useUser } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v4';
+const HISTORY_KEY = 'htmlToUrlHistory_v5';
 
 interface HistoryItem {
   id: string;
@@ -67,33 +70,28 @@ export default function HtmlToUrlPage() {
   const [title, setTitle] = useState('');
   const [language, setLanguage] = useState('auto');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [generatedId, setGeneratedId] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'edit' | 'preview'>('edit');
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
-  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [guestError, setGuestError] = useState<string | null>(null);
 
   // Preview State
   const [previewSrcDoc, setPreviewSrcDoc] = useState('');
 
-  // 1. Guest Authentication Protocol with Clinical Debug Alerts
+  // 1. Guest Authentication Protocol (Requested Exact Flow)
   const handleGuestLogin = async () => {
     if (!auth) {
-      alert("Hardware Error: Firebase Auth instance not initialized.");
+      setGuestError("Hardware Error: Firebase Auth instance not initialized.");
       return;
     }
-    setIsLoggingIn(true);
-    setErrorCode(null);
+    setGuestError("Signing in...");
     try {
-      const cred = await signInAnonymously(auth);
-      alert("Guest OK: " + cred.user.uid);
+      const r = await signInAnonymously(auth);
+      setGuestError("OK " + r.user.uid);
       toast({ title: "Guest identity active" });
-    } catch (err: any) {
-      alert(err.code + " " + err.message);
-      setErrorCode(err.code);
-    } finally {
-      setIsLoggingIn(false);
+    } catch (e: any) {
+      setGuestError(String(e.code) + " — " + String(e.message));
     }
   };
 
@@ -177,7 +175,6 @@ export default function HtmlToUrlPage() {
     if (!html.trim()) return;
 
     setIsProcessing(true);
-    setErrorCode(null);
     
     try {
       const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
@@ -192,10 +189,10 @@ export default function HtmlToUrlPage() {
         createdAt 
       };
 
-      // 1. Hardware Memory Cache (Immediate retrieval)
+      // 1. Hardware Memory Cache
       localStorage.setItem(`kit_page_${id}`, JSON.stringify(payload));
 
-      // 2. Global Cloud Sync (Firestore)
+      // 2. Global Cloud Sync
       if (!firestore) throw new Error("Database reference missing");
       await setDoc(doc(firestore, "pages", id), payload);
       
@@ -212,8 +209,8 @@ export default function HtmlToUrlPage() {
       toast({ title: "Master Published", description: "Page is now live in the global registry." });
       window.open(newUrl, '_blank');
     } catch (err: any) {
-      alert(err.code + " " + err.message);
-      setErrorCode(err.code || "unknown_error");
+      setGuestError(String(err.code) + " — " + String(err.message));
+      toast({ variant: "destructive", title: "Publishing Failed", description: err.message });
     } finally {
       setIsProcessing(false);
     }
@@ -242,28 +239,7 @@ export default function HtmlToUrlPage() {
             </p>
           </div>
           <div className="flex flex-col items-end gap-3">
-             <div className="flex items-center gap-4">
-                <GetHelp toolId="html-to-url" />
-                {!user ? (
-                  <Button 
-                    type="button"
-                    onClick={handleGuestLogin} 
-                    disabled={isLoggingIn}
-                    className="h-11 px-6 bg-primary text-white font-black uppercase text-[10px] rounded-xl shadow-xl shadow-primary/20"
-                  >
-                    {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4 mr-2" />}
-                    Login as Guest
-                  </Button>
-                ) : (
-                  <div className="px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-3">
-                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                     <span className="text-[10px] font-black uppercase text-green-600 tracking-widest">
-                        Guest-{user.uid.substring(0, 6)} Ready
-                     </span>
-                  </div>
-                )}
-             </div>
-             {errorCode && <p className="text-[10px] font-bold text-red-500 uppercase">{errorCode}</p>}
+             <GetHelp toolId="html-to-url" />
           </div>
         </div>
       </div>
@@ -271,6 +247,37 @@ export default function HtmlToUrlPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
         {/* Editor Column */}
         <div className="lg:col-span-6 xl:col-span-6 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+          
+          {/* Exact Guest Auth Implementation */}
+          <Card className="glass-card border-border shadow-xl overflow-hidden">
+             <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+                <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground">
+                  <ShieldCheck className="w-4 h-4 text-primary" /> Identity Hub
+                </CardTitle>
+                <div id="guestStatus" className="text-[9px] font-black uppercase text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                  {user ? `Guest: ${user.uid}` : "Not logged in"}
+                </div>
+             </CardHeader>
+             <CardContent className="pt-8 space-y-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button 
+                    id="guestBtn"
+                    type="button" 
+                    onClick={handleGuestLogin}
+                    className="h-14 flex-1 bg-primary text-white font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-xl shadow-primary/20"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" /> Login as Guest
+                  </Button>
+                  <div id="guestErr" className="flex-1 h-14 bg-secondary/50 border border-border rounded-2xl flex items-center px-4 font-mono text-[9px] text-red-500 font-bold overflow-auto custom-scrollbar">
+                    {guestError || "Protocol Status: Standby"}
+                  </div>
+                </div>
+                <p className="text-[9px] text-foreground/30 font-bold uppercase tracking-widest leading-relaxed">
+                  Required to establish document ownership in the global registry.
+                </p>
+             </CardContent>
+          </Card>
+
           <Tabs value={activeView} onValueChange={(v: any) => setActiveView(v)} className="w-full lg:hidden">
              <TabsList className="grid grid-cols-2 bg-secondary p-1.5 rounded-2xl h-14 mb-8">
                 <TabsTrigger value="edit" className="rounded-xl text-[9px] font-black uppercase">Editor</TabsTrigger>
@@ -407,7 +414,7 @@ export default function HtmlToUrlPage() {
                     srcDoc={previewSrcDoc}
                     title="Preview"
                     sandbox="allow-scripts allow-forms"
-                    className="w-full h-full min-h-[320px] border-none bg-transparent block"
+                    className="flex-1 w-full h-full min-h-[320px] border-none bg-transparent block"
                   />
               </CardContent>
             </Card>
