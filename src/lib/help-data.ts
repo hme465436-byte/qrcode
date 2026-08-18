@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'quran-ayah': {
+    title: 'Quran Ayah Studio',
+    description: 'Professional linguistic discovery engine for Quranic verses with original script and English translations.',
+    steps: [
+      'Click "New Ayah" to shuffle the randomization matrix and discover a new verse.',
+      'To find a specific verse, enter the "Surah:Ayah" reference in the search box (e.g., 2:255).',
+      'The engine will synchronize with the global registry to retrieve both Uthmani script and Asad translation.',
+      'Analyze the Surah identity and Ayah index metadata displayed in the result cards.',
+      'Use the copy protocol to save the textual matrix to your clipboard.'
+    ],
+    tips: [
+      'Enter 2:255 for Ayat-ul-Kursi or 1:1 for the opening verse.',
+      'The Arabic script uses the professional Uthmani font for peak readability.'
+    ],
+    privacy: 'All textual queries are processed strictly in local memory. No reading history is logged or transmitted.'
+  },
   'single': {
     title: 'Single Studio QR',
     description: 'Design a professional, branded QR code with integrated logos and AI-generated backgrounds.',
