@@ -86,7 +86,8 @@ import {
   Trophy,
   Dices,
   Scale,
-  UserCircle
+  UserCircle,
+  Maximize2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -120,6 +121,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/image-size-increaser', 
+    icon: Maximize2, 
+    title: 'Size Increaser', 
+    desc: 'Enlarge images and inflate file size for specific requirements.', 
+    label: 'SCALE', 
+    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
+    glowClass: 'bg-indigo-500/10',
+    keywords: ['enlarge', 'upscale', 'kb increaser', 'increase size', 'high quality scale', 'px'],
+    category: 'image'
   },
   { 
     href: '/watermark-cleaner', 
@@ -897,7 +909,7 @@ const TOOLS: Tool[] = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
@@ -919,7 +931,7 @@ const TOOLS: Tool[] = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
     category: 'utilities'
@@ -974,7 +986,7 @@ const TOOLS: Tool[] = [
     title: 'English Dictionary', 
     desc: 'Professional linguistic analysis and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
@@ -1075,10 +1087,10 @@ export default function Home() {
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
-      'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 
+      'Hide text in image', 'Secret photo', 'Stenography', 'Temp Room', 'Clipboard share', 
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
       'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
-      'Watermark Cleaner', 'Remove text from photo'
+      'Watermark Cleaner', 'Remove text from photo', 'Enlarge image', 'KB size increaser'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1308,7 +1320,7 @@ export default function Home() {
                   { title: 'Zero Data Leakage', desc: 'No logs, no cookies, no third-party tracking.', icon: ShieldCheck },
                   { title: 'Fidelity Control', desc: '1:1 pixel mapping for precision production.', icon: Maximize }
                 ].map((f, i) => (
-                  <div key={i} className="flex gap-4 items-start group/feat">
+                  <div className={cn("flex gap-4 items-start group/feat", i === 0 && "cursor-default")} key={i}>
                     <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center text-primary shrink-0 mt-1 icon-container-3d group-hover/feat:scale-110 transition-transform">
                       <f.icon className="w-4 h-4 icon-3d" />
                     </div>
