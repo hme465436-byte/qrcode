@@ -18,7 +18,9 @@ import {
   ShieldAlert,
   Loader2,
   MousePointer2,
-  Fingerprint
+  Fingerprint,
+  Maximize2,
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -305,7 +307,7 @@ export default function IpFinderPage() {
            </Card>
 
            <Card className="glass-card border-border shadow-xl">
-              <CardHeader className="py-6 border-b border-white/5 bg-white/2">
+              <CardHeader className="py-6 border-b border-border bg-white/2">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground/40">
                     <Activity className="w-4 h-4 text-primary" /> Session Intel
                  </CardTitle>
