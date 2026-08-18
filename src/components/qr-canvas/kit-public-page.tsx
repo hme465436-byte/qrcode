@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -19,17 +20,7 @@ export function KitPublicPage({ id }: KitPublicPageProps) {
 
   useEffect(() => {
     const fetchPage = async () => {
-      // 1. Check Local Hardware Memory
-      try {
-        const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
-        if (pagesMap[id]) {
-          setHtml(pagesMap[id]);
-          setLoading(false);
-          return;
-        }
-      } catch (e) {}
-
-      // 2. Fetch from Cloud Registry
+      // 1. Check Cloud Registry (Primary)
       if (db) {
         try {
           const docRef = doc(db, "pages", id);
@@ -40,9 +31,19 @@ export function KitPublicPage({ id }: KitPublicPageProps) {
             return;
           }
         } catch (err) {
-          console.warn("Network latency:", err);
+          console.warn("Network latency, checking local memory:", err);
         }
       }
+
+      // 2. Check Local Hardware Memory (Fallback)
+      try {
+        const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
+        if (pagesMap[id]) {
+          setHtml(pagesMap[id]);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {}
 
       setLoading(false);
     };
@@ -59,13 +60,15 @@ export function KitPublicPage({ id }: KitPublicPageProps) {
     }
   };
 
-  const isHtmlTag = html?.toLowerCase().includes('<html') || html?.toLowerCase().includes('<!doctype') || html?.toLowerCase().includes('<body');
+  const isHtmlTag = html?.toLowerCase().includes('<html') || 
+                    html?.toLowerCase().includes('<!doctype') || 
+                    html?.toLowerCase().includes('<body');
 
   if (loading) {
     return (
       <div className="fixed inset-0 bg-[#0a0a0c] z-[9999] flex flex-col items-center justify-center gap-8">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Loading Content...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Validating Cloud Signal...</p>
       </div>
     );
   }
@@ -76,9 +79,9 @@ export function KitPublicPage({ id }: KitPublicPageProps) {
         <AlertCircle className="w-12 h-12 text-destructive animate-bounce" />
         <div className="space-y-3">
           <h2 className="text-xl font-headline font-black text-white uppercase tracking-tight">This link does not exist</h2>
-          <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Verify the URL and try again</p>
+          <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Verify the ID and try again</p>
         </div>
-        <Button variant="outline" onClick={() => window.location.href = '/'} className="h-14 px-10 rounded-2xl border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest shadow-2xl">
+        <Button variant="outline" onClick={() => window.location.href = '/html-to-url'} className="h-14 px-10 rounded-2xl border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest shadow-2xl">
            Back to Studio
         </Button>
       </div>
@@ -125,7 +128,7 @@ export function KitPublicPage({ id }: KitPublicPageProps) {
             <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">Studio ID: {id}</span>
           </div>
           <button 
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.location.href = '/html-to-url'}
             className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] hover:text-white transition-all group"
           >
              EXIT VIEW <ArrowLeft className="w-3.5 h-3.5 rotate-180 transition-transform group-hover:translate-x-1" />

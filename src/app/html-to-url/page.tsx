@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -17,7 +18,8 @@ import {
   Plus,
   FileText,
   ShieldCheck,
-  Layout
+  Layout,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +32,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v2';
+const HISTORY_KEY = 'htmlToUrlHistory_v3';
 
 interface HistoryItem {
   id: string;
@@ -47,7 +49,10 @@ export default function HtmlToUrlPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [publishedLink, setPublishedLink] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem(HISTORY_KEY);
@@ -67,36 +72,39 @@ export default function HtmlToUrlPage() {
     if (!html.trim()) return;
 
     setIsProcessing(true);
+    setPublishedLink(null);
+    setError(null);
     
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const link = window.location.origin + window.location.pathname + "?kit=" + id;
     const finalTitle = title.trim() || 'Untitled Page';
 
     try {
-      // 1. Hardware Memory Save
+      if (!db) throw new Error("Database connection unavailable.");
+
+      // 1. Cloud Save - Must succeed before showing link
+      await setDoc(doc(db, "pages", id), { 
+        html: html.trim(), 
+        title: finalTitle, 
+        createdAt: Date.now() 
+      });
+
+      // 2. Local Hardware Fallback
       const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
       pagesMap[id] = html;
       localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
 
-      // 2. Cloud Sync (Background)
-      if (db) {
-        setDoc(doc(db, "pages", id), { 
-          html: html.trim(), 
-          title: finalTitle, 
-          createdAt: Date.now() 
-        });
-      }
-
       // 3. Update History
+      const link = window.location.origin + window.location.pathname + "?kit=" + id;
       const historyItem = { id, title: finalTitle, url: link, date: Date.now() };
       const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 20);
       setLocalHistory(nextHistory);
       localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
 
       setPublishedLink(link);
-      toast({ title: "Link Generated", description: "Document saved locally and syncing to cloud." });
-    } catch (err) {
-      console.warn("Sync deferred", err);
+      toast({ title: "Page Published", description: "Link generated and verified on cloud." });
+    } catch (err: any) {
+      setError(`${err.code || 'Error'}: ${err.message}`);
+      toast({ variant: "destructive", title: "Publish Failed", description: "Check Firestore rules or connection." });
     } finally {
       setIsProcessing(false);
     }
@@ -135,7 +143,7 @@ export default function HtmlToUrlPage() {
               HTML to <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Convert raw code into a shareable link instantly. No login required. Pages are saved locally and synced to our global registry for 100% availability.
+              Convert raw code into a shareable link instantly. Pages are synced to our global registry for 100% availability.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -145,7 +153,6 @@ export default function HtmlToUrlPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-        {/* Editor Column */}
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[500px]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
@@ -178,32 +185,44 @@ export default function HtmlToUrlPage() {
                   />
                </div>
 
-               <Button 
-                  onClick={handlePublish}
-                  disabled={!html.trim() || isProcessing}
-                  className="h-16 w-full bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
-                >
-                  {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                  Make Link
-                </Button>
+               <div className="space-y-4">
+                  <Button 
+                    onClick={handlePublish}
+                    disabled={!html.trim() || isProcessing}
+                    className="h-16 w-full bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
+                  >
+                    {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
+                    {isProcessing ? 'Verifying Cloud Sync...' : 'Publish & Make Link'}
+                  </Button>
+
+                  {error && (
+                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
+                       <AlertCircle className="w-4 h-4 text-destructive" />
+                       <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">{error}</p>
+                    </div>
+                  )}
+               </div>
 
                 {publishedLink && (
-                  <div className="p-8 rounded-[2.5rem] bg-primary/10 border border-primary/20 space-y-6 animate-in zoom-in duration-500">
+                  <div className="p-8 rounded-[2.5rem] bg-emerald-500/10 border border-emerald-500/20 space-y-6 animate-in zoom-in duration-500">
                     <div className="flex items-center justify-between">
-                       <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Hosted URL Generated</p>
-                       <Button variant="ghost" size="icon" onClick={() => setPublishedLink(null)} className="h-6 w-6 rounded-full text-primary/40 hover:text-primary">
+                       <div className="flex items-center gap-2">
+                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                         <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em]">Verified Live Link</p>
+                       </div>
+                       <Button variant="ghost" size="icon" onClick={() => setPublishedLink(null)} className="h-6 w-6 rounded-full text-emerald-500/40 hover:text-emerald-500">
                          <X className="w-4 h-4" />
                        </Button>
                     </div>
-                    <div className="p-4 bg-background rounded-2xl border border-primary/20 text-sm font-bold text-foreground break-all shadow-inner">
+                    <div className="p-4 bg-background rounded-2xl border border-emerald-500/20 text-sm font-bold text-foreground break-all shadow-inner">
                       {publishedLink}
                     </div>
                     <div className="flex gap-3">
-                       <Button onClick={() => handleCopy(publishedLink, 'pub')} className="flex-1 h-12 bg-primary text-white font-black uppercase tracking-widest text-[9px]">
+                       <Button onClick={() => handleCopy(publishedLink, 'pub')} className="flex-1 h-12 bg-emerald-500 text-white font-black uppercase tracking-widest text-[9px]">
                           {isCopied === 'pub' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                           Copy Link
                        </Button>
-                       <Button onClick={() => window.open(publishedLink, '_blank')} variant="outline" className="flex-1 h-12 border-primary/20 text-primary font-black uppercase text-[9px] bg-white/5">
+                       <Button onClick={() => window.open(publishedLink, '_blank')} variant="outline" className="flex-1 h-12 border-emerald-500/20 text-emerald-600 font-black uppercase text-[9px] bg-white/5">
                           Open Page <ExternalLink className="w-4 h-4 ml-2" />
                        </Button>
                     </div>
@@ -251,7 +270,6 @@ export default function HtmlToUrlPage() {
           </Card>
         </div>
 
-        {/* Preview Column */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[400px] bg-white">
             <CardHeader className="py-3 border-b border-border bg-secondary/30 shrink-0">
@@ -275,9 +293,9 @@ export default function HtmlToUrlPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Instant Provision</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Verified Publishing</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Links are generated locally and synced to our registry in the background. Your content is accessible instantly from any hardware.
+                    The studio waits for a successful cloud handshake before providing your link, ensuring your content is live for recipients immediately.
                   </p>
                 </div>
              </div>
@@ -286,15 +304,22 @@ export default function HtmlToUrlPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Local-First Sandbox</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All drafting occurs strictly in your browser session. The query-parameter protocol ensures peak performance without route latency.
+                    Un-published drafting occurs strictly in your browser session. Cloud storage is only initialized upon explicit "Publish" command.
                   </p>
                 </div>
              </div>
           </div>
         </div>
       </div>
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+      `}</style>
     </div>
   );
 }

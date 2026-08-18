@@ -6,12 +6,8 @@ service cloud.firestore {
       allow read, write: if true;
     }
     match /pages/{id} {
-      // Pages are publicly readable by anyone with the link
-      allow read: if true;
-      // Allow any authenticated user (including anonymous guests) to create pages
-      allow create: if request.auth != null;
-      // Only allow the original creator to delete or update
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
+      // Pages are publicly readable and writable by anyone for instant hosting
+      allow read, write: if true;
     }
     match /{document=**} {
       allow read, write: if false;
