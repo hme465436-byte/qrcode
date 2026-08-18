@@ -80,7 +80,9 @@ import {
   MoveHorizontal,
   Eye,
   ClipboardType,
-  Globe
+  Globe,
+  Coins,
+  Receipt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -114,6 +116,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/tax-calculator', 
+    icon: Coins, 
+    title: 'Tax Calculator', 
+    desc: 'Calculate GST, VAT, and sales taxes with reverse logic.', 
+    label: 'FISCAL', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['tax calculator', 'gst calculator', 'vat', 'sales tax', 'reverse tax', 'pkr tax', 'finance'],
+    category: 'utilities'
   },
   { 
     href: '/html-to-url', 
@@ -891,7 +904,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -1003,7 +1016,8 @@ export default function Home() {
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
-      'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link'
+      'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 
+      'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

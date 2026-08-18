@@ -29,6 +29,22 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     ],
     privacy: 'All rendering occurs on your device. Your URLs and brand logos never leave your browser.'
   },
+  'tax-calculator': {
+    title: 'Tax Calculator Studio',
+    description: 'Professional fiscal utility for calculating GST, VAT, and sales taxes with dual-mode reverse logic.',
+    steps: [
+      'Choose your protocol: "Add Tax" for standard calculations or "Tax Included" for reverse-lookup.',
+      'Enter the base or gross amount in the numeric input.',
+      'Select a common tax rate from the quick-chips or enter a custom percentage.',
+      'Review the real-time breakdown of Tax, Net, and Gross values.',
+      'Copy specific values or log the calculation to your local history.'
+    ],
+    tips: [
+      'Use "Tax Included" mode to find the actual value of an item after 15% GST is already applied.',
+      'History is limited to 10 entries and is cleared if you reset your browser cache.'
+    ],
+    privacy: 'All calculations are performed locally via client-side JavaScript. No financial data is logged or transmitted.'
+  },
   'temp-room': {
     title: 'Temp Room Studio',
     description: 'Establish an ephemeral P2P text synchronization tunnel between two hardware devices.',
