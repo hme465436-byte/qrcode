@@ -125,6 +125,25 @@ export default function SpeedTestPage() {
     if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
   };
 
+  const handleCopy = () => {
+    const text = [
+      `[MY KIT TOOL - SPEED TEST]`,
+      `Download: ${downloadMbps?.toFixed(1) || '--'} Mbps`,
+      `Upload: ${uploadMbps?.toFixed(1) || '--'} Mbps`,
+      `Ping: ${pingMs || '--'} ms`,
+      `ISP: ${ispName || 'Unknown'}`,
+      `IP: ${publicIp || 'Hidden'}`,
+      `Node: ${location || 'Global'}`,
+      `Timestamp: ${new Date().toLocaleString()}`,
+      `Link: ${window.location.href}`
+    ].join('\n');
+
+    navigator.clipboard.writeText(text);
+    setIsCopied(true);
+    toast({ title: "Matrix Copied", description: "Telemetry saved to clipboard." });
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
   const runPing = async (): Promise<number> => {
     setStep('ping');
     const start = performance.now();
@@ -418,7 +437,7 @@ export default function SpeedTestPage() {
                      "flex flex-col items-center gap-3 transition-all duration-700",
                      step === s.id ? "scale-110 opacity-100" : "opacity-30"
                    )}>
-                      <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center border transition-all", step === s.id ? "bg-primary/20 border-primary text-primary shadow-lg" : "bg-white/5 border-white/5")}>
+                      <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center border transition-all", step === s.id ? "bg-primary/20 border-primary text-primary shadow-lg" : "bg-white/5 border-white/10 text-white/10")}>
                          <s.icon className="w-5 h-5" />
                       </div>
                       <div className="text-center space-y-0.5">
