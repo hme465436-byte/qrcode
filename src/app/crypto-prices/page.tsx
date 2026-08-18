@@ -67,7 +67,25 @@ const DEFAULT_COINS = [
   { id: 'cardano', symbol: 'ADA', name: 'Cardano' },
 ];
 
-const SEARCH_API = 'https://api.coingecko.com/api/v3/search?query=';
+const LOCAL_TOP_COINS = [
+  { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' },
+  { id: 'ethereum', symbol: 'ETH', name: 'Ethereum' },
+  { id: 'tether', symbol: 'USDT', name: 'Tether' },
+  { id: 'binancecoin', symbol: 'BNB', name: 'BNB' },
+  { id: 'solana', symbol: 'SOL', name: 'Solana' },
+  { id: 'ripple', symbol: 'XRP', name: 'XRP' },
+  { id: 'dogecoin', symbol: 'DOGE', name: 'Dogecoin' },
+  { id: 'cardano', symbol: 'ADA', name: 'Cardano' },
+  { id: 'tron', symbol: 'TRX', name: 'TRON' },
+  { id: 'litecoin', symbol: 'LTC', name: 'Litecoin' },
+  { id: 'polkadot', symbol: 'DOT', name: 'Polkadot' },
+  { id: 'avalanche-2', symbol: 'AVAX', name: 'Avalanche' },
+  { id: 'chainlink', symbol: 'LINK', name: 'Chainlink' },
+  { id: 'polygon', symbol: 'MATIC', name: 'Polygon' },
+  { id: 'uniswap', symbol: 'UNI', name: 'Uniswap' },
+];
+
+const SEARCH_API = 'https://api.coingecko.com/id/v3/search?query=';
 const PRICE_API_BASE = 'https://api.coingecko.com/api/v3/simple/price';
 const MARKETS_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h';
 const PERSIST_KEY = 'mykit_crypto_watchlist_v3';
@@ -114,6 +132,7 @@ export default function CryptoPricesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<CoinIdentity[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   
   // Chart State
   const [activeChartId, setActiveChartId] = useState<string>('bitcoin');
@@ -169,7 +188,7 @@ export default function CryptoPricesPage() {
 
   // --- Debounced Suggestion Protocol ---
   useEffect(() => {
-    if (searchQuery.trim().length < 2) {
+    if (searchQuery.trim().length === 0) {
       setSuggestions([]);
       setShowDropdown(false);
       return;
@@ -177,26 +196,47 @@ export default function CryptoPricesPage() {
 
     const timer = setTimeout(async () => {
       setIsSuggesting(true);
+      setSelectedIndex(-1);
+      
+      const q = searchQuery.trim().toLowerCase();
+      
+      // 1. Local Instant Matches
+      const localMatches = LOCAL_TOP_COINS.filter(c => 
+        c.name.toLowerCase().includes(q) || 
+        c.symbol.toLowerCase().includes(q)
+      );
+
+      setSuggestions(localMatches);
+      setShowDropdown(localMatches.length > 0);
+
+      // 2. Global API Enhancement
       try {
-        const res = await fetch(`${SEARCH_API}${encodeURIComponent(searchQuery.trim())}`);
+        const res = await fetch(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(q)}`);
         if (res.ok) {
           const data = await res.json();
-          const items = (data.coins || []).slice(0, 8).map((c: any) => ({
+          const globalItems = (data.coins || []).slice(0, 10).map((c: any) => ({
             id: c.id,
             symbol: c.symbol.toUpperCase(),
             name: c.name,
             thumb: c.thumb,
             market_cap_rank: c.market_cap_rank
           }));
-          setSuggestions(items);
-          setShowDropdown(items.length > 0);
+
+          // Merge local and global, unique by ID
+          setSuggestions(prev => {
+            const map = new Map();
+            [...prev, ...globalItems].forEach(item => map.set(item.id, item));
+            const merged = Array.from(map.values());
+            setShowDropdown(merged.length > 0);
+            return merged;
+          });
         }
       } catch (e) {
-        setShowDropdown(false);
+        // Fallback to local only on API error
       } finally {
         setIsSuggesting(false);
       }
-    }, 300);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -312,6 +352,28 @@ export default function CryptoPricesPage() {
     setActiveChartId(coin.id);
     setSearchQuery('');
     setShowDropdown(false);
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showDropdown || suggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0) {
+        addCoinToMonitor(suggestions[selectedIndex]);
+      } else {
+        handleSearch();
+      }
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+    }
   };
 
   const handleSearch = async (e?: React.FormEvent) => {
@@ -319,7 +381,8 @@ export default function CryptoPricesPage() {
     if (!searchQuery.trim() || isSearching) return;
 
     if (suggestions.length > 0) {
-      addCoinToMonitor(suggestions[0]);
+      const target = selectedIndex >= 0 ? suggestions[selectedIndex] : suggestions[0];
+      addCoinToMonitor(target);
       return;
     }
 
@@ -327,7 +390,7 @@ export default function CryptoPricesPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${SEARCH_API}${encodeURIComponent(searchQuery.trim())}`);
+      const res = await fetch(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(searchQuery.trim())}`);
       if (res.status === 429) {
          setError("Search Throttled: discovery node restricted. Wait 60s.");
          return;
@@ -414,9 +477,10 @@ export default function CryptoPricesPage() {
                  <form onSubmit={handleSearch} className="space-y-4">
                     <div className="relative group/input">
                        <Input 
-                        placeholder="Search coin (e.g. Polkadot)..." 
+                        placeholder="Search name or symbol..." 
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="h-16 bg-secondary border-border rounded-2xl text-sm font-bold px-6 focus:ring-primary/40 uppercase"
                        />
                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -437,19 +501,25 @@ export default function CryptoPricesPage() {
                       <div ref={dropdownRef} className="absolute left-6 right-6 top-[calc(100%-12px)] z-50 animate-in slide-in-from-top-2 duration-300">
                          <div className="glass-card border-border shadow-2xl rounded-2xl overflow-hidden max-h-[320px] overflow-y-auto custom-scrollbar">
                             <div className="divide-y divide-white/5">
-                               {suggestions.map((coin) => (
+                               {suggestions.map((coin, idx) => (
                                  <button
                                    key={coin.id}
                                    type="button"
                                    onClick={() => addCoinToMonitor(coin)}
-                                   className="w-full flex items-center justify-between p-4 hover:bg-primary/5 transition-all group/sugg"
+                                   className={cn(
+                                     "w-full flex items-center justify-between p-4 transition-all group/sugg",
+                                     selectedIndex === idx ? "bg-primary/10" : "hover:bg-primary/5"
+                                   )}
                                  >
                                     <div className="flex items-center gap-3">
                                        <div className="w-9 h-9 rounded-xl bg-secondary border border-white/5 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
                                           {coin.thumb ? <img src={coin.thumb} alt="" className="w-full h-full object-cover" /> : <Server className="w-4 h-4 text-foreground/10" />}
                                        </div>
                                        <div className="text-left min-w-0">
-                                          <p className="text-[11px] font-bold text-foreground uppercase truncate group-hover/sugg:text-primary transition-colors">{coin.name}</p>
+                                          <p className={cn(
+                                            "text-[11px] font-bold uppercase truncate transition-colors",
+                                            selectedIndex === idx ? "text-primary" : "text-foreground group-hover/sugg:text-primary"
+                                          )}>{coin.name}</p>
                                           <p className="text-[9px] font-black text-foreground/20 uppercase">{coin.symbol}</p>
                                        </div>
                                     </div>
@@ -457,7 +527,10 @@ export default function CryptoPricesPage() {
                                        {coin.market_cap_rank && (
                                          <span className="text-[8px] font-black text-foreground/20 uppercase bg-secondary/50 px-2 py-0.5 rounded-lg border border-white/5">Rank #{coin.market_cap_rank}</span>
                                        )}
-                                       <ChevronRight className="w-4 h-4 text-foreground/10 group-hover/sugg:translate-x-1 group-hover/sugg:text-primary transition-all" />
+                                       <ChevronRight className={cn(
+                                         "w-4 h-4 transition-all",
+                                         selectedIndex === idx ? "translate-x-1 text-primary" : "text-foreground/10 group-hover/sugg:translate-x-1 group-hover/sugg:text-primary"
+                                       )} />
                                     </div>
                                  </button>
                                ))}
@@ -609,7 +682,7 @@ export default function CryptoPricesPage() {
            </Card>
 
            {error && (
-             <div className="p-6 rounded-[2rem] bg-amber-500/10 border border-amber-500/20 flex items-start gap-4 animate-in shake duration-500">
+             <div className="p-6 rounded-[2rem] bg-amber-500/10 border border-amber-500/20 flex items-start gap-4 animate-in shake duration-500 shadow-xl">
                 <AlertCircle className="w-6 h-6 text-amber-600 mt-1 shrink-0" />
                 <div className="space-y-1">
                    <h4 className="text-[11px] font-black uppercase tracking-widest text-amber-700">Node Advisory</h4>
