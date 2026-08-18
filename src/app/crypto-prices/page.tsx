@@ -29,7 +29,9 @@ import {
   Play,
   Pause,
   Banknote,
-  Server
+  Server,
+  LineChart as LineChartIcon,
+  Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +43,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Area,
+  AreaChart
+} from 'recharts';
 
 // --- Configuration Matrix ---
 const DEFAULT_COINS = [
@@ -85,6 +98,11 @@ interface MarketCoin {
   price_change_percentage_24h: number;
 }
 
+interface ChartPoint {
+  time: string;
+  price: number;
+}
+
 export default function CryptoPricesPage() {
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -97,6 +115,13 @@ export default function CryptoPricesPage() {
   const [suggestions, setSuggestions] = useState<CoinIdentity[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   
+  // Chart State
+  const [activeChartId, setActiveChartId] = useState<string>('bitcoin');
+  const [chartTimeframe, setChartTimeframe] = useState<string>('7');
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
+  const [isChartLoading, setIsChartLoading] = useState(false);
+  const [chartStats, setChartStats] = useState({ high: 0, low: 0, current: 0 });
+
   const [isSearching, setIsSearching] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -176,6 +201,39 @@ export default function CryptoPricesPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // --- Chart Data Protocol ---
+  const fetchChartData = useCallback(async () => {
+    if (!activeChartId) return;
+    setIsChartLoading(true);
+    try {
+      const response = await fetch(`https://api.coingecko.com/api/v3/coins/${activeChartId}/market_chart?vs_currency=usd&days=${chartTimeframe}`);
+      if (!response.ok) throw new Error("Chart node unreachable");
+      
+      const data = await response.json();
+      const points: ChartPoint[] = data.prices.map((p: any) => ({
+        time: new Date(p[0]).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit' }),
+        price: p[1]
+      }));
+
+      const pricesArr = points.map(p => p.price);
+      setChartStats({
+        high: Math.max(...pricesArr),
+        low: Math.min(...pricesArr),
+        current: pricesArr[pricesArr.length - 1]
+      });
+      
+      setChartData(points);
+    } catch (e) {
+      console.warn("Chart matrix sync delayed.");
+    } finally {
+      setIsChartLoading(false);
+    }
+  }, [activeChartId, chartTimeframe]);
+
+  useEffect(() => {
+    fetchChartData();
+  }, [fetchChartData]);
+
   const saveWatchlist = (newList: CoinIdentity[]) => {
     setWatchlist(newList);
     localStorage.setItem(PERSIST_KEY, JSON.stringify(newList));
@@ -251,6 +309,7 @@ export default function CryptoPricesPage() {
     } else {
       toast({ title: "Asset Present", description: "Identity already exists in monitor." });
     }
+    setActiveChartId(coin.id);
     setSearchQuery('');
     setShowDropdown(false);
   };
@@ -307,6 +366,10 @@ export default function CryptoPricesPage() {
       maximumFractionDigits: val < 1 ? 6 : 2,
     }).format(val).replace('PKR', 'Rs.').replace('USD', '$');
   };
+
+  const activeCoinMeta = useMemo(() => {
+    return watchlist.find(c => c.id === activeChartId) || markets.find(m => m.id === activeChartId);
+  }, [activeChartId, watchlist, markets]);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -411,7 +474,10 @@ export default function CryptoPricesPage() {
                     </div>
                     <div className="space-y-2 max-h-[300px] overflow-auto custom-scrollbar pr-2">
                        {watchlist.map(coin => (
-                         <div key={coin.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border group/row hover:border-primary/20 transition-all">
+                         <div key={coin.id} className={cn(
+                           "flex items-center justify-between p-3 rounded-xl border transition-all group/row cursor-pointer",
+                           activeChartId === coin.id ? "bg-primary/10 border-primary/40" : "bg-secondary/30 border-border hover:border-primary/20"
+                         )} onClick={() => setActiveChartId(coin.id)}>
                             <div className="flex items-center gap-3">
                                <div className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-primary/40 font-bold text-[10px] overflow-hidden shadow-inner">
                                   {coin.thumb ? <img src={coin.thumb} className="w-full h-full object-cover" alt={coin.name} /> : coin.symbol.slice(0, 3)}
@@ -421,7 +487,7 @@ export default function CryptoPricesPage() {
                                   <p className="text-[8px] font-black text-foreground/20 uppercase">{coin.symbol}</p>
                                </div>
                             </div>
-                            <button onClick={() => removeCoin(coin.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-colors opacity-0 group-hover/row:opacity-100"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); removeCoin(coin.id); }} className="p-2 text-foreground/10 hover:text-red-500 transition-colors opacity-0 group-hover/row:opacity-100"><Trash2 className="w-3.5 h-3.5" /></button>
                          </div>
                        ))}
                     </div>
@@ -451,6 +517,97 @@ export default function CryptoPricesPage() {
 
         {/* Main Dashboard - Right */}
         <div className="lg:col-span-8 space-y-8 animate-in fade-in duration-1000 stagger-2">
+           
+           {/* Visual Analytics Chart */}
+           <Card className="glass-card border-border shadow-2xl overflow-hidden relative">
+              <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                 <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40">
+                       <LineChartIcon className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-0.5">
+                       <CardTitle className="text-xl font-headline font-black uppercase tracking-tight">
+                         {activeCoinMeta?.name || 'Asset'} <span className="text-primary italic">Matrix</span>
+                       </CardTitle>
+                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-[0.2em]">Visual Data Stream</p>
+                    </div>
+                 </div>
+
+                 <div className="flex items-center gap-1.5 p-1 bg-background/50 rounded-xl border border-border">
+                    {['1', '7', '30', '90', '365'].map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => setChartTimeframe(d)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all",
+                          chartTimeframe === d ? "bg-primary text-white shadow-lg" : "text-foreground/40 hover:text-primary"
+                        )}
+                      >
+                        {d === '1' ? '1D' : d === '7' ? '7D' : d === '30' ? '1M' : d === '90' ? '3M' : '1Y'}
+                      </button>
+                    ))}
+                 </div>
+              </CardHeader>
+              
+              <CardContent className="p-8 space-y-8">
+                 <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="p-4 rounded-2xl bg-secondary/40 border border-border text-center space-y-1">
+                       <p className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Period High</p>
+                       <p className="text-sm font-bold text-foreground">{formatCurrency(chartStats.high, 'USD')}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-secondary/40 border border-border text-center space-y-1">
+                       <p className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Period Low</p>
+                       <p className="text-sm font-bold text-foreground">{formatCurrency(chartStats.low, 'USD')}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 text-center space-y-1">
+                       <p className="text-[8px] font-black uppercase text-primary/60 tracking-widest">Current Signal</p>
+                       <p className="text-sm font-bold text-primary">{formatCurrency(chartStats.current, 'USD')}</p>
+                    </div>
+                 </div>
+
+                 <div className="h-[300px] w-full relative">
+                    {isChartLoading && (
+                      <div className="absolute inset-0 z-10 bg-background/40 backdrop-blur-sm flex items-center justify-center rounded-2xl">
+                         <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                      </div>
+                    )}
+                    <ResponsiveContainer width="100%" height="100%">
+                       <AreaChart data={chartData}>
+                          <defs>
+                             <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                             </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                          <XAxis 
+                            dataKey="time" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.2)', fontWeight: 'bold' }} 
+                            minTickGap={30}
+                          />
+                          <YAxis 
+                            domain={['auto', 'auto']} 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.2)', fontWeight: 'bold' }} 
+                            tickFormatter={(val) => `$${val.toLocaleString()}`}
+                            width={60}
+                          />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: 'rgba(10,10,12,0.95)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
+                            labelStyle={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}
+                            itemStyle={{ color: 'hsl(var(--primary))', fontSize: '12px', fontWeight: 'bold' }}
+                            formatter={(val: number) => [`$${val.toLocaleString()}`, 'Price']}
+                          />
+                          <Area type="monotone" dataKey="price" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorPrice)" animationDuration={1500} />
+                       </AreaChart>
+                    </ResponsiveContainer>
+                 </div>
+              </CardContent>
+           </Card>
+
            {error && (
              <div className="p-6 rounded-[2rem] bg-amber-500/10 border border-amber-500/20 flex items-start gap-4 animate-in shake duration-500">
                 <AlertCircle className="w-6 h-6 text-amber-600 mt-1 shrink-0" />
@@ -462,14 +619,20 @@ export default function CryptoPricesPage() {
            )}
 
            {/* Watchlist Quick View */}
-           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {watchlist.slice(0, 6).map((coin) => {
+           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              {watchlist.slice(0, 8).map((coin) => {
                 const data = prices ? prices[coin.id] : null;
                 if (!data) return null;
                 const isUp = data.usd_24h_change >= 0;
                 
                 return (
-                  <Card key={coin.id} className="glass-card border-border shadow-xl hover:border-primary/40 transition-all group overflow-hidden">
+                  <Card key={coin.id} 
+                    onClick={() => setActiveChartId(coin.id)}
+                    className={cn(
+                      "glass-card border-border shadow-xl hover:border-primary/40 transition-all group overflow-hidden cursor-pointer",
+                      activeChartId === coin.id ? "ring-2 ring-primary border-primary shadow-primary/10" : ""
+                    )}
+                  >
                      <CardContent className="p-6 space-y-6">
                         <div className="flex items-center justify-between">
                            <div className="flex items-center gap-3">
@@ -563,7 +726,10 @@ export default function CryptoPricesPage() {
                          const priceToDisplay = displayCurrency === 'USD' ? coin.current_price : coin.current_price * pkrRate;
 
                          return (
-                           <TableRow key={coin.id} className="border-border hover:bg-primary/[0.03] transition-colors group cursor-pointer" onClick={() => { if (!watchlist.find(w => w.id === coin.id)) { saveWatchlist([{ id: coin.id, name: coin.name, symbol: coin.symbol.toUpperCase(), thumb: coin.image }, ...watchlist]); toast({ title: "Asset Monitored" }); } }}>
+                           <TableRow key={coin.id} className={cn(
+                             "border-border hover:bg-primary/[0.03] transition-colors group cursor-pointer",
+                             activeChartId === coin.id ? "bg-primary/[0.05]" : ""
+                           )} onClick={() => { setActiveChartId(coin.id); if (!watchlist.find(w => w.id === coin.id)) { saveWatchlist([{ id: coin.id, name: coin.name, symbol: coin.symbol.toUpperCase(), thumb: coin.image }, ...watchlist]); toast({ title: "Asset Monitored" }); } }}>
                               <TableCell className="text-center font-mono text-[10px] font-bold text-foreground/20">
                                  #{coin.market_cap_rank}
                               </TableCell>
@@ -633,6 +799,8 @@ export default function CryptoPricesPage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .recharts-area-chart { filter: drop-shadow(0 0 10px hsla(var(--primary), 0.2)); }
+        .recharts-cartesian-axis-tick-value { font-family: 'Space Grotesk', sans-serif !important; }
       `}</style>
     </div>
   );
