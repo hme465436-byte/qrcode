@@ -23,7 +23,8 @@ import {
   ArrowRight,
   RefreshCcw,
   Smartphone,
-  Navigation2
+  Navigation2,
+  PhoneCall
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,12 +52,7 @@ interface CountryData {
   area: number;
   timezones: string[];
   maps: { googleMaps: string };
-}
-
-interface CountryShort {
-  name: { common: string };
-  cca2: string;
-  flags: { png: string };
+  idd?: { root: string; suffixes: string[] }; // For calling codes
 }
 
 export default function CountryInfoPage() {
@@ -78,7 +74,7 @@ export default function CountryInfoPage() {
 
     setIsSuggesting(true);
     try {
-      const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(val.trim())}`);
+      const response = await fetch(`https://countries.dev/name/${encodeURIComponent(val.trim())}`);
       if (response.ok) {
         const data = await response.json();
         setSuggestions(Array.isArray(data) ? data.slice(0, 5) : []);
@@ -115,23 +111,16 @@ export default function CountryInfoPage() {
     setShowSuggestions(false);
 
     try {
-      const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(query.trim())}?fullText=true`);
+      const response = await fetch(`https://countries.dev/name/${encodeURIComponent(query.trim())}`);
       const data = await response.json();
       
-      if (response.ok && data.length > 0) {
+      if (response.ok && Array.isArray(data) && data.length > 0) {
         selectCountry(data[0]);
       } else {
-        // Try partial match if fullText fails
-        const partialRes = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(query.trim())}`);
-        const partialData = await partialRes.json();
-        if (partialRes.ok && partialData.length > 0) {
-          selectCountry(partialData[0]);
-        } else {
-          throw new Error("Target identity not identified.");
-        }
+        throw new Error("Target identity not identified in the countries.dev registry.");
       }
     } catch (err: any) {
-      setError("Discovery Node Failure: Location not identified.");
+      setError(`Discovery Node Failure: ${err.message || 'Location not identified.'}`);
       toast({ variant: "destructive", title: "Protocol Failed" });
     } finally {
       setIsLoading(false);
@@ -139,30 +128,7 @@ export default function CountryInfoPage() {
   };
 
   const handleMyLocation = () => {
-    if (!navigator.geolocation) {
-      toast({ variant: "destructive", title: "Hardware Block", description: "Geolocation not supported." });
-      return;
-    }
-
-    setIsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const res = await fetch(`https://restcountries.com/v3.1/alpha?codes=${encodeURIComponent(String(pos.coords.latitude))},${encodeURIComponent(String(pos.coords.longitude))}`);
-          // Note: RestCountries doesn't support direct lat/lng reverse geocoding directly in this way, 
-          // we use it to show we tried or user can use the IP finder.
-          // For now, we'll inform user to search manually or use the IP Finder tool.
-          setIsLoading(false);
-          toast({ title: "Coordinate Handshake", description: "Manual search recommended for clinical accuracy." });
-        } catch (e) {
-          setIsLoading(false);
-        }
-      },
-      () => {
-        setIsLoading(false);
-        toast({ variant: "destructive", title: "Access Denied", description: "Location permissions required." });
-      }
-    );
+    toast({ title: "Hardware Matrix", description: "Use the search bar for clinical countries.dev lookup." });
   };
 
   const handleReset = () => {
@@ -172,6 +138,11 @@ export default function CountryInfoPage() {
     setSuggestions([]);
     setShowSuggestions(false);
     toast({ title: "Studio Reset" });
+  };
+
+  const formatCallingCode = (idd?: { root: string; suffixes: string[] }) => {
+    if (!idd || !idd.root) return '—';
+    return `${idd.root}${idd.suffixes?.[0] || ''}`;
   };
 
   return (
@@ -186,7 +157,7 @@ export default function CountryInfoPage() {
                 Country Info <span className="text-primary italic">Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional geographic diagnostic unit. Isolate global identities, demographic matrices, and fiscal protocols locally and securely.
+                Professional geographic diagnostic unit. Isolate global identities, demographic matrices, and fiscal protocols locally and securely using countries.dev.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -220,6 +191,7 @@ export default function CountryInfoPage() {
                         setShowSuggestions(true);
                       }}
                       onFocus={() => setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                       onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
                       className="h-16 bg-secondary border-border rounded-2xl text-sm font-bold px-6 focus:ring-primary/40 uppercase"
                     />
@@ -252,22 +224,14 @@ export default function CountryInfoPage() {
                     )}
                  </div>
 
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                 <div className="grid grid-cols-1 gap-3">
                     <Button 
                       onClick={handleManualSearch}
                       disabled={isLoading || !query.trim()}
                       className="h-14 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30 active:scale-95"
                     >
                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
-                       Initialize Lookup
-                    </Button>
-                    <Button 
-                      onClick={handleMyLocation}
-                      disabled={isLoading}
-                      variant="outline"
-                      className="h-14 border-border bg-secondary text-foreground font-black text-xs uppercase tracking-widest rounded-2xl"
-                    >
-                       <Navigation2 className="w-4 h-4 mr-2 text-primary" /> My Location
+                       Initialize countries.dev Lookup
                     </Button>
                  </div>
 
@@ -347,11 +311,11 @@ export default function CountryInfoPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                          {[
                            { icon: MapPin, label: 'Capital Protocol', val: country.capital?.join(', ') || '—' },
+                           { icon: PhoneCall, label: 'Calling Code', val: formatCallingCode(country.idd) },
                            { icon: Users, label: 'Population Density', val: country.population.toLocaleString() },
                            { icon: Maximize, label: 'Land Mass (sq km)', val: country.area.toLocaleString() },
                            { icon: Coins, label: 'Fiscal Protocol', val: Object.values(country.currencies || {}).map(c => `${c.name} (${c.symbol})`).join(', ') || '—' },
                            { icon: Languages, label: 'Linguistic Stream', val: Object.values(country.languages || {}).join(', ') || '—' },
-                           { icon: Clock, label: 'Temporal Matrix', val: country.timezones[0] },
                          ].map((item, i) => (
                            <div key={i} className="p-6 rounded-3xl bg-secondary/50 border border-border group hover:border-primary/20 transition-all flex items-center gap-6">
                               <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all shadow-inner shrink-0">
@@ -366,13 +330,15 @@ export default function CountryInfoPage() {
                       </div>
 
                       {/* Navigation Link */}
-                      <div className="pt-6 border-t border-white/5">
-                         <Button asChild className="h-16 w-full bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl">
-                            <a href={country.maps.googleMaps} target="_blank" rel="noopener noreferrer">
-                               <Navigation2 className="w-5 h-5 mr-1" /> Launch Map Protocol
-                            </a>
-                         </Button>
-                      </div>
+                      {country.maps?.googleMaps && (
+                        <div className="pt-6 border-t border-white/5">
+                           <Button asChild className="h-16 w-full bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl">
+                              <a href={country.maps.googleMaps} target="_blank" rel="noopener noreferrer">
+                                 <Navigation2 className="w-5 h-5 mr-1" /> Launch Map Protocol
+                              </a>
+                           </Button>
+                        </div>
+                      )}
                    </div>
                  )}
               </CardContent>
