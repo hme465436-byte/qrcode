@@ -76,13 +76,10 @@ const LOCAL_TOP_COINS = [
   { id: 'ripple', symbol: 'XRP', name: 'XRP' },
   { id: 'dogecoin', symbol: 'DOGE', name: 'Dogecoin' },
   { id: 'cardano', symbol: 'ADA', name: 'Cardano' },
-  { id: 'tron', symbol: 'TRX', name: 'TRON' },
+  { id: 'tron', symbol: 'TRX', name: 'Tron' },
   { id: 'litecoin', symbol: 'LTC', name: 'Litecoin' },
-  { id: 'polkadot', symbol: 'DOT', name: 'Polkadot' },
-  { id: 'avalanche-2', symbol: 'AVAX', name: 'Avalanche' },
-  { id: 'chainlink', symbol: 'LINK', name: 'Chainlink' },
   { id: 'polygon', symbol: 'MATIC', name: 'Polygon' },
-  { id: 'uniswap', symbol: 'UNI', name: 'Uniswap' },
+  { id: 'chainlink', symbol: 'LINK', name: 'Chainlink' },
 ];
 
 const SEARCH_API = 'https://api.coingecko.com/id/v3/search?query=';
@@ -188,9 +185,11 @@ export default function CryptoPricesPage() {
 
   // --- Debounced Suggestion Protocol ---
   useEffect(() => {
-    if (searchQuery.trim().length === 0) {
-      setSuggestions([]);
-      setShowDropdown(false);
+    const query = searchQuery.trim().toLowerCase();
+    
+    // If empty, show top 5 from local list
+    if (query.length === 0) {
+      setSuggestions(LOCAL_TOP_COINS.slice(0, 5));
       return;
     }
 
@@ -198,23 +197,18 @@ export default function CryptoPricesPage() {
       setIsSuggesting(true);
       setSelectedIndex(-1);
       
-      const q = searchQuery.trim().toLowerCase();
-      
-      // 1. Local Instant Matches
+      // 1. Local Matches
       const localMatches = LOCAL_TOP_COINS.filter(c => 
-        c.name.toLowerCase().includes(q) || 
-        c.symbol.toLowerCase().includes(q)
+        c.name.toLowerCase().includes(query) || 
+        c.symbol.toLowerCase().includes(query)
       );
-
-      setSuggestions(localMatches);
-      setShowDropdown(localMatches.length > 0);
 
       // 2. Global API Enhancement
       try {
-        const res = await fetch(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(q)}`);
+        const res = await fetch(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(query)}`);
         if (res.ok) {
           const data = await res.json();
-          const globalItems = (data.coins || []).slice(0, 10).map((c: any) => ({
+          const globalItems = (data.coins || []).map((c: any) => ({
             id: c.id,
             symbol: c.symbol.toUpperCase(),
             name: c.name,
@@ -222,17 +216,15 @@ export default function CryptoPricesPage() {
             market_cap_rank: c.market_cap_rank
           }));
 
-          // Merge local and global, unique by ID
           setSuggestions(prev => {
             const map = new Map();
-            [...prev, ...globalItems].forEach(item => map.set(item.id, item));
-            const merged = Array.from(map.values());
-            setShowDropdown(merged.length > 0);
-            return merged;
+            localMatches.forEach(item => map.set(item.id, item));
+            globalItems.forEach(item => map.set(item.id, item));
+            return Array.from(map.values()).slice(0, 5); // Always exactly 5
           });
         }
       } catch (e) {
-        // Fallback to local only on API error
+        setSuggestions(localMatches.slice(0, 5));
       } finally {
         setIsSuggesting(false);
       }
@@ -368,7 +360,7 @@ export default function CryptoPricesPage() {
       e.preventDefault();
       if (selectedIndex >= 0) {
         addCoinToMonitor(suggestions[selectedIndex]);
-      } else {
+      } else if (searchQuery.trim()) {
         handleSearch();
       }
     } else if (e.key === 'Escape') {
@@ -481,6 +473,8 @@ export default function CryptoPricesPage() {
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
+                        onClick={() => setShowDropdown(true)}
+                        onFocus={() => setShowDropdown(true)}
                         className="h-16 bg-secondary border-border rounded-2xl text-sm font-bold px-6 focus:ring-primary/40 uppercase"
                        />
                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -501,39 +495,42 @@ export default function CryptoPricesPage() {
                       <div ref={dropdownRef} className="absolute left-6 right-6 top-[calc(100%-12px)] z-50 animate-in slide-in-from-top-2 duration-300">
                          <div className="glass-card border-border shadow-2xl rounded-2xl overflow-hidden max-h-[320px] overflow-y-auto custom-scrollbar">
                             <div className="divide-y divide-white/5">
-                               {suggestions.map((coin, idx) => (
-                                 <button
-                                   key={coin.id}
-                                   type="button"
-                                   onClick={() => addCoinToMonitor(coin)}
-                                   className={cn(
-                                     "w-full flex items-center justify-between p-4 transition-all group/sugg",
-                                     selectedIndex === idx ? "bg-primary/10" : "hover:bg-primary/5"
-                                   )}
-                                 >
-                                    <div className="flex items-center gap-3">
-                                       <div className="w-9 h-9 rounded-xl bg-secondary border border-white/5 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
-                                          {coin.thumb ? <img src={coin.thumb} alt="" className="w-full h-full object-cover" /> : <Server className="w-4 h-4 text-foreground/10" />}
-                                       </div>
-                                       <div className="text-left min-w-0">
-                                          <p className={cn(
-                                            "text-[11px] font-bold uppercase truncate transition-colors",
-                                            selectedIndex === idx ? "text-primary" : "text-foreground group-hover/sugg:text-primary"
-                                          )}>{coin.name}</p>
-                                          <p className="text-[9px] font-black text-foreground/20 uppercase">{coin.symbol}</p>
-                                       </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                       {coin.market_cap_rank && (
-                                         <span className="text-[8px] font-black text-foreground/20 uppercase bg-secondary/50 px-2 py-0.5 rounded-lg border border-white/5">Rank #{coin.market_cap_rank}</span>
-                                       )}
-                                       <ChevronRight className={cn(
-                                         "w-4 h-4 transition-all",
-                                         selectedIndex === idx ? "translate-x-1 text-primary" : "text-foreground/10 group-hover/sugg:translate-x-1 group-hover/sugg:text-primary"
-                                       )} />
-                                    </div>
-                                 </button>
-                               ))}
+                               {suggestions.length > 0 ? (
+                                 suggestions.map((coin, idx) => (
+                                   <button
+                                     key={coin.id}
+                                     type="button"
+                                     onClick={() => addCoinToMonitor(coin)}
+                                     className={cn(
+                                       "w-full flex items-center justify-between p-4 transition-all group/sugg",
+                                       selectedIndex === idx ? "bg-primary/10" : "hover:bg-primary/5"
+                                     )}
+                                   >
+                                      <div className="flex items-center gap-3">
+                                         <div className="w-9 h-9 rounded-xl bg-secondary border border-white/5 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
+                                            {coin.thumb ? <img src={coin.thumb} alt="" className="w-full h-full object-cover" /> : <Server className="w-4 h-4 text-foreground/10" />}
+                                         </div>
+                                         <div className="text-left min-w-0">
+                                            <p className={cn(
+                                              "text-[11px] font-bold uppercase truncate transition-colors",
+                                              selectedIndex === idx ? "text-primary" : "text-foreground group-hover/sugg:text-primary"
+                                            )}>{coin.name}</p>
+                                            <p className="text-[9px] font-black text-foreground/20 uppercase">{coin.symbol}</p>
+                                         </div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                         <ChevronRight className={cn(
+                                           "w-4 h-4 transition-all",
+                                           selectedIndex === idx ? "translate-x-1 text-primary" : "text-foreground/10 group-hover/sugg:translate-x-1 group-hover/sugg:text-primary"
+                                         )} />
+                                      </div>
+                                   </button>
+                                 ))
+                               ) : searchQuery.trim() !== '' && (
+                                 <div className="p-4 text-center text-[10px] font-black uppercase text-foreground/40 italic">
+                                    No coin found
+                                 </div>
+                               )}
                             </div>
                          </div>
                       </div>
