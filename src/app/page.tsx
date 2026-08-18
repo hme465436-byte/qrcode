@@ -82,7 +82,9 @@ import {
   ClipboardType,
   Globe,
   Coins,
-  Receipt
+  Receipt,
+  Trophy,
+  Dices
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -115,6 +117,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/lucky-draw', 
+    icon: Trophy, 
+    title: 'Lucky Draw', 
+    desc: 'Fair random selection wheel for giveaways and prizes.', 
+    label: 'CHANCE', 
+    color: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+    glowClass: 'bg-amber-400/10',
+    keywords: ['lucky draw', 'spin wheel', 'random winner', 'giveaway', 'prize wheel', 'raffle'],
     category: 'generators'
   },
   { 
@@ -178,8 +191,8 @@ const TOOLS: Tool[] = [
     title: 'Direct File Share', 
     desc: 'Send large files directly to any device via secret link.', 
     label: 'LINK SHARE', 
-    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-400/20',
-    glowClass: 'bg-emerald-500/10',
+    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    glowClass: 'bg-emerald-400/10',
     keywords: ['share file', 'send file', 'toffee', 'p2p', 'direct share', 'transfer', 'file send', 'no upload'],
     category: 'utilities'
   },
@@ -915,7 +928,7 @@ const TOOLS: Tool[] = [
     title: 'English Dictionary', 
     desc: 'Professional linguistic analysis and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
@@ -1017,7 +1030,7 @@ export default function Home() {
       'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
       'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 
-      'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator'
+      'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
