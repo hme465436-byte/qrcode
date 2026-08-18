@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -12,27 +13,22 @@ import {
   Eye,
   X,
   History,
-  Loader2,
   Save,
   FileText,
   ShieldCheck,
   Layout,
-  AlertCircle,
-  Database,
   Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { rtdb } from '@/firebase';
-import { ref, set } from 'firebase/database';
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v5';
+const HISTORY_KEY = 'htmlToUrlHistory_v6';
 
 interface HistoryItem {
   id: string;
@@ -46,16 +42,36 @@ export default function HtmlToUrlPage() {
   
   const [htmlInput, setHtmlInput] = useState('');
   const [debouncedHtml, setDebouncedHtml] = useState('');
-  const [title, setTitle] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
   const [publishedLink, setPublishedLink] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
+  const [viewHtml, setViewHtml] = useState<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // --- 1. Router Logic (Hash Extraction) ---
+  const checkHash = useCallback(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith('#z=')) {
+      const code = hash.slice(3);
+      const decoded = decompressFromEncodedURIComponent(code);
+      setViewHtml(decoded);
+    } else if (hash.startsWith('#h=')) {
+      const code = hash.slice(3);
+      const decoded = decodeURIComponent(code);
+      setViewHtml(decoded);
+    } else {
+      setViewHtml(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, [checkHash]);
+
+  // --- 2. Studio Init ---
   useEffect(() => {
     const saved = localStorage.getItem(HISTORY_KEY);
     if (saved) {
@@ -79,68 +95,74 @@ export default function HtmlToUrlPage() {
     return debouncedHtml;
   }, [debouncedHtml]);
 
-  const handlePublish = async () => {
+  // --- 3. Actions ---
+  const handlePublish = () => {
     if (!htmlInput.trim()) return;
 
-    setIsProcessing(true);
-    setPublishedLink(null);
-    setError(null);
-    
-    // Short ID Protocol: 8-10 chars
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    const finalTitle = title.trim() || 'Untitled Page';
+    // LZ-Compression Protocol
+    const code = compressToEncodedURIComponent(htmlInput.trim());
+    const link = window.location.origin + window.location.pathname + "#z=" + code;
 
-    try {
-      if (!rtdb) throw new Error("Database offline.");
+    // Update Local Registry
+    const historyItem = { 
+      id: Math.random().toString(36).substr(2, 9), 
+      title: 'Published Code', 
+      url: link, 
+      date: Date.now() 
+    };
+    const nextHistory = [historyItem, ...localHistory].slice(0, 10);
+    setLocalHistory(nextHistory);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
 
-      // 1. Database Sync Protocol
-      await set(ref(rtdb, "pages/" + id), { 
-        html: htmlInput.trim(), 
-        title: finalTitle, 
-        createdAt: Date.now() 
-      });
-
-      // 2. Hardware Persistence (Local Cache)
-      const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
-      pagesMap[id] = htmlInput.trim();
-      localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
-
-      // 3. Short Link Construction
-      const link = window.location.origin + window.location.pathname + "?kit=" + id;
-
-      // 4. Update Registry History
-      const historyItem = { id, title: finalTitle, url: link, date: Date.now() };
-      const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 20);
-      setLocalHistory(nextHistory);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
-
-      setPublishedLink(link);
-      toast({ title: "Page Published", description: "Cloud synchronization verified." });
-    } catch (err: any) {
-      setError(err.message || "Failed to publish. Check your connection.");
-      toast({ variant: "destructive", title: "Sync Failed" });
-    } finally {
-      setIsProcessing(false);
-    }
+    setPublishedLink(link);
+    toast({ title: "Link Generated", description: "Self-sustaining compressed URL ready." });
   };
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(label);
-    toast({ title: "Link Copied" });
+    toast({ title: "Copied to Clipboard" });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
-  const purgeLocalItem = (id: string) => {
-    setLocalHistory(prev => {
-      const next = prev.filter(h => h.id !== id);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-      return next;
-    });
-    const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
-    delete pagesMap[id];
-    localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
+  const handleClear = () => {
+    setHtmlInput('');
+    setPublishedLink(null);
+    toast({ title: "Studio Reset" });
   };
+
+  const purgeHistory = () => {
+    setLocalHistory([]);
+    localStorage.removeItem(HISTORY_KEY);
+    toast({ title: "History Purged" });
+  };
+
+  // --- 4. Render Logic (Viewer vs Editor) ---
+
+  if (viewHtml !== null) {
+    return (
+      <div className="fixed inset-0 bg-black z-[9999] flex flex-col animate-in fade-in duration-500">
+         <iframe 
+          srcDoc={viewHtml}
+          title="HTML View"
+          sandbox="allow-scripts allow-forms"
+          className="flex-1 w-full h-full border-none block bg-white"
+         />
+         <div className="h-14 bg-[#0a0a0c] border-t border-white/10 px-6 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-4">
+              <Globe className="w-3.5 h-3.5 text-primary/40" />
+              <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">Self-Sustaining Host Active</span>
+            </div>
+            <button 
+              onClick={() => { window.location.hash = ''; setViewHtml(null); }}
+              className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] hover:text-white transition-all group"
+            >
+               EXIT VIEW <ArrowLeft className="w-3.5 h-3.5 rotate-180 transition-transform group-hover:translate-x-1" />
+            </button>
+         </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
@@ -154,7 +176,7 @@ export default function HtmlToUrlPage() {
               HTML to <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Convert raw code into a professional short-link instantly. Optimized for high-speed cloud synchronization and zero-latency retrieval.
+              Convert raw code into an instant self-sustaining link. High-performance LZ-compression ensures 100% portability without database requirements.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -164,115 +186,94 @@ export default function HtmlToUrlPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+        {/* Editor Area */}
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[500px]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             <CardHeader className="pb-6 border-b border-border bg-secondary/30">
-               <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                  <Code2 className="w-5 h-5 text-primary" /> Workspace
-               </CardTitle>
+               <div className="flex items-center justify-between">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
+                    <Code2 className="w-5 h-5 text-primary" /> Workspace
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-mono text-primary/60">{htmlInput.length.toLocaleString()} Chars</span>
+                  </div>
+               </div>
             </CardHeader>
             <CardContent className="pt-10 space-y-8">
-               <div className="space-y-4">
-                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Document Title</Label>
-                  <Input 
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    placeholder="ENTER PAGE TITLE..."
-                    className="h-14 bg-secondary border-border rounded-2xl text-lg font-bold px-6 focus:ring-primary/40 uppercase"
-                  />
-               </div>
-
-               <div className="space-y-4">
-                  <div className="flex justify-between items-center px-1">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">HTML / CSS / JS</Label>
-                    <span className="text-[9px] font-mono text-primary/60">
-                      {htmlInput.length.toLocaleString()} Characters
-                    </span>
-                  </div>
-                  <Textarea 
-                    value={htmlInput}
-                    onChange={e => setHtmlInput(e.target.value)}
-                    placeholder="Paste code or text here..."
-                    className="min-h-[400px] bg-secondary border-border text-xs font-mono p-8 rounded-[2rem] leading-relaxed resize-none focus:ring-primary/40 shadow-inner"
-                  />
-               </div>
+               <Textarea 
+                value={htmlInput}
+                onChange={e => setHtmlInput(e.target.value)}
+                placeholder="Paste HTML / CSS / JS code here..."
+                className="min-h-[400px] bg-secondary border-border text-xs font-mono p-8 rounded-[2rem] leading-relaxed resize-none focus:ring-primary/40 shadow-inner"
+               />
 
                <div className="space-y-4">
                   <Button 
                     onClick={handlePublish}
-                    disabled={!htmlInput.trim() || isProcessing}
+                    disabled={!htmlInput.trim()}
                     className="h-16 w-full bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl active:scale-95"
                   >
-                    {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                    {isProcessing ? 'Verifying Sync...' : 'Publish & Create Link'}
+                    <Save className="w-6 h-6" />
+                    Generate Compressed Link
                   </Button>
-
-                  {error && (
-                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
-                       <AlertCircle className="w-4 h-4 text-destructive" />
-                       <p className="text-[10px] font-bold uppercase tracking-widest">{error}</p>
+                  
+                  {publishedLink && (
+                    <div className="p-8 rounded-[2.5rem] bg-emerald-500/10 border border-emerald-500/20 space-y-6 animate-in zoom-in duration-500">
+                      <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-2">
+                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                           <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em]">Self-Sustaining Protocol</p>
+                         </div>
+                         <Button variant="ghost" size="icon" onClick={() => setPublishedLink(null)} className="h-6 w-6 rounded-full text-emerald-500/40 hover:text-emerald-500">
+                           <X className="w-4 h-4" />
+                         </Button>
+                      </div>
+                      <div className="p-4 bg-background rounded-2xl border border-emerald-500/20 text-xs font-bold text-foreground break-all shadow-inner font-mono max-h-32 overflow-y-auto custom-scrollbar">
+                        {publishedLink}
+                      </div>
+                      <div className="flex gap-3">
+                         <Button onClick={() => handleCopy(publishedLink, 'pub')} className="flex-1 h-12 bg-emerald-500 text-white font-black uppercase tracking-widest text-[9px]">
+                            {isCopied === 'pub' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                            Copy Short Link
+                         </Button>
+                         <Button onClick={() => window.open(publishedLink, '_blank')} variant="outline" className="flex-1 h-12 border-emerald-500/20 text-emerald-600 font-black uppercase text-[9px] bg-white/5">
+                            Test Page <ExternalLink className="w-4 h-4 ml-2" />
+                         </Button>
+                      </div>
                     </div>
                   )}
                </div>
-
-                {publishedLink && (
-                  <div className="p-8 rounded-[2.5rem] bg-emerald-500/10 border border-emerald-500/20 space-y-6 animate-in zoom-in duration-500">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-2">
-                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                         <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em]">Verified Sync Link</p>
-                       </div>
-                       <Button variant="ghost" size="icon" onClick={() => setPublishedLink(null)} className="h-6 w-6 rounded-full text-emerald-500/40 hover:text-emerald-500">
-                         <X className="w-4 h-4" />
-                       </Button>
-                    </div>
-                    <div className="p-4 bg-background rounded-2xl border border-emerald-500/20 text-sm font-bold text-foreground break-all shadow-inner">
-                      {publishedLink}
-                    </div>
-                    <div className="flex gap-3">
-                       <Button onClick={() => handleCopy(publishedLink, 'pub')} className="flex-1 h-12 bg-emerald-500 text-white font-black uppercase tracking-widest text-[9px]">
-                          {isCopied === 'pub' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                          Copy Short Link
-                       </Button>
-                       <Button onClick={() => window.open(publishedLink, '_blank')} variant="outline" className="flex-1 h-12 border-emerald-500/20 text-emerald-600 font-black uppercase text-[9px] bg-white/5">
-                          Launch Page <ExternalLink className="w-4 h-4 ml-2" />
-                       </Button>
-                    </div>
-                  </div>
-                )}
             </CardContent>
           </Card>
 
           <Card className="glass-card border-border shadow-xl overflow-hidden">
-            <CardHeader className="py-6 border-b border-border bg-secondary/30">
+            <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                 <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-foreground/60">
-                  <History className="w-4 h-4 text-primary" /> Studio History
+                  <History className="w-4 h-4 text-primary" /> Recent Production
                 </CardTitle>
+                <button onClick={purgeHistory} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-all">Purge</button>
             </CardHeader>
             <CardContent className="p-0">
                 {!localHistory.length ? (
-                  <div className="py-20 text-center space-y-4 opacity-20">
+                  <div className="py-20 text-center opacity-20">
                     <Globe className="w-12 h-12 mx-auto" />
                     <p className="text-[10px] font-black uppercase tracking-widest px-12">No recent sessions found</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
-                    {localHistory.map((page) => (
-                        <div key={page.id} className="p-5 flex items-center justify-between gap-4 hover:bg-white/5 transition-all">
-                          <div className="min-w-0 flex-1 space-y-1">
-                              <h4 className="text-xs font-bold text-foreground truncate uppercase">{page.title}</h4>
+                  <div className="divide-y divide-white/5">
+                    {localHistory.map((page, i) => (
+                        <div key={i} className="p-5 flex items-center justify-between gap-4 hover:bg-white/5 transition-all">
+                          <div className="min-w-0 flex-1">
+                              <p className="text-xs font-mono font-bold text-foreground truncate uppercase">{page.url.substring(0, 40)}...</p>
                               <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">{new Date(page.date).toLocaleDateString()}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                              <Button size="icon" variant="ghost" onClick={() => handleCopy(page.url, `list-${page.id}`)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
-                                {isCopied === `list-${page.id}` ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                              <Button size="icon" variant="ghost" onClick={() => handleCopy(page.url, `list-${i}`)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
+                                {isCopied === `list-${i}` ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                               </Button>
                               <Button variant="ghost" size="icon" onClick={() => window.open(page.url, '_blank')} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-primary">
                                 <ExternalLink className="w-4 h-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={() => purgeLocalItem(page.id)} className="h-9 w-9 rounded-xl text-foreground/20 hover:text-destructive">
-                                <Trash2 className="w-4 h-4" />
                               </Button>
                           </div>
                         </div>
@@ -283,6 +284,7 @@ export default function HtmlToUrlPage() {
           </Card>
         </div>
 
+        {/* Monitor Area */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[400px] bg-white">
             <CardHeader className="py-3 border-b border-border bg-secondary/30 shrink-0">
@@ -290,12 +292,12 @@ export default function HtmlToUrlPage() {
                   <Eye className="w-3.5 h-3.5" /> Monitor
                </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col">
+            <CardContent className="flex-1 p-0 relative overflow-hidden flex flex-col min-h-[320px]">
                 <iframe 
                   srcDoc={previewSrcDoc}
                   title="Preview"
                   sandbox="allow-scripts allow-forms"
-                  className="flex-1 w-full min-h-[320px] border-none bg-transparent block"
+                  className="flex-1 w-full h-full border-none bg-transparent block"
                 />
             </CardContent>
           </Card>
@@ -306,9 +308,9 @@ export default function HtmlToUrlPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Optimized Encoding</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Self-Contained Links</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Utilizing the Realtime Database protocol for zero-latency asset synchronization and short-link generation.
+                    Utilizing the LZ-String algorithm to embed compressed payloads directly into the URL hash. No database fetch required for retrieval.
                   </p>
                 </div>
              </div>
@@ -317,15 +319,30 @@ export default function HtmlToUrlPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Sandboxed Logic</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Hosted pages are rendered in a restricted iframe sandbox to maintain hardware-native security.
+                    Zero data is stored on our servers. The entire page content is carried within the link itself and reconstructed locally in your browser.
                   </p>
                 </div>
              </div>
           </div>
         </div>
       </div>
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+      `}</style>
     </div>
+  );
+}
+
+function ArrowLeft({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+    </svg>
   );
 }
