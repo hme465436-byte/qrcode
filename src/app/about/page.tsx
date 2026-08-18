@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from 'react';
@@ -120,7 +119,7 @@ export default function AboutPage() {
       <section className="container mx-auto px-6 mb-40">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'Studio Units', val: '60+', icon: LayoutGrid },
+            { label: 'Studio Units', val: '200+', icon: LayoutGrid },
             { label: 'Other Projects', val: '7', icon: Zap },
             { label: 'Hardware Logic', val: '100%', icon: ShieldCheck },
             { label: 'Access', val: 'Free', icon: Heart },
