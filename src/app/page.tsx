@@ -85,7 +85,8 @@ import {
   Receipt,
   Trophy,
   Dices,
-  Scale
+  Scale,
+  UserCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -118,6 +119,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/bio-maker', 
+    icon: UserCircle, 
+    title: 'Bio Maker Studio', 
+    desc: 'Generate aesthetic, unique bios for IG, TikTok, WA, and FB.', 
+    label: 'IDENTITY', 
+    color: 'text-pink-500 bg-pink-500/10 border-pink-500/20',
+    glowClass: 'bg-pink-500/10',
+    keywords: ['bio maker', 'instagram bio', 'tiktok bio', 'aesthetic bio', 'cool bio', 'profile bio', 'social media bio'],
     category: 'generators'
   },
   { 
@@ -1043,7 +1055,7 @@ export default function Home() {
       'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
       'Hide text in image', 'Secret photo', 'Steganography', 'Temp Room', 'Clipboard share', 
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
-      'BMI Calculator', 'Body Mass Index', 'Healthy weight'
+      'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
