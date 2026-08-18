@@ -89,7 +89,8 @@ import {
   UserCircle,
   Maximize2,
   Keyboard,
-  ChevronDown
+  ChevronDown,
+  Gauge
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -123,6 +124,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/speed-test', 
+    icon: Gauge, 
+    title: 'Speed Test', 
+    desc: 'Professional network telemetry. Test download, upload, and ping.', 
+    label: 'TELEMETRY', 
+    color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
+    glowClass: 'bg-cyan-500/10',
+    keywords: ['speed test', 'internet speed', 'mbps', 'ping', 'download speed', 'upload speed', 'wifi test'],
+    category: 'utilities'
   },
   { 
     href: '/keyboard-test', 
@@ -798,7 +810,7 @@ const TOOLS: Tool[] = [
   { 
     href: '/markdown-preview', 
     icon: FileEdit, 
-    title: 'Markdown Preview', 
+    title: 'Markdown', 
     desc: 'Live Markdown to HTML synthesis with visual preview.', 
     label: 'MARKUP', 
     color: 'text-sky-500 bg-sky-500/10 border-sky-500/20',
@@ -985,7 +997,7 @@ const TOOLS: Tool[] = [
   { 
     href: '/dictionary', 
     icon: Book, 
-    title: 'English Dictionary', 
+    title: 'Dictionary', 
     desc: 'Professional linguistic analysis and definitions.', 
     label: 'LANG', 
     color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
@@ -1093,7 +1105,7 @@ export default function Home() {
       'Hide text in image', 'Secret photo', 'Stenography', 'Temp Room', 'Clipboard share', 
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
       'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
-      'Enlarge image', 'KB size increaser'
+      'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
