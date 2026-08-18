@@ -27,7 +27,9 @@ import {
   Crown,
   Smartphone,
   Share2,
-  AlertCircle
+  AlertCircle,
+  Activity,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -273,6 +275,11 @@ export default function LuckyDrawPage() {
     localStorage.removeItem('mykit_luckydraw_winners');
   };
 
+  const handleClear = () => {
+    setParticipants([]);
+    toast({ title: "Purged", description: "Participant matrix cleared." });
+  };
+
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
       <div className="mb-12 animate-reveal">
@@ -291,7 +298,7 @@ export default function LuckyDrawPage() {
            <div className="flex items-center gap-3">
               <GetHelp toolId="lucky-draw" />
               {participants.length > 0 && (
-                <Button variant="outline" size="sm" onClick={() => { setParticipants([]); handleClear(); }} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Purge Matrix
                 </Button>
               )}
@@ -559,6 +566,7 @@ export default function LuckyDrawPage() {
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
