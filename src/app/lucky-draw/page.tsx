@@ -106,6 +106,8 @@ export default function LuckyDrawPage() {
   const [currentWinnersBatch, setCurrentWinnersBatch] = useState<Participant[]>([]);
   const [showWinnerPopup, setShowWinnerPopup] = useState(false);
   const [slotIndex, setSlotIndex] = useState(0);
+  const [shuffleView, setShuffleView] = useState<Participant[]>([]);
+  const [isCopied, setIsCopied] = useState<string | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotationRef = useRef(0);
@@ -171,21 +173,6 @@ export default function LuckyDrawPage() {
     } catch(e) {}
   };
 
-  // --- Confetti Synthesis ---
-  const launchConfetti = () => {
-    const duration = 3 * 1000;
-    const end = Date.now() + duration;
-
-    const frame = () => {
-      const canvas = document.createElement('canvas');
-      canvas.className = "fixed inset-0 pointer-events-none z-[300]";
-      document.body.appendChild(canvas);
-      // Confetti simulation simplified
-      setTimeout(() => canvas.remove(), 3000);
-    };
-    // Note: In real production we'd use canvas-confetti, simulating with pop-ups.
-  };
-
   // --- Core Rendering Engine ---
   const drawWheel = useCallback(() => {
     if (!canvasRef.current || mode !== 'wheel') return;
@@ -212,7 +199,7 @@ export default function LuckyDrawPage() {
     let startAngle = rotationRef.current;
     
     activeParticipants.forEach((p, i) => {
-      const sliceAngle = (p.weight / totalWeight) * (Math.PI * 2);
+      const sliceAngle = (p.weight / (totalWeight || 1)) * (Math.PI * 2);
       const endAngle = startAngle + sliceAngle;
 
       // Draw Slice
@@ -231,7 +218,7 @@ export default function LuckyDrawPage() {
       ctx.rotate(startAngle + sliceAngle / 2);
       ctx.textAlign = 'right';
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = `black ${Math.max(10, Math.min(24, 400 / activeParticipants.length))}px Inter, sans-serif`;
+      ctx.font = `bold ${Math.max(10, Math.min(24, 400 / activeParticipants.length))}px Inter, sans-serif`;
       ctx.fillText(p.name.substring(0, 12), radius - 40, 5);
       ctx.restore();
 
@@ -327,7 +314,7 @@ export default function LuckyDrawPage() {
     const animate = (now: number) => {
       const elapsed = now - startTime;
       if (elapsed < duration) {
-        setNicknames([...activeParticipants].sort(() => Math.random() - 0.5) as any);
+        setShuffleView([...activeParticipants].sort(() => Math.random() - 0.5));
         spinRequestRef.current = requestAnimationFrame(animate);
       } else {
         setIsSpinning(false);
@@ -400,6 +387,18 @@ export default function LuckyDrawPage() {
     toast({ title: "Batch Injected", description: `Added ${newItems.length} participants.` });
   };
 
+  const removeParticipant = (id: string) => {
+    setParticipants(prev => prev.filter(p => p.id !== id));
+    toast({ title: "Identity Purged" });
+  };
+
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setIsCopied(label);
+    toast({ title: "Copied", description: "Identity saved to clipboard." });
+    setTimeout(() => setIsCopied(null), 2000);
+  };
+
   const exportRoster = () => {
     const content = participants.map(p => `${p.name},${p.token || ''},${p.weight},${p.group || ''}`).join('\n');
     const blob = new Blob([content], { type: 'text/plain' });
@@ -439,7 +438,7 @@ export default function LuckyDrawPage() {
             Professional high-fidelity selection engine. Execute fair weighted drawings, manage clinical rosters, and archive winners locally with zero cloud persistence.
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="lucky-draw" />
            <Button variant="outline" onClick={() => setParticipants([])} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
               <Trash2 className="w-3.5 h-3.5 mr-2" /> Purge Roster
@@ -540,7 +539,7 @@ export default function LuckyDrawPage() {
                  ) : (
                    <div className="divide-y divide-white/5">
                       {activeParticipants.map(p => {
-                        const winPct = ((p.weight / totalWeight) * 100).toFixed(1);
+                        const winPct = ((p.weight / (totalWeight || 1)) * 100).toFixed(1);
                         return (
                           <div key={p.id} className="p-4 flex items-center justify-between group/row hover:bg-white/5 transition-all">
                              <div className="flex items-center gap-4 overflow-hidden">
@@ -620,7 +619,7 @@ export default function LuckyDrawPage() {
                     {mode === 'shuffle' && (
                        <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
                           <div className={cn("grid grid-cols-2 gap-4 w-full p-4 transition-all duration-300", isSpinning ? "blur-md scale-95 opacity-50" : "opacity-100")}>
-                             {activeParticipants.slice(0, 4).map((p, i) => (
+                             {(isSpinning ? shuffleView : activeParticipants).slice(0, 4).map((p, i) => (
                                <div key={p.id} className="aspect-[4/3] bg-secondary/50 rounded-2xl border border-white/5 flex items-center justify-center p-4">
                                   <span className="text-[10px] font-black text-white/20 uppercase tracking-widest text-center truncate">{p.name}</span>
                                </div>
@@ -758,7 +757,7 @@ export default function LuckyDrawPage() {
                                </div>
                             </div>
                             <button onClick={() => handleCopy(w.name, w.id)} className="text-foreground/10 hover:text-primary transition-colors px-2">
-                               <Copy className="w-4 h-4" />
+                               <Copy className="w-3.5 h-3.5" />
                             </button>
                          </div>
                        ))}
@@ -829,4 +828,3 @@ export default function LuckyDrawPage() {
     </div>
   );
 }
-
