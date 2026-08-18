@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -41,11 +42,12 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Production Telemetry Config ---
-const CLOUDFLARE_DOWN = 'https://speed.cloudflare.com/__down?bytes=25000000';
+// Using 50MB for more stable measurement
+const CLOUDFLARE_DOWN = 'https://speed.cloudflare.com/__down?bytes=50000000';
 const CLOUDFLARE_UP = 'https://speed.cloudflare.com/__up';
 const PING_URL = 'https://www.cloudflare.com/favicon.ico';
 const HISTORY_KEY = 'mykit_speed_history_v7';
-const WARMUP_TIME_MS = 2000; // Ignore first 2s for TCP ramp-up
+const WARMUP_TIME_MS = 2000; 
 const MASTER_TIMEOUT_MS = 45000; 
 
 type TestStep = 'idle' | 'ping' | 'download' | 'upload' | 'complete';
@@ -87,6 +89,7 @@ export default function SpeedTestPage() {
   const [location, setLocation] = useState<string>('');
   const [ispName, setIspName] = useState<string>('');
   const [publicIp, setPublicIp] = useState<string>('');
+  const [browserProtocol, setBrowserProtocol] = useState<string>('');
   
   // Runtime State
   const [isTesting, setIsTesting] = useState(false);
@@ -98,24 +101,43 @@ export default function SpeedTestPage() {
 
   const testTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load Metadata & History
-  useEffect(() => {
-    const saved = localStorage.getItem(HISTORY_KEY);
-    if (saved) try { setHistory(JSON.parse(saved)); } catch (e) {}
+  // Metadata Detection Logic
+  const detectEnvironment = useCallback(() => {
+    if (typeof window === 'undefined') return;
     
+    // Browser Name
+    const ua = navigator.userAgent;
+    let browser = "Other";
+    if (ua.includes("Chrome")) browser = "Chrome";
+    else if (ua.includes("Firefox")) browser = "Firefox";
+    else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+    else if (ua.includes("Edge")) browser = "Edge";
+    
+    // Connection Type (where available)
+    const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    const type = conn ? ` (${conn.effectiveType?.toUpperCase() || 'WiFi'})` : "";
+    setBrowserProtocol(`${browser}${type}`);
+
+    // IP/ISP Discovery
     fetch('https://ipapi.co/json/')
       .then(r => r.json())
       .then(data => {
-        setIspName(data.org || '');
-        setPublicIp(data.ip || '');
+        setIspName(data.org || 'Unknown ISP');
+        setPublicIp(data.ip || 'Hidden');
         setLocation(`${data.city || 'Matrix Node'}, ${data.country_code || 'Global'}`);
       })
-      .catch(() => {});
-
-    return () => {
-      if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
-    };
+      .catch(() => {
+        setIspName('Lookup Restricted');
+        setPublicIp('Hidden');
+        setLocation('Global Node');
+      });
   }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(HISTORY_KEY);
+    if (saved) try { setHistory(JSON.parse(saved)); } catch (e) {}
+    detectEnvironment();
+  }, [detectEnvironment]);
 
   const resetResults = () => {
     setDownloadMbps(null);
@@ -131,40 +153,35 @@ export default function SpeedTestPage() {
   const handleCopy = () => {
     const text = [
       `[MY KIT TOOL - BROWSER SPEED TEST]`,
-      `Download: ${downloadMbps?.toFixed(1) || '--'} Mbps`,
-      `Upload: ${uploadMbps?.toFixed(1) || '--'} Mbps`,
-      `Ping: ${pingMs || '--'} ms`,
-      `Jitter: ${jitterMs || '--'} ms`,
-      `ISP: ${ispName || 'Unknown'}`,
-      `IP: ${publicIp || 'Hidden'}`,
-      `Node: ${location || 'Global'}`,
+      `Download: ${downloadMbps?.toFixed(1) || '—'} Mbps`,
+      `Upload: ${uploadMbps?.toFixed(1) || '—'} Mbps`,
+      `Ping: ${pingMs || '—'} ms`,
+      `Jitter: ${jitterMs || '—'} ms`,
+      `ISP: ${ispName}`,
+      `IP: ${publicIp}`,
+      `Node: ${location}`,
+      `Platform: ${browserProtocol}`,
       `Timestamp: ${new Date().toLocaleString()}`
     ].join('\n');
     navigator.clipboard.writeText(text);
     setIsCopied(true);
-    toast({ title: "Benchmarks Copied" });
+    toast({ title: "Matrix Copied" });
     setTimeout(() => setIsCopied(false), 2000);
   };
-
-  // --- Telemetry Core (Strict Real-World Measurements) ---
 
   const runPingAndJitter = async (): Promise<{ ping: number, jitter: number }> => {
     setStep('ping');
     const samples: number[] = [];
     const jitterSamples: number[] = [];
     
-    // 10 distinct samples for stability
     for (let i = 0; i < 10; i++) {
       const start = performance.now();
       try {
         await fetch(`${PING_URL}?t=${Date.now()}`, { mode: 'no-cors', cache: 'no-cache' });
         const latency = performance.now() - start;
         samples.push(latency);
-        if (i > 0) {
-          jitterSamples.push(Math.abs(latency - samples[i - 1]));
-        }
+        if (i > 0) jitterSamples.push(Math.abs(latency - samples[i - 1]));
       } catch (e) {
-        // Fallback for extreme drops
         samples.push(50); 
       }
       setProgress(Math.round((i / 10) * 10));
@@ -186,7 +203,7 @@ export default function SpeedTestPage() {
       const response = await fetch(`${CLOUDFLARE_DOWN}&t=${Date.now()}`, { cache: 'no-cache' });
       if (!response.body) return 0;
       
-      const totalBytes = 25000000; // 25MB
+      const totalBytes = 50000000; 
       const reader = response.body.getReader();
 
       while (true) {
@@ -196,7 +213,6 @@ export default function SpeedTestPage() {
         loaded += value.length;
         const now = performance.now();
         
-        // Ignore the first 2 seconds (WARMUP) for sustained speed calculation
         if (measureStartTime === 0 && (now - passStartTime) > WARMUP_TIME_MS) {
           measureStartTime = now;
           bytesAtMeasureStart = loaded;
@@ -205,7 +221,6 @@ export default function SpeedTestPage() {
         if (measureStartTime > 0) {
           const durationSecs = (now - measureStartTime) / 1000;
           if (durationSecs > 0) {
-            // Real Mbps = (Bytes * 8 bits) / (seconds * 1M bits)
             const mbps = ((loaded - bytesAtMeasureStart) * 8) / (durationSecs * 1024 * 1024);
             setCurrentSpeed(mbps);
           }
@@ -213,7 +228,7 @@ export default function SpeedTestPage() {
         setProgress(baseProg + Math.min((loaded / totalBytes) * 20, 20));
       }
       
-      if (measureStartTime === 0) return 0; // Test finished before warmup
+      if (measureStartTime === 0) return 0; 
       const finalDuration = (performance.now() - measureStartTime) / 1000;
       return ((loaded - bytesAtMeasureStart) * 8) / (finalDuration * 1024 * 1024);
     } catch (e) {
@@ -223,10 +238,9 @@ export default function SpeedTestPage() {
 
   const runUploadPass = async (): Promise<number | null> => {
     setStep('upload');
-    const size = 5 * 1024 * 1024; // 5MB hardware payload
+    const size = 5 * 1024 * 1024; 
     const data = new Uint8Array(size);
     
-    // Chunked entropy population for hardware stability
     for (let i = 0; i < size; i += 65536) {
       const end = Math.min(i + 65536, size);
       window.crypto.getRandomValues(data.subarray(i, end));
@@ -241,7 +255,6 @@ export default function SpeedTestPage() {
       });
       if (!response.ok) return null;
       const duration = (performance.now() - start) / 1000;
-      // Real Mbps = (Size in bits) / (Duration in seconds * 1M bits)
       return (size * 8) / (duration * 1024 * 1024);
     } catch (e) {
       return null;
@@ -257,25 +270,20 @@ export default function SpeedTestPage() {
       if (isTesting) {
         setIsTesting(false);
         setStep('complete');
-        toast({ title: "Temporal Limit", description: "Studio partially finalized." });
+        toast({ title: "Timeout", description: "Partial results isolated." });
       }
     }, MASTER_TIMEOUT_MS);
 
-    // 1. Latency & Variance
     const { ping, jitter } = await runPingAndJitter();
     setPingMs(ping);
     setJitterMs(jitter);
-    setProgress(15);
-
-    // 2. Dual-Pass Sustained Download
+    
     const d1 = await runDownloadPass(15);
-    setProgress(40);
     const d2 = await runDownloadPass(40);
-    const bestD = Math.max(d1, d2); // Capture peak sustained capacity
+    const bestD = Math.max(d1, d2); 
     setDownloadMbps(bestD);
-    setProgress(75);
+    setCurrentSpeed(bestD);
 
-    // 3. Output Pass
     const u = await runUploadPass();
     setUploadMbps(u);
     setProgress(100);
@@ -284,7 +292,6 @@ export default function SpeedTestPage() {
     setIsTesting(false);
     if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
 
-    // Archive Result to Matrix
     const res: SpeedResult = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
@@ -292,7 +299,7 @@ export default function SpeedTestPage() {
       upload: u,
       ping,
       jitter,
-      location: location,
+      location,
       isp: ispName
     };
 
@@ -301,11 +308,7 @@ export default function SpeedTestPage() {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
       return next;
     });
-
-    toast({ title: "Telemetry Finalized", description: "Network profile synchronized." });
   };
-
-  // --- Utility Matrix ---
 
   const videoCapability = useMemo(() => {
     if (!downloadMbps) return null;
@@ -358,17 +361,13 @@ export default function SpeedTestPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-        {/* Main Telemetry Workspace */}
         <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-left-6 duration-1000">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group flex flex-col min-h-[600px] bg-[#060608]">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               
               <CardContent className="flex-1 flex flex-col items-center justify-center p-6 sm:p-16 relative overflow-hidden">
-                 
-                 {/* GAUGE MATRIX */}
                  <div className="relative w-full max-w-[500px] aspect-[4/3] flex items-center justify-center pt-10">
                     <div className="absolute inset-0 bg-primary/5 blur-[120px] rounded-full animate-pulse" />
-                    
                     <svg viewBox="0 0 200 120" className="w-full h-full fill-none">
                        <path d="M20,110 A80,80 0 0,1 180,110" stroke="currentColor" strokeWidth="12" className="text-white/5" strokeLinecap="round" />
                        <path 
@@ -380,7 +379,6 @@ export default function SpeedTestPage() {
                          className="text-primary/40 transition-all duration-1000 ease-out" 
                          strokeLinecap="round" 
                        />
-
                        {GAUGE_POINTS.map((pt, i) => {
                          const angle = getAngleForSpeed(pt);
                          const rad = (angle * Math.PI) / 180;
@@ -395,7 +393,6 @@ export default function SpeedTestPage() {
                            </g>
                          );
                        })}
-
                        <g style={{ transform: `rotate(${needleAngle}deg)`, transformOrigin: '100px 110px' }} className="transition-transform duration-500 ease-out">
                           <path d="M100,110 L100,30" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" />
                           <circle cx="100" cy="110" r="6" fill="hsl(var(--primary))" />
@@ -416,7 +413,7 @@ export default function SpeedTestPage() {
                           </div>
                        )}
 
-                       {ispName && (
+                       {ispName && ispName !== 'Lookup Restricted' && (
                          <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-white/5 border border-white/10 animate-in fade-in">
                             <Signal className="w-3 3 text-primary animate-pulse" />
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">{ispName}</span>
@@ -447,13 +444,12 @@ export default function SpeedTestPage() {
                  </div>
               </CardContent>
 
-              {/* Status Tracking Bar */}
               <div className="p-8 border-t border-white/5 bg-secondary/30 flex items-center justify-around flex-wrap gap-6">
                  {[
-                   { id: 'ping', label: 'Ping', icon: Clock, val: pingMs ? `${pingMs}ms` : '--', color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-                   { id: 'jitter', label: 'Jitter', icon: Activity, val: jitterMs ? `${jitterMs}ms` : '--', color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
-                   { id: 'download', label: 'Download', icon: ArrowDown, val: downloadMbps ? `${downloadMbps.toFixed(1)}` : '--', color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
-                   { id: 'upload', label: 'Upload', icon: ArrowUp, val: uploadMbps ? `${uploadMbps.toFixed(1)}` : '--', color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+                   { id: 'ping', label: 'Ping', icon: Clock, val: pingMs ? `${pingMs}ms` : '—', color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+                   { id: 'jitter', label: 'Jitter', icon: Activity, val: jitterMs ? `${jitterMs}ms` : '—', color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+                   { id: 'download', label: 'Download', icon: ArrowDown, val: downloadMbps ? `${downloadMbps.toFixed(1)}` : '—', color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
+                   { id: 'upload', label: 'Upload', icon: ArrowUp, val: uploadMbps ? `${uploadMbps.toFixed(1)}` : '—', color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
                  ].map((s) => (
                    <div key={s.id} className={cn(
                      "flex flex-col items-center gap-4 p-5 rounded-[2.5rem] transition-all duration-700 min-w-[100px] border",
@@ -472,7 +468,6 @@ export default function SpeedTestPage() {
               </div>
            </Card>
 
-           {/* Video Capability */}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <Card className="glass-card border-border shadow-xl p-8">
                  <div className="flex items-center gap-3 mb-8">
@@ -517,9 +512,9 @@ export default function SpeedTestPage() {
                  </div>
 
                  <div className="pt-8 space-y-4">
-                    <div className="flex items-center gap-3 px-1 text-foreground/40">
-                       <Info className="w-4 h-4" />
-                       <p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">Browser test based on sustained Cloudflare bitstreams. Not an ISP official certificate.</p>
+                    <div className="flex items-start gap-3 px-1 text-foreground/40">
+                       <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                       <p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">Browser estimate based on sustained Cloudflare bitstreams. Not an ISP official certificate.</p>
                     </div>
                     <Button onClick={handleCopy} disabled={!downloadMbps} className="w-full h-14 bg-white text-black font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-white/90">
                        {isCopied ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
@@ -530,8 +525,8 @@ export default function SpeedTestPage() {
            </div>
         </div>
 
-        {/* Sidebar History */}
-        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+        {/* Sidebar History & Metadata */}
+        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2 min-w-0">
            <Card className="glass-card border-border shadow-xl flex flex-col max-h-[500px]">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
@@ -582,7 +577,7 @@ export default function SpeedTestPage() {
                  {[
                    { label: 'Network Origin', val: location || 'Identifying...', icon: MapPin },
                    { label: 'Public Identity (IP)', val: publicIp || 'Hidden', icon: Shield },
-                   { label: 'Hardware Protocol', val: 'WASM Dual-Pass', icon: Zap },
+                   { label: 'Platform Logic', val: browserProtocol || 'Identifying Hardware...', icon: Zap },
                  ].map((item, i) => (
                     <div key={i} className="flex gap-4 group/item">
                        <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary/40 shrink-0 border border-border group-hover/item:text-primary transition-colors">
@@ -602,9 +597,9 @@ export default function SpeedTestPage() {
                 <ShieldCheck className="w-7 h-7" />
              </div>
              <div className="space-y-2">
-               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hardware Native Accuracy</h4>
+               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hardware Native Logic</h4>
                <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                 Telemetry logic is based strictly on bitstream analysis of global Cloudflare edge assets. No simulation or artificial result biasing is active in the studio.
+                 Telemetry benchmarks are derived strictly from bitstream analysis of global Cloudflare edge assets. Zero simulation or artificial result biasing is enabled.
                </p>
              </div>
           </div>
