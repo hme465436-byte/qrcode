@@ -60,7 +60,7 @@ const TEMPLATES = {
   },
   inventory: {
     headers: ['Item Name', 'SKU', 'Stock', 'Price', 'Value'],
-    rows: [['Monitor 4K', 'HW-101', '10', '45000', '=SUM(C2*D2)'], ['Keyboard', 'HW-102', '50', '1200', '60000']]
+    rows: [['Monitor 4K', 'HW-101', '10', '45000', '=C2*D2'], ['Keyboard', 'HW-102', '50', '1200', '=C3*D3']]
   },
   salary: {
     headers: ['Employee', 'Basic', 'Bonus', 'Tax', 'Net Payable'],
@@ -188,6 +188,36 @@ export default function WpsSheetsAdvancedPage() {
     toast({ title: "Studio Reset", description: "All parameters cleared." });
   };
 
+  const handleImportCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessing(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
+        
+        if (json.length > 0) {
+          pushHistory();
+          setHeaders(json[0].map((h, i) => (h || `Col ${i + 1}`).toString()));
+          setRows(json.slice(1).map(row => row.map(cell => (cell ?? "").toString())));
+          setTitle(file.name.replace(/\.[^/.]+$/, ""));
+          toast({ title: "Import Success", description: "Document matrix synchronized." });
+        }
+      } catch (err) {
+        toast({ variant: "destructive", title: "Import Failed", description: "Malformed file structure." });
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   // --- Formula Engine ---
   const getCellValue = (coord: string, currentRows: string[][]) => {
     const colMatch = coord.match(/[A-Z]+/);
@@ -231,12 +261,14 @@ export default function WpsSheetsAdvancedPage() {
         }
       }
       
+      // Basic math operations
       const resolved = formula.replace(/[A-Z]+\d+/g, (match) => {
         return getCellValue(match, currentRows).toString();
       });
       
       if (/^[0-9+\-*/().\s]+$/.test(resolved)) {
-        return eval(resolved).toString();
+        // Safe evaluation of simple math
+        return Function(`"use strict"; return (${resolved})`)().toString();
       }
     } catch (e) {
       return '#REF!';
@@ -304,7 +336,7 @@ export default function WpsSheetsAdvancedPage() {
       }
     }
     
-    const headersRaw = workingRows[headerIdx];
+    const headersRaw = workingRows[headerIdx] || [];
     workingRows = workingRows.slice(headerIdx + 1);
 
     // 3. Trim and Clean values
