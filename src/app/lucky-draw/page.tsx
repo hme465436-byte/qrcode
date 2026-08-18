@@ -212,14 +212,30 @@ export default function LuckyDrawPage() {
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Draw Name Text
+      // Draw Name Text - Adaptive Scaling
       ctx.save();
       ctx.translate(center, center);
       ctx.rotate(startAngle + sliceAngle / 2);
       ctx.textAlign = 'right';
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = `bold ${Math.max(10, Math.min(24, 400 / activeParticipants.length))}px Inter, sans-serif`;
-      ctx.fillText(p.name.substring(0, 12), radius - 40, 5);
+      
+      const numEntries = activeParticipants.length;
+      let baseSize = 750 / numEntries; 
+      if (numEntries < 8) baseSize = 48; 
+      const fontSize = Math.max(12, Math.min(baseSize, 56));
+      
+      ctx.font = `black ${fontSize}px Inter, sans-serif`;
+      
+      // High Contrast Text Protocol
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
+      
+      // Truncation Matrix to prevent overlap
+      const charLimit = numEntries < 10 ? 20 : 16;
+      const displayName = p.name.length > charLimit ? p.name.substring(0, charLimit - 2) + '...' : p.name;
+      
+      ctx.fillText(displayName.toUpperCase(), radius - 60, fontSize / 3);
       ctx.restore();
 
       startAngle = endAngle;
