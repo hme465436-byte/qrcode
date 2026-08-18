@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -27,7 +26,8 @@ import {
   BarChart3,
   Server,
   MapPin,
-  Clock
+  Clock,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,7 +80,7 @@ export default function SpeedTestPage() {
     
     // Initial Locating
     fetch('https://ipapi.co/json/').then(r => r.json()).then(data => {
-      setLocation(`${data.city}, ${data.country_code}`);
+      setLocation(`${data.city || 'Local Node'}, ${data.country_code || 'Matrix'}`);
     }).catch(() => setLocation('Global Node'));
   }, []);
 
@@ -146,14 +146,22 @@ export default function SpeedTestPage() {
 
   const runUploadTest = async () => {
     setStep('upload');
-    const data = new Uint8Array(UPLOAD_SIZE_KB * 1024);
-    window.crypto.getRandomValues(data);
+    const totalSize = UPLOAD_SIZE_KB * 1024;
+    const data = new Uint8Array(totalSize);
+    
+    // window.crypto.getRandomValues has a 65536 byte limit per call
+    const maxChunkSize = 65536;
+    for (let i = 0; i < totalSize; i += maxChunkSize) {
+      const end = Math.min(i + maxChunkSize, totalSize);
+      window.crypto.getRandomValues(data.subarray(i, end));
+    }
+
     const start = performance.now();
     try {
       const response = await fetch(UPLOAD_TEST_URL, { method: 'POST', body: data, cache: 'no-cache' });
       if (!response.ok) throw new Error("Blocked");
       const elapsed = (performance.now() - start) / 1000;
-      return (data.length * 8) / (elapsed * 1024 * 1024);
+      return (totalSize * 8) / (elapsed * 1024 * 1024);
     } catch (e) {
       return null;
     }
@@ -183,7 +191,7 @@ export default function SpeedTestPage() {
     setUploadMbps(u);
     
     // Archive to History
-    const result: SpeedResult = {
+    const resultRecord: SpeedResult = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
       download: finalDownload,
@@ -192,7 +200,7 @@ export default function SpeedTestPage() {
       location: location
     };
     
-    const newHistory = [result, ...history].slice(0, 5);
+    const newHistory = [resultRecord, ...history].slice(0, 5);
     setHistory(newHistory);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
 
@@ -213,7 +221,7 @@ export default function SpeedTestPage() {
     if (!downloadMbps) return null;
     if (downloadMbps > 50) return { label: 'ULTRA FAST', color: 'text-emerald-500', bg: 'bg-emerald-500/10', tip: 'Optimized for 4K streaming and high-volume data sync.' };
     if (downloadMbps > 20) return { label: 'NORMAL', color: 'text-primary', bg: 'bg-primary/10', tip: 'Standard production bandwidth. Stable for studio work.' };
-    return { label: 'SLOW', color: 'text-amber-500', bg: 'bg-amber-500/10', tip: 'Latency identified. Check hardware hardware or hardware port.' };
+    return { label: 'SLOW', color: 'text-amber-500', bg: 'bg-amber-500/10', tip: 'Latency identified. Check your network hardware or port.' };
   }, [downloadMbps]);
 
   return (
@@ -238,6 +246,9 @@ export default function SpeedTestPage() {
                 Copy Results
              </Button>
            )}
+           <Button variant="outline" onClick={resetResults} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+              <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
+           </Button>
         </div>
       </div>
 
@@ -313,7 +324,7 @@ export default function SpeedTestPage() {
                     ) : (
                       <div className="space-y-4 text-center">
                          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
-                            <span className="flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> {step.toUpperCase()} PROTOCOL...</span>
+                            <span className="flex items-center gap-2"><Loader2 className="w-3" /> {step.toUpperCase()} PROTOCOL...</span>
                             <span>{progress}%</span>
                          </div>
                          <Progress value={progress} className="h-1.5 rounded-full" />
@@ -465,4 +476,3 @@ export default function SpeedTestPage() {
     </div>
   );
 }
-
