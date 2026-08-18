@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -150,30 +149,38 @@ export default function KeyboardTestPage() {
     }
   };
 
+  // 1. Initialization Effect (Run once on mount)
   useEffect(() => {
-    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFsChange);
-    
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768 || /Android|iPhone|iPad/i.test(navigator.userAgent));
     };
     checkMobile();
+    window.addEventListener('resize', checkMobile);
 
     const savedMute = localStorage.getItem(MUTE_KEY);
     if (savedMute !== null) setIsMuted(savedMute === 'true');
 
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  // 2. Event Listener Lifecycle (Depends on handlers)
+  useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('resize', checkMobile);
+    
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('resize', checkMobile);
       document.removeEventListener('fullscreenchange', handleFsChange);
     };
   }, [handleKeyDown, handleKeyUp]);
 
+  // 3. Persistence Sync
   useEffect(() => {
     localStorage.setItem(MUTE_KEY, isMuted.toString());
   }, [isMuted]);
