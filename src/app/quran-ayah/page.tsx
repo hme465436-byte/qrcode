@@ -20,7 +20,8 @@ import {
   Trash2,
   Hash,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,27 +52,31 @@ export default function QuranAyahPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
+  const [error, setLocalError] = useState<string | null>(null);
 
   const fetchAyah = useCallback(async (reference: string | number = 'random') => {
     setIsLoading(true);
+    setLocalError(null);
     try {
-      // 1. Fetch English Translation (Asad)
+      // 1. Fetch English Translation (Asad) from the correct Cloud endpoint
       const transUrl = reference === 'random' 
-        ? `https://api.aladhan.com/v1/ayah/random/en.asad`
-        : `https://api.aladhan.com/v1/ayah/${reference}/en.asad`;
+        ? `https://api.alquran.cloud/v1/ayah/random/en.asad`
+        : `https://api.alquran.cloud/v1/ayah/${reference}/en.asad`;
       
       const transRes = await fetch(transUrl);
       const transJson = await transRes.json();
       
-      if (transJson.code !== 200) throw new Error("Reference not identified.");
+      if (transJson.code !== 200) {
+        throw new Error("Reference not identified. Ensure correct Surah:Ayah format (e.g. 2:255).");
+      }
       
       const data = transJson.data;
       const ayahNumber = data.number;
       
       // 2. Parallel Fetch for Arabic and Urdu
       const [arabicRes, urduRes] = await Promise.all([
-        fetch(`https://api.aladhan.com/v1/ayah/${ayahNumber}/quran-uthmani`),
-        fetch(`https://api.aladhan.com/v1/ayah/${ayahNumber}/ur.jalandhry`).catch(() => null)
+        fetch(`https://api.alquran.cloud/v1/ayah/${ayahNumber}/quran-uthmani`),
+        fetch(`https://api.alquran.cloud/v1/ayah/${ayahNumber}/ur.jalandhry`).catch(() => null)
       ]);
 
       const arabicJson = await arabicRes.json();
@@ -96,9 +101,10 @@ export default function QuranAyahPage() {
       if (reference !== 'random') {
         toast({ title: "Reference Isolated", description: `Surah ${data.surah.englishName} : ${data.numberInSurah}` });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast({ variant: "destructive", title: "Protocol Failure", description: "Could not retrieve ayah matrix." });
+      setLocalError(err.message || "Protocol Failure");
+      toast({ variant: "destructive", title: "Protocol Failure", description: err.message || "Could not retrieve ayah matrix." });
     } finally {
       setIsLoading(false);
     }
@@ -145,9 +151,11 @@ export default function QuranAyahPage() {
            </div>
            <div className="flex items-center gap-3">
               <GetHelp toolId="quran-ayah" />
-              <Button variant="outline" size="sm" onClick={() => fetchAyah()} disabled={isLoading} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">
-                <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isLoading && "animate-spin")} /> New Ayah
-              </Button>
+              {(ayah || error || searchQuery) && (
+                <Button variant="outline" size="sm" onClick={() => fetchAyah()} disabled={isLoading} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">
+                  <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isLoading && "animate-spin")} /> New Ayah
+                </Button>
+              )}
            </div>
         </div>
       </div>
@@ -235,7 +243,7 @@ export default function QuranAyahPage() {
               </CardHeader>
               
               <CardContent className="flex-1 p-8 sm:p-16 flex flex-col gap-12 relative overflow-hidden">
-                 {!ayah && !isLoading && (
+                 {!ayah && !isLoading && !error && (
                    <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-20">
                       <Book className="w-24 h-24 text-primary" />
                       <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Signal Detection</p>
@@ -249,6 +257,17 @@ export default function QuranAyahPage() {
                          <Globe className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                       </div>
                       <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Decoding Textual Buffer...</p>
+                   </div>
+                 )}
+
+                 {error && !isLoading && (
+                   <div className="flex flex-col items-center gap-8 py-20 text-center animate-in shake duration-500">
+                      <AlertCircle className="w-16 h-16 text-destructive animate-bounce" />
+                      <div className="space-y-2">
+                         <h3 className="text-xl font-headline font-black text-destructive uppercase">Reference Failure</h3>
+                         <p className="text-[11px] text-foreground/40 font-bold uppercase max-w-sm mx-auto leading-relaxed">{error}</p>
+                      </div>
+                      <Button onClick={() => fetchAyah()} variant="outline" className="h-12 bg-secondary border border-border text-foreground font-black rounded-xl text-[9px] uppercase tracking-widest">Randomize Protocol</Button>
                    </div>
                  )}
 
