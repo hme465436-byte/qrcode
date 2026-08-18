@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -15,11 +14,11 @@ import {
   History,
   Loader2,
   Save,
-  Plus,
   FileText,
   ShieldCheck,
   Layout,
-  AlertCircle
+  AlertCircle,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,11 +27,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/firebase';
+import { rtdb } from '@/firebase';
+import { ref, set } from 'firebase/database';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const HISTORY_KEY = 'htmlToUrlHistory_v3';
+const HISTORY_KEY = 'htmlToUrlHistory_v4';
 
 interface HistoryItem {
   id: string;
@@ -79,22 +78,29 @@ export default function HtmlToUrlPage() {
     const finalTitle = title.trim() || 'Untitled Page';
 
     try {
-      if (!db) throw new Error("Database connection unavailable.");
+      if (!rtdb) throw new Error("Database connection unavailable.");
 
-      // 1. Cloud Save - Must succeed before showing link
-      await setDoc(doc(db, "pages", id), { 
+      // 1. Cloud Save Protocol (Realtime Database)
+      await set(ref(rtdb, "pages/" + id), { 
         html: html.trim(), 
         title: finalTitle, 
         createdAt: Date.now() 
       });
 
-      // 2. Local Hardware Fallback
+      // 2. Hybrid Link Construction
+      let link = window.location.origin + window.location.pathname + "?kit=" + id;
+      
+      // If content is small, embed directly as fallback
+      if (html.length < 6000) {
+        link += "#h=" + encodeURIComponent(html.trim());
+      }
+
+      // 3. Hardware Persistence
       const pagesMap = JSON.parse(localStorage.getItem("kit_pages") || "{}");
-      pagesMap[id] = html;
+      pagesMap[id] = html.trim();
       localStorage.setItem("kit_pages", JSON.stringify(pagesMap));
 
-      // 3. Update History
-      const link = window.location.origin + window.location.pathname + "?kit=" + id;
+      // 4. Update History
       const historyItem = { id, title: finalTitle, url: link, date: Date.now() };
       const nextHistory = [historyItem, ...localHistory.filter(h => h.id !== id)].slice(0, 20);
       setLocalHistory(nextHistory);
@@ -103,8 +109,15 @@ export default function HtmlToUrlPage() {
       setPublishedLink(link);
       toast({ title: "Page Published", description: "Link generated and verified on cloud." });
     } catch (err: any) {
-      setError(`${err.code || 'Error'}: ${err.message}`);
-      toast({ variant: "destructive", title: "Publish Failed", description: "Check Firestore rules or connection." });
+      // Fallback: If DB fails but HTML is small, we can still provide a hash-only link
+      if (html.length < 6000) {
+        const link = window.location.origin + window.location.pathname + "#h=" + encodeURIComponent(html.trim());
+        setPublishedLink(link);
+        setError(`DB Restricted: ${err.message}. Providing self-contained link fallback.`);
+      } else {
+        setError(`${err.code || 'Error'}: ${err.message}`);
+        toast({ variant: "destructive", title: "Publish Failed", description: "Database rejected payload." });
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -143,7 +156,7 @@ export default function HtmlToUrlPage() {
               HTML to <span className="text-primary italic">URL Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Convert raw code into a shareable link instantly. Pages are synced to our global registry for 100% availability.
+              Convert raw code into a shareable link instantly. Pages are synced via a high-performance database with self-contained fallback protocols.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -175,7 +188,9 @@ export default function HtmlToUrlPage() {
                <div className="space-y-4">
                   <div className="flex justify-between items-center px-1">
                     <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">HTML / CSS / JS</Label>
-                    <span className="text-[9px] font-mono text-primary/60">{html.length.toLocaleString()} Chars</span>
+                    <span className={cn("text-[9px] font-mono", html.length > 6000 ? "text-yellow-500" : "text-primary/60")}>
+                      {html.length.toLocaleString()} Chars {html.length > 6000 ? '(DB Only Mode)' : '(Hybrid Ready)'}
+                    </span>
                   </div>
                   <Textarea 
                     value={html}
@@ -196,9 +211,12 @@ export default function HtmlToUrlPage() {
                   </Button>
 
                   {error && (
-                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
-                       <AlertCircle className="w-4 h-4 text-destructive" />
-                       <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">{error}</p>
+                    <div className={cn(
+                      "p-4 rounded-xl border flex items-center gap-3 animate-in shake duration-500",
+                      publishedLink ? "bg-amber-500/10 border-amber-500/20 text-amber-500" : "bg-destructive/10 border-destructive/20 text-destructive"
+                    )}>
+                       {publishedLink ? <Info className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                       <p className="text-[10px] font-bold uppercase tracking-widest">{error}</p>
                     </div>
                   )}
                </div>
@@ -241,7 +259,7 @@ export default function HtmlToUrlPage() {
                 {!localHistory.length ? (
                   <div className="py-20 text-center space-y-4 opacity-20">
                     <Globe className="w-12 h-12 mx-auto" />
-                    <p className="text-[10px] font-black uppercase tracking-widest px-12">No local links found</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest px-12">No local history found</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-white/5 max-h-[400px] overflow-auto custom-scrollbar">
@@ -293,9 +311,9 @@ export default function HtmlToUrlPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Verified Publishing</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hybrid Link Protocol</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    The studio waits for a successful cloud handshake before providing your link, ensuring your content is live for recipients immediately.
+                    Small payloads are embedded directly in the link hash. This ensures your hosted page is accessible even if the database signal is restricted.
                   </p>
                 </div>
              </div>
@@ -304,22 +322,15 @@ export default function HtmlToUrlPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">WASM Sandbox Safety</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Un-published drafting occurs strictly in your browser session. Cloud storage is only initialized upon explicit "Publish" command.
+                    Pages are rendered in a restricted iframe sandbox. Browser-native memory isolation prevents local scripts from accessing your primary studio environment.
                   </p>
                 </div>
              </div>
           </div>
         </div>
       </div>
-      
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-      `}</style>
     </div>
   );
 }

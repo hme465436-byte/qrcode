@@ -4,6 +4,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getDatabase, Database } from 'firebase/database';
 import { firebaseConfig } from './config';
 
 /**
@@ -21,6 +22,7 @@ let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
 let storage: FirebaseStorage | null = null;
+let rtdb: Database | null = null;
 
 if (typeof window !== 'undefined') {
   if (isConfigValid) {
@@ -29,6 +31,7 @@ if (typeof window !== 'undefined') {
       db = getFirestore(app);
       auth = getAuth(app);
       storage = getStorage(app);
+      rtdb = getDatabase(app);
     } catch (err) {
       console.error("Firebase initialization failed:", err);
     }
@@ -37,10 +40,10 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export { app, db, auth, storage };
+export { app, db, auth, storage, rtdb };
 
 export function initializeFirebase() {
-  return { firebaseApp: app, firestore: db, auth, storage };
+  return { firebaseApp: app, firestore: db, auth, storage, rtdb };
 }
 
 export * from './provider';
