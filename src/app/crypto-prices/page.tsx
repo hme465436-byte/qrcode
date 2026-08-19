@@ -31,7 +31,9 @@ import {
   Banknote,
   Server,
   LineChart as LineChartIcon,
-  Maximize2
+  Maximize2,
+  Radio,
+  Cpu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +69,6 @@ const DEFAULT_COINS = [
   { id: 'cardano', symbol: 'ADA', name: 'Cardano' },
 ];
 
-// Local list for instant filtering
 const LOCAL_FILTER_COINS = [
   { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' },
   { id: 'ethereum', symbol: 'ETH', name: 'Ethereum' },
@@ -81,6 +82,7 @@ const LOCAL_FILTER_COINS = [
 
 const SEARCH_API = 'https://api.coingecko.com/api/v3/search?query=';
 const PRICE_API_BASE = 'https://api.coingecko.com/api/v3/simple/price';
+const BINANCE_BTC_API = 'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT';
 const MARKETS_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h';
 const PERSIST_KEY = 'mykit_crypto_watchlist_v3';
 
@@ -115,6 +117,11 @@ interface ChartPoint {
   price: number;
 }
 
+interface BinancePrice {
+  symbol: string;
+  price: string;
+}
+
 export default function CryptoPricesPage() {
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -122,6 +129,7 @@ export default function CryptoPricesPage() {
   // State Matrix
   const [watchlist, setWatchlist] = useState<CoinIdentity[]>(DEFAULT_COINS);
   const [prices, setPrices] = useState<PriceData | null>(null);
+  const [binanceBtc, setBinanceBtc] = useState<string | null>(null);
   const [markets, setMarkets] = useState<MarketCoin[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<CoinIdentity[]>([]);
@@ -183,7 +191,6 @@ export default function CryptoPricesPage() {
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
     
-    // Minimal requirement: 1 character
     if (query.length === 0) {
       setSuggestions([]);
       setShowDropdown(false);
@@ -195,13 +202,11 @@ export default function CryptoPricesPage() {
       setSelectedIndex(-1);
       setShowDropdown(true);
       
-      // 1. Local Matrix Filter
       const localMatches = LOCAL_FILTER_COINS.filter(c => 
         c.name.toLowerCase().includes(query) || 
         c.symbol.toLowerCase().includes(query)
       );
 
-      // 2. Global API Discovery Handshake
       try {
         const res = await fetch(`${SEARCH_API}${encodeURIComponent(query)}`);
         if (!res.ok) throw new Error("Search node unavailable");
@@ -217,7 +222,6 @@ export default function CryptoPricesPage() {
 
         setSuggestions(() => {
           const map = new Map();
-          // Merge local and global, prioritize local
           localMatches.forEach(item => map.set(item.id, item));
           globalItems.forEach(item => map.set(item.id, item));
           return Array.from(map.values()).slice(0, 5); 
@@ -270,6 +274,18 @@ export default function CryptoPricesPage() {
   };
 
   // --- Telemetry Protocols ---
+  const fetchBinancePrice = useCallback(async () => {
+    try {
+      const res = await fetch(BINANCE_BTC_API);
+      if (res.ok) {
+        const data: BinancePrice = await res.json();
+        setBinanceBtc(parseFloat(data.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      }
+    } catch (e) {
+      console.warn("Binance ticker restricted.");
+    }
+  }, []);
+
   const fetchMarkets = async () => {
     try {
       const response = await fetch(MARKETS_API);
@@ -290,21 +306,21 @@ export default function CryptoPricesPage() {
     const url = `${PRICE_API_BASE}?ids=${ids}&vs_currencies=usd,pkr&include_24hr_change=true`;
 
     try {
-      const response = await fetch(url);
-      
-      if (response.status === 429) {
-        if (!silent) setError("Rate Limit Active: Node restricted. Using cached matrix data.");
-        return;
-      }
-
-      if (!response.ok) throw new Error("Financial nodes unreachable.");
-      
-      const data = await response.json();
-      setPrices(data);
-      setLastSync(Date.now());
-      
-      // Also update markets table
-      fetchMarkets();
+      // Parallel execution for high-frequency sync
+      await Promise.all([
+        fetch(url).then(async response => {
+          if (response.status === 429) {
+            if (!silent) setError("Rate Limit Active: Node restricted. Using cached matrix data.");
+            return;
+          }
+          if (!response.ok) throw new Error("Financial nodes unreachable.");
+          const data = await response.json();
+          setPrices(data);
+          setLastSync(Date.now());
+        }),
+        fetchBinancePrice(),
+        fetchMarkets()
+      ]);
       
       if (!silent) {
         toast({ 
@@ -317,7 +333,7 @@ export default function CryptoPricesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [watchlist, toast]);
+  }, [watchlist, toast, fetchBinancePrice]);
 
   useEffect(() => {
     fetchPrices();
@@ -325,7 +341,7 @@ export default function CryptoPricesPage() {
 
   useEffect(() => {
     if (isAutoRefresh) {
-      const interval = setInterval(() => fetchPrices(true), 15000); // Recalibrated to 15s for high-frequency telemetry
+      const interval = setInterval(() => fetchPrices(true), 15000); 
       return () => clearInterval(interval);
     }
   }, [isAutoRefresh, fetchPrices]);
@@ -406,7 +422,7 @@ export default function CryptoPricesPage() {
             Crypto <span className="text-primary italic">Prices Studio</span>
           </h1>
           <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional real-time financial matrix. Monitor global digital assets in USD and PKR with clinical precision.
+            Professional real-time financial matrix. Monitor global digital assets with dedicated Binance tickers and clinical precision.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-4 shrink-0 pb-2">
@@ -456,7 +472,6 @@ export default function CryptoPricesPage() {
                           </Button>
                        </div>
 
-                       {/* Suggestions Dropdown */}
                        {showDropdown && suggestions.length > 0 && (
                           <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 animate-in slide-in-from-top-2 duration-300">
                              <div className="glass-card border-border shadow-2xl rounded-2xl overflow-hidden divide-y divide-white/5">
@@ -539,6 +554,36 @@ export default function CryptoPricesPage() {
         {/* Main Dashboard - Right */}
         <div className="lg:col-span-8 space-y-8 animate-in fade-in duration-1000 stagger-2">
            
+           {/* Binance Live Ticker Card */}
+           <div className="grid grid-cols-1 gap-6">
+              <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden relative group">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                 <CardContent className="p-8 flex flex-col sm:flex-row items-center justify-between gap-8">
+                    <div className="flex items-center gap-6">
+                       <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
+                          <Radio className="w-8 h-8 animate-pulse" />
+                       </div>
+                       <div className="space-y-1">
+                          <div className="flex items-center gap-3">
+                             <h2 className="text-3xl font-headline font-black text-foreground uppercase tracking-tight">BTC / USDT</h2>
+                             <Badge className="bg-primary/10 text-primary border-primary/20 text-[8px] font-black uppercase tracking-widest">Binance Node</Badge>
+                          </div>
+                          <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.3em]">Real-time Cryptographic Stream</p>
+                       </div>
+                    </div>
+                    
+                    <div className="text-right">
+                       <p className="text-sm font-black text-primary uppercase tracking-widest mb-1 flex items-center justify-center sm:justify-end gap-2">
+                          <Activity className="w-3 h-3" /> Live Signal
+                       </p>
+                       <h3 className="text-4xl sm:text-6xl font-headline font-black text-foreground tracking-tighter">
+                          ${binanceBtc || '---.---'}
+                       </h3>
+                    </div>
+                 </CardContent>
+              </Card>
+           </div>
+
            {/* Visual Analytics Chart */}
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
