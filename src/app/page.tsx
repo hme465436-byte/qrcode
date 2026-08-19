@@ -104,7 +104,8 @@ import {
   Calendar,
   Quote,
   Languages,
-  Joystick
+  Joystick,
+  Github
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -160,6 +161,17 @@ const TOOLS: Tool[] = [
     color: 'text-white bg-white/10 border-white/20',
     glowClass: 'bg-white/10',
     keywords: ['wikipedia', 'search', 'info', 'summary', 'knowledge', 'encyclopedia'],
+    category: 'utilities'
+  },
+  { 
+    href: '/github-user', 
+    icon: Github, 
+    title: 'GitHub Finder', 
+    desc: 'Isolate developer profile metadata, repository density, and social reach.', 
+    label: 'DEV INTEL', 
+    color: 'text-slate-400 bg-slate-400/10 border-slate-400/20',
+    glowClass: 'bg-slate-400/10',
+    keywords: ['github', 'user', 'developer', 'profile', 'repos', 'git', 'finder'],
     category: 'utilities'
   },
   { 
@@ -1225,7 +1237,7 @@ const TOOLS: Tool[] = [
     desc: 'Convert binary files to hexadecimal matrix.', 
     label: 'BINARY', 
     color: 'text-indigo-600 bg-indigo-600/10 border-indigo-600/20',
-    glowClass: 'bg-indigo-500/10',
+    glowClass: 'bg-indigo-600/10',
     keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset'],
     category: 'utilities'
   },
@@ -1359,7 +1371,7 @@ export default function Home() {
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
-      'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup'
+      'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1394,12 +1406,12 @@ export default function Home() {
     }, typingSpeed);
 
     return () => clearTimeout(timeout);
-  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, isFocused, searchQuery]);
+  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, iFocused, searchQuery]);
 
   const dynamicPlaceholder = useMemo(() => {
     if (isFocused || searchQuery) return 'Search tools...';
     return `${placeholder}|`;
-  }, [placeholder, isFocused, searchQuery]);
+  }, [placeholder, iFocused, searchQuery]);
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_MODE_KEY) as 'grid' | 'list' | null;
