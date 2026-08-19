@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -13,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'jokes': {
+    title: 'Joke Studio',
+    description: 'Professional humor synthesis unit. Retrieve and reveal randomized jokes with linguistic precision.',
+    steps: [
+      'Click "New Joke" to initialize the humor discovery protocol.',
+      'The "Setup" of the joke will be isolated in the primary matrix.',
+      'Click "Reveal Punchline" to execute the final humor synthesis.',
+      'Analyze the punchline and linguistic type of the identified slip.',
+      'Use the copy protocol to save the humor matrix for external deployment.'
+    ],
+    tips: [
+      'The punchline is hidden by default to preserve the discovery experience.',
+      'A unique timestamp is added to each query to bypass browser cache.'
+    ],
+    privacy: 'All humor lookups are volatile and held strictly in local memory. No reading history is logged or transmitted.'
+  },
   'country-info': {
     title: 'Country Info Studio',
     description: 'Professional geographic discovery engine. Isolate flags, demographics, and fiscal protocols of global nations.',

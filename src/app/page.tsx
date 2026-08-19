@@ -97,7 +97,8 @@ import {
   BookOpen,
   MessageCircle,
   Sparkles,
-  Footprints
+  Footprints,
+  Laugh
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -131,6 +132,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/jokes', 
+    icon: Laugh, 
+    title: 'Joke Studio', 
+    desc: 'Synthesize high-fidelity humor and randomized punchlines instantly.', 
+    label: 'HUMOR', 
+    color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+    glowClass: 'bg-yellow-400/10',
+    keywords: ['joke', 'humor', 'funny', 'punchline', 'random joke', 'laugh'],
     category: 'generators'
   },
   { 
@@ -1074,7 +1086,7 @@ const TOOLS: Tool[] = [
     title: 'Text Repeater', 
     desc: 'Professional emoji and text multiplication.', 
     label: 'UTIL', 
-    color: 'text-pink-600 bg-pink-500/10 border-pink-500/20',
+    color: 'text-pink-600 bg-pink-500/10 border-pink-600/20',
     glowClass: 'bg-pink-500/10',
     keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner'],
     category: 'generators'
@@ -1217,7 +1229,7 @@ export default function Home() {
       'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
       'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
-      'Pet Studio', 'Dog photos', 'Cat pictures'
+      'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
