@@ -20,7 +20,9 @@ import {
   Tag,
   ArrowRight,
   Terminal,
-  Trash2
+  Trash2,
+  SortAsc,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +30,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -47,6 +56,8 @@ export default function CodingResourcesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState('all');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const fetchResources = async () => {
     setIsLoading(true);
@@ -68,12 +79,29 @@ export default function CodingResourcesPage() {
     fetchResources();
   }, []);
 
-  const filteredResources = useMemo(() => {
-    return resources.filter(res => {
+  const allTopics = useMemo(() => {
+    const topics = new Set<string>();
+    resources.forEach(r => r.topics.forEach(t => topics.add(t)));
+    return Array.from(topics).sort();
+  }, [resources]);
+
+  const filteredAndSortedResources = useMemo(() => {
+    let result = resources.filter(res => {
       const searchTarget = `${res.description} ${res.topics.join(' ')} ${res.types.join(' ')}`.toLowerCase();
-      return searchTarget.includes(searchQuery.toLowerCase());
+      const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
+      const matchesTopic = selectedTopic === 'all' || res.topics.includes(selectedTopic);
+      return matchesSearch && matchesTopic;
     });
-  }, [resources, searchQuery]);
+
+    result.sort((a, b) => {
+      const nameA = a.description.toLowerCase();
+      const nameB = b.description.toLowerCase();
+      if (sortOrder === 'asc') return nameA.localeCompare(nameB);
+      return nameB.localeCompare(nameA);
+    });
+
+    return result;
+  }, [resources, searchQuery, selectedTopic, sortOrder]);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -107,7 +135,7 @@ export default function CodingResourcesPage() {
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground/60">
-                    <Search className="w-5 h-5 text-primary" /> Filter Matrix
+                    <Search className="w-5 h-5 text-primary" /> Discovery Filter
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-10 space-y-8">
@@ -123,6 +151,45 @@ export default function CodingResourcesPage() {
                        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20">
                           <Zap className="w-5 h-5 text-primary" />
                        </div>
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Topic Mapping</Label>
+                    <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+                       <SelectTrigger className="h-12 bg-secondary border-border rounded-xl font-bold uppercase text-[10px]">
+                          <SelectValue placeholder="All Topics" />
+                       </SelectTrigger>
+                       <SelectContent className="glass-card max-h-[300px]">
+                          <SelectItem value="all" className="text-[10px] font-black uppercase">All Topics</SelectItem>
+                          {allTopics.map(topic => (
+                            <SelectItem key={topic} value={topic} className="text-[10px] font-black uppercase">{topic}</SelectItem>
+                          ))}
+                       </SelectContent>
+                    </Select>
+                 </div>
+
+                 <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Sort Protocol</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                       <button
+                         onClick={() => setSortOrder('asc')}
+                         className={cn(
+                           "h-10 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all",
+                           sortOrder === 'asc' ? "bg-primary text-white border-primary shadow-lg" : "bg-background border-border text-foreground/40 hover:text-primary"
+                         )}
+                       >
+                         Name A-Z
+                       </button>
+                       <button
+                         onClick={() => setSortOrder('desc')}
+                         className={cn(
+                           "h-10 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all",
+                           sortOrder === 'desc' ? "bg-primary text-white border-primary shadow-lg" : "bg-background border-border text-foreground/40 hover:text-primary"
+                         )}
+                       >
+                         Name Z-A
+                       </button>
                     </div>
                  </div>
 
@@ -173,12 +240,12 @@ export default function CodingResourcesPage() {
                       <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Resource Registry</span>
                    </div>
                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">
-                      {filteredResources.length} Units Identified
+                      {filteredAndSortedResources.length} Units Identified
                    </Badge>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 animate-in zoom-in-95 duration-500">
-                   {filteredResources.map((res) => (
+                   {filteredAndSortedResources.map((res) => (
                      <Card 
                       key={res.id} 
                       className="glass-card border-border shadow-xl hover:border-primary/20 transition-all group/card flex flex-col cursor-pointer h-full"
@@ -208,10 +275,16 @@ export default function CodingResourcesPage() {
                               </div>
                            </div>
 
-                           <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                              <span className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{res.levels[0] || 'Core'} level</span>
-                              <div className="flex items-center gap-1.5 text-primary text-[8px] font-black uppercase tracking-widest opacity-0 group-hover/card:opacity-100 transition-opacity">
-                                 Launch <ArrowRight className="w-3 h-3" />
+                           <div className="pt-6 border-t border-white/5">
+                              <Button className="w-full h-11 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-lg opacity-80 group-hover/card:opacity-100 transition-all">
+                                 Open Resource <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover/card:translate-x-1 transition-transform" />
+                              </Button>
+                           </div>
+
+                           <div className="pt-4 flex items-center justify-between">
+                              <span className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{res.levels[0] || 'Core'} Level</span>
+                              <div className="flex items-center gap-1.5 text-primary text-[8px] font-black uppercase tracking-widest">
+                                 {res.types[0] || 'Web'}
                               </div>
                            </div>
                         </CardContent>
@@ -219,7 +292,7 @@ export default function CodingResourcesPage() {
                    ))}
                 </div>
                 
-                {filteredResources.length === 0 && (
+                {filteredAndSortedResources.length === 0 && (
                    <div className="h-[400px] flex flex-col items-center justify-center opacity-10 space-y-6">
                       <Terminal className="w-24 h-24 text-primary" />
                       <p className="text-sm font-black uppercase tracking-[0.3em]">Zero Matrix Matches</p>
