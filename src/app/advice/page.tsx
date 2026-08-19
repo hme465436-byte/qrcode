@@ -1,15 +1,13 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   RefreshCcw, 
   Copy, 
-  Trash2, 
   CheckCircle2, 
   Zap, 
   Activity,
-  Globe,
   Loader2,
   AlertCircle,
   Quote,
@@ -28,6 +26,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
