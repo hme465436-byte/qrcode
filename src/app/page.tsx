@@ -1262,6 +1262,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
+  },
+  { 
+    href: '/website-trust-checker', 
+    icon: ShieldCheck, 
+    title: 'Trust Checker', 
+    desc: 'Professional domain reputation auditing and security signals.', 
+    label: 'SECURITY', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['trust', 'security', 'malware', 'dns', 'ip', 'safe', 'website check', 'phishing'],
+    category: 'utilities'
   }
 ];
 
