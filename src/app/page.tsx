@@ -141,6 +141,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/wikipedia', 
+    icon: Globe, 
+    title: 'Wikipedia Studio', 
+    desc: 'Isolate high-fidelity summaries and global knowledge nodes instantly.', 
+    label: 'KNOWLEDGE', 
+    color: 'text-white bg-white/10 border-white/20',
+    glowClass: 'bg-white/10',
+    keywords: ['wikipedia', 'search', 'info', 'summary', 'knowledge', 'encyclopedia'],
+    category: 'utilities'
+  },
+  { 
     href: '/coding-resources', 
     icon: FileCode, 
     title: 'Coding Matrix', 
@@ -1336,7 +1347,8 @@ export default function Home() {
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
-      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix'
+      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
+      'Wikipedia Studio', 'Summarize', 'Search Wikipedia'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

@@ -13,6 +13,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'wikipedia': {
+    title: 'Wikipedia Studio',
+    description: 'Professional-grade knowledge discovery engine. Isolate high-fidelity summaries and visual identifiers from the global Wikipedia registry.',
+    steps: [
+      'Enter a search topic (Person, Place, Concept) in the Discovery Protocol input.',
+      'Execute the search to synchronize with the Wikipedia REST nodes.',
+      'Review the clinical summary and visual identity of the subject.',
+      'Use the copy protocol to save the textual matrix or launch the full article.',
+      'Reset the studio to purge the current discovery signal.'
+    ],
+    tips: [
+      'Enter specific names for more accurate identity isolation.',
+      'The "Read More" protocol launches the full article in a secure new tab.'
+    ],
+    privacy: 'All linguistic lookups are volatile and held strictly in local hardware memory.'
+  },
   'coding-resources': {
     title: 'Coding Matrix Studio',
     description: 'Professional-grade technical discovery engine for developers. Isolate high-fidelity learning assets, documentation, and technical protocols.',
