@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -326,7 +325,7 @@ export default function CryptoPricesPage() {
 
   useEffect(() => {
     if (isAutoRefresh) {
-      const interval = setInterval(() => fetchPrices(true), 60000);
+      const interval = setInterval(() => fetchPrices(true), 15000); // Recalibrated to 15s for high-frequency telemetry
       return () => clearInterval(interval);
     }
   }, [isAutoRefresh, fetchPrices]);
