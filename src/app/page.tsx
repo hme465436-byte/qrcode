@@ -101,7 +101,8 @@ import {
   Laugh,
   Lightbulb,
   Gamepad2,
-  Calendar
+  Calendar,
+  Quote
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -147,6 +148,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-amber-500/10',
     keywords: ['holiday', 'calendar', 'pakistan holidays', 'public holidays', 'namaz', 'date'],
     category: 'utilities'
+  },
+  { 
+    href: '/quotes', 
+    icon: Quote, 
+    title: 'Quote Studio', 
+    desc: 'Synthesize high-fidelity inspiration and randomized wisdom instantly.', 
+    label: 'LINGUISTIC', 
+    color: 'text-sky-400 bg-sky-400/10 border-sky-400/20',
+    glowClass: 'bg-sky-400/10',
+    keywords: ['quote', 'inspiration', 'random quote', 'wisdom', 'motive'],
+    category: 'generators'
   },
   { 
     href: '/books', 
@@ -1277,7 +1289,8 @@ export default function Home() {
       'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
-      'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays'
+      'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
+      'Quote Studio', 'Motivation', 'Zen Quotes'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

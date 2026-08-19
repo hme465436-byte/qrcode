@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'quotes': {
+    title: 'Quote Studio',
+    description: 'Professional high-fidelity inspiration synthesis. Extract unique randomized quotes from the global wisdom matrix with real-time calibration.',
+    steps: [
+      'Click "New Quote" to initialize the inspiration discovery protocol.',
+      'The engine will synchronize with global wisdom nodes to retrieve a unique linguistic matrix.',
+      'Review the quote and author identity in the primary glass-morphic viewport.',
+      'Use the copy protocol to save the quote to your local clipboard.',
+      'Optionally use the share button to instantly deploy the wisdom across social platforms.'
+    ],
+    tips: [
+      'Each query includes a unique timestamp to ensure hardware-native randomization.',
+      'The studio utilizes a dual-node fallback system (ZenQuotes/DummyJSON) to ensure maximum uptime.'
+    ],
+    privacy: 'Inspiration discovery lookups are volatile and held strictly in local memory. No data is logged or transmitted.'
+  },
   'holidays': {
     title: 'Holiday Studio Pro',
     description: 'Professional public holiday discovery and projection unit. Access verified calendar matrices for over 100 global nations.',
@@ -66,7 +82,7 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     steps: [
       'Click "New Fact" to initialize the knowledge discovery protocol.',
       'The engine will synchronize with the Useless Facts registry to retrieve a unique knowledge matrix.',
-      'Review the fact text in the primary glass-morphic viewport.',
+      'Review the fact text in the primary glass-morphic display area.',
       'Use the copy protocol to save the fact to your local clipboard.',
       'Optionally click the source link to verify the fact on the external host.'
     ],
@@ -366,22 +382,6 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'High blur intensity (80%+) is recommended for definitive anonymity.'
     ],
     privacy: 'Redaction occurs 100% locally in your browser memory. Your un-redacted photo never leaves your device.'
-  },
-  'donate': {
-    title: 'Donation Protocol',
-    description: 'Support the continued operation and development of MY KIT TOOL through manual contributions.',
-    steps: [
-      'Select your preferred transfer region (Pakistan or International).',
-      'Copy the required account number, IBAN, or USDT address.',
-      'Open your respective banking or exchange application.',
-      'Perform a manual transfer using the copied details.',
-      'The studio will automatically receive the "fuel" via standard banking/blockchain protocols.'
-    ],
-    tips: [
-      'There is no minimum amount; every contribution fuels server costs.',
-      'Verify the USDT network is TRC20 before confirming crypto transfers.'
-    ],
-    privacy: 'Financial transactions are handled entirely by your own banking software. The studio never sees your banking credentials.'
   },
   'ocr': {
     title: 'OCR Extraction',
