@@ -13,6 +13,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'translate': {
+    title: 'Translate Studio',
+    description: 'Professional bilingual translation unit. Seamlessly translate between English and Urdu with real-time signal processing.',
+    steps: [
+      'Type or paste your text into the primary linguistic input box.',
+      'The engine will automatically set the source language based on the current mode.',
+      'Click "Execute Translation" to synchronize with the global translation nodes.',
+      'Review the result in the secondary matrix box.',
+      'Use the swap button to invert the translation direction instantly.'
+    ],
+    tips: [
+      'Short, clear sentences yield the highest translation fidelity.',
+      'Use the copy button to save results directly to your local clipboard.'
+    ],
+    privacy: 'Linguistic data is processed in real-time. No text payloads are ever logged or stored on our servers.'
+  },
   'image-gallery': {
     title: 'Image Gallery Studio',
     description: 'Professional high-fidelity visual discovery unit. Aggregate and isolate assets from NASA, Openverse, and the Art Institute of Chicago.',

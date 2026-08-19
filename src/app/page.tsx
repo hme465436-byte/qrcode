@@ -103,7 +103,8 @@ import {
   Lightbulb,
   Gamepad2,
   Calendar,
-  Quote
+  Quote,
+  Languages
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -138,6 +139,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/translate', 
+    icon: Languages, 
+    title: 'Translate Studio', 
+    desc: 'Professional English to Urdu translation with real-time sync.', 
+    label: 'LINGUISTIC', 
+    color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    glowClass: 'bg-blue-400/10',
+    keywords: ['translate', 'translation', 'english to urdu', 'urdu to english', 'language', 'converter'],
+    category: 'utilities'
   },
   { 
     href: '/image-gallery', 
@@ -1217,7 +1229,7 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
       )}
     >
       <Card className={cn(
-        "relative flex-1 flex rounded-[2.5rem] bg-secondary/30 border border-white/5 hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 shadow-2xl group-hover:shadow-primary/5 overflow-hidden",
+        "relative flex-1 flex rounded-[2.5rem] bg-secondary/30 border border-white/5 bg-white/40 dark:bg-card/40 backdrop-blur-2xl hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 shadow-2xl group-hover:shadow-primary/5 overflow-hidden",
         isGrid ? "flex-col p-8 hover:-translate-y-2 text-left" : "flex-row items-center p-6 hover:-translate-x-1 gap-6"
       )}>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -1302,7 +1314,7 @@ export default function Home() {
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
-      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History'
+      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
