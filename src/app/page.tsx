@@ -94,7 +94,9 @@ import {
   Banknote,
   Cloud,
   Moon,
-  BookOpen
+  BookOpen,
+  MessageCircle,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -128,6 +130,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/advice', 
+    icon: Sparkles, 
+    title: 'Advice Studio', 
+    desc: 'Synthesize high-fidelity wisdom and clinical advice instantly.', 
+    label: 'LINGUISTIC', 
+    color: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+    glowClass: 'bg-amber-400/10',
+    keywords: ['advice', 'wisdom', 'quotes', 'linguistic', 'life tips'],
     category: 'generators'
   },
   { 
@@ -1191,7 +1204,7 @@ export default function Home() {
       'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection',
       'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
       'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
-      'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus'
+      'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
