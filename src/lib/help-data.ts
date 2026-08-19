@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'github-user': {
+    title: 'GitHub Identity Studio',
+    description: 'Professional developer discovery engine. Isolate public profile metadata, repository density, and social reach locally via the GitHub REST protocol.',
+    steps: [
+      'Enter a GitHub username in the Discovery Protocol input.',
+      'Execute the lookup to synchronize with the GitHub REST nodes.',
+      'Review the identified developer profile, bio, and visual identity.',
+      'Analyze the metrics matrix for repository and follower telemetry.',
+      'Use the copy protocol or launch the official profile link.'
+    ],
+    tips: [
+      'Ensure the username is spelled correctly for 1:1 identity matching.',
+      'Public profiles are retrieved in real-time from GitHub hardware.'
+    ],
+    privacy: 'Identity queries are processed strictly in local hardware memory.'
+  },
   'city-explorer': {
     title: 'City Explorer Studio',
     description: 'Professional geographic mapping and address validation unit. Isolate regional nodes and coordinates locally with the OpenStreetMap protocol.',
@@ -36,7 +52,7 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Execute the search to synchronize with the Wikipedia REST nodes.',
       'Review the clinical summary and visual identity of the subject.',
       'Use the copy protocol to save the textual matrix or launch the full article.',
-      'Reset the studio to purge the current discovery signal.'
+      'Reset the studio buffer to purge the current discovery signal.'
     ],
     tips: [
       'Enter specific names for more accurate identity isolation.',
