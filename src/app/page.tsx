@@ -1229,41 +1229,41 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
     >
       <Card className={cn(
         "relative flex-1 flex rounded-[2rem] sm:rounded-[2.5rem] bg-secondary/30 border border-white/5 bg-white/40 dark:bg-card/40 backdrop-blur-2xl hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 shadow-2xl group-hover:shadow-primary/5 overflow-hidden",
-        isGrid ? "flex-col p-6 sm:p-8 hover:-translate-y-2 text-left" : "flex-row items-center p-3 sm:p-6 hover:-translate-x-1 gap-4 sm:gap-6 !w-full !max-w-full !min-w-0"
+        isGrid ? "flex-col p-5 sm:p-6 hover:-translate-y-2 text-left" : "flex-row items-center p-3 sm:p-6 hover:-translate-x-1 gap-4 sm:gap-6 !w-full !max-w-full !min-w-0"
       )}>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
         <div className={cn(
           "rounded-2xl flex items-center justify-center border transition-all duration-500 icon-container-3d relative z-10 shrink-0",
-          isGrid ? "w-12 h-12 sm:w-14 sm:h-14 mb-6 sm:mb-10" : "w-8 h-8 sm:w-12 sm:h-12",
+          isGrid ? "w-10 h-10 sm:w-12 sm:h-12 mb-4 sm:mb-6" : "w-8 h-8 sm:w-12 sm:h-12",
           item.color
         )}>
-          <item.icon className={cn("icon-3d", isGrid ? "w-6 h-6 sm:w-7 sm:h-7" : "w-4 h-4 sm:w-6 sm:h-6")} />
+          <item.icon className={cn("icon-3d", isGrid ? "w-5 h-5 sm:w-6 sm:h-6" : "w-4 h-4 sm:w-6 sm:h-6")} />
           <div className={cn("absolute inset-0 blur-xl opacity-20 transition-opacity group-hover:opacity-40", item.glowClass)} />
         </div>
 
-        <div className="relative z-10 space-y-1 sm:space-y-4 flex-1 min-w-0">
-          <div className="space-y-0.5 sm:space-y-1.5">
+        <div className="relative z-10 space-y-1 sm:space-y-3 flex-1 min-w-0">
+          <div className="space-y-0.5 sm:space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-[7px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
+              <span className="text-[7px] sm:text-[9px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
               {isGrid && <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />}
             </div>
             <h3 className={cn(
               "font-headline font-black text-foreground uppercase tracking-tight leading-none group-hover:text-primary transition-colors truncate",
-              isGrid ? "text-lg sm:text-xl" : "text-sm sm:text-lg"
+              isGrid ? "text-base sm:text-lg" : "text-sm sm:text-lg"
             )}>
               {item.title}
             </h3>
           </div>
           <p className={cn(
-            "text-[10px] sm:text-sm text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere",
+            "text-[9px] sm:text-xs text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere",
             isGrid ? "line-clamp-2" : "truncate"
           )}>
             {item.desc}
           </p>
           {isGrid && (
-            <div className="mt-auto pt-6 sm:pt-8 flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-              Open <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
+            <div className="mt-auto pt-4 sm:pt-6 flex items-center gap-2 sm:gap-2.5 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+              Open <ArrowRight className="w-3 sm:w-3.5 h-3 sm:h-3.5 group-hover:translate-x-1 transition-transform duration-500 icon-3d" />
             </div>
           )}
         </div>
