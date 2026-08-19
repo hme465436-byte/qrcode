@@ -767,15 +767,15 @@ export default function CryptoPricesPage() {
                     </button>
                  </div>
               </CardHeader>
-              <CardContent className="p-0 overflow-auto custom-scrollbar">
-                 <Table>
+              <CardContent className="p-0 overflow-x-auto custom-scrollbar">
+                 <Table className="w-full border-collapse">
                     <TableHeader className="bg-background/50">
                        <TableRow className="border-border hover:bg-transparent">
-                          <TableHead className="w-16 text-[9px] font-black uppercase text-foreground/30 text-center">Rank</TableHead>
-                          <TableHead className="text-[9px] font-black uppercase text-foreground/30">Asset Identity</TableHead>
-                          <TableHead className="text-[9px] font-black uppercase text-foreground/30 text-right">Market Price</TableHead>
-                          <TableHead className="text-[9px] font-black uppercase text-foreground/30 text-right">24H Volatility</TableHead>
-                          <TableHead className="w-16"></TableHead>
+                          <TableHead className="w-12 sm:w-16 text-[9px] font-black uppercase text-foreground/30 text-center whitespace-nowrap">Rank</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase text-foreground/30 whitespace-nowrap">Asset Identity</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase text-foreground/30 text-right whitespace-nowrap">Market Price</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase text-foreground/30 text-right whitespace-nowrap">24H Volatility</TableHead>
+                          <TableHead className="w-16 hidden md:table-cell"></TableHead>
                        </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -797,35 +797,35 @@ export default function CryptoPricesPage() {
 
                          return (
                            <TableRow key={coin.id} className={cn(
-                             "border-border hover:bg-primary/[0.03] transition-colors group cursor-pointer",
+                             "border-border hover:bg-primary/[0.03] transition-colors group cursor-pointer overflow-wrap-normal",
                              activeChartId === coin.id ? "bg-primary/[0.05]" : ""
                            )} onClick={() => { setActiveChartId(coin.id); if (!watchlist.find(w => w.id === coin.id)) { saveWatchlist([{ id: coin.id, name: coin.name, symbol: coin.symbol.toUpperCase(), thumb: coin.image }, ...watchlist]); toast({ title: "Asset Monitored" }); } }}>
-                              <TableCell className="text-center font-mono text-[10px] font-bold text-foreground/20">
+                              <TableCell className="text-center font-mono text-[10px] font-bold text-foreground/20 whitespace-nowrap">
                                  #{coin.market_cap_rank}
                               </TableCell>
-                              <TableCell>
-                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-secondary border border-border p-1.5 shadow-inner shrink-0 group-hover:scale-105 transition-transform">
+                              <TableCell className="whitespace-nowrap">
+                                 <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-secondary border border-border p-1.5 shadow-inner shrink-0 group-hover:scale-105 transition-transform">
                                        <img src={coin.image} className="w-full h-full object-contain" alt={coin.name} />
                                     </div>
                                     <div className="min-w-0">
-                                       <p className="text-[11px] font-black uppercase text-foreground truncate">{coin.name}</p>
+                                       <p className="text-[11px] font-black uppercase text-foreground truncate max-w-[120px]">{coin.name}</p>
                                        <p className="text-[9px] font-bold text-foreground/20 uppercase">{coin.symbol}</p>
                                     </div>
                                  </div>
                               </TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="text-right whitespace-nowrap">
                                  <span className="text-sm font-headline font-black text-foreground">
                                     {formatCurrency(priceToDisplay, displayCurrency)}
                                  </span>
                               </TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="text-right whitespace-nowrap">
                                  <div className={cn("inline-flex items-center font-bold text-[10px] uppercase", isUp ? "text-green-500" : "text-red-500")}>
                                     {isUp ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
                                     {Math.abs(coin.price_change_percentage_24h).toFixed(2)}%
                                  </div>
                               </TableCell>
-                              <TableCell className="text-center">
+                              <TableCell className="text-center hidden md:table-cell">
                                  <button className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground/10 group-hover:text-primary transition-all shadow-sm">
                                     <ChevronRight className="w-4 h-4" />
                                  </button>
@@ -871,6 +871,7 @@ export default function CryptoPricesPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .recharts-area-chart { filter: drop-shadow(0 0 10px hsla(var(--primary), 0.2)); }
         .recharts-cartesian-axis-tick-value { font-family: 'Space Grotesk', sans-serif !important; }
+        .overflow-wrap-normal { overflow-wrap: normal !important; word-break: normal !important; }
       `}</style>
     </div>
   );
