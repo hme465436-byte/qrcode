@@ -1388,7 +1388,7 @@ export default function Home() {
   }, [filteredTools, visibleCount]);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-16 px-3 sm:px-6">
+    <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -1407,10 +1407,10 @@ export default function Home() {
       />
 
       {/* HERO SECTION */}
-      <section className="w-full pt-16 pb-6 md:pt-24 md:pb-8 min-h-0 text-center relative overflow-hidden flex flex-col justify-center max-w-full">
+      <section className="w-full pt-16 pb-6 md:pt-24 md:pb-8 min-h-0 text-center relative overflow-hidden flex flex-col justify-center max-w-full px-4 sm:px-6">
         <SpaceBackground />
         
-        <div className="w-full max-w-5xl mx-auto animate-reveal relative z-10 px-4">
+        <div className="w-full max-w-5xl mx-auto animate-reveal relative z-10 px-2 sm:px-4">
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[8px] sm:text-[10px] font-black text-primary uppercase tracking-[0.2em]">
               <Command className="w-2.5 h-2.5 sm:w-3 sm:h-3 icon-3d" /> Digital Studio v7.2
@@ -1534,7 +1534,7 @@ export default function Home() {
                  <ShadButton 
                    onClick={() => setVisibleCount(prev => prev + 6)}
                    variant="outline"
-                   className="h-14 sm:h-16 px-10 sm:px-12 rounded-[2rem] border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-[10px] sm:text-xs hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all group/see"
+                   className="h-14 sm:h-16 px-10 sm:px-12 rounded-full border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-[10px] sm:text-xs backdrop-blur-xl hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] group/see"
                  >
                     <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 group-hover/see:translate-y-1 transition-transform" />
                     See More Tools
