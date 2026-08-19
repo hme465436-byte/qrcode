@@ -1319,7 +1319,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [visibleCount, setVisibleCount] = useState(9);
   
   // Search Placeholder Typing Animation Matrix
   const [placeholder, setPlaceholder] = useState('');
@@ -1504,7 +1504,7 @@ export default function Home() {
                     key={cat.id}
                     onClick={() => {
                       setSelectedCategory(cat.id);
-                      setVisibleCount(10);
+                      setVisibleCount(9);
                     }}
                     className={cn(
                       "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
@@ -1560,7 +1560,7 @@ export default function Home() {
                   <ToolItem key={item.href} item={item} mode={viewMode} />
                 ))
               ) : (
-                <EmptyState onReset={() => { setSearchQuery(''); setSelectedCategory('all'); setVisibleCount(10); }} />
+                <EmptyState onReset={() => { setSearchQuery(''); setSelectedCategory('all'); setVisibleCount(9); }} />
               )}
             </div>
 
