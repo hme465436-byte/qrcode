@@ -1146,7 +1146,7 @@ const TOOLS: Tool[] = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
     category: 'utilities'
@@ -1223,40 +1223,40 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
     <Link 
       href={item.href} 
       className={cn(
-        "group relative flex transition-all duration-300 min-w-0 w-full",
-        isGrid ? "flex-col h-full" : "w-full"
+        "group relative flex transition-all duration-300 min-w-0",
+        isGrid ? "h-full w-full" : "w-full !max-w-full !min-w-0"
       )}
     >
       <Card className={cn(
         "relative flex-1 flex rounded-[2rem] sm:rounded-[2.5rem] bg-secondary/30 border border-white/5 bg-white/40 dark:bg-card/40 backdrop-blur-2xl hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 shadow-2xl group-hover:shadow-primary/5 overflow-hidden",
-        isGrid ? "flex-col p-6 sm:p-8 hover:-translate-y-2 text-left" : "flex-row items-center p-4 sm:p-6 hover:-translate-x-1 gap-4 sm:gap-6"
+        isGrid ? "flex-col p-6 sm:p-8 hover:-translate-y-2 text-left" : "flex-row items-center p-3 sm:p-6 hover:-translate-x-1 gap-4 sm:gap-6 !w-full !max-w-full !min-w-0"
       )}>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
         <div className={cn(
           "rounded-2xl flex items-center justify-center border transition-all duration-500 icon-container-3d relative z-10 shrink-0",
-          isGrid ? "w-12 h-12 sm:w-14 sm:h-14 mb-6 sm:mb-10" : "w-10 h-10 sm:w-12 sm:h-12",
+          isGrid ? "w-12 h-12 sm:w-14 sm:h-14 mb-6 sm:mb-10" : "w-8 h-8 sm:w-12 sm:h-12",
           item.color
         )}>
-          <item.icon className={cn("icon-3d", isGrid ? "w-6 h-6 sm:w-7 sm:h-7" : "w-5 h-5 sm:w-6 sm:h-6")} />
+          <item.icon className={cn("icon-3d", isGrid ? "w-6 h-6 sm:w-7 sm:h-7" : "w-4 h-4 sm:w-6 sm:h-6")} />
           <div className={cn("absolute inset-0 blur-xl opacity-20 transition-opacity group-hover:opacity-40", item.glowClass)} />
         </div>
 
-        <div className="relative z-10 space-y-2 sm:space-y-4 flex-1 min-w-0">
-          <div className="space-y-1 sm:space-y-1.5">
+        <div className="relative z-10 space-y-1 sm:space-y-4 flex-1 min-w-0">
+          <div className="space-y-0.5 sm:space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[8px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
+              <span className="text-[7px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
               {isGrid && <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />}
             </div>
             <h3 className={cn(
               "font-headline font-black text-foreground uppercase tracking-tight leading-none group-hover:text-primary transition-colors truncate",
-              isGrid ? "text-lg sm:text-xl" : "text-base sm:text-lg"
+              isGrid ? "text-lg sm:text-xl" : "text-sm sm:text-lg"
             )}>
               {item.title}
             </h3>
           </div>
           <p className={cn(
-            "text-xs sm:text-sm text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere",
+            "text-[10px] sm:text-sm text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere",
             isGrid ? "line-clamp-2" : "truncate"
           )}>
             {item.desc}
@@ -1270,8 +1270,8 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
 
         {!isGrid && (
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 relative z-10 ml-auto">
-            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-primary/0 group-hover:text-primary transition-all translate-x-2 group-hover:translate-x-0 hidden md:inline-block">Open Studio</span>
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-primary/20 group-hover:text-primary transition-all group-hover:translate-x-1 icon-3d" />
+            <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-primary/0 group-hover:text-primary transition-all translate-x-2 group-hover:translate-x-0 hidden md:inline-block">Open Studio</span>
+            <ArrowRight className="w-3 h-3 sm:w-5 sm:h-5 text-primary/20 group-hover:text-primary transition-all group-hover:translate-x-1 icon-3d" />
           </div>
         )}
       </Card>
@@ -1388,7 +1388,7 @@ export default function Home() {
   }, [filteredTools, visibleCount]);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32">
+    <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32 px-3 sm:px-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -1407,10 +1407,10 @@ export default function Home() {
       />
 
       {/* HERO SECTION */}
-      <section className="w-full px-4 sm:px-6 pt-16 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-hidden flex flex-col justify-center">
+      <section className="w-full pt-16 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-hidden flex flex-col justify-center">
         <SpaceBackground />
         
-        <div className="max-w-5xl mx-auto animate-reveal relative z-10 px-0 sm:px-0">
+        <div className="max-w-5xl mx-auto animate-reveal relative z-10">
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[8px] sm:text-[10px] font-black text-primary uppercase tracking-[0.2em]">
               <Command className="w-2.5 h-2.5 sm:w-3 sm:h-3 icon-3d" /> Digital Studio v7.2
@@ -1423,20 +1423,20 @@ export default function Home() {
           <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.95] sm:leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere px-2">
             The World’s Most <span className="text-primary">Advanced</span> Tool Studio
           </h1>
-          <p className="text-xs sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-6 overflow-wrap-anywhere">
+          <p className="text-xs sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
             Professional high-fidelity asset generation and technical data translation. Engineered for high-performance workflows with 100% hardware-native privacy.
           </p>
 
           {/* Search & Category Bar */}
-          <div className="max-w-4xl mx-auto space-y-6 px-4">
+          <div className="max-w-4xl mx-auto space-y-6">
              {/* Search Input */}
-             <div className="max-w-2xl mx-auto group relative">
+             <div className="max-w-2xl mx-auto group relative w-full">
                 <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000 pointer-events-none" />
                 <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within/search:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
 
                 <div className="relative h-14 sm:h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl duration-500 group-hover:from-primary/30 group-focus-within/search:from-primary/60 group-focus-within/search:to-primary/30">
                   <div className="moving-border-matrix" />
-                  <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within/search:border-primary/50 group-focus-within/search:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10 px-2 sm:px-0">
+                  <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within/search:border-primary/50 group-focus-within/search:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
                     <div className="absolute inset-y-0 left-4 sm:left-5 flex items-center pointer-none">
                       <Search className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d" />
                     </div>
@@ -1463,7 +1463,7 @@ export default function Home() {
              </div>
 
              {/* Category Pills */}
-             <div className="sticky top-20 z-20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-[1.5rem] sm:rounded-[2rem] bg-secondary/50 border border-white/5 backdrop-blur-xl shadow-2xl w-fit mx-auto max-w-full">
+             <div className="z-20 flex flex-wrap items-center justify-center gap-2 p-2 rounded-[1.5rem] sm:rounded-[2rem] bg-secondary/50 border border-white/5 backdrop-blur-xl shadow-2xl w-full sm:w-fit mx-auto">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
@@ -1479,7 +1479,7 @@ export default function Home() {
                     )}
                   >
                     <cat.icon className={cn("w-3 sm:w-3.5 h-3 sm:h-3.5", selectedCategory === cat.id ? "icon-3d" : "")} />
-                    <span className="hidden xs:inline">{cat.label}</span>
+                    <span>{cat.label}</span>
                   </button>
                 ))}
              </div>
@@ -1517,8 +1517,8 @@ export default function Home() {
 
           <div className="space-y-12">
             <div className={cn(
-              "w-full transition-all duration-300 px-4 sm:px-0",
-              viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" : "flex flex-col gap-3 sm:gap-4 max-w-4xl mx-auto"
+              "w-full transition-all duration-300",
+              viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" : "flex flex-col gap-3 sm:gap-4 max-w-4xl mx-auto !w-full !max-w-full"
             )}>
               {visibleTools.length > 0 ? (
                 visibleTools.map((item) => (
