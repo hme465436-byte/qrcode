@@ -100,7 +100,8 @@ import {
   Footprints,
   Laugh,
   Lightbulb,
-  Gamepad2
+  Gamepad2,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -135,6 +136,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/holidays', 
+    icon: Calendar, 
+    title: 'Holiday Studio', 
+    desc: 'Isolate global public holidays and verified Pakistan 2026 matrix.', 
+    label: 'TEMPORAL', 
+    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+    glowClass: 'bg-amber-500/10',
+    keywords: ['holiday', 'calendar', 'pakistan holidays', 'public holidays', 'namaz', 'date'],
+    category: 'utilities'
   },
   { 
     href: '/books', 
@@ -1099,7 +1111,7 @@ const TOOLS: Tool[] = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
     category: 'utilities'
@@ -1265,7 +1277,7 @@ export default function Home() {
       'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
-      'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library'
+      'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

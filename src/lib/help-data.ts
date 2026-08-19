@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'holidays': {
+    title: 'Holiday Studio Pro',
+    description: 'Professional public holiday discovery and projection unit. Access verified calendar matrices for over 100 global nations.',
+    steps: [
+      'Select a country from the global registry dropdown.',
+      'Calibrate the temporal cycle (Year) for your target search.',
+      'Execute the sync protocol to retrieve the public holiday matrix.',
+      'Analyze dates and local event names in the primary glass viewport.',
+      'Copy the full schedule for external planning or production use.'
+    ],
+    tips: [
+      'Pakistan 2026 is a local high-fidelity matrix and does not require external node sync.',
+      'The "Today" highlight is synchronized with your device hardware clock.'
+    ],
+    privacy: 'Temporal queries are processed strictly in local memory. No search history or calendar interest is logged.'
+  },
   'books': {
     title: 'Book Studio Pro',
     description: 'Professional linguistic discovery engine for global literature. Access 1:1 verified book metadata, author profiles, and high-fidelity cover imagery.',
