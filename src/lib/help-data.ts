@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'facts': {
+    title: 'Fact Studio',
+    description: 'Professional knowledge synthesis unit. Retrieve randomized high-fidelity facts with 1:1 linguistic precision.',
+    steps: [
+      'Click "New Fact" to initialize the knowledge discovery protocol.',
+      'The engine will synchronize with the Useless Facts registry to retrieve a unique knowledge matrix.',
+      'Review the fact text in the primary glass-morphic viewport.',
+      'Use the copy protocol to save the fact to your local clipboard.',
+      'Optionally click the source link to verify the fact on the external host.'
+    ],
+    tips: [
+      'Each query includes a unique timestamp to ensure hardware-native randomization.',
+      'Use the share button to instantly deploy knowledge across social platforms.'
+    ],
+    privacy: 'All knowledge lookups are volatile and held strictly in local memory. No reading history is logged or transmitted.'
+  },
   'jokes': {
     title: 'Joke Studio',
     description: 'Professional humor synthesis unit. Retrieve and reveal randomized jokes with linguistic precision.',

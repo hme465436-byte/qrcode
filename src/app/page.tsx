@@ -98,7 +98,8 @@ import {
   MessageCircle,
   Sparkles,
   Footprints,
-  Laugh
+  Laugh,
+  Lightbulb
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -132,6 +133,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/facts', 
+    icon: Lightbulb, 
+    title: 'Fact Studio', 
+    desc: 'Synthesize high-fidelity useless facts and randomized knowledge instantly.', 
+    label: 'KNOWLEDGE', 
+    color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+    glowClass: 'bg-yellow-400/10',
+    keywords: ['fact', 'knowledge', 'random fact', 'info', 'useless facts'],
     category: 'generators'
   },
   { 
@@ -1229,7 +1241,7 @@ export default function Home() {
       'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
       'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
-      'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline'
+      'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
