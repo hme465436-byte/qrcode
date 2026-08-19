@@ -1124,7 +1124,7 @@ const TOOLS: Tool[] = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
@@ -1223,55 +1223,55 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
     <Link 
       href={item.href} 
       className={cn(
-        "group relative flex transition-all duration-300 min-w-0",
+        "group relative flex transition-all duration-300 min-w-0 w-full",
         isGrid ? "flex-col h-full" : "w-full"
       )}
     >
       <Card className={cn(
-        "relative flex-1 flex rounded-[2.5rem] bg-secondary/30 border border-white/5 bg-white/40 dark:bg-card/40 backdrop-blur-2xl hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 shadow-2xl group-hover:shadow-primary/5 overflow-hidden",
-        isGrid ? "flex-col p-8 hover:-translate-y-2 text-left" : "flex-row items-center p-6 hover:-translate-x-1 gap-6"
+        "relative flex-1 flex rounded-[2rem] sm:rounded-[2.5rem] bg-secondary/30 border border-white/5 bg-white/40 dark:bg-card/40 backdrop-blur-2xl hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 shadow-2xl group-hover:shadow-primary/5 overflow-hidden",
+        isGrid ? "flex-col p-6 sm:p-8 hover:-translate-y-2 text-left" : "flex-row items-center p-4 sm:p-6 hover:-translate-x-1 gap-4 sm:gap-6"
       )}>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
         <div className={cn(
           "rounded-2xl flex items-center justify-center border transition-all duration-500 icon-container-3d relative z-10 shrink-0",
-          isGrid ? "w-14 h-14 mb-10" : "w-12 h-12",
+          isGrid ? "w-12 h-12 sm:w-14 sm:h-14 mb-6 sm:mb-10" : "w-10 h-10 sm:w-12 sm:h-12",
           item.color
         )}>
-          <item.icon className={cn("icon-3d", isGrid ? "w-7 h-7" : "w-6 h-6")} />
+          <item.icon className={cn("icon-3d", isGrid ? "w-6 h-6 sm:w-7 sm:h-7" : "w-5 h-5 sm:w-6 sm:h-6")} />
           <div className={cn("absolute inset-0 blur-xl opacity-20 transition-opacity group-hover:opacity-40", item.glowClass)} />
         </div>
 
-        <div className="relative z-10 space-y-4 flex-1 min-w-0">
-          <div className="space-y-1.5">
+        <div className="relative z-10 space-y-2 sm:space-y-4 flex-1 min-w-0">
+          <div className="space-y-1 sm:space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
+              <span className="text-[8px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">{item.label}</span>
               {isGrid && <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />}
             </div>
             <h3 className={cn(
               "font-headline font-black text-foreground uppercase tracking-tight leading-none group-hover:text-primary transition-colors truncate",
-              isGrid ? "text-xl" : "text-lg"
+              isGrid ? "text-lg sm:text-xl" : "text-base sm:text-lg"
             )}>
               {item.title}
             </h3>
           </div>
           <p className={cn(
-            "text-sm text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere",
+            "text-xs sm:text-sm text-foreground/40 leading-relaxed font-medium overflow-wrap-anywhere",
             isGrid ? "line-clamp-2" : "truncate"
           )}>
             {item.desc}
           </p>
           {isGrid && (
-            <div className="mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-              Open <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
+            <div className="mt-auto pt-6 sm:pt-8 flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-primary translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+              Open <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1.5 transition-transform duration-500 icon-3d" />
             </div>
           )}
         </div>
 
         {!isGrid && (
-          <div className="flex items-center gap-3 shrink-0 relative z-10 ml-auto">
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/0 group-hover:text-primary transition-all translate-x-2 group-hover:translate-x-0 hidden sm:inline-block">Open Studio</span>
-            <ArrowRight className="w-5 h-5 text-primary/20 group-hover:text-primary transition-all group-hover:translate-x-1 icon-3d" />
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 relative z-10 ml-auto">
+            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-primary/0 group-hover:text-primary transition-all translate-x-2 group-hover:translate-x-0 hidden md:inline-block">Open Studio</span>
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-primary/20 group-hover:text-primary transition-all group-hover:translate-x-1 icon-3d" />
           </div>
         )}
       </Card>
@@ -1407,38 +1407,38 @@ export default function Home() {
       />
 
       {/* HERO SECTION */}
-      <section className="w-full px-4 sm:px-6 pt-20 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-hidden flex flex-col justify-center">
+      <section className="w-full px-4 sm:px-6 pt-16 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-hidden flex flex-col justify-center">
         <SpaceBackground />
         
-        <div className="max-w-5xl mx-auto animate-reveal relative z-10 px-4 sm:px-0">
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
-              <Command className="w-3 h-3 icon-3d" /> Digital Studio v7.2
+        <div className="max-w-5xl mx-auto animate-reveal relative z-10 px-0 sm:px-0">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[8px] sm:text-[10px] font-black text-primary uppercase tracking-[0.2em]">
+              <Command className="w-2.5 h-2.5 sm:w-3 sm:h-3 icon-3d" /> Digital Studio v7.2
             </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[8px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
               Verified {TOOLS.length} Units
             </div>
           </div>
           
-          <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere">
+          <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.95] sm:leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere px-2">
             The World’s Most <span className="text-primary">Advanced</span> Tool Studio
           </h1>
-          <p className="text-sm sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
+          <p className="text-xs sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-6 overflow-wrap-anywhere">
             Professional high-fidelity asset generation and technical data translation. Engineered for high-performance workflows with 100% hardware-native privacy.
           </p>
 
           {/* Search & Category Bar */}
-          <div className="max-w-4xl mx-auto space-y-6 px-0 sm:px-4">
+          <div className="max-w-4xl mx-auto space-y-6 px-4">
              {/* Search Input */}
              <div className="max-w-2xl mx-auto group relative">
                 <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000 pointer-events-none" />
                 <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within/search:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
 
-                <div className="relative h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl duration-500 group-hover:from-primary/30 group-focus-within/search:from-primary/60 group-focus-within/search:to-primary/30">
+                <div className="relative h-14 sm:h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl duration-500 group-hover:from-primary/30 group-focus-within/search:from-primary/60 group-focus-within/search:to-primary/30">
                   <div className="moving-border-matrix" />
-                  <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within/search:border-primary/50 group-focus-within/search:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10">
-                    <div className="absolute inset-y-0 left-5 flex items-center pointer-none">
-                      <Search className="w-5 h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d" />
+                  <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within/search:border-primary/50 group-focus-within/search:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10 px-2 sm:px-0">
+                    <div className="absolute inset-y-0 left-4 sm:left-5 flex items-center pointer-none">
+                      <Search className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d" />
                     </div>
                     <Input 
                       type="text"
@@ -1448,14 +1448,14 @@ export default function Home() {
                       onBlur={() => setIsFocused(false)}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-full w-full pl-14 pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-base font-medium placeholder:text-foreground/20"
+                      className="h-full w-full pl-10 sm:pl-14 pr-10 sm:pr-12 bg-transparent border-none focus-visible:ring-0 rounded-none text-sm sm:text-base font-medium placeholder:text-foreground/20"
                     />
                     {searchQuery && (
                       <button 
                         onClick={() => setSearchQuery('')}
-                        className="absolute inset-y-0 right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
+                        className="absolute inset-y-0 right-4 sm:right-5 flex items-center text-foreground/20 hover:text-primary transition-colors"
                       >
-                        <X className="w-5 h-5 icon-3d" />
+                        <X className="w-4 h-4 sm:w-5 sm:h-5 icon-3d" />
                       </button>
                     )}
                   </div>
@@ -1463,7 +1463,7 @@ export default function Home() {
              </div>
 
              {/* Category Pills */}
-             <div className="sticky top-20 z-20 flex flex-wrap items-center justify-center gap-2 p-2 rounded-[2rem] bg-secondary/50 border border-white/5 backdrop-blur-xl shadow-2xl w-fit mx-auto">
+             <div className="sticky top-20 z-20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-[1.5rem] sm:rounded-[2rem] bg-secondary/50 border border-white/5 backdrop-blur-xl shadow-2xl w-fit mx-auto max-w-full">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
@@ -1472,13 +1472,13 @@ export default function Home() {
                       setVisibleCount(10);
                     }}
                     className={cn(
-                      "flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
+                      "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
                       selectedCategory === cat.id 
                         ? "bg-primary text-primary-foreground border-primary shadow-xl shadow-primary/20 scale-105" 
                         : "bg-white/5 border-white/5 text-foreground/40 hover:text-primary hover:border-primary/20 hover:bg-primary/5"
                     )}
                   >
-                    <cat.icon className={cn("w-3.5 h-3.5", selectedCategory === cat.id ? "icon-3d" : "")} />
+                    <cat.icon className={cn("w-3 sm:w-3.5 h-3 sm:h-3.5", selectedCategory === cat.id ? "icon-3d" : "")} />
                     <span className="hidden xs:inline">{cat.label}</span>
                   </button>
                 ))}
@@ -1487,38 +1487,38 @@ export default function Home() {
 
           {/* View Toggle */}
           <div className="flex justify-center mt-6 mb-10">
-            <div className="inline-flex p-1.5 rounded-2xl bg-secondary/50 border border-white/5 backdrop-blur-xl relative group/toggle shadow-2xl">
+            <div className="inline-flex p-1 rounded-2xl bg-secondary/50 border border-white/5 backdrop-blur-xl relative group/toggle shadow-2xl">
                <div 
                   className={cn(
-                    "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-primary rounded-xl transition-all duration-300 shadow-lg shadow-primary/20",
-                    viewMode === 'grid' ? "left-1.5" : "left-[calc(50%+1.5px)]"
+                    "absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary rounded-xl transition-all duration-300 shadow-lg shadow-primary/20",
+                    viewMode === 'grid' ? "left-1" : "left-[calc(50%+1px)]"
                   )}
                />
                <button 
                 onClick={() => toggleViewMode('grid')}
                 className={cn(
-                  "relative z-10 flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[9px] font-black uppercase tracking-widest",
+                  "relative z-10 flex items-center gap-2 px-5 sm:px-6 py-2 rounded-xl transition-all text-[8px] sm:text-[9px] font-black uppercase tracking-widest",
                   viewMode === 'grid' ? "text-primary-foreground" : "text-foreground/40 hover:text-primary"
                 )}
                >
-                 <LayoutGrid className="w-3.5 h-3.5 icon-3d" /> Grid
+                 <LayoutGrid className="w-3 sm:w-3.5 h-3 sm:h-3.5 icon-3d" /> Grid
                </button>
                <button 
                 onClick={() => toggleViewMode('list')}
                 className={cn(
-                  "relative z-10 flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[9px] font-black uppercase tracking-widest",
+                  "relative z-10 flex items-center gap-2 px-5 sm:px-6 py-2 rounded-xl transition-all text-[8px] sm:text-[9px] font-black uppercase tracking-widest",
                   viewMode === 'list' ? "text-primary-foreground" : "text-foreground/40 hover:text-primary"
                 )}
                >
-                 <List className="w-3.5 h-3.5 icon-3d" /> List
+                 <List className="w-3 sm:w-3.5 h-3 sm:h-3.5 icon-3d" /> List
                </button>
             </div>
           </div>
 
           <div className="space-y-12">
             <div className={cn(
-              "w-full transition-all duration-300 px-2 sm:px-0",
-              viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" : "flex flex-col gap-4 max-w-4xl mx-auto"
+              "w-full transition-all duration-300 px-4 sm:px-0",
+              viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" : "flex flex-col gap-3 sm:gap-4 max-w-4xl mx-auto"
             )}>
               {visibleTools.length > 0 ? (
                 visibleTools.map((item) => (
@@ -1534,12 +1534,12 @@ export default function Home() {
                  <ShadButton 
                    onClick={() => setVisibleCount(prev => prev + 6)}
                    variant="outline"
-                   className="h-16 px-12 rounded-[2rem] border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-xs hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all group/see"
+                   className="h-14 sm:h-16 px-10 sm:px-12 rounded-[2rem] border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-[10px] sm:text-xs hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all group/see"
                  >
-                    <ChevronDown className="w-5 h-5 mr-3 group-hover/see:translate-y-1 transition-transform" />
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 group-hover/see:translate-y-1 transition-transform" />
                     See More Tools
                  </ShadButton>
-                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/20">
+                 <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.4em] text-foreground/20">
                     Displaying {visibleCount} of {filteredTools.length} units
                  </p>
               </div>
@@ -1553,16 +1553,16 @@ export default function Home() {
 
 function EmptyState({ onReset }: { onReset: () => void }) {
   return (
-    <div className="col-span-full py-24 glass-card rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-8 px-6">
-      <Search className="w-12 h-12 text-foreground/5 animate-pulse icon-3d" />
+    <div className="col-span-full py-16 sm:py-24 glass-card rounded-[2.5rem] sm:rounded-[3rem] border-dashed border-white/10 flex flex-col items-center justify-center gap-6 sm:gap-8 px-6">
+      <Search className="w-10 h-10 sm:w-12 sm:h-12 text-foreground/5 animate-pulse icon-3d" />
       <div className="space-y-2 text-center">
-        <h3 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight">No Units Found</h3>
-        <p className="text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
+        <h3 className="text-xl sm:text-2xl font-headline font-black text-foreground uppercase tracking-tight">No Units Found</h3>
+        <p className="text-[10px] sm:text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
       </div>
       <ShadButton 
         onClick={onReset}
         variant="outline"
-        className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10 w-full sm:auto"
+        className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10 w-full sm:w-auto"
       >
         <RotateCcw className="w-4 h-4 mr-2 icon-3d" />
         Reset Filters

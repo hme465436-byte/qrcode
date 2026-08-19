@@ -22,10 +22,10 @@ import { QrScannerModal } from './qr-scanner-modal';
  * Static Logo Component
  */
 const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, iconOnly?: boolean }) => (
-  <div className={cn("flex items-center gap-2 sm:gap-3", className)}>
-    <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
+  <div className={cn("flex items-center gap-1.5 sm:gap-3", className)}>
+    <div className="relative w-7 h-7 sm:w-8 h-8 flex items-center justify-center shrink-0">
       <div className="absolute inset-0 bg-[#2563eb] rounded-lg shadow-lg shadow-blue-600/20 flex items-center justify-center overflow-hidden icon-container-3d">
-        <div className="w-4 h-4 grid grid-cols-2 gap-0.5 relative z-10">
+        <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 grid grid-cols-2 gap-0.5 relative z-10">
           <div className="border-[1.5px] border-white rounded-[1px]" />
           <div className="bg-white/40 rounded-[1px]" />
           <div className="bg-white/40 rounded-[1px]" />
@@ -34,9 +34,9 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
       </div>
     </div>
     {!iconOnly && (
-      <div className="font-headline font-black text-sm sm:text-xl tracking-tighter leading-none flex items-center min-w-0">
+      <div className="font-headline font-black text-xs sm:text-xl tracking-tighter leading-none flex items-center min-w-0">
         <span className="text-[#0f172a] dark:text-white uppercase truncate">MY KIT</span>
-        <span className="text-[#2563eb] ml-1 shrink-0 uppercase">TOOL</span>
+        <span className="text-[#2563eb] ml-0.5 sm:ml-1 shrink-0 uppercase">TOOL</span>
       </div>
     )}
   </div>
@@ -44,7 +44,6 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
 
 /**
  * STATIC NAV ITEMS REGISTRY
- * Hardcoded to ensure 100% parity between server and client.
  */
 const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home },
@@ -85,8 +84,8 @@ export function Navbar() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-[100] w-full border-b border-white/5 bg-background/80 backdrop-blur-xl h-16 transition-all duration-300">
-        <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-1.5 sm:gap-4">
-          <Link href="/" className="flex items-center gap-2 group transition-transform active:scale-95 min-w-0">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 h-full flex items-center justify-between gap-1 sm:gap-4">
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group transition-transform active:scale-95 min-w-0">
             <Logo />
           </Link>
           
@@ -105,11 +104,11 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-             {/* STATIC IDENTITY UNIT: About / Portfolio */}
+          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+             {/* IDENTITY UNIT */}
              <Link 
                 href="/about"
-                title="About My Kit Tool"
+                title="About"
                 className={cn(
                   "w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
                   pathname === '/about' ? "text-primary border-primary/20" : "text-foreground/40 hover:text-primary"
@@ -118,10 +117,10 @@ export function Navbar() {
                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
-             {/* STATIC SUPPORT UNIT: Donate / Coffee */}
+             {/* SUPPORT UNIT */}
              <Link 
                 href="/donate"
-                title="Buy me a coffee"
+                title="Donate"
                 className={cn(
                   "w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
                   pathname === '/donate' ? "text-primary border-primary/20" : "text-foreground/40 hover:text-primary"
@@ -130,10 +129,10 @@ export function Navbar() {
                <Coffee className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
-             {/* THEME TOGGLE UNIT */}
+             {/* THEME TOGGLE */}
              <button 
                 onClick={toggleTheme}
-                title="Toggle Theme"
+                title="Theme"
                 className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all icon-container-3d"
              >
                {!mounted ? (
@@ -145,10 +144,10 @@ export function Navbar() {
                )}
              </button>
 
-             {/* SCANNER UNIT */}
+             {/* SCANNER */}
              <button 
                 onClick={() => setIsScannerOpen(true)}
-                className="flex items-center justify-center sm:gap-2 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] w-8 h-8 sm:w-auto sm:px-5 sm:py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
+                className="flex items-center justify-center sm:gap-2 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] w-8 h-8 sm:w-auto sm:px-5 sm:py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
              >
               <Scan className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d" />
               <span className="hidden sm:inline">Scanner</span>
