@@ -5,6 +5,7 @@ import {
   Calendar, 
   Globe, 
   RefreshCcw, 
+  RotateCcw,
   Search, 
   Trash2, 
   CheckCircle2, 
@@ -256,7 +257,7 @@ export default function HolidayStudioPage() {
         <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <Activity className="w-5 h-5" />
