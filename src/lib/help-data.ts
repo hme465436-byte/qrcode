@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'website-trust-checker': {
+    title: 'Website Trust Studio',
+    description: 'Professional domain reputation auditing unit. Evaluate visual and technical security signals via multi-node malware registries and DNS resolution protocols.',
+    steps: [
+      'Enter the target website URL in the Discovery Node input.',
+      'Execute the Trust Audit to initialize the multi-node security handshake.',
+      'Review the calculated Risk Level based on malware, SSL, and DNS results.',
+      'Analyze the technical data grid for IP, ISP, and blacklist status.',
+      'Copy the full audit log for technical reporting or further deep-dives.'
+    ],
+    tips: [
+      'Enter full URLs including https:// for more precise certificate validation.',
+      'Blacklisted results are derived from the live URLhaus malware registry.'
+    ],
+    privacy: 'All security lookups are processed strictly in local browser memory via secure server actions. No data intent is logged.'
+  },
   'github-user': {
     title: 'GitHub Identity Studio',
     description: 'Professional developer discovery engine. Isolate public profile metadata, repository density, and social reach locally via the GitHub REST protocol.',

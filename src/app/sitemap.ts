@@ -20,7 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/bmi-calculator', '/bio-maker', '/image-size-increaser', '/wps-sheets', '/speed-test', '/ip-finder',
     '/currency-converter', '/weather', '/namaz-times', '/quran-ayah', '/crypto-prices', '/country', '/advice',
     '/pets', '/jokes', '/facts', '/pokemon', '/books', '/holidays', '/quotes', '/image-gallery', '/translate',
-    '/free-games', '/coding-resources', '/wikipedia', '/city-explorer', '/github-user'
+    '/free-games', '/coding-resources', '/wikipedia', '/city-explorer', '/github-user', '/website-trust-checker'
   ];
 
   const routes = tools.map(tool => ({
