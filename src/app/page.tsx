@@ -1406,12 +1406,12 @@ export default function Home() {
     }, typingSpeed);
 
     return () => clearTimeout(timeout);
-  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, iFocused, searchQuery]);
+  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, isFocused, searchQuery]);
 
   const dynamicPlaceholder = useMemo(() => {
     if (isFocused || searchQuery) return 'Search tools...';
     return `${placeholder}|`;
-  }, [placeholder, iFocused, searchQuery]);
+  }, [placeholder, isFocused, searchQuery]);
 
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_MODE_KEY) as 'grid' | 'list' | null;
@@ -1559,7 +1559,7 @@ export default function Home() {
                   viewMode === 'grid' ? "text-primary-foreground" : "text-foreground/40 hover:text-primary"
                 )}
                >
-                 <LayoutGrid className="w-3 sm:w-3.5 h-3 sm:h-3.5 icon-3d" /> Grid
+                 <LayoutGrid className="w-3.5 h-3.5 icon-3d" /> Grid
                </button>
                <button 
                 onClick={() => toggleViewMode('list')}
@@ -1568,7 +1568,7 @@ export default function Home() {
                   viewMode === 'list' ? "text-primary-foreground" : "text-foreground/40 hover:text-primary"
                 )}
                >
-                 <List className="w-3 sm:w-3.5 h-3 sm:h-3.5 icon-3d" /> List
+                 <List className="w-3.5 h-3.5 icon-3d" /> List
                </button>
             </div>
           </div>
