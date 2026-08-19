@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -138,7 +139,7 @@ export default function FreeGamesPage() {
                        <Input 
                         placeholder="Search game title..." 
                         value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="h-14 bg-secondary border-border rounded-xl font-bold uppercase px-6 focus:ring-primary/40"
                        />
                        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20">
