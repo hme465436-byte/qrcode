@@ -12,7 +12,7 @@ import {
   Loader2, 
   Info,
   CheckCircle2,
-  Zap,
+  Zap, 
   Activity,
   AlertCircle,
   ArrowRight,
@@ -24,7 +24,8 @@ import {
   Maximize2,
   Share2,
   Globe2,
-  FileText
+  FileText,
+  Quote
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -198,7 +199,7 @@ export default function WikipediaPage() {
 
         {/* Result Matrix */}
         <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/10">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px] bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <div className="flex items-center gap-4">
