@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -191,7 +190,7 @@ export default function ImageGalleryPage() {
                 Image <span className="text-primary italic">Gallery Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional multi-node visual discovery. Isolate high-fidelity assets from NASA, Openverse, and the Art Institute of Chicago locally with 1:1 hardware fidelity.
+                Professional multi-source discovery. Isolate high-fidelity assets from NASA, Openverse, and the Art Institute of Chicago locally with 1:1 hardware fidelity.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -299,15 +298,15 @@ export default function ImageGalleryPage() {
                    ))}
                 </div>
 
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-center justify-between gap-6">
-                   <Button variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="h-12 px-6 rounded-xl border-border text-[10px] font-black uppercase">
-                      <ChevronLeft className="w-4 h-4 mr-2" /> Previous
+                <div className="p-4 sm:p-8 rounded-[2rem] sm:rounded-[3rem] bg-secondary/50 border border-border flex flex-row items-center justify-center gap-2 sm:gap-6">
+                   <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="h-10 px-4 rounded-xl border-border bg-background text-[9px] font-black uppercase tracking-widest">
+                      <ChevronLeft className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Previous</span><span className="sm:hidden">Prev</span>
                    </Button>
-                   <div className="h-12 px-8 flex items-center justify-center bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest text-primary">
-                      Node Page {page}
+                   <div className="h-10 px-4 sm:px-8 flex items-center justify-center bg-background border border-border rounded-xl text-[9px] font-black uppercase tracking-widest text-primary shrink-0">
+                      Page {page}
                    </div>
-                   <Button variant="outline" onClick={() => setPage(p => p + 1)} className="h-12 px-6 rounded-xl border-border text-[10px] font-black uppercase">
-                      Next <ChevronRight className="w-4 h-4 ml-2" />
+                   <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} className="h-10 px-4 rounded-xl border-border bg-background text-[9px] font-black uppercase tracking-widest">
+                      <span className="hidden sm:inline">Next</span><span className="sm:hidden">Next</span> <ChevronRight className="w-4 h-4 sm:ml-2" />
                    </Button>
                 </div>
              </div>
