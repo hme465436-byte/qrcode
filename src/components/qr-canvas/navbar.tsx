@@ -22,7 +22,7 @@ import { QrScannerModal } from './qr-scanner-modal';
  * Static Logo Component
  */
 const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, iconOnly?: boolean }) => (
-  <div className={cn("flex items-center gap-3", className)}>
+  <div className={cn("flex items-center gap-2 sm:gap-3", className)}>
     <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
       <div className="absolute inset-0 bg-[#2563eb] rounded-lg shadow-lg shadow-blue-600/20 flex items-center justify-center overflow-hidden icon-container-3d">
         <div className="w-4 h-4 grid grid-cols-2 gap-0.5 relative z-10">
@@ -34,7 +34,7 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
       </div>
     </div>
     {!iconOnly && (
-      <div className="font-headline font-black text-xl tracking-tighter leading-none flex items-center min-w-0">
+      <div className="font-headline font-black text-lg sm:text-xl tracking-tighter leading-none flex items-center min-w-0">
         <span className="text-[#0f172a] dark:text-white uppercase truncate">MY KIT</span>
         <span className="text-[#2563eb] ml-1.5 shrink-0 uppercase">TOOL</span>
       </div>
@@ -85,7 +85,7 @@ export function Navbar() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-[100] w-full border-b border-white/5 bg-background/80 backdrop-blur-xl h-16 transition-all duration-300">
-        <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+        <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-2 group transition-transform active:scale-95 min-w-0">
             <Logo />
           </Link>
@@ -105,13 +105,13 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
              {/* STATIC IDENTITY UNIT: About / Portfolio */}
              <Link 
                 href="/about"
                 title="About My Kit Tool"
                 className={cn(
-                  "w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
+                  "w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
                   pathname === '/about' ? "text-primary border-primary/20" : "text-foreground/40 hover:text-primary"
                 )}
              >
@@ -123,18 +123,18 @@ export function Navbar() {
                 href="/donate"
                 title="Buy me a coffee"
                 className={cn(
-                  "w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
+                  "w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
                   pathname === '/donate' ? "text-primary border-primary/20" : "text-foreground/40 hover:text-primary"
                 )}
              >
                <Coffee className="w-4 h-4 transition-transform group-hover:scale-110 icon-3d" />
              </Link>
 
-             {/* THEME TOGGLE UNIT: Stable container to prevent hydration shift */}
+             {/* THEME TOGGLE UNIT */}
              <button 
                 onClick={toggleTheme}
                 title="Toggle Theme"
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all icon-container-3d"
+                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all icon-container-3d"
              >
                {!mounted ? (
                  <div className="w-4 h-4" /> 
@@ -148,7 +148,7 @@ export function Navbar() {
              {/* SCANNER UNIT */}
              <button 
                 onClick={() => setIsScannerOpen(true)}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-4 md:px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
+                className="flex items-center justify-center sm:gap-2 text-[10px] font-black uppercase tracking-[0.2em] w-9 h-9 sm:w-auto sm:px-5 sm:py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
              >
               <Scan className="w-4 h-4 icon-3d" />
               <span className="hidden sm:inline">Scanner</span>

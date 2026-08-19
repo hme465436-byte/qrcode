@@ -63,6 +63,7 @@
     max-width: 100%;
     box-sizing: border-box;
     scroll-behavior: smooth;
+    position: relative;
   }
   
   * {
@@ -70,6 +71,7 @@
     box-sizing: border-box;
     overflow-wrap: anywhere;
     word-break: normal;
+    max-width: 100%;
   }
   
   body {

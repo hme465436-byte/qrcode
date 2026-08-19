@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -786,7 +785,7 @@ const TOOLS: Tool[] = [
     label: 'DOCUMENT', 
     color: 'text-blue-600 bg-blue-600/10 border-blue-600/20',
     glowClass: 'bg-blue-600/10',
-    keywords: ['rotate pdf', 'fix orientation', 'sideways pdf', 'upside down', 'pdf fixer'],
+    keywords: ['rotate pdf', 'fix orientation', 'sideways pdf', 'upsside down', 'pdf fixer'],
     category: 'pdf'
   },
   { 
@@ -1408,7 +1407,7 @@ export default function Home() {
       />
 
       {/* HERO SECTION */}
-      <section className="w-full px-4 sm:px-6 pt-20 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-visible flex flex-col justify-center">
+      <section className="w-full px-4 sm:px-6 pt-20 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-hidden flex flex-col justify-center">
         <SpaceBackground />
         
         <div className="max-w-5xl mx-auto animate-reveal relative z-10">
@@ -1421,7 +1420,7 @@ export default function Home() {
             </div>
           </div>
           
-          <h1 className="text-4xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere">
+          <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere">
             The World’s Most <span className="text-primary">Advanced</span> Tool Studio
           </h1>
           <p className="text-base sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
@@ -1429,7 +1428,7 @@ export default function Home() {
           </p>
 
           {/* Search & Category Bar */}
-          <div className="max-w-4xl mx-auto space-y-6 px-4">
+          <div className="max-w-4xl mx-auto space-y-6 px-0 sm:px-4">
              {/* Search Input */}
              <div className="max-w-2xl mx-auto group relative">
                 <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000 pointer-events-none" />
