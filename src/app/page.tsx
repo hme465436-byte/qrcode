@@ -99,7 +99,8 @@ import {
   Sparkles,
   Footprints,
   Laugh,
-  Lightbulb
+  Lightbulb,
+  Gamepad2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -133,6 +134,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/pokemon', 
+    icon: Gamepad2, 
+    title: 'Pokemon Studio', 
+    desc: 'Isolate high-fidelity unit data, base stats, and visual identifiers.', 
+    label: 'DISCOVERY', 
+    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
+    glowClass: 'bg-rose-500/10',
+    keywords: ['pokemon', 'pokedex', 'stats', 'sprite', 'discovery', 'lookup', 'game'],
     category: 'generators'
   },
   { 
@@ -1054,7 +1066,7 @@ const TOOLS: Tool[] = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
@@ -1076,7 +1088,7 @@ const TOOLS: Tool[] = [
     title: 'OCR Extraction', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-600/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
     category: 'utilities'
@@ -1241,7 +1253,8 @@ export default function Home() {
       'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
       'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
-      'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts'
+      'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
+      'Pokemon Studio', 'Pokedex', 'Pokemon stats'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

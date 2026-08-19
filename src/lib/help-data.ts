@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'pokemon': {
+    title: 'Pokemon Finder Studio',
+    description: 'Professional linguistic discovery engine for Pokémon data. Access 1:1 verified stats, sprites, and identity profiles.',
+    steps: [
+      'Enter a name or numeric ID in the search matrix to initialize discovery.',
+      'The engine will synchronize with the PokeAPI registry to isolate the target unit.',
+      'Analyze the base stat telemetry grid (HP, Attack, Defense).',
+      'Review the biometric data and ability protocol modules.',
+      'Use the copy protocol to save the identity data or reset for a new search.'
+    ],
+    tips: [
+      'Enter numeric IDs (e.g., 25) for direct astronomical identification.',
+      'The "official artwork" sprite is prioritized for peak visual fidelity.'
+    ],
+    privacy: 'All textual queries are processed strictly in local memory. No search history or identity interest is logged.'
+  },
   'facts': {
     title: 'Fact Studio',
     description: 'Professional knowledge synthesis unit. Retrieve randomized high-fidelity facts with 1:1 linguistic precision.',
