@@ -30,7 +30,9 @@ import {
   RotateCcw,
   TrendingUp,
   Dices,
-  FileDown
+  FileDown,
+  FileSearch,
+  FileX
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,6 +74,9 @@ export default function BooksPage() {
   const [page, setPage] = useState(1);
   const [totalFound, setTotalFound] = useState(0);
   const [activeMode, setActiveMode] = useState<'search' | 'trending' | 'random'>('search');
+
+  // Download State
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
   const executeSearch = async (pageNum: number = 1, isNewSearch: boolean = false) => {
     const searchTarget = query.trim();
@@ -166,6 +171,43 @@ export default function BooksPage() {
     setError(null);
     setActiveMode('search');
     toast({ title: "Studio Reset" });
+  };
+
+  const handleDirectDownload = async (iaId: string) => {
+    setIsDownloading(iaId);
+    try {
+      const response = await fetch(`https://archive.org/metadata/${iaId}`);
+      if (!response.ok) throw new Error("Metadata uplink restricted.");
+      
+      const data = await response.json();
+      const files = data.files || [];
+      
+      // Find the first file that is a PDF
+      const pdfFile = files.find((f: any) => f.name.toLowerCase().endsWith('.pdf'));
+      
+      if (!pdfFile) {
+        toast({ 
+          variant: "destructive", 
+          title: "Protocol Mismatch", 
+          description: "No direct PDF bitstream identified for this identity." 
+        });
+        return;
+      }
+
+      const downloadUrl = `https://archive.org/download/${iaId}/${pdfFile.name}`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = pdfFile.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({ title: "Extraction Initiated", description: "PDF bitstream pushed to browser." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Handshake Failed", description: "Could not isolate remote file registry." });
+    } finally {
+      setIsDownloading(null);
+    }
   };
 
   return (
@@ -349,11 +391,6 @@ export default function BooksPage() {
                                     <Calendar className="w-2.5 h-2.5 mr-1" /> {book.first_publish_year}
                                  </Badge>
                                )}
-                               {book.language?.[0] && (
-                                 <Badge variant="outline" className="bg-background/50 text-[8px] font-black uppercase tracking-widest py-0.5 border-white/5">
-                                    <Languages className="w-2.5 h-2.5 mr-1" /> {book.language[0]}
-                                 </Badge>
-                               )}
                             </div>
                           </div>
                         </Card>
@@ -393,10 +430,17 @@ export default function BooksPage() {
                                      </a>
                                   </Button>
                                   {book.ia && book.ia.length > 0 && (
-                                    <Button asChild variant="outline" className="h-10 px-6 rounded-xl border-primary/20 bg-primary/5 text-primary font-black text-[9px] uppercase tracking-widest">
-                                       <a href={`https://archive.org/details/${book.ia[0]}`} target="_blank" rel="noopener noreferrer">
-                                          <FileDown className="w-3.5 h-3.5 mr-2" /> Download
-                                       </a>
+                                    <Button 
+                                      onClick={() => handleDirectDownload(book.ia![0])} 
+                                      disabled={isDownloading === book.ia[0]}
+                                      variant="outline" 
+                                      className="h-10 px-6 rounded-xl border-primary/20 bg-primary/5 text-primary font-black text-[9px] uppercase tracking-widest disabled:opacity-50"
+                                    >
+                                       {isDownloading === book.ia[0] ? (
+                                         <><Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> Searching Matrix...</>
+                                       ) : (
+                                         <><FileDown className="w-3.5 h-3.5 mr-2" /> Direct Download</>
+                                       )}
                                     </Button>
                                   )}
                                </div>
