@@ -21,7 +21,9 @@ import {
   History,
   ArrowRight,
   Bookmark,
-  X
+  X,
+  ShieldCheck,
+  BadgeCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -194,7 +196,9 @@ export default function AdvicePage() {
                     <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Linguistic Matrix</CardTitle>
                  </div>
                  {currentAdvice && (
-                   <BadgeCheck className="w-3.5 h-3.5 text-primary/40" />
+                   <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[8px] font-black text-primary uppercase tracking-widest">
+                    <BadgeCheck className="w-3 h-3" /> Verified Signal
+                  </div>
                  )}
               </CardHeader>
               
@@ -404,14 +408,6 @@ export default function AdvicePage() {
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
       `}</style>
-    </div>
-  );
-}
-
-function BadgeCheck({ className }: { className?: string }) {
-  return (
-    <div className={cn("flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[8px] font-black text-primary uppercase tracking-widest", className)}>
-      <CheckCircle2 className="w-3 h-3" /> Verified Signal
     </div>
   );
 }
