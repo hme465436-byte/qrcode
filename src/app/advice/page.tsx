@@ -147,10 +147,15 @@ export default function AdvicePage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
-  const handleShare = (slip: AdviceSlip) => {
+  const handleShare = async (slip: AdviceSlip) => {
     const text = `"${slip.advice}" — Wisdom ID: ${slip.id}. Shared via mykittool.app`;
     if (navigator.share) {
-      navigator.share({ title: 'Advice Studio Wisdom', text });
+      try {
+        await navigator.share({ title: 'Advice Studio Wisdom', text });
+      } catch (err) {
+        // Fallback to copy protocol if native share is blocked by hardware/OS
+        handleCopy(text, slip.id);
+      }
     } else {
       handleCopy(text, slip.id);
     }
@@ -270,7 +275,7 @@ export default function AdvicePage() {
                         placeholder="Search keywords (e.g. Life, Future, Love)..."
                         className="h-14 bg-secondary border-border rounded-2xl text-sm font-bold px-6 focus:ring-primary/40 uppercase"
                        />
-                       <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within:opacity-100 transition-opacity">
+                       <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/input:opacity-100 transition-opacity">
                           <Activity className="w-5 h-5 text-primary" />
                        </div>
                     </div>
