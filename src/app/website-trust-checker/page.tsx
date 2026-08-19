@@ -287,10 +287,10 @@ export default function WebsiteTrustCheckerPage() {
                          </div>
                          <div className="flex flex-col items-center gap-3 pt-4 border-t border-white/5">
                             {riskAssessment.reasons.map((r, i) => (
-                               <p key={i} className="text-[10px] font-bold uppercase tracking-widest text-foreground/40 flex items-center gap-2">
+                               <div key={i} className="text-[10px] font-bold uppercase tracking-widest text-foreground/40 flex items-center gap-2">
                                   <div className={cn("w-1.5 h-1.5 rounded-full", riskAssessment.color.replace('text-', 'bg-'))} />
                                   {r}
-                               </p>
+                               </div>
                             ))}
                          </div>
                       </div>
