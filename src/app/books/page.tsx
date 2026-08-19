@@ -27,7 +27,10 @@ import {
   Languages,
   Hash,
   BookOpen,
-  RotateCcw
+  RotateCcw,
+  TrendingUp,
+  Dices,
+  FileDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,6 +58,7 @@ interface BookEntry {
   language?: string[];
   number_of_pages_median?: number;
   subject?: string[];
+  ia?: string[];
 }
 
 export default function BooksPage() {
@@ -67,6 +71,7 @@ export default function BooksPage() {
   // Pagination Matrix
   const [page, setPage] = useState(1);
   const [totalFound, setTotalFound] = useState(0);
+  const [activeMode, setActiveMode] = useState<'search' | 'trending' | 'random'>('search');
 
   const executeSearch = async (pageNum: number = 1, isNewSearch: boolean = false) => {
     const searchTarget = query.trim();
@@ -74,6 +79,7 @@ export default function BooksPage() {
 
     setIsLoading(true);
     setError(null);
+    setActiveMode('search');
     if (isNewSearch) {
       setResults([]);
       setPage(1);
@@ -103,6 +109,43 @@ export default function BooksPage() {
     }
   };
 
+  const fetchTrending = async () => {
+    setIsLoading(true);
+    setError(null);
+    setResults([]);
+    setActiveMode('trending');
+    try {
+      const response = await fetch('https://openlibrary.org/trending/daily.json');
+      const data = await response.json();
+      if (data.works && data.works.length > 0) {
+        const normalized: BookEntry[] = data.works.map((w: any) => ({
+          key: w.key,
+          title: w.title,
+          author_name: w.author_names,
+          first_publish_year: w.first_publish_year,
+          cover_i: w.cover_i,
+          ia: w.ia
+        }));
+        setResults(normalized);
+        setTotalFound(normalized.length);
+        toast({ title: "Trending Matrix Active", description: "Isolating daily high-frequency signals." });
+      } else {
+        setError("Trending registry currently empty.");
+      }
+    } catch (err) {
+      setError("Failed to synchronize with trending node.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchRandom = async () => {
+    const randomPage = Math.floor(Math.random() * 100) + 1;
+    setQuery('book'); 
+    setActiveMode('random');
+    executeSearch(randomPage, true);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     executeSearch(1, true);
@@ -121,6 +164,7 @@ export default function BooksPage() {
     setTotalFound(0);
     setPage(1);
     setError(null);
+    setActiveMode('search');
     toast({ title: "Studio Reset" });
   };
 
@@ -177,17 +221,42 @@ export default function BooksPage() {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={isLoading || !query.trim()}
-                  className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
-                >
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Sparkles className="w-5 h-5 mr-2" />}
-                  Execute Search
-                </Button>
+                <div className="grid grid-cols-1 gap-3">
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || !query.trim()}
+                    className="w-full h-14 bg-primary text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                  >
+                    {isLoading && activeMode === 'search' ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Search className="w-4 h-4 mr-2" />}
+                    Execute Search
+                  </Button>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={fetchTrending}
+                      disabled={isLoading}
+                      className="h-12 border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary hover:text-white transition-all"
+                    >
+                      {isLoading && activeMode === 'trending' ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <TrendingUp className="w-3.5 h-3.5 mr-2" />}
+                      Trending
+                    </Button>
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={fetchRandom}
+                      disabled={isLoading}
+                      className="h-12 border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary hover:text-white transition-all"
+                    >
+                      {isLoading && activeMode === 'random' ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <Dices className="w-3.5 h-3.5 mr-2" />}
+                      Random
+                    </Button>
+                  </div>
+                </div>
               </form>
 
-              {totalFound > 0 && (
+              {totalFound > 0 && activeMode === 'search' && (
                 <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex items-center justify-between">
                    <div className="space-y-1">
                       <p className="text-[9px] font-black text-foreground/30 uppercase tracking-widest">Identified Signal</p>
@@ -316,6 +385,21 @@ export default function BooksPage() {
                                     </Badge>
                                   )}
                                </div>
+
+                               <div className="flex flex-wrap justify-center md:justify-start gap-3 pt-2">
+                                  <Button asChild className="h-10 px-6 rounded-xl bg-primary text-white font-black text-[9px] uppercase tracking-widest shadow-lg">
+                                     <a href={`https://openlibrary.org${book.key}`} target="_blank" rel="noopener noreferrer">
+                                        <BookOpen className="w-3.5 h-3.5 mr-2" /> Read Online
+                                     </a>
+                                  </Button>
+                                  {book.ia && book.ia.length > 0 && (
+                                    <Button asChild variant="outline" className="h-10 px-6 rounded-xl border-primary/20 bg-primary/5 text-primary font-black text-[9px] uppercase tracking-widest">
+                                       <a href={`https://archive.org/details/${book.ia[0]}`} target="_blank" rel="noopener noreferrer">
+                                          <FileDown className="w-3.5 h-3.5 mr-2" /> Download
+                                       </a>
+                                    </Button>
+                                  )}
+                               </div>
                             </div>
                           </div>
                         </DialogHeader>
@@ -357,9 +441,9 @@ export default function BooksPage() {
 
                         <div className="p-6 bg-secondary/30 border-t border-white/5 flex items-center justify-between shrink-0">
                            <span className="text-[8px] font-black uppercase text-foreground/10 tracking-[0.4em]">Hardware-Native Registry</span>
-                           <Button asChild className="h-12 px-8 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20">
+                           <Button asChild className="h-12 px-8 rounded-xl bg-white text-black font-black text-[10px] uppercase tracking-widest shadow-xl">
                               <a href={`https://openlibrary.org${book.key}`} target="_blank" rel="noopener noreferrer">
-                                 Open Library Protocol <ExternalLink className="w-3.5 h-3.5 ml-2" />
+                                 Registry Node <ExternalLink className="w-3.5 h-3.5 ml-2" />
                               </a>
                            </Button>
                         </div>
@@ -369,39 +453,41 @@ export default function BooksPage() {
                 </div>
                 
                 {/* Pagination Controls */}
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex flex-col sm:flex-row items-center justify-between gap-6">
-                   <div className="flex items-center gap-3">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => handlePageChange('prev')} 
-                        disabled={page <= 1 || isLoading}
-                        className="h-12 w-12 rounded-xl bg-background border-border"
-                      >
-                         <ChevronLeft className="w-5 h-5" />
-                      </Button>
-                      <div className="px-6 h-12 flex items-center justify-center bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
-                         Matrix Page {page}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => handlePageChange('next')} 
-                        disabled={results.length < 12 || isLoading}
-                        className="h-12 w-12 rounded-xl bg-background border-border"
-                      >
-                         <ChevronRight className="w-5 h-5" />
-                      </Button>
-                   </div>
-                   
-                   <div className="flex items-center gap-5">
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
-                         <BookOpen className="w-6 h-6" />
-                      </div>
-                      <div className="text-left space-y-0.5">
-                         <h4 className="text-[13px] font-black uppercase text-foreground">Registry Stream</h4>
-                         <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest">End of identified segment</p>
-                      </div>
-                   </div>
-                </div>
+                {activeMode === 'search' && (
+                  <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-3">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handlePageChange('prev')} 
+                          disabled={page <= 1 || isLoading}
+                          className="h-12 w-12 rounded-xl bg-background border-border"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </Button>
+                        <div className="px-6 h-12 flex items-center justify-center bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
+                          Matrix Page {page}
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handlePageChange('next')} 
+                          disabled={results.length < 12 || isLoading}
+                          className="h-12 w-12 rounded-xl bg-background border-border"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </Button>
+                    </div>
+                    
+                    <div className="flex items-center gap-5">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
+                          <BookOpen className="w-6 h-6" />
+                        </div>
+                        <div className="text-left space-y-0.5">
+                          <h4 className="text-[13px] font-black uppercase text-foreground">Registry Stream</h4>
+                          <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest">End of identified segment</p>
+                        </div>
+                    </div>
+                  </div>
+                )}
              </div>
            )}
         </div>
@@ -422,4 +508,3 @@ export default function BooksPage() {
     </div>
   );
 }
-
