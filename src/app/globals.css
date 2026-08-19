@@ -67,7 +67,6 @@
 
   @media (max-width: 640px) {
     h1 {
-      font-size: 22px !important;
       line-height: 1.2 !important;
       word-break: break-word !important;
     }

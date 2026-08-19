@@ -1420,7 +1420,7 @@ export default function Home() {
             </div>
           </div>
           
-          <h1 className="text-[22px] sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[1.2] sm:leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere px-2">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-headline font-black mb-4 leading-[1.1] sm:leading-[1.1] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere px-2">
             The World’s Most <span className="text-primary">Advanced</span> Tool Studio
           </h1>
           <p className="text-xs sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
