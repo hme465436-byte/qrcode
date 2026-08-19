@@ -141,6 +141,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/city-explorer', 
+    icon: MapPin, 
+    title: 'City Explorer', 
+    desc: 'Professional geographic mapping and address validation for regional nodes.', 
+    label: 'GEOGRAPHY', 
+    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    glowClass: 'bg-emerald-400/10',
+    keywords: ['city explorer', 'map', 'address', 'coordinates', 'lat long', 'pakistan cities', 'geocoding'],
+    category: 'utilities'
+  },
+  { 
     href: '/wikipedia', 
     icon: Globe, 
     title: 'Wikipedia Studio', 
@@ -1214,7 +1225,7 @@ const TOOLS: Tool[] = [
     desc: 'Convert binary files to hexadecimal matrix.', 
     label: 'BINARY', 
     color: 'text-indigo-600 bg-indigo-600/10 border-indigo-600/20',
-    glowClass: 'bg-indigo-600/10',
+    glowClass: 'bg-indigo-500/10',
     keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset'],
     category: 'utilities'
   },
@@ -1348,7 +1359,7 @@ export default function Home() {
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
-      'Wikipedia Studio', 'Summarize', 'Search Wikipedia'
+      'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

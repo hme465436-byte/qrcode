@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -13,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'city-explorer': {
+    title: 'City Explorer Studio',
+    description: 'Professional geographic mapping and address validation unit. Isolate regional nodes and coordinates locally with the OpenStreetMap protocol.',
+    steps: [
+      'Enter the target city name in the search matrix.',
+      'The engine will synchronize with the regional registry node.',
+      'Review the identified geographic identifiers and postal data.',
+      'Verify the coordinate vectors (Latitude/Longitude) for accuracy.',
+      'Execute the map protocol to view the exact node location.'
+    ],
+    tips: [
+      'Enter specific names for more accurate identity isolation.',
+      'Coordinate data is derived from 1:1 geographic mapping.'
+    ],
+    privacy: 'All geographic lookups are volatile and held strictly in local hardware memory.'
+  },
   'wikipedia': {
     title: 'Wikipedia Studio',
     description: 'Professional-grade knowledge discovery engine. Isolate high-fidelity summaries and visual identifiers from the global Wikipedia registry.',
