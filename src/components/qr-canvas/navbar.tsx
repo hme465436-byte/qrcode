@@ -34,7 +34,7 @@ const Logo = ({ className = "h-8", iconOnly = false }: { className?: string, ico
       </div>
     </div>
     {!iconOnly && (
-      <div className="font-headline font-black text-xs sm:text-xl tracking-tighter leading-none flex items-center min-w-0">
+      <div className="font-headline font-black text-base sm:text-2xl tracking-tighter leading-none flex items-center min-w-0">
         <span className="text-[#0f172a] dark:text-white uppercase truncate">MY KIT</span>
         <span className="text-[#2563eb] ml-0.5 sm:ml-1 shrink-0 uppercase">TOOL</span>
       </div>
