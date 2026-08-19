@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'books': {
+    title: 'Book Studio Pro',
+    description: 'Professional linguistic discovery engine for global literature. Access 1:1 verified book metadata, author profiles, and high-fidelity cover imagery.',
+    steps: [
+      'Enter a book title or author name in the search matrix to initialize discovery.',
+      'The engine will synchronize with the Open Library registry to isolate matching signals.',
+      'Review the top 10 relevant book identities including publication years and author rosters.',
+      'Analyze visual assets (covers) and click "View Logic" for deep metadata lookup.',
+      'Reset the studio buffer for a new bibliographic search.'
+    ],
+    tips: [
+      'Use specific titles for more precise identity isolation.',
+      'Cover imagery is served directly from library hardware for maximum fidelity.'
+    ],
+    privacy: 'All textual queries are processed strictly in local memory. No search history or bibliographic interest is logged.'
+  },
   'pokemon': {
     title: 'Pokemon Finder Studio',
     description: 'Professional linguistic discovery engine for Pokémon data. Access 1:1 verified stats, sprites, and identity profiles.',

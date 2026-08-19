@@ -137,6 +137,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/books', 
+    icon: Book, 
+    title: 'Book Studio', 
+    desc: 'Isolate global book identities and covers via Open Library.', 
+    label: 'LIBRARY', 
+    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
+    glowClass: 'bg-indigo-500/10',
+    keywords: ['books', 'library', 'author', 'title', 'search', 'find books'],
+    category: 'generators'
+  },
+  { 
     href: '/pokemon', 
     icon: Gamepad2, 
     title: 'Pokemon Studio', 
@@ -1110,7 +1121,7 @@ const TOOLS: Tool[] = [
     title: 'Text Repeater', 
     desc: 'Professional emoji and text multiplication.', 
     label: 'UTIL', 
-    color: 'text-pink-600 bg-pink-500/10 border-pink-600/20',
+    color: 'text-pink-600 bg-pink-500/10 border-pink-500/20',
     glowClass: 'bg-pink-500/10',
     keywords: ['repeat', 'text repeat', 'emoji', 'multiply', 'spam', 'util', 'repeater', 'cloner'],
     category: 'generators'
@@ -1254,7 +1265,7 @@ export default function Home() {
       'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
-      'Pokemon Studio', 'Pokedex', 'Pokemon stats'
+      'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
