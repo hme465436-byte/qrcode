@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useCallback } from 'react';
@@ -28,7 +27,8 @@ import {
   Link as LinkIcon,
   Star,
   GitFork,
-  BookMarked
+  BookMarked,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -412,4 +412,3 @@ export default function GithubUserPage() {
     </div>
   );
 }
-
