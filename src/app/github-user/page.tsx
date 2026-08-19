@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   ArrowRight,
   RefreshCcw,
+  RotateCcw,
   Globe,
   FileCode,
   Calendar,
@@ -144,7 +145,7 @@ export default function GithubUserPage() {
                 <Button 
                   onClick={() => fetchUser()} 
                   disabled={isLoading || !username.trim()}
-                  className="w-full h-14 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                  className="h-14 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                 >
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <RefreshCcw className="w-5 h-5 mr-2" />}
                   Execute Lookup
