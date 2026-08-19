@@ -22,7 +22,8 @@ import {
   Maximize2,
   LayoutGrid,
   ChevronRight,
-  Target
+  Target,
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,6 +91,17 @@ export default function PokemonPage() {
     setData(null);
     setError(null);
     toast({ title: "Studio Reset" });
+  };
+
+  const handleShare = () => {
+    if (!data) return;
+    const text = `Pokemon Identity: ${data.name.toUpperCase()} (#${data.id}). Discovered via My Kit Tool.`;
+    if (navigator.share) {
+      navigator.share({ title: 'Pokemon Studio Discovery', text });
+    } else {
+      navigator.clipboard.writeText(text);
+      toast({ title: "Identity Copied", description: "Metadata saved to clipboard." });
+    }
   };
 
   return (
@@ -298,7 +310,7 @@ export default function PokemonPage() {
                          <Button onClick={() => handleClear()} variant="outline" className="h-16 flex-1 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
                             <RotateCcw className="w-5 h-5 mr-2" /> Reset Studio
                          </Button>
-                         <Button onClick={() => fetchAyah()} variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                         <Button onClick={() => handleShare()} variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
                             <Share2 className="w-5 h-5" />
                          </Button>
                       </div>
