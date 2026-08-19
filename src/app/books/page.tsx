@@ -75,9 +75,6 @@ export default function BooksPage() {
   const [totalFound, setTotalFound] = useState(0);
   const [activeMode, setActiveMode] = useState<'search' | 'trending' | 'random'>('search');
 
-  // Download State
-  const [isDownloading, setIsDownloading] = useState<string | null>(null);
-
   const executeSearch = async (pageNum: number = 1, isNewSearch: boolean = false) => {
     const searchTarget = query.trim();
     if (!searchTarget) return;
@@ -173,41 +170,17 @@ export default function BooksPage() {
     toast({ title: "Studio Reset" });
   };
 
-  const handleDirectDownload = async (iaId: string) => {
-    setIsDownloading(iaId);
-    try {
-      const response = await fetch(`https://archive.org/metadata/${iaId}`);
-      if (!response.ok) throw new Error("Metadata uplink restricted.");
-      
-      const data = await response.json();
-      const files = data.files || [];
-      
-      // Find the first file that is a PDF
-      const pdfFile = files.find((f: any) => f.name.toLowerCase().endsWith('.pdf'));
-      
-      if (!pdfFile) {
-        toast({ 
-          variant: "destructive", 
-          title: "Protocol Mismatch", 
-          description: "No direct PDF bitstream identified for this identity." 
-        });
-        return;
-      }
-
-      const downloadUrl = `https://archive.org/download/${iaId}/${pdfFile.name}`;
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = pdfFile.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast({ title: "Extraction Initiated", description: "PDF bitstream pushed to browser." });
-    } catch (err) {
-      toast({ variant: "destructive", title: "Handshake Failed", description: "Could not isolate remote file registry." });
-    } finally {
-      setIsDownloading(null);
-    }
+  const handleDirectDownload = (iaId: string) => {
+    // Construction of direct Archive.org download vector
+    const downloadUrl = `https://archive.org/download/${iaId}`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.setAttribute('download', '');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({ title: "Download Initiated", description: "Directing to Archive.org download node." });
   };
 
   return (
@@ -429,18 +402,22 @@ export default function BooksPage() {
                                         <BookOpen className="w-3.5 h-3.5 mr-2" /> Read Online
                                      </a>
                                   </Button>
-                                  {book.ia && book.ia.length > 0 && (
+                                  
+                                  {book.ia && book.ia.length > 0 ? (
                                     <Button 
                                       onClick={() => handleDirectDownload(book.ia![0])} 
-                                      disabled={isDownloading === book.ia[0]}
                                       variant="outline" 
-                                      className="h-10 px-6 rounded-xl border-primary/20 bg-primary/5 text-primary font-black text-[9px] uppercase tracking-widest disabled:opacity-50"
+                                      className="h-10 px-6 rounded-xl border-primary/20 bg-primary/5 text-primary font-black text-[9px] uppercase tracking-widest"
                                     >
-                                       {isDownloading === book.ia[0] ? (
-                                         <><Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> Searching Matrix...</>
-                                       ) : (
-                                         <><FileDown className="w-3.5 h-3.5 mr-2" /> Direct Download</>
-                                       )}
+                                       <FileDown className="w-3.5 h-3.5 mr-2" /> Direct Download
+                                    </Button>
+                                  ) : (
+                                    <Button 
+                                      disabled
+                                      variant="outline" 
+                                      className="h-10 px-6 rounded-xl border-white/5 bg-secondary/50 text-foreground/20 font-black text-[9px] uppercase tracking-widest"
+                                    >
+                                       <FileX className="w-3.5 h-3.5 mr-2" /> PDF Not Available
                                     </Button>
                                   )}
                                </div>
@@ -464,7 +441,7 @@ export default function BooksPage() {
                            </div>
 
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-white/5">
-                              <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border flex items-start gap-4">
+                              <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-4">
                                  <Languages className="w-5 h-5 text-primary/40 shrink-0 mt-1" />
                                  <div className="space-y-1">
                                     <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">Linguistic Stream</p>
@@ -473,7 +450,7 @@ export default function BooksPage() {
                                     </p>
                                  </div>
                               </div>
-                              <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border flex items-start gap-4">
+                              <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-4">
                                  <Globe className="w-5 h-5 text-primary/40 shrink-0 mt-1" />
                                  <div className="space-y-1">
                                     <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">Registry ID</p>
@@ -542,10 +519,10 @@ export default function BooksPage() {
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .bg-checkered {
-          background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #111113 75%), 
-                            linear-gradient(-45deg, transparent 75%, #111113 75%);
+          background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
           background-size: 20px 20px;
         }
       `}</style>
