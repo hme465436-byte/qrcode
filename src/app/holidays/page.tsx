@@ -81,7 +81,11 @@ export default function HolidayStudioPage() {
       try {
         const res = await fetch('https://date.nager.at/api/v3/AvailableCountries');
         if (!res.ok) throw new Error("Registry node restricted.");
-        const data = await res.json();
+        
+        const text = await res.text();
+        if (!text || text.trim() === '') throw new Error("Empty registry response.");
+        
+        const data = JSON.parse(text);
         
         // Ensure Pakistan is present in the list manually if missing from API
         const hasPK = data.some((c: Country) => c.countryCode === 'PK');
@@ -113,20 +117,29 @@ export default function HolidayStudioPage() {
 
     try {
       const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${selectedCountry}`);
+      
       if (!response.ok) {
-        if (selectedCountry === 'PK') throw new Error("Pakistan protocol restricted. Only 2026 is verified locally.");
-        throw new Error("Registry node restricted.");
+        setError("No holidays identified for this selection.");
+        setIsLoading(false);
+        return;
       }
       
-      const data = await response.json();
-      if (data && data.length > 0) {
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        setError("No holidays identified for this selection.");
+        setIsLoading(false);
+        return;
+      }
+
+      const data = JSON.parse(text);
+      if (data && Array.isArray(data) && data.length > 0) {
         setHolidays(data);
         toast({ title: "Signal Isolated", description: `Found ${data.length} registered events.` });
       } else {
-        setError("Zero holiday signals detected for this calibration.");
+        setError("No holidays identified for this selection.");
       }
     } catch (err: any) {
-      setError(err.message || "Failed to synchronize with astronomical nodes.");
+      setError("No holidays identified. (Astronomical Node Unavailable)");
       toast({ variant: "destructive", title: "Protocol Failed" });
     } finally {
       setIsLoading(false);
