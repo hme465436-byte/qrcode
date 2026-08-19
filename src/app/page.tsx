@@ -103,7 +103,8 @@ import {
   Gamepad2,
   Calendar,
   Quote,
-  Languages
+  Languages,
+  Joystick
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -137,6 +138,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/free-games', 
+    icon: Gamepad2, 
+    title: 'Free Games', 
+    desc: 'Isolate high-fidelity free titles for PC and Browser.', 
+    label: 'DISCOVERY', 
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    glowClass: 'bg-indigo-400/10',
+    keywords: ['games', 'free games', 'pc games', 'browser games', 'freetogame', 'entertainment'],
     category: 'generators'
   },
   { 
@@ -1313,7 +1325,7 @@ export default function Home() {
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
-      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate'
+      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
