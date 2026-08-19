@@ -38,6 +38,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -63,11 +64,8 @@ export default function ImageGalleryPage() {
   const [page, setPage] = useState(1);
   const [selectedImage, setSelectedImage] = useState<ImageResult | null>(null);
 
-  // --- Multi-Source Discovery Matrix ---
-
   const fetchImages = useCallback(async (searchQuery: string, pageNum: number) => {
     if (!searchQuery && !activeCategory) {
-      // Default to Nature if nothing is selected
       searchQuery = 'Nature';
     }
     
@@ -75,7 +73,6 @@ export default function ImageGalleryPage() {
     const searchTerm = searchQuery || activeCategory || 'Nature';
 
     const fetchers = [
-      // 1. Openverse Node
       fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(searchTerm)}&page=${pageNum}&page_size=24`)
         .then(r => r.json())
         .then(data => (data.results || []).map((img: any) => ({
@@ -88,7 +85,6 @@ export default function ImageGalleryPage() {
         })))
         .catch(() => []),
 
-      // 2. NASA Node
       fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(searchTerm)}&media_type=image&page=${pageNum}`)
         .then(r => r.json())
         .then(data => (data.collection?.items || []).map((item: any) => ({
@@ -101,7 +97,6 @@ export default function ImageGalleryPage() {
         })))
         .catch(() => []),
 
-      // 3. Art Institute Node
       fetch(`https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(searchTerm)}&fields=id,title,image_id,artist_display&limit=24`)
         .then(r => r.json())
         .then(data => (data.data || [])
@@ -116,7 +111,6 @@ export default function ImageGalleryPage() {
           })))
         .catch(() => []),
 
-      // 4. Lorem Picsum (Random Baseline)
       fetch(`https://picsum.photos/v2/list?page=${pageNum}&limit=24`)
         .then(r => r.json())
         .then(data => (data || []).map((img: any) => ({
@@ -135,7 +129,7 @@ export default function ImageGalleryPage() {
       const combined = responses
         .filter((r): r is PromiseFulfilledResult<ImageResult[]> => r.status === 'fulfilled')
         .flatMap(r => r.value)
-        .sort(() => Math.random() - 0.5); // Shuffle for variety
+        .sort(() => Math.random() - 0.5);
 
       setResults(combined);
       if (combined.length === 0) {
@@ -207,7 +201,6 @@ export default function ImageGalleryPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Controls Column */}
         <aside className="lg:col-span-4 xl:col-span-3 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
@@ -264,7 +257,6 @@ export default function ImageGalleryPage() {
            </Card>
         </aside>
 
-        {/* Results Matrix */}
         <div className="lg:col-span-8 xl:col-span-9 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
            {isLoading && results.length === 0 ? (
              <div className="h-[600px] flex flex-col items-center justify-center gap-8">
@@ -307,7 +299,6 @@ export default function ImageGalleryPage() {
                    ))}
                 </div>
 
-                {/* Pagination Protocol */}
                 <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-center justify-between gap-6">
                    <Button variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="h-12 px-6 rounded-xl border-border text-[10px] font-black uppercase">
                       <ChevronLeft className="w-4 h-4 mr-2" /> Previous
@@ -334,11 +325,14 @@ export default function ImageGalleryPage() {
         </div>
       </div>
 
-      {/* Lightbox Matrix */}
       <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
         <DialogContent className="glass-card max-w-6xl w-[calc(100%-32px)] border-white/10 p-0 overflow-hidden outline-none flex flex-col max-h-[90vh]">
           {selectedImage && (
             <>
+              <DialogHeader className="sr-only">
+                <DialogTitle>{selectedImage.title}</DialogTitle>
+                <DialogDescription>Full resolution visual master viewport.</DialogDescription>
+              </DialogHeader>
               <div className="flex-1 overflow-hidden relative bg-[#060608] flex items-center justify-center p-4 sm:p-12">
                  <img src={selectedImage.url} alt="" className="max-w-full max-h-full object-contain shadow-2xl" />
                  <button onClick={() => setSelectedImage(null)} className="absolute top-6 right-6 w-12 h-12 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-primary transition-all border border-white/10">
@@ -347,7 +341,7 @@ export default function ImageGalleryPage() {
               </div>
               <div className="p-8 bg-secondary/30 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-8 shrink-0">
                  <div className="space-y-2 min-w-0">
-                    <h2 className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight truncate max-w-lg">{selectedImage.title}</h2>
+                    <DialogTitle className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight truncate max-w-lg">{selectedImage.title}</DialogTitle>
                     <div className="flex flex-wrap items-center gap-4">
                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">{selectedImage.source} Registry</p>
                        <span className="text-white/10">•</span>
