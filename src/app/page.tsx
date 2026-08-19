@@ -1410,20 +1410,20 @@ export default function Home() {
       <section className="w-full px-4 sm:px-6 pt-20 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-hidden flex flex-col justify-center">
         <SpaceBackground />
         
-        <div className="max-w-5xl mx-auto animate-reveal relative z-10">
+        <div className="max-w-5xl mx-auto animate-reveal relative z-10 px-4 sm:px-0">
           <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-[0.2em]">
               <Command className="w-3 h-3 icon-3d" /> Digital Studio v7.2
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
-              Verified {TOOLS.length} Production Units
+              Verified {TOOLS.length} Units
             </div>
           </div>
           
           <h1 className="text-3xl sm:text-7xl lg:text-8xl font-headline font-black mb-4 leading-[0.9] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere">
             The World’s Most <span className="text-primary">Advanced</span> Tool Studio
           </h1>
-          <p className="text-base sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
+          <p className="text-sm sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
             Professional high-fidelity asset generation and technical data translation. Engineered for high-performance workflows with 100% hardware-native privacy.
           </p>
 
@@ -1472,14 +1472,14 @@ export default function Home() {
                       setVisibleCount(10);
                     }}
                     className={cn(
-                      "flex items-center gap-2 px-6 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
+                      "flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
                       selectedCategory === cat.id 
                         ? "bg-primary text-primary-foreground border-primary shadow-xl shadow-primary/20 scale-105" 
                         : "bg-white/5 border-white/5 text-foreground/40 hover:text-primary hover:border-primary/20 hover:bg-primary/5"
                     )}
                   >
                     <cat.icon className={cn("w-3.5 h-3.5", selectedCategory === cat.id ? "icon-3d" : "")} />
-                    {cat.label}
+                    <span className="hidden xs:inline">{cat.label}</span>
                   </button>
                 ))}
              </div>
@@ -1517,8 +1517,8 @@ export default function Home() {
 
           <div className="space-y-12">
             <div className={cn(
-              "w-full transition-all duration-300",
-              viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "flex flex-col gap-4 max-w-4xl mx-auto"
+              "w-full transition-all duration-300 px-2 sm:px-0",
+              viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" : "flex flex-col gap-4 max-w-4xl mx-auto"
             )}>
               {visibleTools.length > 0 ? (
                 visibleTools.map((item) => (
