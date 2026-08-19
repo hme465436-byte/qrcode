@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useCallback } from 'react';
@@ -16,7 +15,9 @@ import {
   Loader2,
   Type,
   AlignLeft,
-  ChevronRight
+  ChevronRight,
+  Globe,
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -102,9 +103,11 @@ export default function TranslatePage() {
            </div>
            <div className="flex items-center gap-3">
               <GetHelp toolId="translate" />
-              <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
-              </Button>
+              {(resultText || sourceText) && (
+                <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                  <Trash2 className="w-3.5 h-3.5 mr-2" /> Reset
+                </Button>
+              )}
            </div>
         </div>
       </div>
@@ -192,7 +195,7 @@ export default function TranslatePage() {
                     {isCopied ? <CheckCircle2 className="w-4 h-4 mr-2 text-primary" /> : <Copy className="w-4 h-4 mr-2" />}
                     Copy Result
                   </Button>
-                  <Button variant="outline" onClick={() => handleCopy(resultText, 'result')} className="h-14 border-white/10 bg-white/5 text-white/40 rounded-2xl flex items-center justify-center">
+                  <Button variant="outline" onClick={() => { if(navigator.share) navigator.share({text: resultText}); }} className="h-14 border-white/10 bg-white/5 text-white/40 rounded-2xl flex items-center justify-center">
                     <Share2 className="w-5 h-5" />
                   </Button>
                 </div>
