@@ -14,6 +14,7 @@ import {
   Dices,
   ShieldCheck,
   RotateCcw,
+  RefreshCcw,
   Gamepad2,
   Sword,
   Shield,
@@ -32,7 +33,9 @@ import {
   Star,
   Eye,
   EyeOff,
-  Wind
+  Wind,
+  Layers,
+  Copy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -486,7 +489,7 @@ export default function PokemonPage() {
            </Card>
         </div>
       </div>
-
+      
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
