@@ -1388,7 +1388,7 @@ export default function Home() {
   }, [filteredTools, visibleCount]);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-32 px-3 sm:px-6">
+    <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-16 px-3 sm:px-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -1407,7 +1407,7 @@ export default function Home() {
       />
 
       {/* HERO SECTION */}
-      <section className="w-full pt-16 pb-12 md:pt-24 md:pb-16 min-h-0 text-center relative overflow-hidden flex flex-col justify-center max-w-full">
+      <section className="w-full pt-16 pb-6 md:pt-24 md:pb-8 min-h-0 text-center relative overflow-hidden flex flex-col justify-center max-w-full">
         <SpaceBackground />
         
         <div className="w-full max-w-5xl mx-auto animate-reveal relative z-10 px-4">
@@ -1557,7 +1557,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
       <Search className="w-10 h-10 sm:w-12 sm:h-12 text-foreground/5 animate-pulse icon-3d" />
       <div className="space-y-2 text-center">
         <h3 className="text-xl sm:text-2xl font-headline font-black text-foreground uppercase tracking-tight">No Units Found</h3>
-        <p className="text-[10px] sm:text-sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
+        <p className="text-[10px] sm:sm text-foreground/30 font-medium uppercase tracking-widest">Adjust query parameters for wider discovery</p>
       </div>
       <ShadButton 
         onClick={onReset}
