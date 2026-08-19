@@ -96,7 +96,8 @@ import {
   Moon,
   BookOpen,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  Footprints
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -130,6 +131,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/pets', 
+    icon: Footprints, 
+    title: 'Pet Studio', 
+    desc: 'Professional random pet discovery. Isolate canine and feline visual identities.', 
+    label: 'MEDIA', 
+    color: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+    glowClass: 'bg-orange-400/10',
+    keywords: ['dog', 'cat', 'pets', 'random photo', 'canine', 'feline', 'animal'],
     category: 'generators'
   },
   { 
@@ -1204,7 +1216,8 @@ export default function Home() {
       'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection',
       'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
       'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
-      'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip'
+      'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
+      'Pet Studio', 'Dog photos', 'Cat pictures'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1453,7 +1466,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
       <ShadButton 
         onClick={onReset}
         variant="outline"
-        className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10 w-full sm:w-auto"
+        className="h-12 px-10 rounded-xl font-black uppercase text-[10px] tracking-widest border-white/10 w-full sm:auto"
       >
         <RotateCcw className="w-4 h-4 mr-2 icon-3d" />
         Reset Filters
