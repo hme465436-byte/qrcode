@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -67,7 +68,8 @@ const DEFAULT_COINS = [
   { id: 'cardano', symbol: 'ADA', name: 'Cardano' },
 ];
 
-const LOCAL_TOP_COINS = [
+// Local list for instant filtering
+const LOCAL_FILTER_COINS = [
   { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' },
   { id: 'ethereum', symbol: 'ETH', name: 'Ethereum' },
   { id: 'tether', symbol: 'USDT', name: 'Tether' },
@@ -76,13 +78,9 @@ const LOCAL_TOP_COINS = [
   { id: 'ripple', symbol: 'XRP', name: 'XRP' },
   { id: 'dogecoin', symbol: 'DOGE', name: 'Dogecoin' },
   { id: 'cardano', symbol: 'ADA', name: 'Cardano' },
-  { id: 'tron', symbol: 'TRX', name: 'Tron' },
-  { id: 'litecoin', symbol: 'LTC', name: 'Litecoin' },
-  { id: 'polygon', symbol: 'MATIC', name: 'Polygon' },
-  { id: 'chainlink', symbol: 'LINK', name: 'Chainlink' },
 ];
 
-const SEARCH_API = 'https://api.coingecko.com/id/v3/search?query=';
+const SEARCH_API = 'https://api.coingecko.com/api/v3/search?query=';
 const PRICE_API_BASE = 'https://api.coingecko.com/api/v3/simple/price';
 const MARKETS_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h';
 const PERSIST_KEY = 'mykit_crypto_watchlist_v3';
@@ -139,7 +137,6 @@ export default function CryptoPricesPage() {
   const [chartStats, setChartStats] = useState({ high: 0, low: 0, current: 0 });
 
   const [isSearching, setIsSearching] = useState(false);
-  const [isSuggesting, setIsSuggesting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAutoRefresh, setIsAutoRefresh] = useState(true);
   const [displayCurrency, setDisplayCurrency] = useState<'USD' | 'PKR'>('USD');
@@ -187,46 +184,48 @@ export default function CryptoPricesPage() {
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
     
-    // If empty, show top 5 from local list
+    // Minimal requirement: 1 character
     if (query.length === 0) {
-      setSuggestions(LOCAL_TOP_COINS.slice(0, 5));
+      setSuggestions([]);
+      setShowDropdown(false);
       return;
     }
 
     const timer = setTimeout(async () => {
-      setIsSuggesting(true);
+      setError(null);
       setSelectedIndex(-1);
+      setShowDropdown(true);
       
-      // 1. Local Matches
-      const localMatches = LOCAL_TOP_COINS.filter(c => 
+      // 1. Local Matrix Filter
+      const localMatches = LOCAL_FILTER_COINS.filter(c => 
         c.name.toLowerCase().includes(query) || 
         c.symbol.toLowerCase().includes(query)
       );
 
-      // 2. Global API Enhancement
+      // 2. Global API Discovery Handshake
       try {
-        const res = await fetch(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(query)}`);
-        if (res.ok) {
-          const data = await res.json();
-          const globalItems = (data.coins || []).map((c: any) => ({
-            id: c.id,
-            symbol: c.symbol.toUpperCase(),
-            name: c.name,
-            thumb: c.thumb,
-            market_cap_rank: c.market_cap_rank
-          }));
+        const res = await fetch(`${SEARCH_API}${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error("Search node unavailable");
+        
+        const data = await res.json();
+        const globalItems = (data.coins || []).map((c: any) => ({
+          id: c.id,
+          symbol: c.symbol.toUpperCase(),
+          name: c.name,
+          thumb: c.thumb,
+          market_cap_rank: c.market_cap_rank
+        }));
 
-          setSuggestions(prev => {
-            const map = new Map();
-            localMatches.forEach(item => map.set(item.id, item));
-            globalItems.forEach(item => map.set(item.id, item));
-            return Array.from(map.values()).slice(0, 5); // Always exactly 5
-          });
-        }
-      } catch (e) {
+        setSuggestions(() => {
+          const map = new Map();
+          // Merge local and global, prioritize local
+          localMatches.forEach(item => map.set(item.id, item));
+          globalItems.forEach(item => map.set(item.id, item));
+          return Array.from(map.values()).slice(0, 5); 
+        });
+      } catch (e: any) {
         setSuggestions(localMatches.slice(0, 5));
-      } finally {
-        setIsSuggesting(false);
+        if (query.length > 3) setError("Search uplink failure. Displaying local matches only.");
       }
     }, 250);
 
@@ -287,8 +286,7 @@ export default function CryptoPricesPage() {
   const fetchPrices = useCallback(async (silent = false) => {
     if (watchlist.length === 0) return;
     if (!silent) setIsLoading(true);
-    setError(null);
-
+    
     const ids = watchlist.map(c => c.id).join(',');
     const url = `${PRICE_API_BASE}?ids=${ids}&vs_currencies=usd,pkr&include_24hr_change=true`;
 
@@ -317,7 +315,6 @@ export default function CryptoPricesPage() {
       }
     } catch (err: any) {
       if (!silent) setError("Uplink failure. Market discovery nodes are unreachable.");
-      toast({ variant: "destructive", title: "Sync Failed" });
     } finally {
       setIsLoading(false);
     }
@@ -368,42 +365,15 @@ export default function CryptoPricesPage() {
     }
   };
 
-  const handleSearch = async (e?: React.FormEvent) => {
+  const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!searchQuery.trim() || isSearching) return;
+    if (!searchQuery.trim()) return;
 
     if (suggestions.length > 0) {
       const target = selectedIndex >= 0 ? suggestions[selectedIndex] : suggestions[0];
       addCoinToMonitor(target);
-      return;
-    }
-
-    setIsSearching(true);
-    setError(null);
-
-    try {
-      const res = await fetch(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(searchQuery.trim())}`);
-      if (res.status === 429) {
-         setError("Search Throttled: discovery node restricted. Wait 60s.");
-         return;
-      }
-      const data = await res.json();
-      
-      if (data.coins && data.coins.length > 0) {
-        addCoinToMonitor({
-          id: data.coins[0].id,
-          symbol: data.coins[0].symbol.toUpperCase(),
-          name: data.coins[0].name,
-          thumb: data.coins[0].thumb,
-          market_cap_rank: data.coins[0].market_cap_rank
-        });
-      } else {
-        toast({ variant: "destructive", title: "Discovery Failed", description: "No asset identified for this query." });
-      }
-    } catch (err) {
-      setError("Search uplink failure.");
-    } finally {
-      setIsSearching(false);
+    } else {
+      toast({ variant: "destructive", title: "Discovery Failed", description: "No asset identified." });
     }
   };
 
@@ -437,7 +407,7 @@ export default function CryptoPricesPage() {
             Crypto <span className="text-primary italic">Prices Studio</span>
           </h1>
           <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional real-time financial matrix. Monitor global digital assets in USD and PKR with clinical precision. Search and expand your monitor in real-time.
+            Professional real-time financial matrix. Monitor global digital assets in USD and PKR with clinical precision.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-4 shrink-0 pb-2">
@@ -467,18 +437,16 @@ export default function CryptoPricesPage() {
               </CardHeader>
               <CardContent className="pt-10 space-y-6 relative">
                  <form onSubmit={handleSearch} className="space-y-4">
-                    <div className="relative group/input">
+                    <div className="relative group/input" ref={dropdownRef}>
                        <Input 
                         placeholder="Search name or symbol..." 
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        onClick={() => setShowDropdown(true)}
-                        onFocus={() => setShowDropdown(true)}
+                        onFocus={() => { if(searchQuery) setShowDropdown(true); }}
                         className="h-16 bg-secondary border-border rounded-2xl text-sm font-bold px-6 focus:ring-primary/40 uppercase"
                        />
-                       <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                          {isSuggesting && <Loader2 className="w-4 h-4 animate-spin text-primary/40" />}
+                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
                           <Button 
                             type="submit" 
                             disabled={!searchQuery.trim() || isSearching}
@@ -488,53 +456,37 @@ export default function CryptoPricesPage() {
                              {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                           </Button>
                        </div>
-                    </div>
 
-                    {/* Suggestions Dropdown */}
-                    {showDropdown && (
-                      <div ref={dropdownRef} className="absolute left-6 right-6 top-[calc(100%-12px)] z-50 animate-in slide-in-from-top-2 duration-300">
-                         <div className="glass-card border-border shadow-2xl rounded-2xl overflow-hidden max-h-[320px] overflow-y-auto custom-scrollbar">
-                            <div className="divide-y divide-white/5">
-                               {suggestions.length > 0 ? (
-                                 suggestions.map((coin, idx) => (
-                                   <button
-                                     key={coin.id}
-                                     type="button"
-                                     onClick={() => addCoinToMonitor(coin)}
-                                     className={cn(
-                                       "w-full flex items-center justify-between p-4 transition-all group/sugg",
-                                       selectedIndex === idx ? "bg-primary/10" : "hover:bg-primary/5"
-                                     )}
-                                   >
-                                      <div className="flex items-center gap-3">
-                                         <div className="w-9 h-9 rounded-xl bg-secondary border border-white/5 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
-                                            {coin.thumb ? <img src={coin.thumb} alt="" className="w-full h-full object-cover" /> : <Server className="w-4 h-4 text-foreground/10" />}
-                                         </div>
-                                         <div className="text-left min-w-0">
-                                            <p className={cn(
-                                              "text-[11px] font-bold uppercase truncate transition-colors",
-                                              selectedIndex === idx ? "text-primary" : "text-foreground group-hover/sugg:text-primary"
-                                            )}>{coin.name}</p>
-                                            <p className="text-[9px] font-black text-foreground/20 uppercase">{coin.symbol}</p>
-                                         </div>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                         <ChevronRight className={cn(
-                                           "w-4 h-4 transition-all",
-                                           selectedIndex === idx ? "translate-x-1 text-primary" : "text-foreground/10 group-hover/sugg:translate-x-1 group-hover/sugg:text-primary"
-                                         )} />
-                                      </div>
-                                   </button>
-                                 ))
-                               ) : searchQuery.trim() !== '' && (
-                                 <div className="p-4 text-center text-[10px] font-black uppercase text-foreground/40 italic">
-                                    No coin found
-                                 </div>
-                               )}
-                            </div>
-                         </div>
-                      </div>
-                    )}
+                       {/* Suggestions Dropdown */}
+                       {showDropdown && suggestions.length > 0 && (
+                          <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 animate-in slide-in-from-top-2 duration-300">
+                             <div className="glass-card border-border shadow-2xl rounded-2xl overflow-hidden divide-y divide-white/5">
+                                {suggestions.map((coin, idx) => (
+                                  <button
+                                    key={coin.id}
+                                    type="button"
+                                    onClick={() => addCoinToMonitor(coin)}
+                                    className={cn(
+                                      "w-full flex items-center justify-between p-4 transition-all group/sugg",
+                                      selectedIndex === idx ? "bg-primary/10" : "hover:bg-primary/5"
+                                    )}
+                                  >
+                                     <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-secondary border border-white/5 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
+                                           {coin.thumb ? <img src={coin.thumb} alt="" className="w-full h-full object-cover" /> : <Server className="w-4 h-4 text-foreground/10" />}
+                                        </div>
+                                        <div className="text-left min-w-0">
+                                           <p className="text-[11px] font-bold uppercase truncate text-foreground group-hover/sugg:text-primary">{coin.name}</p>
+                                           <p className="text-[9px] font-black text-foreground/20 uppercase">{coin.symbol}</p>
+                                        </div>
+                                     </div>
+                                     <ChevronRight className="w-4 h-4 text-foreground/10 group-hover/sugg:text-primary transition-all group-hover/sugg:translate-x-1" />
+                                  </button>
+                                ))}
+                             </div>
+                          </div>
+                       )}
+                    </div>
                  </form>
 
                  <div className="pt-4 border-t border-white/5">
@@ -791,7 +743,6 @@ export default function CryptoPricesPage() {
                        )}
                        {markets.map((coin) => {
                          const isUp = coin.price_change_percentage_24h >= 0;
-                         // Handle PKR conversion for table since markets API only gives USD
                          const pkrRate = (prices?.bitcoin?.pkr && prices?.bitcoin?.usd) ? prices.bitcoin.pkr / prices.bitcoin.usd : 280;
                          const priceToDisplay = displayCurrency === 'USD' ? coin.current_price : coin.current_price * pkrRate;
 
