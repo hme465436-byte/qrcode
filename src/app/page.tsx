@@ -141,6 +141,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/coding-resources', 
+    icon: FileCode, 
+    title: 'Coding Matrix', 
+    desc: 'Isolate high-fidelity learning assets and technical documentation.', 
+    label: 'LIBRARY', 
+    color: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
+    glowClass: 'bg-cyan-400/10',
+    keywords: ['coding', 'learning', 'resources', 'documentation', 'programming', 'tutorial'],
+    category: 'generators'
+  },
+  { 
     href: '/free-games', 
     icon: Gamepad2, 
     title: 'Free Games', 
@@ -1136,7 +1147,7 @@ const TOOLS: Tool[] = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
     glowClass: 'bg-teal-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
@@ -1325,7 +1336,7 @@ export default function Home() {
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
-      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games'
+      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

@@ -13,6 +13,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'coding-resources': {
+    title: 'Coding Matrix Studio',
+    description: 'Professional-grade technical discovery engine for developers. Isolate high-fidelity learning assets, documentation, and technical protocols.',
+    steps: [
+      'Enter a keyword or technical topic in the Filter Matrix.',
+      'The engine will automatically narrow the resource registry.',
+      'Review identified signals including topics, levels, and descriptions.',
+      'Click any card to launch the external resource in a secure new tab.',
+      'Use the Re-Sync button to re-calibrate with the global source nodes.'
+    ],
+    tips: [
+      'Search for specific technologies like "React", "Python", or "API" for faster mapping.',
+      'Hover over cards to see the launch protocol icon.'
+    ],
+    privacy: 'Linguistic discovery lookups are volatile and held strictly in local hardware memory.'
+  },
   'translate': {
     title: 'Translate Studio',
     description: 'Professional bilingual translation unit. Seamlessly translate between English and Urdu with real-time signal processing.',
