@@ -24,7 +24,8 @@ import {
   RefreshCcw,
   Smartphone,
   Navigation2,
-  PhoneCall
+  PhoneCall,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,8 +52,9 @@ interface CountryData {
   population: number;
   area: number;
   timezones: string[];
+  borders?: string[];
   maps: { googleMaps: string };
-  idd?: { root: string; suffixes: string[] }; // For calling codes
+  idd?: { root: string; suffixes: string[] };
 }
 
 export default function CountryInfoPage() {
@@ -74,7 +76,8 @@ export default function CountryInfoPage() {
 
     setIsSuggesting(true);
     try {
-      const response = await fetch(`https://countries.dev/name/${encodeURIComponent(val.trim())}`);
+      // Primary search on REST Countries
+      const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(val.trim())}?fields=name,flags,cca2`);
       if (response.ok) {
         const data = await response.json();
         setSuggestions(Array.isArray(data) ? data.slice(0, 5) : []);
@@ -111,13 +114,20 @@ export default function CountryInfoPage() {
     setShowSuggestions(false);
 
     try {
-      const response = await fetch(`https://countries.dev/name/${encodeURIComponent(query.trim())}`);
+      // Dual-Node Sync Logic
+      let response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(query.trim())}`);
+      
+      if (!response.ok) {
+        // Fallback to Countries.dev
+        response = await fetch(`https://countries.dev/name/${encodeURIComponent(query.trim())}`);
+      }
+
       const data = await response.json();
       
       if (response.ok && Array.isArray(data) && data.length > 0) {
         selectCountry(data[0]);
       } else {
-        throw new Error("Target identity not identified in the countries.dev registry.");
+        throw new Error("Target identity not identified in the global registry.");
       }
     } catch (err: any) {
       setError(`Discovery Node Failure: ${err.message || 'Location not identified.'}`);
@@ -125,10 +135,6 @@ export default function CountryInfoPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleMyLocation = () => {
-    toast({ title: "Hardware Matrix", description: "Use the search bar for clinical countries.dev lookup." });
   };
 
   const handleReset = () => {
@@ -157,7 +163,7 @@ export default function CountryInfoPage() {
                 Country Info <span className="text-primary italic">Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional geographic diagnostic unit. Isolate global identities, demographic matrices, and fiscal protocols locally and securely using countries.dev.
+                Professional geographic diagnostic unit. Isolate global identities, demographic matrices, and fiscal protocols locally and securely using multi-node REST synchronization.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -231,7 +237,7 @@ export default function CountryInfoPage() {
                       className="h-14 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30 active:scale-95"
                     >
                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 mr-2" />}
-                       Initialize countries.dev Lookup
+                       Initialize REST Lookup
                     </Button>
                  </div>
 
@@ -244,17 +250,22 @@ export default function CountryInfoPage() {
               </CardContent>
            </Card>
 
-           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-             <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <ShieldCheck className="w-7 h-7" />
-             </div>
-             <div className="space-y-2">
-               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                 Identity discovery occurs strictly within your browser's volatile memory. No search history or geographic interest is logged to remote registries.
-               </p>
-             </div>
-          </div>
+           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex flex-col gap-6">
+              <div className="flex items-center gap-4">
+                 <ShieldCheck className="w-10 h-10 text-primary/40 shrink-0" />
+                 <div className="space-y-1">
+                    <p className="text-[11px] font-black uppercase text-foreground leading-none">Verified Nodes</p>
+                    <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest">RESTCountries.com & Countries.dev</p>
+                 </div>
+              </div>
+              <div className="flex items-center gap-4">
+                 <Smartphone className="w-10 h-10 text-primary/40 shrink-0" />
+                 <div className="space-y-1">
+                    <p className="text-[11px] font-black uppercase text-foreground leading-none">Local Sandbox</p>
+                    <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest">100% Client-Side Processing</p>
+                 </div>
+              </div>
+           </div>
         </div>
 
         {/* Right Column: Results Matrix */}
@@ -268,6 +279,12 @@ export default function CountryInfoPage() {
                     </div>
                     <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Profile</CardTitle>
                  </div>
+                 {country && (
+                    <div className="flex gap-2">
+                      <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">Code: {country.cca2}</Badge>
+                      <Badge className="bg-white/5 text-white/40 border-white/10 text-[9px] font-black uppercase tracking-widest px-3 py-1">Node Active</Badge>
+                    </div>
+                 )}
               </CardHeader>
               
               <CardContent className="flex-1 p-8 sm:p-16 flex flex-col items-center justify-center relative overflow-hidden">
@@ -301,8 +318,7 @@ export default function CountryInfoPage() {
                                <p className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.4em]">{country.name.official}</p>
                             </div>
                             <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                               <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">Code: {country.cca2}</Badge>
-                               <Badge className="bg-white/5 text-white/40 border-white/10 text-[9px] font-black uppercase tracking-widest px-3 py-1">{country.region} / {country.subregion}</Badge>
+                               <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">{country.region} / {country.subregion}</Badge>
                             </div>
                          </div>
                       </div>
@@ -316,6 +332,8 @@ export default function CountryInfoPage() {
                            { icon: Maximize, label: 'Land Mass (sq km)', val: country.area.toLocaleString() },
                            { icon: Coins, label: 'Fiscal Protocol', val: Object.values(country.currencies || {}).map(c => `${c.name} (${c.symbol})`).join(', ') || '—' },
                            { icon: Languages, label: 'Linguistic Stream', val: Object.values(country.languages || {}).join(', ') || '—' },
+                           { icon: Clock, label: 'Temporal Matrix', val: country.timezones?.join(', ') || '—' },
+                           { icon: Shield, label: 'Sovereign Borders', val: country.borders?.join(', ') || 'Isolated' },
                          ].map((item, i) => (
                            <div key={i} className="p-6 rounded-3xl bg-secondary/50 border border-border group hover:border-primary/20 transition-all flex items-center gap-6">
                               <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all shadow-inner shrink-0">
@@ -331,8 +349,8 @@ export default function CountryInfoPage() {
 
                       {/* Navigation Link */}
                       {country.maps?.googleMaps && (
-                        <div className="pt-6 border-t border-white/5">
-                           <Button asChild className="h-16 w-full bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl">
+                        <div className="pt-6 border-t border-white/5 flex gap-4">
+                           <Button asChild className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl">
                               <a href={country.maps.googleMaps} target="_blank" rel="noopener noreferrer">
                                  <Navigation2 className="w-5 h-5 mr-1" /> Launch Map Protocol
                               </a>
