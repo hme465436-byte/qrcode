@@ -1,3 +1,4 @@
+
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -19,7 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/hide-message-photo', '/temp-room', '/sim-data', '/html-to-url', '/tax-calculator', '/lucky-draw',
     '/bmi-calculator', '/bio-maker', '/image-size-increaser', '/wps-sheets', '/speed-test', '/ip-finder',
     '/currency-converter', '/weather', '/namaz-times', '/quran-ayah', '/crypto-prices', '/country', '/advice',
-    '/pets', '/jokes', '/facts', '/pokemon', '/books', '/holidays', '/quotes'
+    '/pets', '/jokes', '/facts', '/pokemon', '/books', '/holidays', '/quotes', '/image-gallery'
   ];
 
   const routes = tools.map(tool => ({

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -137,6 +138,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/image-gallery', 
+    icon: ImageIcon, 
+    title: 'Image Gallery', 
+    desc: 'Professional multi-source discovery. Extract high-res visuals from global scientific and art registries.', 
+    label: 'DISCOVERY', 
+    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    glowClass: 'bg-emerald-400/10',
+    keywords: ['image', 'stock', 'nasa', 'art', 'openverse', 'gallery', 'photos', 'download'],
+    category: 'image'
   },
   { 
     href: '/holidays', 
@@ -1167,7 +1179,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -1290,7 +1302,7 @@ export default function Home() {
       'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
-      'Quote Studio', 'Motivation', 'Zen Quotes'
+      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

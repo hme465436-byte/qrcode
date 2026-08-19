@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -12,6 +13,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'image-gallery': {
+    title: 'Image Gallery Studio',
+    description: 'Professional high-fidelity visual discovery unit. Aggregate and isolate assets from NASA, Openverse, and the Art Institute of Chicago.',
+    steps: [
+      'Enter a visual keyword or select a category profile to initialize discovery.',
+      'The engine will synchronize with multiple global registries to isolate matching identifiers.',
+      'Review the results in the interactive masonry grid.',
+      'Click any asset to launch the High-Resolution Matrix Viewport.',
+      'Execute the download protocol to save the master binary locally.'
+    ],
+    tips: [
+      'The studio utilizes parallel fetch protocols to ensure 100% signal availability.',
+      'Source badges indicate the origin registry (e.g., NASA, Art Institute).'
+    ],
+    privacy: 'All discovery signals are processed strictly in local memory. Your visual search history is never transmitted or stored.'
+  },
   'quotes': {
     title: 'Quote Studio',
     description: 'Professional high-fidelity inspiration synthesis. Extract unique randomized quotes from the global wisdom matrix with real-time calibration.',
