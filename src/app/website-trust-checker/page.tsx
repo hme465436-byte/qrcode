@@ -26,7 +26,8 @@ import {
   Wifi,
   BarChart3,
   Dices,
-  Target
+  Target,
+  Fingerprint
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -153,7 +154,7 @@ export default function WebsiteTrustCheckerPage() {
             <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
               Website <span className="text-primary italic">Trust Checker</span>
             </h1>
-            <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
+            <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
               Professional domain reputation auditing. evaluate visual and technical security signals via multi-node malware registries and DNS resolution protocols.
             </p>
           </div>
