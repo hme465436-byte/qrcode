@@ -241,28 +241,28 @@ export default function WikipediaPage() {
 
                  {result && !isLoading && (
                    <div className="w-full space-y-12 animate-in zoom-in-95 duration-500">
-                      {/* Visual Header */}
-                      <div className="flex flex-col md:flex-row gap-10 items-start border-b border-white/5 pb-12">
+                      {/* Visual Header - Stacked for better readability */}
+                      <div className="flex flex-col gap-10 items-center border-b border-white/5 pb-12">
                          {result.originalimage?.source || result.thumbnail?.source ? (
-                            <div className="w-full md:w-72 aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-white/5 ring-1 ring-border shrink-0 relative group/img">
-                               <img src={result.originalimage?.source || result.thumbnail?.source} alt={result.title} className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-1000" />
+                            <div className="w-full max-w-2xl aspect-video rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white dark:border-white/5 ring-1 ring-border shrink-0 relative group/img">
+                               <img src={result.originalimage?.source || result.thumbnail?.source} alt={result.title} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-1000" />
                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity" />
                             </div>
                          ) : (
-                            <div className="w-full md:w-72 aspect-square rounded-[3rem] bg-secondary border border-border flex items-center justify-center text-foreground/10 shrink-0 shadow-inner">
+                            <div className="w-full max-w-2xl aspect-video rounded-[3rem] bg-secondary border border-border flex items-center justify-center text-foreground/10 shrink-0 shadow-inner">
                                <ImageIcon className="w-16 h-16" />
                             </div>
                          )}
-                         <div className="space-y-6 flex-1 min-w-0">
-                            <div className="space-y-2">
+                         <div className="space-y-8 w-full">
+                            <div className="text-center space-y-4">
                                <h2 className="text-4xl sm:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-none" dangerouslySetInnerHTML={{ __html: result.displaytitle }} />
                                {result.description && (
                                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black uppercase tracking-widest px-4 py-1.5">{result.description}</Badge>
                                )}
                             </div>
-                            <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border shadow-inner relative group/extract">
-                               <Quote className="absolute -top-4 -right-4 w-24 h-24 text-primary/5 -rotate-12" />
-                               <p className="text-base sm:text-xl font-medium text-foreground/70 leading-relaxed relative z-10">
+                            <div className="p-10 sm:p-14 rounded-[3.5rem] bg-secondary/50 border border-border shadow-inner relative group/extract">
+                               <Quote className="absolute -top-6 -right-6 w-32 h-32 text-primary/5 -rotate-12" />
+                               <p className="text-lg sm:text-2xl font-medium text-foreground/80 leading-relaxed relative z-10 text-center sm:text-left">
                                   {result.extract}
                                 </p>
                             </div>
