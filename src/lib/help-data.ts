@@ -12,6 +12,23 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'dns-lookup': {
+    title: 'DNS Lookup Studio',
+    description: 'Professional-grade DNS discovery and domain auditing unit. Resolve global DNS records including A, AAAA, MX, NS, TXT, and CNAME with clinical precision.',
+    steps: [
+      'Enter the target domain name in the primary input field (e.g., google.com).',
+      'Select the specific record type protocol you wish to isolate.',
+      'Execute the lookup to synchronize with the Google DNS discovery nodes.',
+      'Review the identified records, including data values and TTL (Time-To-Live) metadata.',
+      'Analyze the results in the structuralized data matrix below.'
+    ],
+    tips: [
+      'Use the MX protocol to verify email server routing for any domain.',
+      'TTL values indicate how long the record is cached in seconds.',
+      'Multiple records of the same type indicate high-availability configurations.'
+    ],
+    privacy: 'All DNS queries are processed strictly in local browser memory. No domain interest or lookup history is logged or stored.'
+  },
   'password-breach-checker': {
     title: 'Breach Checker Studio',
     description: 'Professional-grade password integrity evaluator. Verify if a password has been identified in global data breaches using the secure k-Anonymity protocol.',
