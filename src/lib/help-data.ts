@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'password-breach-checker': {
+    title: 'Breach Checker Studio',
+    description: 'Professional-grade password integrity evaluator. Verify if a password has been identified in global data breaches using the secure k-Anonymity protocol.',
+    steps: [
+      'Enter the password you wish to verify in the Security Matrix input.',
+      'Optionally use the eye icon to verify character entry accuracy.',
+      'Execute the integrity check to initialize the k-Anonymity handshake.',
+      'The engine will hash your password and query the first 5 characters of the prefix.',
+      'Review the report to see if the identity is Safe or Compromised.'
+    ],
+    tips: [
+      'For peak security, never check passwords on a shared or public terminal.',
+      'Compromised results indicate the password is no longer viable for professional security.'
+    ],
+    privacy: 'Clinical Security Protocol: Your full password or its full hash never leaves this hardware unit. Only the first 5 characters of a SHA-1 hash are sent to the HaveIBeenPwned node.'
+  },
   'website-trust-checker': {
     title: 'Website Trust Studio',
     description: 'Professional domain reputation auditing unit. Evaluate visual and technical security signals via multi-node malware registries and DNS resolution protocols.',
@@ -254,7 +270,7 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
   },
   'single': {
     title: 'Single Studio QR',
-    description: 'Design a professional, branded QR code with integrated logos and AI-generated backgrounds.',
+    description: 'Design a professional, branded QR code with integrated logos and AI backgrounds.',
     steps: [
       'Enter your destination URL or text payload in the Data block.',
       'Upload a brand icon (PNG/SVG) to the Logo Manager.',

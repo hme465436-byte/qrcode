@@ -142,6 +142,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/password-breach-checker', 
+    icon: ShieldAlert, 
+    title: 'Breach Checker', 
+    desc: 'Verify if passwords have been exposed using secure k-Anonymity.', 
+    label: 'SECURITY', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['password breach', 'pwned', 'security check', 'hack check', 'breach checker', 'password safety'],
+    category: 'utilities'
+  },
+  { 
     href: '/city-explorer', 
     icon: MapPin, 
     title: 'City Explorer', 
@@ -150,6 +161,17 @@ const TOOLS: Tool[] = [
     color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
     glowClass: 'bg-emerald-400/10',
     keywords: ['city explorer', 'map', 'address', 'coordinates', 'lat long', 'pakistan cities', 'geocoding'],
+    category: 'utilities'
+  },
+  { 
+    href: '/website-trust-checker', 
+    icon: ShieldCheck, 
+    title: 'Trust Checker', 
+    desc: 'Professional multi-node security diagnostics and domain auditing.', 
+    label: 'SECURITY', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['trust', 'security', 'malware', 'dns', 'ip', 'safe', 'website check', 'phishing'],
     category: 'utilities'
   },
   { 
@@ -545,7 +567,7 @@ const TOOLS: Tool[] = [
     label: 'BATCH', 
     color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
     glowClass: 'bg-indigo-500/10',
-    keywords: ['bulk', 'batch', 'mass', 'multi', 'qr', 'barcodes', 'production', 'zip', 'many'],
+    keywords: ['bulk', 'batch', 'many', 'qr', 'barcodes', 'production', 'zip'],
     category: 'generators'
   },
   { 
@@ -1262,17 +1284,6 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
-  },
-  { 
-    href: '/website-trust-checker', 
-    icon: ShieldCheck, 
-    title: 'Trust Checker', 
-    desc: 'Professional domain reputation auditing and security signals.', 
-    label: 'SECURITY', 
-    color: 'text-red-500 bg-red-500/10 border-red-500/20',
-    glowClass: 'bg-red-500/10',
-    keywords: ['trust', 'security', 'malware', 'dns', 'ip', 'safe', 'website check', 'phishing'],
-    category: 'utilities'
   }
 ];
 
@@ -1382,7 +1393,8 @@ export default function Home() {
       'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
-      'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile'
+      'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
+      'Password Breach', 'Pwned Check', 'Hack Search'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
