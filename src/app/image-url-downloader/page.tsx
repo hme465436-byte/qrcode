@@ -74,6 +74,12 @@ function ImageResultCard({
     }
   };
 
+  const handleTriggerDownload = async () => {
+    setIsDownloading(true);
+    await onDownload(asset);
+    setIsDownloading(false);
+  };
+
   if (hasFailed) return null;
 
   return (
@@ -100,11 +106,7 @@ function ImageResultCard({
           <p className="text-[9px] font-black uppercase text-foreground truncate">{asset.label}</p>
         </div>
         <Button 
-          onClick={() => {
-            setIsDownloading(true);
-            onDownload(asset);
-            setTimeout(() => setIsDownloading(false), 2000);
-          }} 
+          onClick={handleTriggerDownload} 
           size="icon" 
           disabled={isDownloading}
           className="w-10 h-10 rounded-xl bg-primary shrink-0 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
@@ -151,50 +153,31 @@ export default function ImageUrlDownloaderPage() {
 
   const downloadSingle = async (asset: ImageAsset) => {
     const filename = asset.url.split('/').pop()?.split('?')[0] || `mykit-image-${Date.now()}.jpg`;
+    const cleanFilename = filename.includes('.') ? filename : `${filename}.jpg`;
     
     try {
-      // Phase 1: Direct Fetch
+      // Phase 1: Direct Internal Fetch
       const response = await fetch(asset.url);
-      if (!response.ok) throw new Error('Fetch rejected');
+      if (!response.ok) throw new Error('CORS Restricted');
       const blob = await response.blob();
-      saveToDevice(blob, filename);
-      toast({ title: "Extraction Success", description: "Saved to downloads." });
+      saveToDevice(blob, cleanFilename);
+      toast({ title: "Master Exported", description: "Asset saved to local storage." });
     } catch (e) {
-      // Phase 2: Canvas Re-matrixing (CORS Bypass)
+      // Phase 2: Cloud Proxy Fallback (Bypass CORS)
       try {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = asset.url;
-        
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Canvas init failed');
-        ctx.drawImage(img, 0, 0);
-        
-        const format = asset.url.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg';
-        canvas.toBlob((blob) => {
-          if (blob) {
-            saveToDevice(blob, filename);
-            toast({ title: "Matrix Isolated", description: "Saved via local synthesis." });
-          } else {
-            throw new Error('Canvas blob empty');
-          }
-        }, format, 0.95);
+        const dataUri = await proxyDownloadImage(asset.url);
+        const res = await fetch(dataUri);
+        const blob = await res.blob();
+        saveToDevice(blob, cleanFilename);
+        toast({ title: "Signal Isolated", description: "Saved via secure proxy bypass." });
       } catch (e2) {
-        // Phase 3: Hardware Fallback
-        window.open(asset.url, '_blank');
+        // Phase 3: Total Failure Alert
         toast({ 
-          variant: "default", 
-          title: "Optical Protocol", 
-          description: "CORS Restricted. Right-click the image in the new tab to save." 
+          variant: "destructive", 
+          title: "Extraction Blocked", 
+          description: "Remote host definitively restricted automated access." 
         });
+        window.open(asset.url, '_blank');
       }
     }
   };
