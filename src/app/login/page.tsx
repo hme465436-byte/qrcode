@@ -64,42 +64,42 @@ export default function LoginPage() {
 
   const mapAuthError = (code: string) => {
     switch (code) {
-      case 'auth/user-not-found': return "Identity not recognized in registry.";
-      case 'auth/wrong-password': return "Incorrect security key.";
-      case 'auth/email-already-in-use': return "Email already mapped to an existing identity.";
-      case 'auth/invalid-email': return "Malformed email format protocol.";
-      case 'auth/weak-password': return "Security key is too weak (min 6 chars).";
-      case 'auth/too-many-requests': return "Access throttled due to multiple failures.";
-      default: return "Authentication protocol failure. Check your connection.";
+      case 'auth/user-not-found': return "Account not found.";
+      case 'auth/wrong-password': return "Incorrect password.";
+      case 'auth/email-already-in-use': return "This email is already in use.";
+      case 'auth/invalid-email': return "Invalid email address.";
+      case 'auth/weak-password': return "Password is too weak (min 6 characters).";
+      case 'auth/too-many-requests': return "Too many failed attempts. Please try later.";
+      default: return "Login failed. Please try again.";
     }
   };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) {
-      setError("Firebase Auth not connected.");
+      setError("Service temporarily unavailable.");
       return;
     }
     
     setIsLoading(true);
     setError(null);
 
-    // Client-side Validation Matrix
+    // Form Validation
     if (isSignUp) {
       if (!fullName.trim()) { setError("Full name is required."); setIsLoading(false); return; }
-      if (password.length < 6) { setError("Security key must be at least 6 characters."); setIsLoading(false); return; }
-      if (password !== confirmPassword) { setError("Passwords do not align."); setIsLoading(false); return; }
-      if (!agreedToTerms) { setError("You must accept the terms protocol."); setIsLoading(false); return; }
+      if (password.length < 6) { setError("Password must be at least 6 characters."); setIsLoading(false); return; }
+      if (password !== confirmPassword) { setError("Passwords do not match."); setIsLoading(false); return; }
+      if (!agreedToTerms) { setError("You must agree to the terms."); setIsLoading(false); return; }
     }
 
     try {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: fullName });
-        toast({ title: "Account Created", description: "Identity registered in studio matrix." });
+        toast({ title: "Account Created", description: "Your account is ready to use." });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        toast({ title: "Welcome Back", description: "Protocol authentication successful." });
+        toast({ title: "Login Successful", description: "Welcome back to the studio." });
       }
       router.push(redirectTo);
     } catch (err: any) {
@@ -131,14 +131,14 @@ export default function LoginPage() {
           
           <CardHeader className="p-6 sm:p-8 border-b border-white/5 bg-secondary/10 text-center relative overflow-hidden">
             <div className="w-14 h-14 rounded-[1.6rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-4 shadow-2xl relative z-10 ring-1 ring-primary/20">
-               {isSignUp ? <UserPlus className="w-6 h-6" /> : <Fingerprint className="w-6 h-6" />}
+               {isSignUp ? <UserPlus className="w-6 h-6" /> : <User className="w-6 h-6" />}
             </div>
             <div className="space-y-1 relative z-10">
               <CardTitle className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
-                {isSignUp ? 'Create Account' : 'Identify'}
+                {isSignUp ? 'Register' : 'Login'}
               </CardTitle>
               <p className="text-[8px] font-black text-foreground/20 uppercase tracking-[0.4em] leading-relaxed">
-                Secure Studio Onboarding
+                {isSignUp ? 'Create your account' : 'Sign in to continue'}
               </p>
             </div>
           </CardHeader>
@@ -148,7 +148,7 @@ export default function LoginPage() {
               <div className="space-y-4">
                 {isSignUp && (
                   <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                    <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.3em] ml-1">Full Identity Name</Label>
+                    <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.3em] ml-1">Full Name</Label>
                     <div className="relative group/input">
                       <Input 
                         required
@@ -163,14 +163,14 @@ export default function LoginPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.3em] ml-1">Identity (Email)</Label>
+                  <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.3em] ml-1">Email</Label>
                   <div className="relative group/input">
                     <Input 
                       type="email" 
                       required
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      placeholder="user@studio.com"
+                      placeholder="user@example.com"
                       className="h-11 bg-secondary/40 border-white/5 rounded-xl pl-10 focus:ring-primary/20 transition-all font-bold text-xs"
                     />
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/10 group-focus-within/input:text-primary transition-colors" />
@@ -179,7 +179,7 @@ export default function LoginPage() {
 
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.3em] ml-1">Protocol (Password)</Label>
+                    <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.3em] ml-1">Password</Label>
                     <div className="relative group/input">
                       <Input 
                         type={showPassword ? "text" : "password"} 
@@ -202,7 +202,7 @@ export default function LoginPage() {
 
                   {isSignUp && (
                     <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                      <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.3em] ml-1">Verify Matrix</Label>
+                      <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.3em] ml-1">Confirm Password</Label>
                       <div className="relative group/input">
                         <Input 
                           type={showConfirmPassword ? "text" : "password"} 
@@ -269,7 +269,7 @@ export default function LoginPage() {
                   className="text-[9px] font-black uppercase text-foreground/30 hover:text-primary transition-all tracking-[0.2em] group"
                  >
                    {isSignUp ? (
-                     <>Already registered? <span className="text-primary ml-1 group-hover:underline">Login</span></>
+                     <>Already have an account? <span className="text-primary ml-1 group-hover:underline">Login</span></>
                    ) : (
                      <>Not registered? <span className="text-primary ml-1 group-hover:underline">Create account</span></>
                    )}
