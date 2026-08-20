@@ -14,17 +14,14 @@ import {
   Languages,
   AlertCircle,
   Zap,
-  Maximize,
-  SlidersHorizontal,
-  Eraser,
-  Search,
+  RefreshCcw,
   Cloud,
   Cpu,
-  RefreshCcw,
-  RotateCcw,
   Check,
   Settings2,
-  ShieldCheck
+  ShieldCheck,
+  Search,
+  Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -97,32 +94,42 @@ export default function OCRPage() {
     setFallbackActive(false);
 
     try {
-      // 1. Attempt Primary Node: OCR.space
+      // 1. Attempt Primary Node: Cloud Engine (OCR.space)
       setActiveEngine('cloud');
       const cloudResult = await recognizeTextOcrSpace(image, language);
       
-      if (cloudResult.success && cloudResult.text) {
+      if (cloudResult.success && cloudResult.text && cloudResult.text.trim()) {
         setResult(cloudResult.text);
-        toast({ title: "Signal Isolated", description: "Text extracted via Cloud Node." });
+        toast({ title: "Signal Isolated", description: "Text extracted via high-fidelity Cloud Node." });
       } else {
-        // 2. Automated Fallback: Tesseract.js
-        console.warn("Cloud node failed or returned empty. Initializing local fallback...");
+        // 2. Automated Fallback: Tesseract.js (Local Hardware)
+        console.warn("Cloud node returned empty results. Initializing local fallback...");
         const localText = await extractTextLocal(image);
-        setResult(localText);
-        toast({ title: "Fallback Sync", description: "Cloud node restricted. Switched to Local Hardware." });
+        if (localText) {
+          setResult(localText);
+          toast({ title: "Fallback Sync", description: "Switched to hardware-native extraction." });
+        } else {
+          throw new Error("Zero linguistic data identified in visual matrix.");
+        }
       }
     } catch (err: any) {
-      // 3. Last Resort: Local Tesseract if not already tried
+      // 3. Last Resort: Force Local Tesseract if not already tried
       if (activeEngine !== 'local') {
         try {
           const localText = await extractTextLocal(image);
-          setResult(localText);
-          toast({ title: "Local Sync", description: "Hardware-native extraction complete." });
+          if (localText) {
+            setResult(localText);
+            toast({ title: "Local Sync", description: "Hardware-native extraction complete." });
+          } else {
+            throw new Error("Linguistic failure.");
+          }
         } catch (localErr) {
-          toast({ variant: "destructive", title: "Protocol Failure", description: "All extraction nodes are restricted." });
+          setResult('');
+          toast({ variant: "destructive", title: "Protocol Failure", description: "Extraction nodes are restricted or image is unreadable." });
         }
       } else {
-        toast({ variant: "destructive", title: "Protocol Failure", description: "All extraction nodes are restricted." });
+        setResult('');
+        toast({ variant: "destructive", title: "Protocol Failure", description: "Could not isolate text from this visual." });
       }
     } finally {
       setIsProcessing(false);
@@ -190,7 +197,7 @@ export default function OCRPage() {
                   activeEngine === 'cloud' ? "bg-primary/10 text-primary border-primary/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                 )}>
                    {activeEngine === 'cloud' ? <Cloud className="w-3 h-3" /> : <Cpu className="w-3 h-3" />}
-                   {activeEngine === 'cloud' ? 'Cloud Engine' : 'Hardware Local'}
+                   {activeEngine === 'cloud' ? 'Neural Cloud' : 'Hardware Local'}
                 </div>
               )}
             </CardHeader>
@@ -231,7 +238,7 @@ export default function OCRPage() {
                              {fallbackActive && (
                                <div className="space-y-4 w-full max-w-[200px] mx-auto">
                                   <Progress value={progress} className="h-1" />
-                                  <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Local WASM Pass: {progress}%</span>
+                                  <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">WASM Pass: {progress}%</span>
                                </div>
                              )}
                           </div>
@@ -331,16 +338,16 @@ export default function OCRPage() {
                 <div className="space-y-2">
                   <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Fallback decoding occurs 100% locally in browser memory. Documents are never transmitted to our servers.
+                    Extraction nodes prioritize hardware-local memory when available. No data is stored permanently.
                   </p>
                 </div>
              </div>
              <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <RefreshCcw className="w-6 h-6" />
+                   <Activity className="w-6 h-6" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Multi-Node Fallback</h4>
+                  <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Multi-Node Fallback</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
                     The studio uses a dual-engine protocol to ensure the highest extraction accuracy across all browser hardware.
                   </p>
