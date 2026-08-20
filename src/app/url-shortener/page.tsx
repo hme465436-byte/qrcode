@@ -14,7 +14,8 @@ import {
   AlertCircle,
   ArrowRight,
   ShieldCheck,
-  RotateCcw
+  RotateCcw,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -217,7 +218,7 @@ export default function UrlShortenerPage() {
 
                       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mx-auto">
                          <Button onClick={handleCopy} className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                            {isCopied === 'all' ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
+                            {isCopied ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
                             Copy Short Link
                          </Button>
                          <Button asChild variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl active:scale-95 transition-all">
