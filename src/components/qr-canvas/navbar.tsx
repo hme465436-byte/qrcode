@@ -19,7 +19,9 @@ import {
   UserPlus,
   ChevronDown,
   ShieldCheck,
-  Settings
+  Settings,
+  Info,
+  Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -132,14 +134,38 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+             {/* Secondary Utilities */}
+             <Link 
+              href="/about" 
+              className={cn(
+                "hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all hover:text-primary",
+                pathname === '/about' ? "text-primary border-primary/20" : "text-foreground/40"
+              )}
+              title="About Studio"
+             >
+                <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d" />
+             </Link>
+
+             <Link 
+              href="/donate" 
+              className={cn(
+                "hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all hover:text-primary",
+                pathname === '/donate' ? "text-primary border-primary/20" : "text-foreground/40"
+              )}
+              title="Support Developer"
+             >
+                <Coffee className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d" />
+             </Link>
+
              {/* IDENTITY UNIT / AUTH SECTION */}
              {!authLoading && (
                <>
                  {user ? (
                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary transition-all hover:bg-primary/20 icon-container-3d">
+                        <button className="flex items-center gap-2 px-3 h-8 sm:h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary transition-all hover:bg-primary/20 icon-container-3d">
                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d" />
+                           <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Account</span>
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56 glass-card mt-2 p-2 border-white/10 shadow-2xl animate-in slide-in-from-top-2">
@@ -159,20 +185,13 @@ export function Navbar() {
                       </DropdownMenuContent>
                    </DropdownMenu>
                  ) : (
-                   <div className="flex items-center gap-1 sm:gap-2">
-                      <Link 
-                        href="/login" 
-                        className="hidden sm:flex h-10 items-center justify-center px-4 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-all"
-                      >
-                         Sign In
-                      </Link>
-                      <Link 
-                        href="/login?signup=true"
-                        className="h-8 sm:h-10 flex items-center justify-center px-3 sm:px-5 rounded-xl bg-white/5 border border-white/10 text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-foreground hover:bg-white/10 transition-all shadow-xl"
-                      >
-                         <UserPlus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1.5 sm:mr-2 text-primary" /> Join
-                      </Link>
-                   </div>
+                   <Link 
+                    href="/login"
+                    className="flex items-center gap-2 px-3 sm:px-5 h-8 sm:h-10 rounded-xl bg-white/5 border border-white/10 text-foreground/40 hover:text-primary hover:bg-white/10 transition-all shadow-xl icon-container-3d"
+                   >
+                      <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
+                      <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest">Account</span>
+                   </Link>
                  )}
                </>
              )}

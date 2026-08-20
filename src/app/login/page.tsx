@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   AlertCircle,
   Command,
-  Zap
+  Zap,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,10 +109,10 @@ export default function LoginPage() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
           <CardHeader className="pb-8 border-b border-border bg-secondary/30 text-center">
             <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-6 shadow-inner">
-               {isSignUp ? <UserPlus className="w-7 h-7" /> : <LogIn className="w-7 h-7" />}
+               {isSignUp ? <UserPlus className="w-7 h-7" /> : <User className="w-7 h-7" />}
             </div>
             <CardTitle className="text-2xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
-              {isSignUp ? 'Join Studio' : 'Log in to Studio'}
+              {isSignUp ? 'Join Studio' : 'Account Login'}
             </CardTitle>
             <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] mt-2">Identity Verification Matrix</p>
           </CardHeader>
@@ -167,7 +168,7 @@ export default function LoginPage() {
                   onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
                   className="text-[10px] font-black uppercase text-foreground/30 hover:text-primary transition-colors tracking-widest"
                  >
-                   {isSignUp ? 'Already have an identity? Log in' : 'No protocol yet? Create account'}
+                   {isSignUp ? 'Already have an identity? Log in' : 'Not registered? Create account'}
                  </button>
               </div>
             </form>
