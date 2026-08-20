@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -114,8 +115,10 @@ export default function LoginPage() {
       }
       router.push(redirectTo);
     } catch (err: any) {
-      console.error("Auth Error Code:", err.code);
-      setError(mapAuthError(err.code));
+      // Use console.warn to avoid NextJS fatal error overlays for standard auth failures
+      const errorCode = err?.code || 'unknown';
+      console.warn("Auth Error Code:", errorCode);
+      setError(mapAuthError(errorCode));
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +150,7 @@ export default function LoginPage() {
             </div>
             <div className="space-y-1 relative z-10">
               <CardTitle className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
-                {isSignUp ? 'Create Account' : 'Login'}
+                {isSignUp ? 'Register' : 'Login'}
               </CardTitle>
               <p className="text-[8px] font-black text-foreground/20 uppercase tracking-[0.4em] leading-relaxed">
                 {isSignUp ? 'Join the professional studio' : 'Sign in to your dashboard'}
