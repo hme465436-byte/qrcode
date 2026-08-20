@@ -119,6 +119,7 @@ const TOOLS: Tool[] = [
   { href: '/speaker-tester', title: 'Speaker Tester', icon: Activity, keywords: ['audio', 'left right', 'frequency'], desc: 'Audio hardware test.' },
   { href: '/mic-tester', title: 'Mic Tester', icon: Mic, keywords: ['microphone', 'record', 'input'], desc: 'Mic hardware test.' },
   { href: '/live-wallpaper', title: 'Live Wallpaper', icon: MonitorPlay, keywords: ['video', 'loop', 'pc', 'phone'], desc: 'Create live loops.' },
+  { href: '/image-to-link', title: 'Image to Link', icon: LinkIcon, keywords: ['host', 'imgur', 'share', 'upload'], desc: 'Image link maker.' },
 ];
 
 const QUICK_CHIPS = ["PDF tools", "Image tools", "How to use"];

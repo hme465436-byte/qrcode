@@ -12,6 +12,23 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'image-to-link': {
+    title: 'Image to Link Studio',
+    description: 'Professional visual hosting unit. Convert photos and graphics into permanent shareable links via the global Imgur anonymous registry.',
+    steps: [
+      'Import your image (JPG, PNG, GIF, or WebP up to 10MB) into the intake matrix.',
+      'Review the visual preview to verify the asset identity.',
+      'Execute the uplink protocol by clicking the "Execute Uplink" button.',
+      'Once synthesized, a matrix of 5 shareable link formats will be generated.',
+      'Use the dedicated copy protocols to save Direct, Markdown, or HTML identifiers.'
+    ],
+    tips: [
+      'Direct links ending in .jpg or .png are ideal for embedding in third-party applications.',
+      'Markdown protocols are hard-coded for GitHub and technical documentation READMEs.',
+      'Imgur is an anonymous host; ensure your assets comply with SFW professional standards.'
+    ],
+    privacy: 'Uplinks are performed via secure server-side tunnels. Your original visual data is transmitted directly to the Imgur registry and is not stored on our studio servers.'
+  },
   'wallpapers': {
     title: 'Wallpapers Studio',
     description: 'Professional high-fidelity visual discovery unit for Desktop and Mobile hardware. Isolate high-resolution assets optimized for modern aspect ratios.',

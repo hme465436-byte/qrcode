@@ -145,6 +145,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/image-to-link', 
+    icon: LinkIcon, 
+    title: 'Image to Link', 
+    desc: 'Upload visual assets and generate shareable link matrices via Imgur.', 
+    label: 'HOSTING', 
+    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    glowClass: 'bg-emerald-400/10',
+    keywords: ['image to link', 'hosting', 'imgur', 'share image', 'upload photo', 'link maker', 'direct link'],
+    category: 'image'
+  },
+  { 
     href: '/wallpapers', 
     icon: Monitor, 
     title: 'Wallpapers', 
@@ -1453,7 +1464,7 @@ export default function Home() {
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
-      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds'
+      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
