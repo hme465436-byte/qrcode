@@ -29,13 +29,16 @@ import {
   Target,
   Fingerprint,
   Copy,
-  RotateCcw
+  RotateCcw,
+  ShieldHalf,
+  Network
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -47,6 +50,7 @@ interface TrustResults {
   dnsInfo: any;
   isHttps: boolean;
   domain: string;
+  url: string;
 }
 
 export default function WebsiteTrustCheckerPage() {
@@ -55,6 +59,7 @@ export default function WebsiteTrustCheckerPage() {
   const [results, setResults] = useState<TrustResults | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   const extractDomain = (input: string) => {
     try {
@@ -63,7 +68,8 @@ export default function WebsiteTrustCheckerPage() {
       const parsed = new URL(cleanUrl);
       return parsed.hostname;
     } catch (e) {
-      return input.trim();
+      // Fallback for simple domain strings
+      return input.trim().split('/')[0];
     }
   };
 
@@ -91,7 +97,8 @@ export default function WebsiteTrustCheckerPage() {
         ipInfo: ipData,
         dnsInfo: dnsData,
         isHttps,
-        domain
+        domain,
+        url: fullUrl
       });
 
       toast({ title: "Analysis Complete", description: "Trust matrix calibrated." });
@@ -103,39 +110,75 @@ export default function WebsiteTrustCheckerPage() {
     }
   };
 
-  const riskAssessment = useMemo(() => {
+  const audit = useMemo(() => {
     if (!results) return null;
 
-    let score = 0; // 0 = Good, higher = worse
+    let score = 100;
     const reasons: string[] = [];
+    const flags: ('safe' | 'suspicious' | 'dangerous')[] = [];
 
-    // URLhaus Check
+    // 1. Malware Registry Check (Critical)
     if (results.urlhaus?.query_status === 'ok') {
-      score += 100;
-      reasons.push("Blacklisted: Identity identified in malware registry.");
+      score -= 80;
+      reasons.push("Blacklisted: Identity found in active malware registry.");
+      flags.push('dangerous');
     }
 
-    // DNS Check
-    if (results.dnsInfo?.Status !== 0 || !results.dnsInfo?.Answer) {
-      score += 30;
-      reasons.push("Unresolved: No valid 'A' records identified in DNS matrix.");
-    }
-
-    // SSL Check
+    // 2. SSL Protocol Check
     if (!results.isHttps) {
-      score += 20;
-      reasons.push("Insecure Protocol: Missing HTTPS/SSL encryption.");
+      score -= 15;
+      reasons.push("Insecure: Missing HTTPS/SSL encryption protocol.");
+      flags.push('suspicious');
     }
 
-    // IP Info Check
+    // 3. DNS Integrity
+    if (results.dnsInfo?.Status !== 0 || !results.dnsInfo?.Answer) {
+      score -= 10;
+      reasons.push("Unresolved: No valid 'A' records identified in DNS matrix.");
+      flags.push('suspicious');
+    }
+
+    // 4. Identity Metadata
     if (results.ipInfo?.success === false) {
-      score += 10;
-      reasons.push("Metadata Restricted: Domain host metadata unavailable.");
+      score -= 5;
+      reasons.push("Obscured: Domain host metadata restricted or hidden.");
     }
 
-    if (score >= 100) return { level: 'High Risk', color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: ShieldAlert, reasons };
-    if (score >= 20) return { level: 'Medium Risk', color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', icon: AlertCircle, reasons };
-    return { level: 'Low Risk', color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20', icon: ShieldCheck, reasons: ["Clean Signal: No threats identified in active registries."] };
+    // Determine Final Status
+    const finalScore = Math.max(0, score);
+    let status: 'Safe' | 'Suspicious' | 'Dangerous' = 'Safe';
+    let color = 'text-green-500';
+    let bg = 'bg-green-500/10';
+    let border = 'border-green-500/20';
+    let icon = ShieldCheck;
+
+    if (finalScore < 40 || flags.includes('dangerous')) {
+      status = 'Dangerous';
+      color = 'text-red-500';
+      bg = 'bg-red-500/10';
+      border = 'border-red-500/20';
+      icon = ShieldAlert;
+    } else if (finalScore < 80 || flags.includes('suspicious')) {
+      status = 'Suspicious';
+      color = 'text-yellow-500';
+      bg = 'bg-yellow-500/10';
+      border = 'border-yellow-500/20';
+      icon = AlertCircle;
+    }
+
+    if (reasons.length === 0) {
+      reasons.push("Clean Signal: No threats identified in active registries.");
+    }
+
+    return { 
+      score: finalScore, 
+      status, 
+      color, 
+      bg, 
+      border, 
+      icon, 
+      reasons 
+    };
   }, [results]);
 
   const handleReset = () => {
@@ -145,6 +188,28 @@ export default function WebsiteTrustCheckerPage() {
     toast({ title: "Studio Reset" });
   };
 
+  const handleCopy = () => {
+    if (!results || !audit) return;
+    const report = [
+      `[MY KIT TOOL - WEBSITE TRUST REPORT]`,
+      `Domain: ${results.domain}`,
+      `Trust Score: ${audit.score}/100`,
+      `Safety Status: ${audit.status}`,
+      `IP Address: ${results.ipInfo?.ip || 'N/A'}`,
+      `Location: ${results.ipInfo?.city}, ${results.ipInfo?.country}`,
+      `ISP: ${results.ipInfo?.connection?.isp || 'N/A'}`,
+      `HTTPS: ${results.isHttps ? 'Yes' : 'No'}`,
+      `DNS Resolved: ${results.dnsInfo?.Status === 0 ? 'Yes' : 'No'}`,
+      `Malware Status: ${results.urlhaus?.query_status === 'ok' ? 'Identified' : 'Clean'}`,
+      `Reasons: ${audit.reasons.join(' | ')}`,
+      `Timestamp: ${new Date().toLocaleString()}`
+    ].join('\n');
+    navigator.clipboard.writeText(report);
+    setIsCopied(true);
+    toast({ title: "Audit Log Copied" });
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
@@ -152,30 +217,30 @@ export default function WebsiteTrustCheckerPage() {
           <ShieldCheck className="w-3.5 h-3.5" /> Security Suite
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-              Website <span className="text-primary italic">Trust Checker</span>
-            </h1>
-            <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-              Professional domain reputation auditing. evaluate visual and technical security signals via multi-node malware registries and DNS resolution protocols.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-             <GetHelp toolId="website-trust-checker" />
-             {(results || url) && (
-               <Button variant="outline" size="sm" onClick={handleReset} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                  <RefreshCcw className="w-3.5 h-3.5 mr-2" /> Reset
-               </Button>
-             )}
-          </div>
+           <div>
+              <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
+                Website <span className="text-primary italic">Trust Checker PRO</span>
+              </h1>
+              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+                Professional multi-node security diagnostics. Evaluate domain safety, malware signatures, and network metadata locally via high-performance REST protocols.
+              </p>
+           </div>
+           <div className="flex items-center gap-3">
+              <GetHelp toolId="website-trust-checker" />
+              {(results || url) && (
+                <Button variant="outline" size="sm" onClick={handleReset} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
+                </Button>
+              )}
+           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Discovery Input */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        {/* Discovery Input - Left */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
                  <Search className="w-5 h-5 text-primary" /> Discovery Node
@@ -201,10 +266,10 @@ export default function WebsiteTrustCheckerPage() {
               <Button 
                 onClick={handleCheck}
                 disabled={isLoading || !url.trim()}
-                className="w-full h-16 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                className="w-full h-16 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
               >
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Zap className="w-5 h-5 mr-2" />}
-                Execute Trust Audit
+                Execute Full Scan
               </Button>
 
               {error && (
@@ -216,37 +281,34 @@ export default function WebsiteTrustCheckerPage() {
             </CardContent>
           </Card>
 
-          {/* Quick Info Grid */}
-          <div className="grid grid-cols-1 gap-6">
-             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ActivityIcon className="w-7 h-7" />
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Signal Monitoring</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Utilizing hardware-native HTTPS handshakes to verify SSL certificates and protocol integrity during the discovery cycle.
-                  </p>
-                </div>
+          <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+             <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-7 h-7" />
+             </div>
+             <div className="space-y-2">
+               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                 Identity deconstruction occurs 100% locally. Discovery nodes are queried via secure server actions to maintain your hardware privacy.
+               </p>
              </div>
           </div>
         </div>
 
-        {/* Results Matrix */}
+        {/* Results Matrix - Right */}
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px] bg-black/10">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                       <Activity className="w-5 h-5" />
+                       <ActivityIcon className="w-5 h-5" />
                     </div>
-                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Trust Profile</CardTitle>
+                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Audit Profile</CardTitle>
                  </div>
                  {results && (
-                   <div className="flex gap-2">
-                      <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">Node Verified</Badge>
-                   </div>
+                    <div className="flex gap-2">
+                       <Badge className="bg-white/5 text-white/40 border-white/10 text-[9px] font-black uppercase px-3 py-1">Node Active</Badge>
+                    </div>
                  )}
               </CardHeader>
               
@@ -254,7 +316,7 @@ export default function WebsiteTrustCheckerPage() {
                  {!results && !isLoading && !error && (
                    <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-20">
                       <Shield className="w-24 h-24 text-primary" />
-                      <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Discovery Signal</p>
+                      <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Inbound Signal</p>
                    </div>
                  )}
 
@@ -264,73 +326,46 @@ export default function WebsiteTrustCheckerPage() {
                          <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                          <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                       </div>
-                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Negotiating Security Nodes...</p>
+                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Decoding Trust Matrix...</p>
                    </div>
                  )}
 
-                 {results && riskAssessment && !isLoading && (
+                 {results && audit && !isLoading && (
                    <div className="w-full space-y-12 animate-in zoom-in-95 duration-500">
-                      {/* Risk Level Gauge */}
+                      {/* Master Score & Status */}
                       <div className={cn(
-                        "p-10 rounded-[3rem] border-2 text-center space-y-4 shadow-2xl relative overflow-hidden transition-all duration-700",
-                        riskAssessment.bg, riskAssessment.border
+                        "p-12 rounded-[3.5rem] border-2 text-center space-y-6 shadow-2xl relative overflow-hidden transition-all duration-700",
+                        audit.bg, audit.border
                       )}>
                          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[80px]" />
-                         <div className={cn("w-16 h-16 rounded-[2rem] mx-auto flex items-center justify-center shadow-xl border border-white/10 mb-4", riskAssessment.bg)}>
-                            <riskAssessment.icon className={cn("w-8 h-8", riskAssessment.color)} />
+                         <div className={cn("w-16 h-16 rounded-[2rem] mx-auto flex items-center justify-center shadow-xl border border-white/10 mb-2", audit.bg)}>
+                            <audit.icon className={cn("w-8 h-8", audit.color)} />
                          </div>
-                         <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-[0.6em] opacity-40">Clinical Level</p>
-                            <h2 className={cn("text-4xl sm:text-6xl font-headline font-black uppercase tracking-tighter", riskAssessment.color)}>
-                               {riskAssessment.level}
-                            </h2>
+                         <div className="space-y-2">
+                            <p className="text-[11px] font-black uppercase tracking-[0.6em] opacity-40">Identity Trust Score</p>
+                            <h2 className="text-7xl sm:text-9xl font-headline font-black text-foreground tracking-tighter leading-none">{audit.score}</h2>
+                            <h4 className={cn("text-2xl font-headline font-black uppercase tracking-tight", audit.color)}>{audit.status}</h4>
                          </div>
-                         <div className="flex flex-col items-center gap-3 pt-4 border-t border-white/5">
-                            {riskAssessment.reasons.map((r, i) => (
-                               <div key={i} className="text-[10px] font-bold uppercase tracking-widest text-foreground/40 flex items-center gap-2">
-                                  <div className={cn("w-1.5 h-1.5 rounded-full", riskAssessment.color.replace('text-', 'bg-'))} />
+                         
+                         <div className="flex flex-col items-center gap-3 pt-6 border-t border-white/5">
+                            {audit.reasons.map((r, i) => (
+                               <div key={i} className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 flex items-center gap-2">
+                                  <div className={cn("w-1.5 h-1.5 rounded-full", audit.color.replace('text-', 'bg-'))} />
                                   {r}
                                </div>
                             ))}
                          </div>
                       </div>
 
-                      {/* Technical Data Grid */}
+                      {/* Technical Modules */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {[
-                          { 
-                            icon: Fingerprint, 
-                            label: 'Public Identity (IP)', 
-                            val: results.ipInfo?.ip || 'Identifying...' 
-                          },
-                          { 
-                            icon: Database, 
-                            label: 'Carrier (ISP)', 
-                            val: results.ipInfo?.connection?.isp || 'Unknown' 
-                          },
-                          { 
-                            icon: Globe, 
-                            label: 'Sovereign Domain', 
-                            val: `${results.ipInfo?.flag?.emoji || '🏳️'} ${results.ipInfo?.country || 'Global'}` 
-                          },
-                          { 
-                            icon: Lock, 
-                            label: 'SSL Protocol', 
-                            val: results.isHttps ? 'HTTPS SECURE' : 'HTTP INSECURE',
-                            color: results.isHttps ? 'text-green-500' : 'text-red-500'
-                          },
-                          { 
-                            icon: Hash, 
-                            label: 'DNS A-Record', 
-                            val: results.dnsInfo?.Answer ? `${results.dnsInfo.Answer[0].data}` : 'No Record Found',
-                            color: results.dnsInfo?.Answer ? 'text-primary' : 'text-red-500'
-                          },
-                          { 
-                            icon: Target, 
-                            label: 'Malware Registry', 
-                            val: results.urlhaus?.query_status === 'ok' ? 'BLACKLISTED' : 'CLEAN',
-                            color: results.urlhaus?.query_status === 'ok' ? 'text-red-500' : 'text-green-500'
-                          },
+                          { icon: Fingerprint, label: 'Public Identity (IP)', val: results.ipInfo?.ip || 'Identifying...' },
+                          { icon: Database, label: 'Carrier (ISP)', val: results.ipInfo?.connection?.isp || 'Unknown' },
+                          { icon: MapPin, label: 'Hosting Node', val: `${results.ipInfo?.flag?.emoji || ''} ${results.ipInfo?.country || 'Global'}` },
+                          { icon: Lock, label: 'SSL Encryption', val: results.isHttps ? 'HTTPS SECURE' : 'INSECURE HTTP', color: results.isHttps ? 'text-green-500' : 'text-red-500' },
+                          { icon: Network, label: 'DNS Status', val: results.dnsInfo?.Status === 0 ? 'RESOLVED' : 'UNRESOLVED', color: results.dnsInfo?.Status === 0 ? 'text-primary' : 'text-red-500' },
+                          { icon: ShieldHalf, label: 'Malware Status', val: results.urlhaus?.query_status === 'ok' ? 'DANGEROUS' : 'CLEAN', color: results.urlhaus?.query_status === 'ok' ? 'text-red-500' : 'text-green-500' },
                         ].map((item, i) => (
                           <div key={i} className="p-6 rounded-3xl bg-secondary/50 border border-border group hover:border-primary/20 transition-all flex items-center gap-6">
                             <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all shadow-inner shrink-0">
@@ -344,28 +379,16 @@ export default function WebsiteTrustCheckerPage() {
                         ))}
                       </div>
 
-                      {/* Domain Header */}
-                      <div className="p-8 rounded-[3rem] bg-secondary border border-border space-y-4 shadow-inner">
-                         <div className="flex items-center justify-between">
-                            <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] ml-1">Linguistic Identifier</Label>
-                            <span className="text-[9px] font-mono text-primary/40">RFC 1035 COMPLIANT</span>
-                         </div>
-                         <div className="flex items-center justify-between gap-6">
-                            <p className="text-xl font-headline font-black text-foreground truncate uppercase">{results.domain}</p>
-                            <Button asChild variant="outline" className="h-10 px-6 rounded-xl border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-widest">
-                               <a href={`https://${results.domain}`} target="_blank" rel="noopener noreferrer">
-                                  Launch <ExternalLink className="w-3 h-3 ml-2" />
-                               </a>
-                            </Button>
-                         </div>
-                      </div>
-
+                      {/* Actions */}
                       <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row gap-4">
-                         <Button onClick={() => { navigator.clipboard.writeText(JSON.stringify(results, null, 2)); toast({ title: "Matrix Copied" }); }} className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                            <Copy className="w-5 h-5 mr-1" /> Copy Full Audit Log
+                         <Button onClick={handleCopy} className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                            {isCopied ? <CheckCircle2 className="w-5 h-5 mr-1" /> : <Copy className="w-5 h-5 mr-1" />}
+                            Copy Full Audit Report
                          </Button>
-                         <Button onClick={handleReset} variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
-                            <RotateCcw className="w-5 h-5 mr-2" /> New Audit
+                         <Button asChild variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                            <a href={results.url} target="_blank" rel="noopener noreferrer">
+                               <ExternalLink className="w-5 h-5 mr-2" /> Launch URL
+                            </a>
                          </Button>
                       </div>
                    </div>
@@ -379,13 +402,8 @@ export default function WebsiteTrustCheckerPage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .bg-checkered {
-          background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #111113 75%), 
-                            linear-gradient(-45deg, transparent 75%, #111113 75%);
-          background-size: 20px 20px;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
