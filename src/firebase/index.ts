@@ -10,27 +10,39 @@ import { firebaseConfig } from './config';
 /**
  * Firebase Core Initialization
  * Centralized setup for production services with pre-flight validation.
+ * Prevents crashes if API keys are missing or invalid.
  */
-let app: FirebaseApp;
-let db: Firestore;
-let auth: Auth;
-let storage: FirebaseStorage;
-let rtdb: Database;
+let app: FirebaseApp | undefined;
+let db: Firestore | undefined;
+let auth: Auth | undefined;
+let storage: FirebaseStorage | undefined;
+let rtdb: Database | undefined;
 
-try {
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
-  storage = getStorage(app);
-  rtdb = getDatabase(app);
-} catch (err) {
-  console.error("Firebase initialization failed. Ensure environment variables are set correctly.", err);
+// Only initialize if we have a potentially valid API key
+if (firebaseConfig.apiKey && firebaseConfig.apiKey.length > 5) {
+  try {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    storage = getStorage(app);
+    rtdb = getDatabase(app);
+  } catch (err) {
+    console.error("Firebase services failed to initialize:", err);
+  }
+} else {
+  console.warn("Firebase API Key is missing or invalid. Authentication and Cloud features will be restricted.");
 }
 
 export { app, db, auth, storage, rtdb };
 
 export function initializeFirebase() {
-  return { firebaseApp: app!, firestore: db!, auth: auth!, storage: storage!, rtdb: rtdb! };
+  return { 
+    firebaseApp: app || null, 
+    firestore: db || null, 
+    auth: auth || null, 
+    storage: storage || null, 
+    rtdb: rtdb || null 
+  };
 }
 
 export * from './provider';
