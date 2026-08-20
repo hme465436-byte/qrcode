@@ -176,13 +176,13 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <Button type="submit" disabled={isLoading} className="w-full h-14 bg-primary text-white font-black text-sm uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all group overflow-hidden relative">
+              <Button type="submit" disabled={isLoading} className="w-full h-14 bg-primary text-white font-black text-sm uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all group overflow-hidden relative">
                  <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                  {isLoading ? (
                    <Loader2 className="w-5 h-5 animate-spin" />
                  ) : (
                    <div className="flex items-center gap-3 relative z-10">
-                     {isSignUp ? 'REGISTER IDENTITY' : 'AUTHORIZE SESSION'}
+                     {isSignUp ? 'Register' : 'Login'}
                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                    </div>
                  )}
