@@ -12,7 +12,8 @@ import {
   Globe,
   AlertCircle,
   RotateCcw,
-  Activity
+  Activity,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,7 +101,7 @@ export default function UrlShortenerPage() {
               URL <span className="text-primary italic">Shortener Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
-              Professional direct link compression. Convert long destination URLs into compact, high-fidelity TinyURL identifiers instantly. No redirects, no delays.
+              Professional direct link compression. Convert long destination URLs into compact, high-fidelity identifiers instantly using the is.gd protocol. No intermediate pages.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -203,7 +204,7 @@ export default function UrlShortenerPage() {
                  {shortUrl && !isLoading && (
                    <div className="w-full space-y-12 animate-in zoom-in-95 duration-500">
                       <div className="text-center space-y-4">
-                         <p className="text-[10px] font-black uppercase text-primary tracking-[0.6em]">TinyURL Matrix Result</p>
+                         <p className="text-[10px] font-black uppercase text-primary tracking-[0.6em]">is.gd Matrix Result</p>
                          <div className="p-8 bg-background/50 rounded-[3rem] border-2 border-primary/20 shadow-2xl relative group/res overflow-hidden">
                             <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/res:opacity-100 transition-opacity" />
                             <h2 className="text-2xl sm:text-4xl font-mono font-bold text-foreground break-all leading-tight relative z-10">{shortUrl}</h2>
@@ -211,7 +212,7 @@ export default function UrlShortenerPage() {
                       </div>
 
                       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mx-auto">
-                         <Button onClick={handleCopy} className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                         <Button onClick={handleCopy} className="h-16 flex-1 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-white/90 active:scale-95 transition-all">
                             {isCopied ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
                             Copy Short Link
                          </Button>
@@ -225,6 +226,16 @@ export default function UrlShortenerPage() {
                  )}
               </CardContent>
            </Card>
+
+           <div className="p-6 rounded-[2rem] bg-secondary border border-border flex items-start gap-5">
+              <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
+              <div className="space-y-1">
+                 <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Protocol Intelligence</p>
+                 <p className="text-[11px] text-foreground/40 font-medium leading-relaxed uppercase">
+                    Utilizing the is.gd high-speed API for direct link synthesis. Generated identifiers route the visitor instantly to the destination matrix without intermediate redirects.
+                 </p>
+              </div>
+           </div>
         </div>
       </div>
     </div>

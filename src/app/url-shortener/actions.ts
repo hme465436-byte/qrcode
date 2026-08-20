@@ -1,12 +1,12 @@
 'use server';
 
 /**
- * @fileOverview Server actions for URL Shortener to handle TinyURL API securely.
+ * @fileOverview Server actions for URL Shortener to handle is.gd API securely.
  */
 
 export async function createShortUrl(longUrl: string) {
   try {
-    const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`, {
+    const response = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(longUrl)}`, {
       method: 'GET',
       next: { revalidate: 0 } // Ensure fresh response
     });
