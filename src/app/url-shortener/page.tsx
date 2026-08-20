@@ -8,14 +8,11 @@ import {
   CheckCircle2, 
   Trash2, 
   Loader2, 
-  Activity,
   ExternalLink,
   Globe,
   AlertCircle,
-  ArrowRight,
-  ShieldCheck,
   RotateCcw,
-  Info
+  Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +33,8 @@ export default function UrlShortenerPage() {
 
   const validateUrl = (input: string) => {
     try {
-      new URL(input.startsWith('http') ? input : `https://${input}`);
+      const urlToTest = input.startsWith('http') ? input : `https://${input}`;
+      new URL(urlToTest);
       return true;
     } catch {
       return false;
@@ -62,7 +60,7 @@ export default function UrlShortenerPage() {
       const result = await createShortUrl(targetUrl);
       if (result.success && result.shortUrl) {
         setShortUrl(result.shortUrl);
-        toast({ title: "Signal Compressed", description: "Short link successfully synthesized." });
+        toast({ title: "Signal Compressed", description: "Direct short link successfully synthesized." });
       } else {
         throw new Error(result.error || "Uplink failure.");
       }
@@ -102,28 +100,31 @@ export default function UrlShortenerPage() {
               URL <span className="text-primary italic">Shortener Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
-              Professional linguistic compression. Convert long URLs into high-fidelity short links locally via the TinyURL protocol. 100% secure.
+              Professional direct link compression. Convert long destination URLs into compact, high-fidelity TinyURL identifiers instantly. No redirects, no delays.
             </p>
           </div>
           <div className="flex items-center gap-3">
              <GetHelp toolId="url-shortener" />
              {(shortUrl || longUrl) && (
-               <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
-               </Button>
+               <button 
+                 onClick={handleClear} 
+                 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-foreground/20 hover:text-destructive transition-colors px-2"
+               >
+                  <RotateCcw className="w-3.5 h-3.5" /> Reset
+               </button>
              )}
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Input Pane */}
+        {/* Input Panel */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                <Zap className="w-5 h-5 text-primary" /> Compression Node
+                <Zap className="w-5 h-5 text-primary" /> Compression Input
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-10 space-y-10">
@@ -149,7 +150,7 @@ export default function UrlShortenerPage() {
                   className="w-full h-16 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                 >
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Zap className="w-5 h-5 mr-2" />}
-                  Generate Short Link
+                  Execute Shorten
                 </Button>
               </form>
 
@@ -159,18 +160,6 @@ export default function UrlShortenerPage() {
                   <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">{error}</p>
                 </div>
               )}
-
-              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-7 h-7" />
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Data compression occurs via secure server-side uplinks. Your original URL history is volatile and held strictly in local browser memory.
-                  </p>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -186,6 +175,11 @@ export default function UrlShortenerPage() {
                     </div>
                     <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Profile</CardTitle>
                  </div>
+                 {shortUrl && (
+                   <div className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[8px] font-black uppercase tracking-widest">
+                     Direct Link Active
+                   </div>
+                 )}
               </CardHeader>
               
               <CardContent className="flex-1 p-8 sm:p-12 flex flex-col items-center justify-center relative overflow-hidden">
@@ -202,14 +196,14 @@ export default function UrlShortenerPage() {
                          <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                          <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                       </div>
-                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Negotiating Node Link...</p>
+                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Negotiating Direct Node...</p>
                    </div>
                  )}
 
                  {shortUrl && !isLoading && (
                    <div className="w-full space-y-12 animate-in zoom-in-95 duration-500">
                       <div className="text-center space-y-4">
-                         <p className="text-[10px] font-black uppercase text-primary tracking-[0.6em]">Compressed Protocol</p>
+                         <p className="text-[10px] font-black uppercase text-primary tracking-[0.6em]">TinyURL Matrix Result</p>
                          <div className="p-8 bg-background/50 rounded-[3rem] border-2 border-primary/20 shadow-2xl relative group/res overflow-hidden">
                             <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/res:opacity-100 transition-opacity" />
                             <h2 className="text-2xl sm:text-4xl font-mono font-bold text-foreground break-all leading-tight relative z-10">{shortUrl}</h2>
@@ -226,18 +220,6 @@ export default function UrlShortenerPage() {
                                <ExternalLink className="w-5 h-5 mr-2" /> Launch URL
                             </a>
                          </Button>
-                      </div>
-
-                      <div className="pt-8 border-t border-white/5">
-                         <div className="p-6 rounded-[2rem] bg-secondary border border-border flex items-start gap-5">
-                            <Info className="w-5 h-5 text-primary mt-1 shrink-0" />
-                            <div className="space-y-1">
-                               <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Protocol Intelligence</p>
-                               <p className="text-[11px] text-foreground/40 font-medium leading-relaxed uppercase">
-                                  Your compressed identifier is permanent and will redirect to the destination until the target node is definitively removed from the registry.
-                               </p>
-                            </div>
-                         </div>
                       </div>
                    </div>
                  )}
