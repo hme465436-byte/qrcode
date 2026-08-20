@@ -14,7 +14,9 @@ import {
   AlertCircle,
   Command,
   Zap,
-  User
+  User,
+  Fingerprint,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +27,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'fire
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { SpaceBackground } from '@/components/qr-canvas/space-background';
+import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -41,7 +44,6 @@ export default function LoginPage() {
 
   const redirectTo = searchParams.get('redirect') || '/';
 
-  // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
       router.replace(redirectTo);
@@ -55,8 +57,7 @@ export default function LoginPage() {
       case 'auth/email-already-in-use': return "Email already mapped to an existing identity.";
       case 'auth/invalid-email': return "Malformed email format protocol.";
       case 'auth/weak-password': return "Security key is too weak (min 6 chars).";
-      case 'auth/too-many-requests': return "Access throttled due to multiple failures. Try again later.";
-      case 'auth/operation-not-allowed': return "Authentication protocol is currently disabled.";
+      case 'auth/too-many-requests': return "Access throttled due to multiple failures.";
       default: return "Authentication protocol failure. Check your connection.";
     }
   };
@@ -64,7 +65,7 @@ export default function LoginPage() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) {
-      setError("Firebase Auth not connected. Configuration missing.");
+      setError("Firebase Auth not connected.");
       return;
     }
     
@@ -81,7 +82,6 @@ export default function LoginPage() {
       }
       router.push(redirectTo);
     } catch (err: any) {
-      console.error("Auth Matrix Error:", err.code, err.message);
       setError(mapAuthError(err.code));
     } finally {
       setIsLoading(false);
@@ -90,53 +90,62 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c]">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-6 py-20 overflow-hidden bg-[#0a0a0c]">
       <SpaceBackground />
       
-      <div className="relative z-10 w-full flex flex-col items-center">
-        <Link href="/" className="mb-12 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-all group">
+      <div className="relative z-10 w-full max-w-lg flex flex-col items-center">
+        <Link href="/" className="mb-10 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 hover:text-primary transition-all group">
            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" /> Back to Studio
         </Link>
 
-        <Card className="w-full max-w-md glass-card border-border shadow-2xl overflow-hidden relative group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-          <CardHeader className="pb-8 border-b border-border bg-secondary/30 text-center">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-6 shadow-inner">
-               {isSignUp ? <UserPlus className="w-7 h-7" /> : <User className="w-7 h-7" />}
+        <Card className="w-full glass-card border-white/5 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden relative group/card border-t border-white/10">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -ml-32 -mb-32 pointer-events-none" />
+          
+          <CardHeader className="pb-8 border-b border-white/5 bg-secondary/20 text-center relative overflow-hidden">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-6 shadow-2xl relative z-10">
+               {isSignUp ? <UserPlus className="w-7 h-7" /> : <Fingerprint className="w-7 h-7" />}
             </div>
-            <CardTitle className="text-2xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
-              {isSignUp ? 'Join Studio' : 'Account Login'}
-            </CardTitle>
-            <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] mt-2">Identity Verification Matrix</p>
+            <div className="space-y-2 relative z-10">
+              <CardTitle className="text-3xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+                {isSignUp ? 'Join Studio' : 'Identity Login'}
+              </CardTitle>
+              <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">Protocol Verification Matrix</p>
+            </div>
           </CardHeader>
 
-          <CardContent className="pt-10">
-            <form onSubmit={handleAuth} className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Email Protocol</Label>
+          <CardContent className="p-8 sm:p-12">
+            <form onSubmit={handleAuth} className="space-y-8">
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Secure Email Address</Label>
                   <div className="relative group/input">
                     <Input 
                       type="email" 
                       required
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      placeholder="user@matrix.com"
-                      className="h-14 bg-secondary/50 border-border rounded-2xl pl-12 focus:ring-primary/20"
+                      placeholder="user@studio.com"
+                      className="h-14 bg-secondary/50 border-white/5 rounded-2xl pl-12 focus:ring-primary/20 transition-all font-medium"
                     />
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/10 group-focus-within/input:text-primary transition-colors" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-foreground/20 group-focus-within/input:text-primary transition-colors" />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Security Key (Password)</Label>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Security Key</Label>
+                    {!isSignUp && (
+                      <button type="button" className="text-[9px] font-black uppercase text-primary/40 hover:text-primary transition-colors">Recover</button>
+                    )}
+                  </div>
                   <div className="relative group/input">
                     <Input 
                       type="password" 
@@ -144,47 +153,55 @@ export default function LoginPage() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="h-14 bg-secondary/50 border-border rounded-2xl pl-12 focus:ring-primary/20"
+                      className="h-14 bg-secondary/50 border-white/5 rounded-2xl pl-12 focus:ring-primary/20 transition-all"
                     />
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/10 group-focus-within/input:text-primary transition-colors" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-foreground/20 group-focus-within/input:text-primary transition-colors" />
                   </div>
                 </div>
               </div>
 
               {error && (
-                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-start gap-3 animate-in shake duration-500">
-                  <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
-                  <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">{error}</p>
+                <div className="p-5 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-start gap-4 animate-in shake duration-500 shadow-xl shadow-destructive/5">
+                  <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-[11px] font-bold text-destructive uppercase tracking-widest leading-relaxed">{error}</p>
                 </div>
               )}
 
-              <Button type="submit" disabled={isLoading} className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                 {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isSignUp ? 'Create Identity' : 'Authorize Login'}
+              <Button type="submit" disabled={isLoading} className="w-full h-16 bg-primary text-white font-black text-[11px] uppercase tracking-[0.3em] rounded-2xl shadow-2xl shadow-primary/30 active:scale-95 transition-all group">
+                 {isLoading ? (
+                   <Loader2 className="w-5 h-5 animate-spin" />
+                 ) : (
+                   <div className="flex items-center gap-3">
+                     {isSignUp ? 'Initialize Identity' : 'Authorize Session'}
+                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                   </div>
+                 )}
               </Button>
 
-              <div className="text-center pt-4 border-t border-white/5">
+              <div className="text-center pt-6 border-t border-white/5">
                  <button 
                   type="button"
                   onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
-                  className="text-[10px] font-black uppercase text-foreground/30 hover:text-primary transition-colors tracking-widest"
+                  className="text-[10px] font-black uppercase text-foreground/30 hover:text-primary transition-all tracking-[0.1em] hover:tracking-[0.15em]"
                  >
-                   {isSignUp ? 'Already have an identity? Log in' : 'Not registered? Create account'}
+                   {isSignUp ? 'Already have an account? Login' : 'Not registered? Create account'}
                  </button>
               </div>
             </form>
           </CardContent>
         </Card>
 
-        <div className="mt-12 flex items-center gap-8 opacity-20">
-           <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
-              <ShieldCheck className="w-3.5 h-3.5" /> Secure Matrix
-           </div>
-           <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Verified Host
-           </div>
-           <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
-              <Zap className="w-3.5 h-3.5" /> Zero Lag
-           </div>
+        <div className="mt-12 flex flex-wrap justify-center items-center gap-x-10 gap-y-6 opacity-30">
+           {[
+             { icon: ShieldCheck, label: 'Secure Matrix' },
+             { icon: CheckCircle2, label: 'Verified Host' },
+             { icon: Zap, label: 'Zero Lag' }
+           ].map((badge, i) => (
+             <div key={i} className="flex items-center gap-2.5">
+                <badge.icon className="w-4 h-4 text-primary/60" />
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground">{badge.label}</span>
+             </div>
+           ))}
         </div>
       </div>
     </div>
