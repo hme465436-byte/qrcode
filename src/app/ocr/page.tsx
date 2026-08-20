@@ -21,6 +21,7 @@ import {
   Cloud,
   Cpu,
   RefreshCcw,
+  RotateCcw,
   Check,
   Settings2,
   ShieldCheck
@@ -329,7 +330,7 @@ export default function OCRPage() {
                 </div>
                 <div className="space-y-2">
                   <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Privacy Absolute</h4>
-                  <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
+                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
                     Fallback decoding occurs 100% locally in browser memory. Documents are never transmitted to our servers.
                   </p>
                 </div>
