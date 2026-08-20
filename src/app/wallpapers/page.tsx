@@ -25,7 +25,9 @@ import {
   Trash2,
   AlertCircle,
   Eye,
-  Camera
+  Camera,
+  Settings2,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -177,7 +179,7 @@ export default function WallpapersPage() {
            </div>
            <div className="flex items-center gap-3">
               <GetHelp toolId="wallpapers" />
-              <Button variant="outline" onClick={() => fetchWallpapers()} disabled={isLoading} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">
+              <Button variant="outline" size="sm" onClick={() => fetchWallpapers()} disabled={isLoading} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">
                 <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isLoading && "animate-spin")} /> New Batch
               </Button>
            </div>
@@ -289,10 +291,10 @@ export default function WallpapersPage() {
                         <img 
                           src={asset.previewUrl} 
                           alt={asset.title} 
-                          className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-1000" 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" 
                         />
                         
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity p-6 flex flex-col justify-end">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:card:opacity-100 transition-opacity p-6 flex flex-col justify-end">
                            <div className="space-y-1 mb-4">
                               <p className="text-[11px] font-bold text-white uppercase truncate">{asset.title}</p>
                               <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">{asset.source} Node</p>
