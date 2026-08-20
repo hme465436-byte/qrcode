@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -107,7 +108,7 @@ export function Navbar() {
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
-      router.refresh();
+      router.push('/');
     }
   };
 
@@ -171,23 +172,18 @@ export function Navbar() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56 glass-card mt-2 p-2 border-white/10 shadow-2xl animate-in slide-in-from-top-2">
                         <DropdownMenuLabel className="px-3 py-2 space-y-1">
-                           <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Studio Identity</p>
+                           <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">My Account</p>
                            <p className="text-[11px] font-bold text-foreground/60 truncate">{user.email}</p>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-white/5" />
                         <DropdownMenuItem asChild>
                            <Link href="/account" className="flex items-center gap-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-colors cursor-pointer rounded-lg">
-                              <Fingerprint className="w-3.5 h-3.5" /> Profile Settings
-                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                           <Link href="/about" className="flex items-center gap-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-colors cursor-pointer rounded-lg">
-                              <Settings className="w-3.5 h-3.5" /> Workspace Config
+                              <Fingerprint className="w-3.5 h-3.5" /> Profile
                            </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-white/5" />
                         <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-500/60 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer rounded-lg">
-                           <LogOut className="w-3.5 h-3.5" /> De-Authorize Session
+                           <LogOut className="w-3.5 h-3.5" /> Logout
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                    </DropdownMenu>

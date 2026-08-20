@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -68,9 +69,9 @@ export default function AccountPage() {
     setIsUpdating(true);
     try {
       await updateProfile(user, { displayName });
-      toast({ title: "Identity Updated", description: "Your display name has been synchronized." });
+      toast({ title: "Name Updated", description: "Your profile has been updated." });
     } catch (err) {
-      toast({ variant: "destructive", title: "Protocol Failure", description: "Failed to update profile matrix." });
+      toast({ variant: "destructive", title: "Update Failed", description: "Failed to update profile name." });
     } finally {
       setIsUpdating(false);
     }
@@ -79,7 +80,7 @@ export default function AccountPage() {
   const handleChangePassword = async () => {
     if (!user || !newPass) return;
     if (newPass !== confirmPass) {
-      toast({ variant: "destructive", title: "Matrix Mismatch", description: "Passwords do not align." });
+      toast({ variant: "destructive", title: "Mismatch", description: "Passwords do not match." });
       return;
     }
     
@@ -88,12 +89,12 @@ export default function AccountPage() {
       await updatePassword(user, newPass);
       setNewPass('');
       setConfirmPass('');
-      toast({ title: "Security Key Rotated", description: "New password protocol active." });
+      toast({ title: "Password Changed", description: "Your password has been updated." });
     } catch (err: any) {
       if (err.code === 'auth/requires-recent-login') {
-        toast({ variant: "destructive", title: "Re-Auth Required", description: "Please log out and back in to change security keys." });
+        toast({ variant: "destructive", title: "Login Required", description: "Please log out and back in to change your password." });
       } else {
-        toast({ variant: "destructive", title: "Protocol Failure", description: err.message });
+        toast({ variant: "destructive", title: "Failed", description: err.message });
       }
     } finally {
       setIsUpdating(false);
@@ -104,7 +105,7 @@ export default function AccountPage() {
     if (auth) {
       await signOut(auth);
       router.push('/');
-      toast({ title: "Session De-Authorized" });
+      toast({ title: "Logged Out" });
     }
   };
 
@@ -112,19 +113,19 @@ export default function AccountPage() {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6 bg-[#0a0a0c]">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Negotiating Identity Node...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Loading Profile...</p>
       </div>
     );
   }
 
   const creationDate = user.metadata.creationTime 
     ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    : 'Archive Unknown';
+    : 'Unknown';
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] selection:bg-primary/20">
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-16 max-w-5xl">
-        {/* Header Matrix */}
+        {/* Header */}
         <div className="mb-12 animate-reveal">
           <Link href="/" className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:text-primary transition-all mb-10 group">
             <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" /> Back to Studio
@@ -149,7 +150,7 @@ export default function AccountPage() {
             <div className="text-center md:text-left space-y-4 flex-1 min-w-0">
                <div className="space-y-2">
                   <h1 className="text-3xl sm:text-5xl font-headline font-black text-foreground uppercase tracking-tighter leading-none truncate">
-                    {user.displayName || 'IDENTITY_NODE'}
+                    {user.displayName || 'Member'}
                   </h1>
                   <div className="flex flex-wrap justify-center md:justify-start items-center gap-4">
                      <p className="text-primary font-black uppercase text-[10px] tracking-[0.3em]">{user.email}</p>
@@ -160,11 +161,11 @@ export default function AccountPage() {
                <div className="flex flex-wrap justify-center md:justify-start gap-x-8 gap-y-2">
                   <div className="flex items-center gap-2 text-[9px] font-bold text-foreground/20 uppercase tracking-widest">
                      <Clock className="w-3.5 h-3.5 text-primary/30" />
-                     Reg: {creationDate}
+                     Joined: {creationDate}
                   </div>
                   <div className="flex items-center gap-2 text-[9px] font-bold text-foreground/20 uppercase tracking-widest">
                      <Smartphone className="w-3.5 h-3.5 text-primary/30" />
-                     ID: {user.uid.substring(0, 8).toUpperCase()}
+                     User ID: {user.uid.substring(0, 8).toUpperCase()}
                   </div>
                </div>
             </div>
@@ -172,27 +173,27 @@ export default function AccountPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Management Module */}
+          {/* Main Controls */}
           <div className="lg:col-span-8 space-y-6 animate-in fade-in slide-in-from-left-6 duration-1000">
              <Card className="glass-card border-white/5 shadow-2xl overflow-hidden relative rounded-[2.5rem]">
                 <CardHeader className="p-6 sm:p-8 border-b border-white/5 bg-secondary/10">
                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground">
-                      <Settings2 className="w-4 h-4 text-primary" /> Profile Parameters
+                      <Settings2 className="w-4 h-4 text-primary" /> Profile Settings
                    </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 sm:p-8 space-y-8">
                    <div className="space-y-8">
                       <div className="space-y-4">
-                         <Label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.3em] ml-1">Display Identity</Label>
+                         <Label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.3em] ml-1">Full Name</Label>
                          <div className="flex flex-col sm:flex-row gap-3">
                             <Input 
                               value={displayName}
                               onChange={e => setDisplayName(e.target.value)}
-                              placeholder="Set name..."
+                              placeholder="Your name..."
                               className="h-12 bg-black/40 border-white/5 rounded-xl text-sm font-bold px-6 focus:ring-primary/20 uppercase flex-1"
                             />
                             <Button onClick={handleUpdateProfile} disabled={isUpdating} className="h-12 px-6 rounded-xl bg-primary text-[10px] shadow-lg shadow-primary/20 active:scale-95 transition-all">
-                               {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <div className="flex items-center gap-2"><Save className="w-4 h-4" /> Sync</div>}
+                               {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <div className="flex items-center gap-2"><Save className="w-4 h-4" /> Save</div>}
                             </Button>
                          </div>
                       </div>
@@ -203,8 +204,8 @@ export default function AccountPage() {
                                <KeyRound className="w-5 h-5" />
                             </div>
                             <div className="space-y-0.5">
-                               <Label className="text-[10px] font-black text-foreground uppercase tracking-[0.3em]">Security Key Rotation</Label>
-                               <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Update your encrypted access protocol</p>
+                               <Label className="text-[10px] font-black text-foreground uppercase tracking-[0.3em]">Change Password</Label>
+                               <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Update your account password</p>
                             </div>
                          </div>
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -212,20 +213,20 @@ export default function AccountPage() {
                               type="password" 
                               value={newPass}
                               onChange={e => setNewPass(e.target.value)}
-                              placeholder="New Protocol Key" 
+                              placeholder="New Password" 
                               className="h-12 bg-black/40 border-white/5 rounded-xl text-xs font-bold px-6"
                             />
                             <Input 
                               type="password"
                               value={confirmPass}
                               onChange={e => setConfirmPass(e.target.value)} 
-                              placeholder="Verify Matrix" 
+                              placeholder="Confirm Password" 
                               className="h-12 bg-black/40 border-white/5 rounded-xl text-xs font-bold px-6"
                             />
                          </div>
                          <Button onClick={handleChangePassword} disabled={isUpdating || !newPass} variant="outline" className="w-full h-12 rounded-xl border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-[0.3em] hover:bg-primary hover:text-white transition-all">
                             {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
-                            Update Security Matrix
+                            Update Password
                          </Button>
                       </div>
                    </div>
@@ -237,28 +238,28 @@ export default function AccountPage() {
                   <ShieldCheck className="w-6 h-6" />
                </div>
                <div className="space-y-1">
-                 <h4 className="text-[11px] font-black text-foreground uppercase tracking-[0.2em] leading-none">Hardened Encryption</h4>
+                 <h4 className="text-[11px] font-black text-foreground uppercase tracking-[0.2em] leading-none">Security Guaranteed</h4>
                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase tracking-tight">
-                   Identity parameters and security keys are processed via hardware-native Firebase Authentication protocols.
+                   Your account details and passwords are encrypted and managed securely via Firebase.
                  </p>
                </div>
             </div>
           </div>
 
-          {/* Info Module - Right */}
+          {/* Metadata Sidebar */}
           <div className="lg:col-span-4 space-y-6 animate-in fade-in slide-in-from-right-6 duration-1000">
              <Card className="glass-card border-white/5 shadow-2xl overflow-hidden bg-black/10 rounded-[2.5rem]">
                 <CardHeader className="p-6 sm:p-8 border-b border-white/5 bg-secondary/10">
                    <CardTitle className="text-[9px] font-black uppercase tracking-[0.4em] flex items-center gap-3 text-foreground">
-                      <Activity className="w-4 h-4 text-primary" /> Session Metadata
+                      <Activity className="w-4 h-4 text-primary" /> Session Details
                    </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 sm:p-8 space-y-8">
                    <div className="space-y-6">
                       {[
-                        { label: 'Primary Email', val: user.email, icon: Mail },
-                        { label: 'Provider Node', val: user.providerData[0]?.providerId === 'password' ? 'Studio Matrix' : 'External SSO', icon: Globe },
-                        { label: 'Status Protocol', val: user.emailVerified ? 'VERIFIED' : 'PENDING', icon: Shield, color: user.emailVerified ? 'text-green-500' : 'text-amber-500' },
+                        { label: 'Email Address', val: user.email, icon: Mail },
+                        { label: 'Login Method', val: user.providerData[0]?.providerId === 'password' ? 'Email/Password' : 'SSO', icon: Globe },
+                        { label: 'Account Status', val: user.emailVerified ? 'VERIFIED' : 'PENDING', icon: Shield, color: user.emailVerified ? 'text-green-500' : 'text-amber-500' },
                       ].map((item, i) => (
                         <div key={i} className="flex gap-4 group/item">
                            <div className="w-9 h-9 rounded-lg bg-secondary border border-white/5 flex items-center justify-center text-primary/30 shrink-0 group-hover/item:text-primary transition-all shadow-inner">
@@ -274,21 +275,20 @@ export default function AccountPage() {
 
                    <div className="pt-6 border-t border-white/5 space-y-4">
                       <Button onClick={handleLogout} variant="outline" className="w-full h-12 rounded-xl border-white/10 bg-white/5 text-red-500/60 hover:text-red-500 hover:bg-red-500/10 font-black uppercase tracking-[0.3em] text-[9px] transition-all">
-                         <LogOut className="w-4 h-4 mr-2" /> De-Authorize
+                         <LogOut className="w-4 h-4 mr-2" /> Logout
                       </Button>
-                      <p className="text-center text-[7px] font-black text-foreground/10 uppercase tracking-[0.5em]">Protocol Cycle: Stable</p>
                    </div>
                 </CardContent>
              </Card>
 
              <div className="p-6 rounded-[2rem] bg-secondary/10 border border-white/5 flex items-start gap-4 group hover:bg-secondary/20 transition-all shadow-xl">
-               <div className="w-10 h-10 rounded-xl bg-background border border-white/5 flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+               <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                   <Zap className="w-5 h-5" />
                </div>
                <div className="space-y-1">
-                 <h4 className="text-[9px] font-black text-foreground uppercase tracking-[0.2em] leading-none">Instant Persistence</h4>
+                 <h4 className="text-[9px] font-black text-foreground uppercase tracking-[0.2em] leading-none">Always Synced</h4>
                  <p className="text-[9px] text-foreground/40 leading-relaxed font-medium uppercase tracking-tight">
-                   Identity changes synchronize immediately across all connected hardware sessions.
+                   Changes to your profile are reflected across all your devices immediately.
                  </p>
                </div>
             </div>
