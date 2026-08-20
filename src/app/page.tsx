@@ -148,11 +148,11 @@ const TOOLS: Tool[] = [
     href: '/wallpapers', 
     icon: Monitor, 
     title: 'Wallpapers', 
-    desc: 'Browse and download high-res PC and Mobile wallpapers.', 
+    desc: 'Browse and download high-res PC, Mobile and Anime wallpapers.', 
     label: 'DAILY', 
     color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
     glowClass: 'bg-indigo-400/10',
-    keywords: ['wallpaper', 'background', 'desktop', 'mobile', '4k', 'hd', 'nasa', 'space', 'nature'],
+    keywords: ['wallpaper', 'background', 'desktop', 'mobile', '4k', 'hd', 'nasa', 'space', 'nature', 'anime', 'waifu'],
     category: 'image'
   },
   { 

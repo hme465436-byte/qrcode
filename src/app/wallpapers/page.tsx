@@ -27,7 +27,8 @@ import {
   Eye,
   Camera,
   Settings2,
-  ChevronRight
+  ChevronRight,
+  Ghost
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,7 +52,7 @@ interface WallpaperAsset {
   previewUrl: string;
   title: string;
   author: string;
-  source: 'Picsum' | 'NASA' | 'Studio';
+  source: 'Picsum' | 'NASA' | 'Studio' | 'Anime';
   width: number;
   height: number;
 }
@@ -61,6 +62,7 @@ const CATEGORIES = [
   { id: 'nature', label: 'Nature', icon: Wind },
   { id: 'dark', label: 'Dark', icon: Moon },
   { id: 'space', label: 'Space', icon: Globe },
+  { id: 'anime', label: 'Anime', icon: Ghost },
   { id: 'minimal', label: 'Minimal', icon: Layers },
 ];
 
@@ -88,8 +90,52 @@ export default function WallpapersPage() {
     let results: WallpaperAsset[] = [];
 
     try {
-      // Node A: NASA APOD (Special for Space Category)
-      if (activeCategory === 'space') {
+      // Node A: Anime Multi-Node Protocol
+      if (activeCategory === 'anime') {
+        try {
+          // Primary: Waifu.pics SFW many endpoint
+          const response = await fetch('https://api.waifu.pics/many/sfw/waifu', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          const data = await response.json();
+          if (data.files && data.files.length > 0) {
+            results = data.files.slice(0, count).map((url: string, i: number) => ({
+              id: `waifu-${i}-${Date.now()}`,
+              url: url,
+              previewUrl: url,
+              title: `Anime Identity ${i + 1}`,
+              author: 'Linguistic Artist',
+              source: 'Anime',
+              width: w,
+              height: h
+            }));
+          }
+        } catch (e) {
+          // Fallback: Waifu.im SFW endpoint
+          try {
+            const resFallback = await fetch(`https://api.waifu.im/search/?is_nsfw=false&limit=${count}`);
+            const dataFallback = await resFallback.json();
+            if (dataFallback.images) {
+              results = dataFallback.images.map((img: any) => ({
+                id: `waifuim-${img.image_id}`,
+                url: img.url,
+                previewUrl: img.url,
+                title: `Anime Node ${img.image_id}`,
+                author: 'Studio Native',
+                source: 'Anime',
+                width: w,
+                height: h
+              }));
+            }
+          } catch (e2) {
+            console.warn("Anime Node restricted. Falling back to global.");
+          }
+        }
+      } 
+      // Node B: NASA APOD (Special for Space Category)
+      else if (activeCategory === 'space') {
         try {
           const res = await fetch(`https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=${count}`);
           const data = await res.json();
@@ -110,9 +156,8 @@ export default function WallpapersPage() {
         }
       }
 
-      // Node B: Picsum Master (Primary/Fallback)
+      // Node C: Picsum Master (Primary/Fallback)
       if (results.length === 0) {
-        // Generating deterministic random set via random seeds
         results = Array.from({ length: count }).map((_, i) => {
           const seed = Math.floor(Math.random() * 10000);
           return {
