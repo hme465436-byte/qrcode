@@ -54,7 +54,7 @@ export default function LoginPage() {
   
   const [error, setError] = useState<string | null>(null);
 
-  const redirectTo = searchParams.get('redirect') || '/';
+  const redirectTo = searchParams.get('redirect') || '/account';
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -64,45 +64,57 @@ export default function LoginPage() {
 
   const mapAuthError = (code: string) => {
     switch (code) {
-      case 'auth/user-not-found': return "Account not found.";
-      case 'auth/wrong-password': return "Incorrect password.";
-      case 'auth/email-already-in-use': return "This email is already in use.";
-      case 'auth/invalid-email': return "Invalid email address.";
-      case 'auth/weak-password': return "Password is too weak (min 6 characters).";
-      case 'auth/too-many-requests': return "Too many failed attempts. Please try later.";
-      default: return "Login failed. Please try again.";
+      case 'auth/user-not-found': 
+      case 'auth/wrong-password': 
+      case 'auth/invalid-credential':
+        return "Invalid email or password.";
+      case 'auth/email-already-in-use': 
+        return "This email is already in use.";
+      case 'auth/invalid-email': 
+        return "Please enter a valid email address.";
+      case 'auth/weak-password': 
+        return "Password is too weak. Please use at least 6 characters.";
+      case 'auth/too-many-requests': 
+        return "Too many attempts. Please try again later.";
+      case 'auth/network-request-failed':
+        return "Network error. Please check your connection.";
+      case 'auth/operation-not-allowed':
+        return "Email/Password sign-in is not enabled. Please contact support.";
+      default: 
+        return "Unable to sign in. Please check your details and try again.";
     }
   };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) {
-      setError("Service temporarily unavailable.");
+      setError("The login service is not configured correctly. Please check your connection.");
       return;
     }
     
     setIsLoading(true);
     setError(null);
 
-    // Form Validation
+    // Local Validation
     if (isSignUp) {
-      if (!fullName.trim()) { setError("Full name is required."); setIsLoading(false); return; }
+      if (!fullName.trim()) { setError("Please enter your full name."); setIsLoading(false); return; }
       if (password.length < 6) { setError("Password must be at least 6 characters."); setIsLoading(false); return; }
       if (password !== confirmPassword) { setError("Passwords do not match."); setIsLoading(false); return; }
-      if (!agreedToTerms) { setError("You must agree to the terms."); setIsLoading(false); return; }
+      if (!agreedToTerms) { setError("You must agree to the Terms and Privacy Policy."); setIsLoading(false); return; }
     }
 
     try {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: fullName });
-        toast({ title: "Account Created", description: "Your account is ready to use." });
+        toast({ title: "Welcome!", description: "Your account has been created." });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        toast({ title: "Login Successful", description: "Welcome back to the studio." });
+        toast({ title: "Login Successful", description: "Redirecting to your account..." });
       }
       router.push(redirectTo);
     } catch (err: any) {
+      console.error("Auth Error Code:", err.code);
       setError(mapAuthError(err.code));
     } finally {
       setIsLoading(false);
@@ -135,10 +147,10 @@ export default function LoginPage() {
             </div>
             <div className="space-y-1 relative z-10">
               <CardTitle className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
-                {isSignUp ? 'Register' : 'Login'}
+                {isSignUp ? 'Create Account' : 'Login'}
               </CardTitle>
               <p className="text-[8px] font-black text-foreground/20 uppercase tracking-[0.4em] leading-relaxed">
-                {isSignUp ? 'Create your account' : 'Sign in to continue'}
+                {isSignUp ? 'Join the professional studio' : 'Sign in to your dashboard'}
               </p>
             </div>
           </CardHeader>
@@ -154,7 +166,7 @@ export default function LoginPage() {
                         required
                         value={fullName}
                         onChange={e => setFullName(e.target.value)}
-                        placeholder="John Doe"
+                        placeholder="e.g. John Doe"
                         className="h-11 bg-secondary/40 border-white/5 rounded-xl pl-10 focus:ring-primary/20 transition-all font-bold text-xs"
                       />
                       <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/10 group-focus-within/input:text-primary transition-colors" />
