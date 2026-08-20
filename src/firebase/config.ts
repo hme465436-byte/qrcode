@@ -3,13 +3,14 @@
 /**
  * Firebase Configuration Matrix
  * Provides the identity parameters for the studio's signaling services.
- * Uses conditional checks to ensure undefined values don't break the SDK.
+ * Synchronized with the production project credentials.
  */
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+  apiKey: "AIzaSyCrd5Xv-0hEtAExLNW2ayzV9Jt3xfVczr8",
+  authDomain: "studio-2731876746-ec9a7.firebaseapp.com",
+  databaseURL: "https://studio-2731876746-ec9a7-default-rtdb.firebaseio.com",
+  projectId: "studio-2731876746-ec9a7",
+  storageBucket: "studio-2731876746-ec9a7.firebasestorage.app",
+  messagingSenderId: "664142810422",
+  appId: "1:664142810422:web:7e98c6c52ed42def0ff797"
 };
