@@ -58,7 +58,7 @@ export function Footer() {
                   { label: 'Single QR', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
                   { label: 'Logo Maker', href: '/logo-maker' },
-                  { label: 'OCR Extraction', href: '/ocr' },
+                  { label: 'Photo to Text', href: '/ocr' },
                 ].map((link) => (
                   <Link key={link.label} href={link.href} className="text-xs font-bold text-foreground/40 hover:text-foreground transition-all uppercase tracking-widest">
                     {link.label}

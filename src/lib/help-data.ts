@@ -512,7 +512,7 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     privacy: 'Redaction occurs 100% locally in your browser memory. Your un-redacted photo never leaves your device.'
   },
   'ocr': {
-    title: 'OCR Extraction',
+    title: 'Photo to Text Studio',
     description: 'Extract raw text from images, documents, and screenshots using Optical Character Recognition.',
     steps: [
       'Import your visual asset (JPG, PNG, or WebP).',

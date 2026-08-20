@@ -156,7 +156,7 @@ export default function OCRPage() {
             <FileText className="w-3.5 h-3.5" /> Intelligence Suite
           </div>
           <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
-            Extract Text <span className="text-primary italic">(OCR PRO)</span>
+            Photo to <span className="text-primary italic">Text Studio</span>
           </h1>
           <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
             Professional Multi-Engine Optical Character Recognition. Prioritizing high-fidelity cloud neural networks with hardware-native Tesseract fallback.

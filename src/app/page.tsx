@@ -105,7 +105,8 @@ import {
   Quote,
   Languages,
   Joystick,
-  Github
+  Github,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -1222,12 +1223,12 @@ const TOOLS: Tool[] = [
   { 
     href: '/ocr', 
     icon: FileText, 
-    title: 'OCR Extraction', 
+    title: 'Photo to Text', 
     desc: 'Extract text from images locally and securely.', 
     label: 'INTEL', 
     color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read'],
+    keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read', 'photo to text'],
     category: 'utilities'
   },
   { 
@@ -1283,6 +1284,28 @@ const TOOLS: Tool[] = [
     color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
+    category: 'utilities'
+  },
+  { 
+    href: '/password-breach-checker', 
+    icon: ShieldAlert, 
+    title: 'Breach Checker', 
+    desc: 'Verify if passwords have been exposed using secure k-Anonymity.', 
+    label: 'SECURITY', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['password breach', 'pwned', 'security check', 'hack check', 'breach checker', 'password safety'],
+    category: 'utilities'
+  },
+  { 
+    href: '/website-trust-checker', 
+    icon: ShieldCheck, 
+    title: 'Trust Checker', 
+    desc: 'Professional multi-node security diagnostics and domain auditing.', 
+    label: 'SECURITY', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['trust', 'security', 'malware', 'dns', 'ip', 'safe', 'website check', 'phishing'],
     category: 'utilities'
   }
 ];
@@ -1376,7 +1399,7 @@ export default function Home() {
   const phrases = useMemo(() => {
     const list = [
       'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
-      'Word to PDF', 'Photo Enhance', 'Age Calculator', 'OCR Extraction', 
+      'Word to PDF', 'Photo Enhance', 'Age Calculator', 'Photo to Text', 
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
@@ -1394,7 +1417,7 @@ export default function Home() {
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
-      'Password Breach', 'Pwned Check', 'Hack Search'
+      'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

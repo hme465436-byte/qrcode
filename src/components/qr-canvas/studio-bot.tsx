@@ -86,7 +86,7 @@ const TOOLS: Tool[] = [
   { href: '/regex-tester', title: 'Regex Test', icon: Search, keywords: ['regex', 'test', 'pattern'], desc: 'Regex evaluator.' },
   { href: '/photo-enhance-fix', title: 'Photo Enhance', icon: Wand2, keywords: ['upscale', 'fix', 'quality'], desc: 'Fix blurry photos.' },
   { href: '/passport-photo-maker', title: 'Passport Photo', icon: SquareUser, keywords: ['passport', 'visa', 'id'], desc: 'Official ID photos.' },
-  { href: '/ocr', title: 'OCR Extraction', icon: FileText, keywords: ['ocr', 'text', 'read'], desc: 'Image to text.' },
+  { href: '/ocr', title: 'Photo to Text', icon: FileText, keywords: ['ocr', 'text', 'read', 'photo to text'], desc: 'Image to text.' },
   { href: '/pdf-merger', title: 'PDF Merger', icon: FileStack, keywords: ['merge', 'pdf', 'combine'], desc: 'Join PDF files.' },
   { href: '/pdf-compressor', title: 'PDF Compressor', icon: FileArchive, keywords: ['compress', 'pdf', 'small'], desc: 'Shrink PDF size.' },
   { href: '/video-to-audio', title: 'Video to MP3', icon: Music, keywords: ['mp3', 'extract', 'audio'], desc: 'Video sound ripper.' },
@@ -362,7 +362,7 @@ export function StudioBot() {
                               </div>
                               <span className="text-[10px] font-black uppercase text-black/60 dark:text-white/60 group-hover:text-[#6B9BD1] dark:group-hover:text-primary transition-colors truncate">{tool.title}</span>
                             </div>
-                            <ArrowRight className="w-3 h-3 text-[#6B9BD1]/40 dark:text-primary/40 group-hover:text-[#6B9BD1] dark:group-hover:text-primary transition-all group-hover:translate-x-0.5 shrink-0" />
+                            <ArrowRight className="w-3.5 h-3.5 text-[#6B9BD1]/40 dark:text-primary/40 group-hover:text-[#6B9BD1] dark:group-hover:text-primary transition-all group-hover:translate-x-0.5 shrink-0" />
                           </button>
                         );
                       })}
