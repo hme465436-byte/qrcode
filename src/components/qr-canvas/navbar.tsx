@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Scan, 
@@ -13,10 +13,27 @@ import {
   Type,
   Coffee,
   User,
-  X
+  X,
+  LogIn,
+  LogOut,
+  UserPlus,
+  ChevronDown,
+  ShieldCheck,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
+import { useUser, useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from '@/components/ui/button';
 
 /**
  * Static Logo Component
@@ -54,6 +71,9 @@ const NAV_ITEMS = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const auth = useAuth();
+  const { user, loading: authLoading } = useUser();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [mounted, setMounted] = useState(false);
@@ -81,6 +101,13 @@ export function Navbar() {
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.refresh();
+    }
+  };
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-[100] w-full max-w-full overflow-hidden border-b border-white/5 bg-background/80 backdrop-blur-xl h-16 transition-all duration-300">
@@ -105,29 +132,50 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-             {/* IDENTITY UNIT */}
-             <Link 
-                href="/about"
-                title="About"
-                className={cn(
-                  "w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
-                  pathname === '/about' ? "text-primary border-primary/20" : "text-foreground/40 hover:text-primary"
-                )}
-             >
-               <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:scale-110 icon-3d" />
-             </Link>
-
-             {/* SUPPORT UNIT */}
-             <Link 
-                href="/donate"
-                title="Donate"
-                className={cn(
-                  "w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all group icon-container-3d",
-                  pathname === '/donate' ? "text-primary border-primary/20" : "text-foreground/40 hover:text-primary"
-                )}
-             >
-               <Coffee className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:scale-110 icon-3d" />
-             </Link>
+             {/* IDENTITY UNIT / AUTH SECTION */}
+             {!authLoading && (
+               <>
+                 {user ? (
+                   <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary transition-all hover:bg-primary/20 icon-container-3d">
+                           <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56 glass-card mt-2 p-2 border-white/10 shadow-2xl animate-in slide-in-from-top-2">
+                        <DropdownMenuLabel className="px-3 py-2 space-y-1">
+                           <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Studio Identity</p>
+                           <p className="text-[11px] font-bold text-foreground/60 truncate">{user.email}</p>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-white/5" />
+                        <DropdownMenuItem asChild>
+                           <Link href="/about" className="flex items-center gap-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-colors cursor-pointer rounded-lg">
+                              <Settings className="w-3.5 h-3.5" /> Workspace Config
+                           </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-500/60 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer rounded-lg mt-1">
+                           <LogOut className="w-3.5 h-3.5" /> De-Authorize Session
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                   </DropdownMenu>
+                 ) : (
+                   <div className="flex items-center gap-1 sm:gap-2">
+                      <Link 
+                        href="/login" 
+                        className="hidden sm:flex h-10 items-center justify-center px-4 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-all"
+                      >
+                         Sign In
+                      </Link>
+                      <Link 
+                        href="/login?signup=true"
+                        className="h-8 sm:h-10 flex items-center justify-center px-3 sm:px-5 rounded-xl bg-white/5 border border-white/10 text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-foreground hover:bg-white/10 transition-all shadow-xl"
+                      >
+                         <UserPlus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1.5 sm:mr-2 text-primary" /> Join
+                      </Link>
+                   </div>
+                 )}
+               </>
+             )}
 
              {/* THEME TOGGLE */}
              <button 

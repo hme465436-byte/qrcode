@@ -1,7 +1,6 @@
-
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   LogIn, 
@@ -12,22 +11,26 @@ import {
   Loader2, 
   CheckCircle2, 
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Command,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { SpaceBackground } from '@/components/qr-canvas/space-background';
 
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
+  const { user, loading: authLoading } = useUser();
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +38,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const redirectTo = searchParams.get('redirect') || '/html-to-url';
+  const redirectTo = searchParams.get('redirect') || '/';
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace(redirectTo);
+    }
+  }, [user, authLoading, router, redirectTo]);
 
   const mapAuthError = (code: string) => {
     switch (code) {
@@ -77,89 +87,104 @@ export default function LoginPage() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-6 py-20 min-h-screen flex flex-col items-center justify-center">
-      <Link href="/" className="mb-12 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-all">
-         <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
-      </Link>
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+      <SpaceBackground />
+      
+      <div className="relative z-10 w-full flex flex-col items-center">
+        <Link href="/" className="mb-12 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-all group">
+           <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" /> Back to Studio
+        </Link>
 
-      <Card className="w-full max-w-md glass-card border-border shadow-2xl overflow-hidden relative group">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-        <CardHeader className="pb-8 border-b border-border bg-secondary/30 text-center">
-          <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-6 shadow-inner">
-             {isSignUp ? <UserPlus className="w-8 h-8" /> : <LogIn className="w-8 h-8" />}
-          </div>
-          <CardTitle className="text-2xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
-            {isSignUp ? 'Join Studio' : 'Log in to Studio'}
-          </CardTitle>
-          <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] mt-2">Identity Verification Matrix</p>
-        </CardHeader>
+        <Card className="w-full max-w-md glass-card border-border shadow-2xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
+          <CardHeader className="pb-8 border-b border-border bg-secondary/30 text-center">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-6 shadow-inner">
+               {isSignUp ? <UserPlus className="w-7 h-7" /> : <LogIn className="w-7 h-7" />}
+            </div>
+            <CardTitle className="text-2xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+              {isSignUp ? 'Join Studio' : 'Log in to Studio'}
+            </CardTitle>
+            <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] mt-2">Identity Verification Matrix</p>
+          </CardHeader>
 
-        <CardContent className="pt-10">
-          <form onSubmit={handleAuth} className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Email Protocol</Label>
-                <div className="relative group">
-                  <Input 
-                    type="email" 
-                    required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="user@matrix.com"
-                    className="h-14 bg-secondary/50 border-border rounded-2xl pl-12"
-                  />
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/10 group-focus-within:text-primary transition-colors" />
+          <CardContent className="pt-10">
+            <form onSubmit={handleAuth} className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Email Protocol</Label>
+                  <div className="relative group/input">
+                    <Input 
+                      type="email" 
+                      required
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="user@matrix.com"
+                      className="h-14 bg-secondary/50 border-border rounded-2xl pl-12 focus:ring-primary/20"
+                    />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/10 group-focus-within/input:text-primary transition-colors" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Security Key (Password)</Label>
+                  <div className="relative group/input">
+                    <Input 
+                      type="password" 
+                      required
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="h-14 bg-secondary/50 border-border rounded-2xl pl-12 focus:ring-primary/20"
+                    />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/10 group-focus-within/input:text-primary transition-colors" />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Security Key (Password)</Label>
-                <div className="relative group">
-                  <Input 
-                    type="password" 
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="h-14 bg-secondary/50 border-border rounded-2xl pl-12"
-                  />
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/10 group-focus-within:text-primary transition-colors" />
+              {error && (
+                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-start gap-3 animate-in shake duration-500">
+                  <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">{error}</p>
                 </div>
+              )}
+
+              <Button type="submit" disabled={isLoading} className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                 {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isSignUp ? 'Create Identity' : 'Authorize Login'}
+              </Button>
+
+              <div className="text-center pt-4 border-t border-white/5">
+                 <button 
+                  type="button"
+                  onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
+                  className="text-[10px] font-black uppercase text-foreground/30 hover:text-primary transition-colors tracking-widest"
+                 >
+                   {isSignUp ? 'Already have an identity? Log in' : 'No protocol yet? Create account'}
+                 </button>
               </div>
-            </div>
+            </form>
+          </CardContent>
+        </Card>
 
-            {error && (
-              <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-start gap-3 animate-in shake duration-500">
-                <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
-                <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">{error}</p>
-              </div>
-            )}
-
-            <Button type="submit" disabled={isLoading} className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30">
-               {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isSignUp ? 'Create Identity' : 'Authorize Login'}
-            </Button>
-
-            <div className="text-center pt-4 border-t border-white/5">
-               <button 
-                type="button"
-                onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
-                className="text-[10px] font-black uppercase text-foreground/30 hover:text-primary transition-colors tracking-widest"
-               >
-                 {isSignUp ? 'Already have an identity? Log in' : 'No protocol yet? Create account'}
-               </button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <div className="mt-12 flex items-center gap-6 opacity-20">
-         <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
-            <ShieldCheck className="w-3.5 h-3.5" /> Secure Matrix
-         </div>
-         <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Verified Host
-         </div>
+        <div className="mt-12 flex items-center gap-8 opacity-20">
+           <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+              <ShieldCheck className="w-3.5 h-3.5" /> Secure Matrix
+           </div>
+           <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Verified Host
+           </div>
+           <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+              <Zap className="w-3.5 h-3.5" /> Zero Lag
+           </div>
+        </div>
       </div>
     </div>
   );
