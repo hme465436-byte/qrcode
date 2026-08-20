@@ -14,7 +14,7 @@ import {
   Languages,
   AlertCircle,
   Zap,
-  RefreshCcw,
+  RotateCcw,
   Cloud,
   Cpu,
   Check,
