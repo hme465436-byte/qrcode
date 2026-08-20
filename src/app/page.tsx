@@ -145,6 +145,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/wallpapers', 
+    icon: Monitor, 
+    title: 'Wallpapers', 
+    desc: 'Browse and download high-res PC and Mobile wallpapers.', 
+    label: 'DAILY', 
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    glowClass: 'bg-indigo-400/10',
+    keywords: ['wallpaper', 'background', 'desktop', 'mobile', '4k', 'hd', 'nasa', 'space', 'nature'],
+    category: 'image'
+  },
+  { 
     href: '/url-shortener', 
     icon: LinkIcon, 
     title: 'URL Shortener', 
@@ -1441,7 +1452,8 @@ export default function Home() {
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
-      'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link'
+      'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
+      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

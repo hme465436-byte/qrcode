@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'wallpapers': {
+    title: 'Wallpapers Studio',
+    description: 'Professional high-fidelity visual discovery unit for Desktop and Mobile hardware. Isolate high-resolution assets optimized for modern aspect ratios.',
+    steps: [
+      'Select your target hardware preset: Desktop (16:9) or Mobile (9:16).',
+      'Choose a thematic category chip to recalibrate the discovery stream.',
+      'Click any thumbnail to launch the High-Resolution Matrix Viewport.',
+      'Execute the download protocol to save the master binary locally.',
+      'Use the Refresh Batch button to generate a new set of visual identifiers.'
+    ],
+    tips: [
+      'The Space category synchronizes with the NASA APOD node for clinical astronomical data.',
+      'Mobile wallpapers are rendered at 1080x1920 for peak high-DPI clarity on smartphones.'
+    ],
+    privacy: 'All visual discovery lookups are volatile and held strictly in local memory. No search history or visual interest is logged or transmitted.'
+  },
   'url-shortener': {
     title: 'URL Shortener Studio',
     description: 'Professional linguistic compression unit for web identifiers. Convert long, complex URLs into high-fidelity short links for efficient social sharing and branding.',
