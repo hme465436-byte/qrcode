@@ -107,7 +107,8 @@ import {
   Joystick,
   Github,
   Shield,
-  Network
+  Network,
+  Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -142,6 +143,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/url-shortener', 
+    icon: LinkIcon, 
+    title: 'URL Shortener', 
+    desc: 'Professional linguistic compression for long URLs.', 
+    label: 'WEB UTILITY', 
+    color: 'text-sky-400 bg-sky-400/10 border-sky-400/20',
+    glowClass: 'bg-sky-400/10',
+    keywords: ['url shortener', 'tinyurl', 'short link', 'link compressor', 'shorten url', 'tiny link'],
+    category: 'utilities'
   },
   { 
     href: '/dns-lookup', 
@@ -1429,7 +1441,7 @@ export default function Home() {
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
-      'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records'
+      'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

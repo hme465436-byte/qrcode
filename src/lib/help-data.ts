@@ -12,6 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'url-shortener': {
+    title: 'URL Shortener Studio',
+    description: 'Professional linguistic compression unit for web identifiers. Convert long, complex URLs into high-fidelity short links for efficient social sharing and branding.',
+    steps: [
+      'Paste your destination URL into the primary input field.',
+      'The engine automatically detects the target node and prepares the compression protocol.',
+      'Execute the synthesis by clicking the generate button.',
+      'Analyze the resulting short identifier in the result matrix.',
+      'Use the copy protocol to save the short link to your clipboard.'
+    ],
+    tips: [
+      'Ensure your long URL starts with http:// or https:// for peak accuracy.',
+      'Links generated via the TinyURL protocol are permanent and self-sustaining.'
+    ],
+    privacy: 'URL compression occurs via secure server-side uplinks. No link history or user-specific metadata is stored on our servers.'
+  },
   'dns-lookup': {
     title: 'DNS Lookup Studio',
     description: 'Professional-grade DNS discovery and domain auditing unit. Resolve global DNS records including A, AAAA, MX, NS, TXT, and CNAME with clinical precision.',

@@ -66,7 +66,8 @@ import {
   Clock,
   History,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
@@ -82,6 +83,7 @@ interface Tool {
 const TOOLS: Tool[] = [
   { href: '/single', title: 'Single Studio', icon: QrCode, keywords: ['qr', 'generator', 'code', 'brand'], desc: 'Branded QR codes.' },
   { href: '/bulk', title: 'Bulk Mode', icon: Layers, keywords: ['bulk', 'batch', 'many'], desc: 'Mass QR production.' },
+  { href: '/url-shortener', title: 'URL Shortener', icon: LinkIcon, keywords: ['url', 'short', 'tiny', 'link'], desc: 'Compress long URLs.' },
   { href: '/json-formatter', title: 'JSON Formatter', icon: Braces, keywords: ['json', 'format', 'pretty'], desc: 'Clean JSON data.' },
   { href: '/regex-tester', title: 'Regex Test', icon: Search, keywords: ['regex', 'test', 'pattern'], desc: 'Regex evaluator.' },
   { href: '/photo-enhance-fix', title: 'Photo Enhance', icon: Wand2, keywords: ['upscale', 'fix', 'quality'], desc: 'Fix blurry photos.' },
