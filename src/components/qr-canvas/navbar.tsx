@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   Settings,
   Info,
-  Heart
+  Heart,
+  Fingerprint
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QrScannerModal } from './qr-scanner-modal';
@@ -175,11 +176,17 @@ export function Navbar() {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-white/5" />
                         <DropdownMenuItem asChild>
+                           <Link href="/account" className="flex items-center gap-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-colors cursor-pointer rounded-lg">
+                              <Fingerprint className="w-3.5 h-3.5" /> Profile Settings
+                           </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
                            <Link href="/about" className="flex items-center gap-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-colors cursor-pointer rounded-lg">
                               <Settings className="w-3.5 h-3.5" /> Workspace Config
                            </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-500/60 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer rounded-lg mt-1">
+                        <DropdownMenuSeparator className="bg-white/5" />
+                        <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-500/60 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer rounded-lg">
                            <LogOut className="w-3.5 h-3.5" /> De-Authorize Session
                         </DropdownMenuItem>
                       </DropdownMenuContent>
