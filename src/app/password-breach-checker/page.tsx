@@ -89,7 +89,7 @@ export default function PasswordBreachCheckerPage() {
     }
 
     const finalScore = Math.max(0, score);
-    let status = 'Low Risk';
+    let status: 'Safe' | 'Suspicious' | 'Dangerous' = 'Safe';
     let color = 'text-green-500';
     let bg = 'bg-green-500/10';
     let border = 'border-green-500/20';
@@ -107,6 +107,10 @@ export default function PasswordBreachCheckerPage() {
       bg = 'bg-yellow-500/10';
       border = 'border-yellow-500/20';
       icon = AlertCircle;
+    }
+
+    if (reasons.length === 0) {
+      reasons.push("Clean Signal: No threats identified in active registries.");
     }
 
     return { score: finalScore, status, color, bg, border, icon, reasons };
@@ -152,14 +156,11 @@ export default function PasswordBreachCheckerPage() {
       if (match) {
         const count = parseInt(match.split(':')[1]);
         setResult({ breached: true, count });
-        toast({ variant: "destructive", title: "Breach Identified", description: `This password was found in ${count.toLocaleString()} leaks.` });
       } else {
         setResult({ breached: false, count: 0 });
-        toast({ title: "Protocol Secure", description: "Identity not found in current breach matrix." });
       }
     } catch (err) {
       setError("Discovery node restricted. Please verify your uplink or try again later.");
-      toast({ variant: "destructive", title: "Uplink Failed" });
     } finally {
       setIsLoading(false);
     }
@@ -169,7 +170,6 @@ export default function PasswordBreachCheckerPage() {
     setPassword('');
     setResult(null);
     setError(null);
-    toast({ title: "Studio Reset" });
   };
 
   return (
@@ -389,9 +389,9 @@ export default function PasswordBreachCheckerPage() {
                       </div>
 
                       {/* Advisory Panel */}
-                      <div className="p-8 rounded-[3rem] bg-primary/5 border border-primary/20 space-y-6 relative overflow-hidden group">
+                      <div className="p-8 rounded-[3rem] bg-primary/5 border border-primary/10 space-y-6 relative overflow-hidden group">
                          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[80px]" />
-                         <div className="flex items-center gap-4 relative z-10">
+                         <div className="flex items-start gap-4 relative z-10">
                             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20">
                                <Zap className="w-5 h-5" />
                             </div>
