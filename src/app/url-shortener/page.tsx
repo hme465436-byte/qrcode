@@ -47,7 +47,7 @@ export default function UrlShortenerPage() {
     if (!longUrl.trim()) return;
 
     if (!validateUrl(longUrl)) {
-      setError("Matrix Mismatch: Provide a valid URL identifier (e.g. google.com).");
+      setError("Provide a valid URL (e.g. google.com).");
       return;
     }
 
@@ -66,8 +66,7 @@ export default function UrlShortenerPage() {
         throw new Error(result.error || "Uplink failure.");
       }
     } catch (err: any) {
-      setError("Matrix Retrieval Failure: The shortener node is currently restricted.");
-      toast({ variant: "destructive", title: "Protocol Failed" });
+      setError(err.message || "Shortener unavailable. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +76,7 @@ export default function UrlShortenerPage() {
     if (shortUrl) {
       navigator.clipboard.writeText(shortUrl);
       setIsCopied(true);
-      toast({ title: "Protocol Copied" });
+      toast({ title: "Link Copied" });
       setTimeout(() => setIsCopied(false), 2000);
     }
   };
@@ -101,7 +100,7 @@ export default function UrlShortenerPage() {
               URL <span className="text-primary italic">Shortener Studio</span>
             </h1>
             <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
-              Professional direct link compression. Convert long destination URLs into compact, high-fidelity identifiers instantly using the is.gd protocol. No intermediate pages.
+              Professional direct link compression. Convert long destination URLs into compact, high-fidelity identifiers using a multi-node fallback protocol.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -197,14 +196,14 @@ export default function UrlShortenerPage() {
                          <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                          <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                       </div>
-                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Negotiating Direct Node...</p>
+                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Negotiating Multi-Node Protocols...</p>
                    </div>
                  )}
 
                  {shortUrl && !isLoading && (
                    <div className="w-full space-y-12 animate-in zoom-in-95 duration-500">
                       <div className="text-center space-y-4">
-                         <p className="text-[10px] font-black uppercase text-primary tracking-[0.6em]">is.gd Matrix Result</p>
+                         <p className="text-[10px] font-black uppercase text-primary tracking-[0.6em]">Direct Link Result</p>
                          <div className="p-8 bg-background/50 rounded-[3rem] border-2 border-primary/20 shadow-2xl relative group/res overflow-hidden">
                             <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/res:opacity-100 transition-opacity" />
                             <h2 className="text-2xl sm:text-4xl font-mono font-bold text-foreground break-all leading-tight relative z-10">{shortUrl}</h2>
@@ -227,12 +226,12 @@ export default function UrlShortenerPage() {
               </CardContent>
            </Card>
 
-           <div className="p-6 rounded-[2rem] bg-secondary border border-border flex items-start gap-5">
+           <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5">
               <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
               <div className="space-y-1">
                  <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Protocol Intelligence</p>
                  <p className="text-[11px] text-foreground/40 font-medium leading-relaxed uppercase">
-                    Utilizing the is.gd high-speed API for direct link synthesis. Generated identifiers route the visitor instantly to the destination matrix without intermediate redirects.
+                    Utilizing a multi-node fallback architecture (is.gd, v.gd, TinyURL) for maximum reliability. All generated identifiers route the visitor directly to the destination without intermediate redirects.
                  </p>
               </div>
            </div>
