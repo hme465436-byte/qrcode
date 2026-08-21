@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -450,7 +449,7 @@ export default function FILEHOSTPage() {
             )}
            >
               {activeNode ? <ShieldCheck className="w-3.5 h-3.5 mr-2" /> : <Zap className="w-3.5 h-3.5 mr-2" />}
-              {activeNode ? 'HOST ACTIVE' : 'HOST'}
+              {activeNode ? (activeNode.username ? `@${activeNode.username.toUpperCase()}` : 'HOST ACTIVE') : 'HOST'}
            </Button>
            {(file || result) && user && (
                 <Button variant="outline" size="sm" onClick={() => { setFile(null); setResult(null); setError(null); }} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
@@ -655,9 +654,14 @@ export default function FILEHOSTPage() {
                      <span className="text-[10px] font-black uppercase text-primary tracking-widest">{selectedIds.size} Selected</span>
                      <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="text-[9px] font-black uppercase text-foreground/40 h-8">Clear</Button>
                   </div>
-                  <Button onClick={handleBulkGenerate} className="h-9 px-4 bg-primary text-white text-[9px] font-black uppercase rounded-lg shadow-lg">
-                    Generate Links
-                  </Button>
+                  <div className="flex gap-3">
+                     <Button onClick={handleBulkGenerate} className="h-9 px-4 bg-primary text-white text-[9px] font-black uppercase rounded-lg shadow-lg">
+                        Generate Links
+                     </Button>
+                     <Button onClick={() => setDeleteTarget('all')} variant="outline" className="h-9 px-4 border-destructive/20 text-destructive bg-destructive/5 text-[9px] font-black uppercase rounded-lg">
+                        Purge All
+                     </Button>
+                  </div>
                </div>
              )}
 
@@ -832,10 +836,10 @@ export default function FILEHOSTPage() {
                              )}
                           </div>
                        </div>
-                    </Card>
-                  ))}
-               </div>
-             )}
+                     )}
+                  </Card>
+                ))}
+             </div>
           </div>
         </div>
       )}
@@ -866,7 +870,7 @@ export default function FILEHOSTPage() {
                   saveHistoryToDisk(history.filter(h => h.id !== deleteTarget));
                 }
                 setDeleteTarget(null);
-                toast({ title: "Registry Sanitized" });
+                toast({ title: deleteTarget === 'all' ? "Registry Sanitized" : "Identity Purged" });
               }}
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
