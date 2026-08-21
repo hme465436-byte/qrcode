@@ -3,7 +3,7 @@
 
 /**
  * @fileOverview Server actions for Telegram File Host.
- * Handles secure communication with Telegram Bot API.
+ * Handles secure communication with Telegram Bot API using environment secrets.
  */
 
 export async function uploadToTelegram(formData: FormData) {
@@ -11,8 +11,8 @@ export async function uploadToTelegram(formData: FormData) {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
-    if (!token || !chatId || chatId === 'YOUR_NUMERIC_CHAT_ID') {
-      throw new Error("Studio Node Error: Telegram credentials not configured in environment. Please set TELEGRAM_BOT_TOKEN and a valid numeric TELEGRAM_CHAT_ID.");
+    if (!token || !chatId) {
+      throw new Error("Studio Node Error: Telegram credentials not configured in environment.");
     }
 
     const file = formData.get('document') as File;
@@ -24,9 +24,11 @@ export async function uploadToTelegram(formData: FormData) {
     telegramForm.append('document', file);
     telegramForm.append('caption', `📁 File: ${file.name}\n⚖️ Size: ${(file.size / 1024).toFixed(1)} KB\n🚀 Uploaded via MY KIT TOOL`);
 
+    // Execute the POST handshake with the Telegram Bot API
     const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
       method: 'POST',
       body: telegramForm,
+      cache: 'no-store'
     });
 
     if (!response.ok) {

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -361,7 +362,7 @@ export default function TelegramFileHostPage() {
                       <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight">Archival Registry</h3>
                    </div>
                    {history.length > 0 && (
-                      <button onClick={() => { setHistory([]); localStorage.removeItem(`mykit_tg_history_v1_${user?.uid}`); }} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors">Purge Registry</button>
+                      <button onClick={() => { setHistory([]); localStorage.removeItem(`mykit_tg_history_v1_${user?.uid}`); }} className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors">Purge Registry</button>
                    )}
                 </div>
 
