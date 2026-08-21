@@ -6,7 +6,8 @@
 
 export async function uploadToImgBB(base64Image: string, customKey?: string) {
   try {
-    const apiKey = customKey || '7dd99fb70a655cd8730f8c5bac31178f';
+    // Trim the key to ensure no leading/trailing spaces cause authentication failure
+    const apiKey = (customKey || '7dd99fb70a655cd8730f8c5bac31178f').trim();
     
     if (!base64Image) {
       throw new Error("Missing visual payload.");
@@ -24,18 +25,19 @@ export async function uploadToImgBB(base64Image: string, customKey?: string) {
     const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
       method: 'POST',
       body: formData,
-      cache: 'no-store'
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json',
+      }
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
-      if (response.status === 403 || response.status === 401) {
-        throw new Error("API key not valid or blocked. Create a new key from ImgBB API page.");
-      }
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error?.message || `Node Error: ${response.status}`);
+      // Return the exact error message from ImgBB if available
+      throw new Error(result.error?.message || `Node Error: ${response.status}`);
     }
 
-    const result = await response.json();
     return { success: true, data: result.data };
   } catch (error: any) {
     console.error('ImgBB Upload Error:', error);
@@ -44,30 +46,40 @@ export async function uploadToImgBB(base64Image: string, customKey?: string) {
 }
 
 /**
- * Validates a custom API key by performing a minimal handshake.
+ * Validates a custom API key by performing a real multipart upload handshake.
+ * Executed server-side to bypass CORS and provide exact error telemetry.
  */
 export async function testImgBBKey(key: string) {
+  const trimmedKey = key.trim();
+  if (!trimmedKey) return { success: false, error: "API Key cannot be empty." };
+
   try {
     // Tiny 1x1 transparent PNG pixel base64 for validation
-    const testImage = 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const testImage = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+    
     const formData = new FormData();
     formData.append('image', testImage);
 
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${key}`, {
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${trimmedKey}`, {
       method: 'POST',
       body: formData,
+      headers: {
+        'Accept': 'application/json',
+      }
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      if (response.status === 403 || response.status === 401) {
-        return { success: false, error: "API key not valid or blocked. Create a new key from ImgBB API page." };
-      }
-      const data = await response.json().catch(() => ({}));
-      return { success: false, error: data.error?.message || 'Invalid API Key' };
+      // Provide exact error message from ImgBB API
+      return { 
+        success: false, 
+        error: data.error?.message || `Protocol Error ${response.status}: ${response.statusText}` 
+      };
     }
 
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'Discovery node connection timeout.' };
   }
 }

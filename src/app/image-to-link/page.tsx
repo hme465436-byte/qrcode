@@ -207,6 +207,8 @@ export default function ImageToLinkPage() {
   const handleTestAndConnect = async () => {
     if (!customKey.trim()) return;
     setIsTestingNode(true);
+    setError(null); // Clear previous errors on new attempt
+
     try {
       const res = await testImgBBKey(customKey.trim());
       if (res.success) {
@@ -221,12 +223,12 @@ export default function ImageToLinkPage() {
         setCustomLabel('');
         toast({ title: "Host Node Active", description: `Linked to ${node.label}.` });
       } else {
-        const errorMsg = res.error?.includes('forbidden') || res.error?.includes('blocked') 
-          ? "API key not valid or blocked. Create a new key from ImgBB API page." 
-          : (res.error || "Handshake Failed");
-        toast({ variant: "destructive", title: "Handshake Failed", description: errorMsg });
+        // Display the specific error from ImgBB
+        setError(res.error || "Handshake Failed");
+        toast({ variant: "destructive", title: "Handshake Failed", description: res.error });
       }
     } catch (e) {
+      setError("Protocol Error: Discovery node unreachable.");
       toast({ variant: "destructive", title: "Protocol Error" });
     } finally {
       setIsTestingNode(false);
@@ -276,7 +278,7 @@ export default function ImageToLinkPage() {
            <div className="flex items-center gap-3 shrink-0 pb-2">
               <GetHelp toolId="image-to-link" />
               <Button 
-                onClick={() => { setCustomKey(''); setCustomLabel(''); setShowCustomNode(true); }}
+                onClick={() => { setError(null); setCustomKey(''); setCustomLabel(''); setShowCustomNode(true); }}
                 variant="outline" 
                 size="sm" 
                 className={cn(
@@ -292,7 +294,6 @@ export default function ImageToLinkPage() {
                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
                 </Button>
               )}
-           </div>
         </div>
       </div>
 
