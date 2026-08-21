@@ -43,7 +43,8 @@ import {
   Clock,
   KeyRound,
   Shield,
-  Unplug
+  Unplug,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -431,11 +432,11 @@ export default function FILEHOSTPage() {
                            />
                         </div>
                         <div className="space-y-2">
-                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Chat ID</Label>
+                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">ID</Label>
                            <Input 
                             value={customChatId}
                             onChange={e => setCustomChatId(e.target.value)}
-                            placeholder="Enter your chat id"
+                            placeholder="Enter your id"
                             className="h-11 bg-background border-border text-xs font-mono"
                            />
                         </div>
