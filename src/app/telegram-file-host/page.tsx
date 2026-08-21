@@ -45,8 +45,6 @@ import {
   Shield,
   Unplug,
   AlertTriangle,
-  Music,
-  Waves,
   RefreshCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -68,7 +66,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
-import { uploadToTelegram, getDownloadProtocol, testConnection, convertAndUploadAudioVariant } from './actions';
+import { uploadToTelegram, getDownloadProtocol, testConnection } from './actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -80,7 +78,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// --- Registry & Telemetry Helpers ---
 const formatSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -89,18 +86,12 @@ const formatSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-interface AudioVariant {
-  fileId: string;
-  size: number;
-}
-
 interface FileLinkMatrix {
   fileId: string;
   messageId: number;
   name: string;
   size: number;
   mime: string;
-  variants?: Record<string, AudioVariant>;
 }
 
 interface HistoryItem {
@@ -141,7 +132,6 @@ export default function FILEHOSTPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
-  const [variantProcessing, setVariantProcessing] = useState<Record<string, string>>({}); // historyId -> currentFormat
   
   // UI Meta
   const [isCopied, setIsCopied] = useState<string | null>(null);
@@ -151,10 +141,9 @@ export default function FILEHOSTPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- Persistence Matrix ---
   useEffect(() => {
     if (user) {
-      const saved = localStorage.getItem(`mykit_tg_history_v2_${user.uid}`);
+      const saved = localStorage.getItem(`mykit_host_history_v2_${user.uid}`);
       if (saved) {
         try {
           setHistory(JSON.parse(saved));
@@ -175,10 +164,9 @@ export default function FILEHOSTPage() {
   const saveHistoryToDisk = (next: HistoryItem[]) => {
     if (!user) return;
     setHistory(next);
-    localStorage.setItem(`mykit_tg_history_v2_${user.uid}`, JSON.stringify(next));
+    localStorage.setItem(`mykit_host_history_v2_${user.uid}`, JSON.stringify(next));
   };
 
-  // --- Filtered & Sorted Logic ---
   const processedHistory = useMemo(() => {
     return history
       .filter(item => {
@@ -201,52 +189,6 @@ export default function FILEHOSTPage() {
     };
   }, [history]);
 
-  // --- Audio Synthesis Handlers ---
-  const handleAudioVariants = async (sourceId: string, historyId: string) => {
-    const formats = ['mp3', 'wav', 'ogg', 'm4a', 'flac'];
-    
-    for (const fmt of formats) {
-      setVariantProcessing(prev => ({ ...prev, [historyId]: fmt }));
-      try {
-        const response = await convertAndUploadAudioVariant(
-          sourceId, 
-          fmt, 
-          activeNode?.token, 
-          activeNode?.chatId
-        );
-
-        if (response.success && response.data) {
-          const variant = response.data;
-          setHistory(prev => {
-            const next = prev.map(h => {
-              if (h.id === historyId) {
-                const vars = h.data.variants || {};
-                return { 
-                  ...h, 
-                  data: { 
-                    ...h.data, 
-                    variants: { ...vars, [fmt]: { fileId: variant.fileId, size: variant.size } } 
-                  } 
-                };
-              }
-              return h;
-            });
-            localStorage.setItem(`mykit_tg_history_v2_${user?.uid}`, JSON.stringify(next));
-            return next;
-          });
-        }
-      } catch (e) {
-        console.warn(`Synthesis protocol failed for ${fmt}`, e);
-      }
-    }
-    setVariantProcessing(prev => {
-      const next = { ...prev };
-      delete next[historyId];
-      return next;
-    });
-  };
-
-  // --- Primary Handlers ---
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -297,18 +239,12 @@ export default function FILEHOSTPage() {
         const nextHistory = [newItem, ...history].slice(0, 50);
         saveHistoryToDisk(nextHistory);
         toast({ title: "Uplink Success" });
-
-        // Trigger Audio Synthesis Pipeline in background - DO NOT AWAIT
-        if (file.type.startsWith('audio/')) {
-          handleAudioVariants(response.data.fileId, newItem.id);
-        }
-        
-        setFile(null); // Reset intake
+        setFile(null); 
       } else {
-        throw new Error(response.error || "Uplink restricted.");
+        throw new Error(response.error || "Uplink failed. Please try again.");
       }
     } catch (err: any) {
-      setError(err.message || "Uplink failure.");
+      setError(err.message || "Upload failed. Please try again.");
       toast({ variant: "destructive", title: "Protocol Failure" });
     } finally {
       clearInterval(interval);
@@ -316,21 +252,20 @@ export default function FILEHOSTPage() {
     }
   };
 
-  const handleGenerateLink = async (fileId: string, historyId: string, format?: string) => {
-    const key = format ? `${historyId}-${format}` : historyId;
-    setGeneratingIds(prev => new Set(prev).add(key));
+  const handleGenerateLink = async (fileId: string, historyId: string) => {
+    setGeneratingIds(prev => new Set(prev).add(historyId));
     try {
       const response = await getDownloadProtocol(fileId, activeNode?.token);
       if (response.success && response.url) {
         const fullUrl = window.location.origin + response.url;
-        setGeneratedUrls(prev => ({ ...prev, [key]: fullUrl }));
+        setGeneratedUrls(prev => ({ ...prev, [historyId]: fullUrl }));
       } else {
         throw new Error(response.error || "Uplink Failed");
       }
     } catch (err: any) {
       toast({ variant: "destructive", title: "Link Generation Failed" });
     } finally {
-      setGeneratingIds(prev => { const n = new Set(prev); n.delete(key); return n; });
+      setGeneratingIds(prev => { const n = new Set(prev); n.delete(historyId); return n; });
     }
   };
 
@@ -343,7 +278,7 @@ export default function FILEHOSTPage() {
         const node = { 
           token: customToken.trim(), 
           chatId: customChatId.trim(), 
-          name: res.botName || 'Custom Bot',
+          name: res.botName || 'Custom Node',
           username: res.username
         };
         setActiveNode(node);
@@ -479,7 +414,6 @@ export default function FILEHOSTPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start animate-in fade-in duration-1000">
           
-          {/* LEFT: Intake Section */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
             {showCustomNode && (
                <Card className="glass-card border-primary/40 bg-primary/[0.03] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
@@ -593,6 +527,16 @@ export default function FILEHOSTPage() {
                     Execute Uplink
                   </Button>
                 </div>
+
+                {error && (
+                  <div className="p-6 rounded-[2rem] bg-destructive/5 border border-destructive/20 space-y-3 animate-in shake duration-500">
+                    <div className="flex items-center gap-3 text-destructive">
+                       <AlertTriangle className="w-4 h-4" />
+                       <h4 className="text-[10px] font-black uppercase tracking-widest">Handshake Failed</h4>
+                    </div>
+                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase tracking-tighter">{error}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -615,12 +559,11 @@ export default function FILEHOSTPage() {
             </Card>
           </div>
 
-          {/* RIGHT: Registry Section */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-1">
              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="flex items-center gap-3">
                    <History className="w-5 h-5 text-primary" />
-                   <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight">Archival Registry</h3>
+                   <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60 tracking-tight">Archival Registry</h3>
                 </div>
                 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -711,14 +654,6 @@ export default function FILEHOSTPage() {
                                  <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
                                  <div className="w-1 h-1 rounded-full bg-primary/20" />
                                  <p className="text-[8px] font-bold text-primary uppercase tracking-widest">{formatSize(item.data.size)}</p>
-                                 {variantProcessing[item.id] && (
-                                   <>
-                                      <div className="w-1 h-1 rounded-full bg-primary/20" />
-                                      <div className="flex items-center gap-1.5 text-[8px] font-black text-indigo-400 uppercase animate-pulse">
-                                         <RefreshCcw className="w-2.5 h-2.5 animate-spin" /> Synthesizing {variantProcessing[item.id].toUpperCase()}...
-                                      </div>
-                                   </>
-                                 )}
                               </div>
                            </div>
                         </div>
@@ -748,7 +683,7 @@ export default function FILEHOSTPage() {
                                       <Zap className="w-5 h-5" />
                                    </div>
                                    <div>
-                                      <p className="text-[10px] font-black uppercase text-foreground">Original Matrix</p>
+                                      <p className="text-[10px] font-black uppercase text-foreground">Cloud Node Signal</p>
                                       <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">{formatSize(item.data.size)}</p>
                                    </div>
                                 </div>
@@ -773,59 +708,6 @@ export default function FILEHOSTPage() {
                                    )}
                                 </div>
                              </div>
-
-                             {item.data.mime.includes('audio') && (
-                               <div className="space-y-4">
-                                  <div className="flex items-center gap-3 px-1">
-                                     <Waves className="w-4 h-4 text-indigo-400" />
-                                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Multi-Format Matrix</h4>
-                                  </div>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                     {['mp3', 'wav', 'ogg', 'm4a', 'flac'].map(fmt => {
-                                       const variant = item.data.variants?.[fmt];
-                                       const gKey = `${item.id}-${fmt}`;
-                                       if (!variant && !variantProcessing[item.id]) return null;
-
-                                       return (
-                                         <div key={fmt} className="p-5 rounded-3xl bg-black/40 border border-white/5 flex items-center justify-between gap-4">
-                                            <div className="flex items-center gap-3">
-                                               <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground/30 font-black text-[8px] uppercase">
-                                                  {fmt}
-                                               </div>
-                                               <div>
-                                                  <p className="text-[9px] font-black text-foreground/60 uppercase">{fmt.toUpperCase()} Variant</p>
-                                                  <p className="text-[7px] font-bold text-foreground/20 uppercase">{variant ? formatSize(variant.size) : 'Processing...'}</p>
-                                               </div>
-                                            </div>
-                                            
-                                            {variant && (
-                                              <div className="flex gap-2">
-                                                 {!generatedUrls[gKey] ? (
-                                                   <button 
-                                                    onClick={(e) => { e.stopPropagation(); handleGenerateLink(variant.fileId, item.id, fmt); }}
-                                                    disabled={generatingIds.has(gKey)}
-                                                    className="p-2 rounded-lg bg-white/5 text-primary hover:bg-primary/10"
-                                                   >
-                                                      {generatingIds.has(gKey) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LinkIcon className="w-3.5 h-3.5" />}
-                                                   </button>
-                                                 ) : (
-                                                   <>
-                                                      <button onClick={() => handleCopyText(generatedUrls[gKey], gKey)} className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
-                                                         {isCopied === gKey ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                                      </button>
-                                                      <Button asChild variant="ghost" size="icon" className="h-8 w-8 bg-white/5 text-white">
-                                                         <a href={generatedUrls[gKey]} target="_blank"><Download className="w-3.5 h-3.5" /></a>
-                                                      </Button>
-                                                   </>
-                                                 )}
-                                              </div>
-                                            )}
-                                         </div>
-                                       );
-                                     })}
-                                  </div>
-                               </div>
-                             )}
 
                              {generatedUrls[item.id] && (
                                <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 flex items-center justify-center gap-3">

@@ -2,19 +2,8 @@
 
 /**
  * @fileOverview Server actions for File Host.
- * handles secure communication with Bot API using environment secrets or user-provided tokens.
- * Integrated with FFmpeg for multi-format audio synthesis.
+ * Handles secure communication with cloud nodes using environment secrets or user-provided tokens.
  */
-
-import ffmpeg from 'fluent-ffmpeg';
-import ffmpegStatic from 'ffmpeg-static';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-
-if (ffmpegStatic) {
-  ffmpeg.setFfmpegPath(ffmpegStatic);
-}
 
 export async function uploadToTelegram(formData: FormData, customToken?: string, customChatId?: string) {
   try {
@@ -45,102 +34,38 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
     }
 
     const result = await response.json();
-    const doc = result.result.document;
+    const message = result.result;
+
+    if (!message) {
+      throw new Error("Uplink failed. Please try again.");
+    }
+
+    // Safe extraction from various classification nodes (document, audio, video, etc)
+    const fileData = message.document || 
+                     message.audio || 
+                     message.video || 
+                     message.voice || 
+                     message.animation || 
+                     (message.photo ? message.photo[message.photo.length - 1] : null);
+
+    if (!fileData || !fileData.file_id) {
+      throw new Error("Upload failed. Identity token not identified.");
+    }
 
     return { 
       success: true, 
       data: {
-        fileId: doc.file_id,
-        fileUniqueId: doc.file_unique_id,
-        messageId: result.result.message_id,
-        name: doc.file_name,
-        size: doc.file_size,
-        mime: doc.mime_type
+        fileId: fileData.file_id,
+        fileUniqueId: fileData.file_unique_id,
+        messageId: message.message_id,
+        name: fileData.file_name || file.name || 'unnamed_asset',
+        size: fileData.file_size || file.size,
+        mime: fileData.mime_type || file.type || 'application/octet-stream'
       }
     };
   } catch (error: any) {
     console.error('Uplink Error:', error);
-    return { success: false, error: error.message || 'Uplink failure.' };
-  }
-}
-
-/**
- * Advanced Audio Synthesis Action.
- * Downloads the source from Telegram, converts to target format, and re-uploads.
- */
-export async function convertAndUploadAudioVariant(
-  sourceFileId: string,
-  targetFormat: string,
-  customToken?: string,
-  customChatId?: string
-) {
-  const tmpIn = path.join(os.tmpdir(), `in_${sourceFileId}`);
-  const tmpOut = path.join(os.tmpdir(), `out_${sourceFileId}.${targetFormat}`);
-
-  try {
-    const token = customToken || process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = customChatId || process.env.TELEGRAM_CHAT_ID;
-
-    if (!token || !chatId) throw new Error("Credentials restricted.");
-
-    // 1. Resolve source path
-    const getFileRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${sourceFileId}`);
-    const getFileData = await getFileRes.json();
-    if (!getFileData.ok) throw new Error("Source identity unreachable.");
-    const filePath = getFileData.result.file_path;
-
-    // 2. Fetch bitstream
-    const fileRes = await fetch(`https://api.telegram.org/file/bot${token}/${filePath}`);
-    const buffer = Buffer.from(await fileRes.arrayBuffer());
-
-    fs.writeFileSync(tmpIn, buffer);
-
-    // 3. Spawning FFmpeg Synthesis
-    await new Promise((resolve, reject) => {
-      ffmpeg(tmpIn)
-        .toFormat(targetFormat)
-        .on('end', resolve)
-        .on('error', (err) => {
-          console.error(`FFmpeg Error [${targetFormat}]:`, err);
-          reject(err);
-        })
-        .save(tmpOut);
-    });
-
-    // 4. Re-uploading synthesized variant
-    const stats = fs.statSync(tmpOut);
-    const telegramForm = new FormData();
-    telegramForm.append('chat_id', chatId);
-    
-    const outBuffer = fs.readFileSync(tmpOut);
-    const blob = new Blob([outBuffer], { type: `audio/${targetFormat}` });
-    telegramForm.append('document', blob, `master_synthesis.${targetFormat}`);
-    telegramForm.append('caption', `💠 Format Matrix: ${targetFormat.toUpperCase()}\n⚖️ Volume: ${(stats.size/1024).toFixed(1)} KB`);
-
-    const uploadRes = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
-      method: 'POST',
-      body: telegramForm,
-    });
-
-    const uploadData = await uploadRes.json();
-    if (!uploadData.ok) throw new Error(uploadData.description || "Variant upload failed");
-
-    const doc = uploadData.result.document;
-    return {
-      success: true,
-      data: {
-        fileId: doc.file_id,
-        size: doc.file_size,
-        format: targetFormat
-      }
-    };
-  } catch (error: any) {
-    console.error('Synthesis Action Failed:', error);
-    return { success: false, error: error.message };
-  } finally {
-    // Immediate Hardware Buffer Purge
-    try { if (fs.existsSync(tmpIn)) fs.unlinkSync(tmpIn); } catch(e) {}
-    try { if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut); } catch(e) {}
+    return { success: false, error: error.message || 'Upload failed. Please try again.' };
   }
 }
 
@@ -176,7 +101,6 @@ export async function testConnection(token: string, chatId: string) {
       throw new Error("Invalid Token");
     }
 
-    // Attempt to verify Chat ID by sending a dummy message (silent)
     const testMsg = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -189,7 +113,7 @@ export async function testConnection(token: string, chatId: string) {
     
     const msgData = await testMsg.json();
     if (!msgData.ok) {
-      throw new Error("Invalid Chat ID or restricted bot access.");
+      throw new Error("Invalid ID or restricted node access.");
     }
 
     return { 
