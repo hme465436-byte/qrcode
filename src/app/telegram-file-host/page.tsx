@@ -121,6 +121,7 @@ export default function FILEHOSTPage() {
   const [customChatId, setCustomChatId] = useState('');
   const [isTestingNode, setIsTestingNode] = useState(false);
   const [activeNode, setActiveNode] = useState<{ token: string, chatId: string, name: string } | null>(null);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
   // Registry Management State
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -405,7 +406,7 @@ export default function FILEHOSTPage() {
            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">Synchronizing Identity Node...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start animate-in fade-in duration-1000">
           
           {/* LEFT: Intake Section */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
@@ -451,7 +452,11 @@ export default function FILEHOSTPage() {
                            Test & Connect Node
                         </Button>
                         {activeNode && (
-                          <Button variant="outline" onClick={disconnectNode} className="h-10 text-[9px] font-black uppercase border-destructive/20 text-destructive bg-destructive/5">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setShowDisconnectConfirm(true)} 
+                            className="h-10 text-[9px] font-black uppercase border-destructive/20 text-destructive bg-destructive/5"
+                          >
                              <Unplug className="w-3.5 h-3.5 mr-2" /> Disconnect Node
                           </Button>
                         )}
@@ -783,6 +788,7 @@ export default function FILEHOSTPage() {
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
@@ -818,6 +824,35 @@ export default function FILEHOSTPage() {
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
               Confirm Purge
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Disconnect Host Confirmation Dialog */}
+      <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <Unplug className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               Disconnect Host
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+              Are you sure you want to disconnect your host?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                disconnectNode();
+                setShowDisconnectConfirm(false);
+              }}
+              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+            >
+              Disconnect
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
