@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -55,6 +54,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -116,7 +122,6 @@ export default function TelegramFileHostPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
   const [generatedUrls, setGeneratedUrls] = useState<Record<string, string>>({});
-  const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -185,7 +190,6 @@ export default function TelegramFileHostPage() {
     setUploadProgress(0);
     setError(null);
 
-    // Simulated progress for better UX on small files
     const interval = setInterval(() => {
       setUploadProgress(prev => (prev < 90 ? prev + 5 : prev));
     }, 150);
@@ -231,7 +235,6 @@ export default function TelegramFileHostPage() {
         throw new Error(response.error || "Uplink Failed");
       }
     } catch (err: any) {
-      setLinkErrors(prev => ({ ...prev, [historyId]: err.message }));
       toast({ variant: "destructive", title: "Link Generation Failed" });
     } finally {
       setGeneratingIds(prev => { const n = new Set(prev); n.delete(historyId); return n; });
@@ -240,7 +243,7 @@ export default function TelegramFileHostPage() {
 
   const handleBulkGenerate = async () => {
     if (selectedIds.size === 0) return;
-    toast({ title: "Batch Processing Initiated" });
+    toast({ title: "Batch Processing" });
     for (const id of selectedIds) {
       const item = history.find(h => h.id === id);
       if (item && !generatedUrls[id]) {
@@ -280,19 +283,13 @@ export default function TelegramFileHostPage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
-  const handleShare = (url: string, platform: 'wa' | 'tg') => {
-    const text = `Shared via MY KIT TOOL: ${url}`;
-    const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent('Archived File')}`;
-    window.open(platform === 'wa' ? waUrl : tgUrl, '_blank');
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  const getFileIcon = (mime: string) => {
+    if (mime.includes('image')) return <FileImage className="w-5 h-5 text-emerald-500" />;
+    if (mime.includes('audio')) return <FileAudio className="w-5 h-5 text-amber-500" />;
+    if (mime.includes('video')) return <FileVideo className="w-5 h-5 text-rose-500" />;
+    if (mime.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
+    if (mime.includes('zip') || mime.includes('archive')) return <FileArchive className="w-5 h-5 text-indigo-500" />;
+    return <FileText className="w-5 h-5 text-primary/40" />;
   };
 
   return (
@@ -306,14 +303,14 @@ export default function TelegramFileHostPage() {
             Telegram <span className="text-primary italic">File Host</span>
           </h1>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="telegram-file-host" />
         </div>
       </div>
 
       {!user && !authLoading ? (
         <Card className="glass-card border-border shadow-2xl p-12 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
-          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary shadow-2xl relative z-10">
+          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl relative z-10">
              <Lock className="w-8 h-8" />
           </div>
           <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight relative z-10">Authentication Required</h2>
@@ -324,13 +321,15 @@ export default function TelegramFileHostPage() {
       ) : authLoading ? (
         <div className="flex flex-col items-center justify-center py-40 gap-6">
            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">Synchronizing Identity Node...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* LEFT: Intake Section */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-            <Card className="glass-card border-border shadow-2xl overflow-hidden relative">
+            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
                    <FileUp className="w-5 h-5 text-primary" /> Inbound Matrix
@@ -340,7 +339,7 @@ export default function TelegramFileHostPage() {
                 <div 
                   onClick={() => !isProcessing && fileInputRef.current?.click()}
                   className={cn(
-                    "relative h-64 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer",
+                    "relative h-64 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer group/upload",
                     file && "border-solid border-primary/20 bg-background/50",
                     isProcessing && "opacity-50 cursor-not-allowed"
                   )}
@@ -379,7 +378,7 @@ export default function TelegramFileHostPage() {
                   <Button 
                     onClick={executeUpload} 
                     disabled={isProcessing || !file}
-                    className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30"
+                    className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95"
                   >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
                     Execute Uplink
@@ -395,7 +394,6 @@ export default function TelegramFileHostPage() {
               </CardContent>
             </Card>
 
-            {/* Storage Stats */}
             <Card className="glass-card border-border shadow-xl">
                <CardHeader className="py-4 border-b border-white/5 bg-secondary/30">
                   <CardTitle className="text-[9px] font-black uppercase text-foreground/40 tracking-[0.2em] flex items-center gap-3">
@@ -415,10 +413,10 @@ export default function TelegramFileHostPage() {
             </Card>
 
             <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group hover:bg-secondary/80 transition-all">
-                <ShieldCheck className="w-5 h-5 text-primary/40 group-hover:text-primary" />
+                <ShieldCheck className="w-5 h-5 text-primary/40 group-hover:text-primary mt-0.5 shrink-0" />
                 <div className="space-y-1">
-                   <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">WASM Buffer Protection</h4>
-                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Binary data is transmitted via secure server-side handshakes to keep bot credentials strictly private.</p>
+                   <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Distributed Hosting</h4>
+                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Files are stored across Telegram's global data matrix, ensuring high availability and permanent archival.</p>
                 </div>
             </div>
           </div>
@@ -445,14 +443,15 @@ export default function TelegramFileHostPage() {
                    </div>
                    <Select value={filterType} onValueChange={(v: any) => setFilterType(v)}>
                       <SelectTrigger className="h-10 w-32 bg-secondary/50 border-border rounded-xl text-[9px] font-black uppercase">
-                        <SelectValue />
+                        <SelectValue placeholder="Filter" />
                       </SelectTrigger>
                       <SelectContent className="glass-card">
-                         <SelectItem value="all">All Types</SelectItem>
-                         <SelectItem value="image">Images</SelectItem>
-                         <SelectItem value="audio">Audio</SelectItem>
-                         <SelectItem value="pdf">PDF Docs</SelectItem>
-                         <SelectItem value="zip">ZIP Files</SelectItem>
+                         <SelectItem value="all" className="text-[9px] font-black uppercase">All Types</SelectItem>
+                         <SelectItem value="image" className="text-[9px] font-black uppercase">Images</SelectItem>
+                         <SelectItem value="audio" className="text-[9px] font-black uppercase">Audio</SelectItem>
+                         <SelectItem value="video" className="text-[9px] font-black uppercase">Video</SelectItem>
+                         <SelectItem value="pdf" className="text-[9px] font-black uppercase">PDF Docs</SelectItem>
+                         <SelectItem value="zip" className="text-[9px] font-black uppercase">ZIP Files</SelectItem>
                       </SelectContent>
                    </Select>
                 </div>
@@ -639,7 +638,6 @@ export default function TelegramFileHostPage() {
         </div>
       )}
       
-      {/* Confirmation Dialog Matrix */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
@@ -661,15 +659,16 @@ export default function TelegramFileHostPage() {
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => {
-                if (deleteTarget === 'batch') {
-                  const next = history.filter(h => !selectedIds.has(h.id));
-                  saveHistoryToDisk(next);
+                if (deleteTarget === 'all') {
+                  saveHistoryToDisk([]);
+                } else if (deleteTarget === 'batch') {
+                  saveHistoryToDisk(history.filter(h => !selectedIds.has(h.id)));
                   setSelectedIds(new Set());
-                  setDeleteTarget(null);
-                  toast({ title: "Batch Purge Complete" });
                 } else {
-                  handleConfirmDelete();
+                  saveHistoryToDisk(history.filter(h => h.id !== deleteTarget));
                 }
+                setDeleteTarget(null);
+                toast({ title: "Registry Sanitized" });
               }}
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
@@ -685,20 +684,7 @@ export default function TelegramFileHostPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .animate-spin-slow { animation: spin 3s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
-
-  function handleConfirmDelete() {
-    if (!user || !deleteTarget) return;
-    if (deleteTarget === 'all') {
-      saveHistoryToDisk([]);
-    } else {
-      saveHistoryToDisk(history.filter(h => h.id !== deleteTarget));
-    }
-    setDeleteTarget(null);
-    toast({ title: "Registry Sanitized" });
-  }
 }
