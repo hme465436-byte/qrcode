@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -29,7 +30,11 @@ import {
   Maximize2,
   X,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  FileUp,
+  ClipboardCheck,
+  Eye,
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -133,7 +138,6 @@ export default function ImageToLinkPage() {
     setLinks(null);
 
     try {
-      // Direct Client-Side Protocol to bypass Server Action 1MB limits
       const apiKey = '7dd99fb70a655cd8730f8c5bac31178f';
       const parts = image.split(',');
       if (parts.length < 2) throw new Error("Malformed binary matrix.");
@@ -200,23 +204,24 @@ export default function ImageToLinkPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
-      <div className="mb-12 animate-reveal">
+      {/* Header Matrix */}
+      <div className="mb-16 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Globe className="w-3.5 h-3.5" /> Web Suite Pro
+          <Globe className="w-3.5 h-3.5" /> Web Hosting Suite
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
            <div>
-              <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+              <h1 className="text-4xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-none">
                 Image to <span className="text-primary italic">Link Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional-grade visual hosting. Upload imagery to the global ImgBB node and synthesize a complete multi-format shareable link matrix instantly.
+                The standard for anonymous professional hosting. Transform high-resolution imagery into permanent linguistic sharing protocols with a single hardware handshake.
               </p>
            </div>
-           <div className="flex items-center gap-3">
+           <div className="flex items-center gap-3 shrink-0">
               <GetHelp toolId="image-to-link" />
               {(image || links) && user && (
-                <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
                 </Button>
               )}
@@ -226,23 +231,23 @@ export default function ImageToLinkPage() {
 
       {!user && !authLoading ? (
         <div className="grid grid-cols-1 gap-8 animate-in fade-in zoom-in duration-500">
-           <Card className="glass-card border-border shadow-2xl p-12 sm:p-20 text-center flex flex-col items-center gap-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-              <div className="w-24 h-24 rounded-[2.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/20 relative z-10">
-                 <Lock className="w-10 h-10" />
+           <Card className="glass-card border-border shadow-2xl p-12 sm:p-24 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+              <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/10 relative z-10">
+                 <Lock className="w-8 h-8" />
               </div>
-              <div className="space-y-3 relative z-10">
-                 <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Login Required</h2>
-                 <p className="text-[10px] sm:text-xs text-foreground/40 font-black uppercase tracking-[0.4em] leading-relaxed">
-                    You must be logged in to use the high-fidelity upload matrix.
+              <div className="space-y-4 relative z-10">
+                 <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Identity Authentication Required</h2>
+                 <p className="text-[10px] sm:text-xs text-foreground/30 font-black uppercase tracking-[0.4em] leading-relaxed max-w-md mx-auto">
+                    To maintain protocol integrity and ensure high-bandwidth uplinks, you must be logged into the professional studio.
                  </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md relative z-10">
                 <Button asChild className="h-16 flex-1 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                   <Link href="/login?redirect=/image-to-link">Sign In to Studio</Link>
+                   <Link href="/login?redirect=/image-to-link">Initialize Session</Link>
                 </Button>
                 <Button asChild variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
-                   <Link href="/">Back to Tools</Link>
+                   <Link href="/">Explore Suite</Link>
                 </Button>
               </div>
            </Card>
@@ -250,17 +255,17 @@ export default function ImageToLinkPage() {
       ) : authLoading ? (
         <div className="flex flex-col items-center justify-center py-40 gap-6">
            <Loader2 className="w-12 h-12 text-primary animate-spin" />
-           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">Authenticating Protocol...</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">Synchronizing Identity Node...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start animate-in fade-in duration-700">
-          {/* Left Column: Intake */}
-          <div className="lg:col-span-5 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start animate-in fade-in duration-1000">
+          {/* Left Column: Intake & Configuration */}
+          <div className="lg:col-span-5 xl:col-span-4 space-y-8">
             <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                   <Upload className="w-5 h-5 text-primary" /> Inbound Matrix
+                   <FileUp className="w-5 h-5 text-primary" /> Inbound Matrix
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-10 space-y-8">
@@ -270,25 +275,25 @@ export default function ImageToLinkPage() {
                   onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files[0]) handleFileUpload({ target: { files: e.dataTransfer.files } } as any); }}
                   className={cn(
                     "relative h-64 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer group/upload",
-                    image && "border-solid border-primary/20",
+                    image && "border-solid border-primary/20 bg-background/50",
                     isProcessing && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   {image ? (
                     <div className="w-full h-full p-4 flex items-center justify-center relative">
-                      <img src={image} alt="Preview" className="max-w-full max-h-full object-contain rounded-xl shadow-2xl group-hover/upload:opacity-40 transition-opacity" />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/upload:opacity-100 transition-opacity bg-black/20 backdrop-blur-sm">
-                         <RefreshCcw className="w-8 h-8 text-white" />
+                      <img src={image} alt="Preview" className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl group-hover/upload:opacity-40 transition-opacity" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/upload:opacity-100 transition-opacity bg-black/40 backdrop-blur-sm rounded-2xl">
+                         <RefreshCcw className="w-10 h-10 text-white animate-spin-slow" />
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center space-y-4">
-                      <div className="w-16 h-16 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary group-hover/upload:scale-110 transition-all mx-auto shadow-xl">
+                    <div className="text-center space-y-6 p-8">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary group-hover/upload:scale-110 transition-all mx-auto shadow-xl">
                         <ImageIcon className="w-8 h-8" />
                       </div>
-                      <div className="space-y-1">
-                         <span className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover/upload:text-primary transition-colors">Select Visual Payload</span>
-                         <p className="text-[8px] text-foreground/20 font-bold uppercase">JPG, PNG, GIF, WebP (Max 10MB)</p>
+                      <div className="space-y-2">
+                         <span className="text-xs font-black uppercase text-foreground/40 tracking-[0.2em] group-hover/upload:text-primary transition-colors">Select Visual Payload</span>
+                         <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">JPEG, PNG, GIF, WebP (Max 10MB)</p>
                       </div>
                     </div>
                   )}
@@ -298,14 +303,14 @@ export default function ImageToLinkPage() {
                 <Button 
                   onClick={executeUpload} 
                   disabled={isProcessing || !image}
-                  className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                  className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                 >
-                  {isProcessing ? <Loader2 className="w-6 h-6 animate-spin mr-3" /> : <Zap className="w-6 h-6 mr-3" />}
-                  Execute Uplink
+                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
+                  Execute Transmission
                 </Button>
 
                 {error && (
-                  <div className="p-6 rounded-2xl bg-destructive/5 border border-destructive/20 space-y-3 animate-in shake duration-500">
+                  <div className="p-6 rounded-[2rem] bg-destructive/5 border border-destructive/20 space-y-3 animate-in shake duration-500">
                     <div className="flex items-center gap-3 text-destructive">
                        <AlertTriangle className="w-4 h-4" />
                        <h4 className="text-[10px] font-black uppercase tracking-widest">Handshake Failed</h4>
@@ -316,181 +321,207 @@ export default function ImageToLinkPage() {
               </CardContent>
             </Card>
 
-            <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-7 h-7" />
+            <div className="grid grid-cols-1 gap-6">
+                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                    <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                       <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Security Matrix</h4>
+                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
+                        1:1 binary preservation ensures your visual assets retain original resolution and metadata during the cloud sync.
+                      </p>
+                    </div>
                 </div>
-                <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">High Fidelity</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    10MB limit enabled. Direct client-side transmission bypasses standard server action restrictions for peak performance.
-                  </p>
+                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                    <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                       <Maximize2 className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Zero Storage</h4>
+                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
+                        All local history is volatile and held strictly in hardware memory. Your private archive is never logged to our servers.
+                      </p>
+                    </div>
                 </div>
-             </div>
+            </div>
           </div>
 
-          {/* Right Column: Output & History */}
-          <div className="lg:col-span-7 space-y-8 stagger-2">
-             {/* Immediate Results Card */}
+          {/* Right Column: Output & Archive */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-10">
+             
+             {/* Current Results Section */}
              {links && (
                <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl overflow-hidden relative flex flex-col animate-in zoom-in-95 duration-500">
                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
-                  <CardHeader className="py-6 border-b border-emerald-500/10 bg-emerald-500/5 flex flex-row items-center justify-between shrink-0">
+                  <CardHeader className="py-6 border-b border-emerald-500/10 bg-emerald-500/5 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
                      <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-inner">
                            <CheckCircle2 className="w-5 h-5" />
                         </div>
-                        <CardTitle className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.5em]">Active Result Matrix</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.5em]">Active Master Result</CardTitle>
                      </div>
                      <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
                         Uplink Verified
                      </Badge>
                   </CardHeader>
-                  <CardContent className="p-8 sm:p-12 space-y-8">
-                      <div className="space-y-6">
-                        {[
-                          { label: 'Direct Link', val: links.direct, icon: LinkIcon },
-                          { label: 'View Page', val: links.view, icon: ExternalLink },
-                          { label: 'Markdown Code', val: links.markdown, icon: FileCode },
-                          { label: 'HTML Snippet', val: links.html, icon: Code2 },
-                          { label: 'BBCode Format', val: links.bbcode, icon: MessageSquare }
-                        ].map((item) => (
-                          <div key={item.label} className="space-y-2 group/row">
-                             <div className="flex items-center justify-between px-1">
-                                <Label className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em]">{item.label}</Label>
-                                {item.label === 'Direct Link' && (
-                                  <button onClick={() => window.open(item.val, '_blank')} className="text-[8px] font-black text-primary uppercase hover:underline">Verify Signal</button>
-                                )}
-                             </div>
-                             <div className="flex gap-2">
-                                <div className="flex-1 h-14 bg-secondary border border-border rounded-2xl flex items-center px-6 font-mono text-[11px] font-bold text-foreground overflow-hidden shadow-inner group-hover/row:border-primary/20 transition-colors">
-                                   <span className="truncate">{item.val}</span>
-                                </div>
-                                <Button 
-                                  onClick={() => handleCopy(item.val, item.label)}
-                                  variant="outline"
-                                  className={cn(
-                                    "h-14 w-14 rounded-2xl bg-secondary border-border shrink-0 transition-all",
-                                    isCopied === item.label && "bg-primary text-white border-primary shadow-lg"
-                                  )}
-                                >
-                                   {isCopied === item.label ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                                </Button>
-                             </div>
+                  <CardContent className="p-8 sm:p-12">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+                        {/* Preview Sub-card */}
+                        <div className="space-y-6">
+                           <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] ml-1">Visual Master Preview</Label>
+                           <div className="aspect-square w-full rounded-[2.5rem] bg-white dark:bg-black/40 border border-emerald-500/10 shadow-2xl p-4 flex items-center justify-center relative group/preview">
+                              <img src={image!} alt="Final" className="max-w-full max-h-full object-contain rounded-xl" />
+                              <div className="absolute bottom-6 right-6">
+                                 <Button asChild size="icon" className="h-10 w-10 rounded-xl bg-emerald-500 shadow-xl shadow-emerald-500/20">
+                                    <a href={links.direct} target="_blank"><ExternalLink className="w-5 h-5" /></a>
+                                 </Button>
+                              </div>
+                           </div>
+                        </div>
+
+                        {/* Codes Matrix */}
+                        <div className="space-y-6">
+                          <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] ml-1">Protocol Matrix</Label>
+                          <div className="space-y-4">
+                            {[
+                              { label: 'Direct Link', val: links.direct, icon: LinkIcon },
+                              { label: 'Markdown', val: links.markdown, icon: FileCode },
+                              { label: 'HTML', val: links.html, icon: Code2 },
+                              { label: 'BBCode', val: links.bbcode, icon: MessageSquare }
+                            ].map((item) => (
+                              <div key={item.label} className="space-y-2 group/row">
+                                 <div className="flex items-center justify-between px-1">
+                                    <div className="flex items-center gap-2">
+                                       <item.icon className="w-3 h-3 text-emerald-600/40" />
+                                       <span className="text-[9px] font-black uppercase text-foreground/50 tracking-widest">{item.label}</span>
+                                    </div>
+                                    <button 
+                                      onClick={() => handleCopy(item.val, item.label)}
+                                      className={cn(
+                                        "text-[8px] font-black uppercase transition-all",
+                                        isCopied === item.label ? "text-emerald-500" : "text-primary/60 hover:text-primary"
+                                      )}
+                                    >
+                                       {isCopied === item.label ? 'Identity Isolated' : 'Copy Snippet'}
+                                    </button>
+                                 </div>
+                                 <div className="h-11 bg-white/40 dark:bg-black/40 border border-emerald-500/5 rounded-xl flex items-center px-4 font-mono text-[10px] font-bold text-foreground/80 overflow-hidden shadow-inner group-hover/row:border-emerald-500/20 transition-colors">
+                                    <span className="truncate">{item.val}</span>
+                                 </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
                       </div>
                   </CardContent>
                </Card>
              )}
 
-             {/* Archives Header */}
-             <div className="flex items-center justify-between px-2 pt-4">
-                <div className="flex items-center gap-3">
-                   <History className="w-4 h-4 text-primary" />
-                   <h3 className="text-xl font-headline font-black text-foreground/60 uppercase tracking-tight">Identity Archive</h3>
+             {/* Archives Section */}
+             <div className="space-y-6 pt-4">
+                <div className="flex items-center justify-between px-2">
+                   <div className="flex items-center gap-3">
+                      <History className="w-4 h-4 text-primary" />
+                      <h3 className="text-xl font-headline font-black text-foreground/60 uppercase tracking-tight">Identity Archive</h3>
+                   </div>
+                   {history.length > 0 && (
+                      <button 
+                        onClick={() => { setHistory([]); localStorage.removeItem(`mykit_img_history_v3_${user?.uid}`); }} 
+                        className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors"
+                      >
+                        Purge Registry
+                      </button>
+                   )}
                 </div>
-                {history.length > 0 && (
-                   <button 
-                    onClick={() => { setHistory([]); localStorage.removeItem(`mykit_img_history_v3_${user?.uid}`); }} 
-                    className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors"
-                  >
-                    Purge All
-                  </button>
-                )}
-             </div>
 
-             {/* History Registry */}
-             <div className="space-y-4">
                 {history.length === 0 ? (
-                  <Card className="glass-card border-border shadow-inner p-20 text-center flex flex-col items-center gap-4 opacity-10">
+                  <div className="p-20 text-center flex flex-col items-center gap-6 opacity-10 grayscale border-2 border-dashed border-white/5 rounded-[3rem]">
                      <Activity className="w-12 h-12 text-primary" />
-                     <p className="text-[10px] font-black uppercase tracking-widest">Awaiting Signal Detection</p>
-                  </Card>
+                     <p className="text-[11px] font-black uppercase tracking-[0.4em]">Awaiting Discovery Signal</p>
+                  </div>
                 ) : (
-                  history.map((item) => (
-                    <Card key={item.id} className="glass-card border-border shadow-xl overflow-hidden group/row animate-in slide-in-from-bottom-2">
-                       <div 
-                        onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                        className="p-6 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
-                       >
-                          <div className="flex items-center gap-6 min-w-0">
-                             <div className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
-                                <img src={item.thumb} alt="" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity">
-                                   <Maximize2 className="w-4 h-4 text-white/60" />
+                  <div className="grid grid-cols-1 gap-4">
+                     {history.map((item) => (
+                       <Card key={item.id} className="glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300">
+                          <div 
+                            onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                            className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
+                          >
+                             <div className="flex items-center gap-5 min-w-0">
+                                <div className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative group/thumb">
+                                   <img src={item.thumb} alt="" className="w-full h-full object-cover group-hover/row:scale-105 transition-transform" />
+                                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity">
+                                      <Eye className="w-4 h-4 text-white/60" />
+                                   </div>
+                                </div>
+                                <div className="min-w-0">
+                                   <p className="text-xs font-black text-foreground truncate uppercase tracking-tight">{item.name}</p>
+                                   <div className="flex items-center gap-3 mt-1">
+                                      <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
+                                      <div className="w-1 h-1 rounded-full bg-primary/20" />
+                                      <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Node Verified</p>
+                                   </div>
                                 </div>
                              </div>
-                             <div className="min-w-0">
-                                <p className="text-xs font-black text-foreground truncate uppercase">{item.name}</p>
-                                <div className="flex items-center gap-3 mt-1">
-                                   <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
-                                   <span className="text-white/5 text-[8px]">•</span>
-                                   <p className="text-[9px] font-bold text-primary uppercase">Matrix ID: {item.id}</p>
+                             <div className="flex items-center gap-4 shrink-0">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); removeFromHistory(item.id); }} 
+                                  className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/10 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                >
+                                   <Trash2 className="w-4 h-4" />
+                                </button>
+                                <div className={cn(
+                                  "w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 group-hover/row:text-primary transition-all border border-transparent",
+                                  expandedId === item.id && "bg-primary text-primary-foreground"
+                                )}>
+                                   {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                 </div>
                              </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                             <button onClick={(e) => { e.stopPropagation(); removeFromHistory(item.id); }} className="p-2 text-foreground/10 hover:text-red-500 transition-colors">
-                                <Trash2 className="w-4 h-4" />
-                             </button>
-                             <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground/20 group-hover/row:text-primary transition-all">
-                                {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                             </div>
-                          </div>
-                       </div>
 
-                       {expandedId === item.id && (
-                         <div className="p-6 pt-0 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-300">
-                            <div className="grid grid-cols-1 gap-6 pt-6">
-                               {[
-                                 { label: 'Direct', val: item.links.direct, icon: LinkIcon },
-                                 { label: 'View', val: item.links.view, icon: ExternalLink },
-                                 { label: 'Markdown', val: item.links.markdown, icon: FileCode },
-                                 { label: 'HTML', val: item.links.html, icon: Code2 },
-                                 { label: 'BBCode', val: item.links.bbcode, icon: MessageSquare }
-                               ].map((sub) => (
-                                 <div key={sub.label} className="space-y-2 group/sub">
-                                    <div className="flex items-center justify-between px-1">
-                                       <div className="flex items-center gap-2">
-                                          <sub.icon className="w-3 h-3 text-primary/40" />
-                                          <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">{sub.label} Protocol</span>
+                          {expandedId === item.id && (
+                            <div className="px-5 pb-8 pt-2 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-500">
+                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6">
+                                  {[
+                                    { label: 'Direct', val: item.links.direct, icon: LinkIcon },
+                                    { label: 'Markdown', val: item.links.markdown, icon: FileCode },
+                                    { label: 'HTML', val: item.links.html, icon: Code2 },
+                                    { label: 'BBCode', val: item.links.bbcode, icon: MessageSquare }
+                                  ].map((sub) => (
+                                    <div key={sub.label} className="space-y-2 group/sub">
+                                       <div className="flex items-center justify-between px-1">
+                                          <div className="flex items-center gap-2">
+                                             <sub.icon className="w-3 h-3 text-primary/30" />
+                                             <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">{sub.label} Protocol</span>
+                                          </div>
+                                          <button 
+                                           onClick={() => handleCopy(sub.val, `hist-${item.id}-${sub.label}`)}
+                                           className={cn(
+                                             "text-[8px] font-black uppercase transition-all",
+                                             isCopied === `hist-${item.id}-${sub.label}` ? "text-emerald-500" : "text-primary/60 hover:text-primary"
+                                           )}
+                                          >
+                                             {isCopied === `hist-${item.id}-${sub.label}` ? 'Identity Isolated' : 'Copy'}
+                                          </button>
                                        </div>
-                                       <button 
-                                        onClick={() => handleCopy(sub.val, `hist-${item.id}-${sub.label}`)}
-                                        className={cn(
-                                          "text-[8px] font-black uppercase transition-all",
-                                          isCopied === `hist-${item.id}-${sub.label}` ? "text-emerald-500" : "text-primary/60 hover:text-primary"
-                                        )}
-                                       >
-                                          {isCopied === `hist-${item.id}-${sub.label}` ? 'Identity Copied' : 'Copy Snippet'}
-                                       </button>
+                                       <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[9px] font-bold text-foreground/40 overflow-hidden shadow-inner group-hover/sub:border-primary/20 transition-all">
+                                          <span className="truncate">{sub.val}</span>
+                                       </div>
                                     </div>
-                                    <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[9px] font-bold text-foreground/60 overflow-hidden shadow-inner group-hover/sub:border-primary/20 transition-all">
-                                       <span className="truncate">{sub.val}</span>
-                                    </div>
-                                 </div>
-                               ))}
+                                  ))}
+                               </div>
+                               <div className="mt-6 flex justify-center">
+                                  <Button asChild variant="ghost" className="h-8 text-[8px] font-black uppercase text-primary/40 hover:text-primary">
+                                     <a href={item.links.view} target="_blank">Launch Official Registry View <ArrowRight className="ml-2 w-3 h-3" /></a>
+                                  </Button>
+                               </div>
                             </div>
-                         </div>
-                       )}
-                    </Card>
-                  ))
+                          )}
+                       </Card>
+                     ))}
+                  </div>
                 )}
-             </div>
-
-             <div className="grid grid-cols-1 gap-6 pt-8">
-                <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                   <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                      <Maximize2 className="w-7 h-7" />
-                   </div>
-                   <div className="space-y-2">
-                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">High Fidelity Integration</h4>
-                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                       1:1 binary preservation ensures your visual assets retain original resolution and metadata during the cloud sync.
-                     </p>
-                   </div>
-                </div>
              </div>
           </div>
         </div>
@@ -501,7 +532,6 @@ export default function ImageToLinkPage() {
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .bg-checkered {
           background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
                             linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
