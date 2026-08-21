@@ -345,6 +345,16 @@ export default function FILEHOSTPage() {
     return <FileText className="w-5 h-5 text-primary/40" />;
   };
 
+  const handleBulkGenerate = async () => {
+    const itemsToProcess = history.filter(h => selectedIds.has(h.id));
+    for (const item of itemsToProcess) {
+      if (!generatedUrls[item.id]) {
+        await handleGenerateLink(item.data.fileId, item.id);
+      }
+    }
+    toast({ title: "Batch Synthesis Ready" });
+  };
+
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -411,7 +421,7 @@ export default function FILEHOSTPage() {
                   <CardContent className="p-6 space-y-6">
                      <div className="space-y-4">
                         <div className="space-y-2">
-                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Bot Token</Label>
+                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Tokken</Label>
                            <Input 
                             value={customToken}
                             onChange={e => setCustomToken(e.target.value)}
@@ -459,6 +469,8 @@ export default function FILEHOSTPage() {
               <CardContent className="pt-10 space-y-8">
                 <div 
                   onClick={() => !isProcessing && fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files[0]) handleFileUpload({ target: { files: e.dataTransfer.files } } as any); }}
                   className={cn(
                     "relative h-64 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer group/upload",
                     file && "border-solid border-primary/20 bg-background/50",
@@ -812,4 +824,3 @@ export default function FILEHOSTPage() {
     </div>
   );
 }
-
