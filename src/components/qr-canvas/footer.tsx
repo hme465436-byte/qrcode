@@ -1,15 +1,14 @@
 "use client"
 
 import React from 'react';
-import { CopyrightYear } from './copyright-year';
-import { Shield, Lock, Zap, ArrowUpRight, Heart, Coffee } from 'lucide-react';
+import { Shield, Lock, Zap, Heart, Coffee } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 const Logo = ({ className = "h-8" }: { className?: string }) => (
   <div className={cn("flex items-center gap-3", className)}>
     <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
-      <div className="absolute inset-0 bg-primary rounded-lg shadow-lg shadow-primary/20 flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 bg-primary rounded-lg shadow-lg shadow-blue-600/20 flex items-center justify-center overflow-hidden icon-container-3d">
         <div className="w-4 h-4 grid grid-cols-2 gap-0.5 relative z-10">
           <div className="border-[1.5px] border-white rounded-[1px]" />
           <div className="bg-white/40 rounded-[1px]" />
@@ -112,7 +111,7 @@ export function Footer() {
           
           <div className="text-center md:text-right">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/20">
-              &copy; <CopyrightYear /> MY KIT TOOL. ALL RIGHTS RESERVED.
+              MY KIT TOOL. ALL RIGHTS RESERVED. ©
             </p>
           </div>
         </div>
