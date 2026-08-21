@@ -22,7 +22,8 @@ import {
   Paperclip,
   Lock,
   ArrowLeft,
-  Cloud
+  Cloud,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -244,7 +245,7 @@ export default function TelegramFileHostPage() {
                       <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary transition-all mx-auto shadow-xl">
                         <FileUp className="w-8 h-8" />
                       </div>
-                      <span className="text-[10px] font-black uppercase text-foreground/30 tracking-[0.2em] group-hover/upload:text-primary transition-colors">Select Any Binary Asset</span>
+                      <span className="text-[10px] font-black uppercase text-foreground/30 tracking-widest group-hover/upload:text-primary transition-colors">Select Any Binary Asset</span>
                     </div>
                   )}
                   <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
