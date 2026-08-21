@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -10,8 +11,8 @@ export async function uploadToTelegram(formData: FormData) {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
-    if (!token || !chatId) {
-      throw new Error("Studio Node Error: Telegram credentials not configured in environment.");
+    if (!token || !chatId || chatId === 'YOUR_NUMERIC_CHAT_ID') {
+      throw new Error("Studio Node Error: Telegram credentials not configured in environment. Please set TELEGRAM_BOT_TOKEN and a valid numeric TELEGRAM_CHAT_ID.");
     }
 
     const file = formData.get('document') as File;
@@ -21,7 +22,7 @@ export async function uploadToTelegram(formData: FormData) {
     const telegramForm = new FormData();
     telegramForm.append('chat_id', chatId);
     telegramForm.append('document', file);
-    telegramForm.append('caption', `Uploaded via MY KIT TOOL\nFile: ${file.name}\nSize: ${(file.size / 1024).toFixed(1)} KB`);
+    telegramForm.append('caption', `📁 File: ${file.name}\n⚖️ Size: ${(file.size / 1024).toFixed(1)} KB\n🚀 Uploaded via MY KIT TOOL`);
 
     const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
       method: 'POST',

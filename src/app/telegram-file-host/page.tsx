@@ -1,36 +1,27 @@
+
 "use client"
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Send, 
   Upload, 
-  Trash2, 
-  Globe, 
   CheckCircle2, 
   Copy, 
   Loader2, 
-  Info, 
   AlertCircle,
   Zap,
   Activity,
-  FileText,
-  ExternalLink,
   ShieldCheck,
-  ImageIcon,
   RefreshCcw,
-  RotateCcw,
-  Lock,
   History,
   FileUp,
   X,
   ChevronDown,
   ChevronUp,
-  FileArchive,
   Database,
-  Smartphone,
-  Cloud,
   MessageCircle,
-  Paperclip
+  Paperclip,
+  Lock,
+  ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -229,6 +220,8 @@ export default function TelegramFileHostPage() {
               <CardContent className="pt-10 space-y-8">
                 <div 
                   onClick={() => !isProcessing && fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files[0]) handleFileUpload({ target: { files: e.dataTransfer.files } } as any); }}
                   className={cn(
                     "relative h-56 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer group/upload",
                     file && "border-solid border-primary/20 bg-background/50",
@@ -266,9 +259,12 @@ export default function TelegramFileHostPage() {
                 </Button>
 
                 {error && (
-                  <div className="p-5 rounded-2xl bg-destructive/5 border border-destructive/20 flex items-start gap-4 animate-in shake">
-                    <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase">{error}</p>
+                  <div className="p-5 rounded-2xl bg-destructive/5 border border-destructive/20 space-y-3 animate-in shake">
+                    <div className="flex items-center gap-3 text-destructive">
+                       <AlertCircle className="w-5 h-5 text-destructive shrink-0" />
+                       <h4 className="text-[10px] font-black uppercase tracking-widest">Handshake Failed</h4>
+                    </div>
+                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase tracking-tighter">{error}</p>
                   </div>
                 )}
               </CardContent>
@@ -279,7 +275,7 @@ export default function TelegramFileHostPage() {
                    <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest">Archival Fidelity</h4>
+                  <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Archival Fidelity</h4>
                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
                     1:1 binary preservation ensures your assets remain identical to the source. No compression or metadata stripping is applied during the archival cycle.
                   </p>
@@ -446,7 +442,7 @@ export default function TelegramFileHostPage() {
                    <Activity className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                    <div className="space-y-1">
                       <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Signal Trace</h4>
-                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Utilizing secure server-side uplinks to bypass standard browser-CORS restrictions on API handshakes.</p>
+                      <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase">Utilizing secure server-side uplinks to bypass standard browser-CORS restrictions on API handshakes.</p>
                    </div>
                 </div>
                 <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-4 group">
