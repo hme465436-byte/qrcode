@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Upload, 
   CheckCircle2, 
@@ -36,12 +36,25 @@ import {
   Maximize2,
   Check,
   Download,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Search,
+  Filter,
+  Star,
+  Edit3,
+  Share2,
+  BarChart3,
+  CheckSquare,
+  Square,
+  Smartphone,
+  Save,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -70,25 +83,37 @@ interface TelegramLinkMatrix {
 interface HistoryItem {
   id: string;
   name: string;
+  customName?: string;
+  isFavorite?: boolean;
   timestamp: number;
   data: TelegramLinkMatrix;
 }
 
+type FilterType = 'all' | 'image' | 'audio' | 'video' | 'pdf' | 'zip';
+
 export default function TelegramFileHostPage() {
   const { toast } = useToast();
   const { user, loading: authLoading } = useUser();
+  
+  // Intake State
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [result, setResult] = useState<TelegramLinkMatrix | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isCopied, setIsCopied] = useState<string | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  // Delete Confirmation State
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null); // 'all' or fileId
-
-  // Download Link States
+  // Registry Management State
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  
+  // UI Meta
+  const [isCopied, setIsCopied] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
   const [generatedUrls, setGeneratedUrls] = useState<Record<string, string>>({});
   const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
@@ -98,7 +123,7 @@ export default function TelegramFileHostPage() {
   // --- Persistence Matrix ---
   useEffect(() => {
     if (user) {
-      const saved = localStorage.getItem(`mykit_tg_history_v1_${user.uid}`);
+      const saved = localStorage.getItem(`mykit_tg_history_v2_${user.uid}`);
       if (saved) {
         try {
           setHistory(JSON.parse(saved));
@@ -109,31 +134,36 @@ export default function TelegramFileHostPage() {
     }
   }, [user]);
 
-  const saveToHistory = (item: HistoryItem) => {
+  const saveHistoryToDisk = (next: HistoryItem[]) => {
     if (!user) return;
-    setHistory(prev => {
-      const next = [item, ...prev.filter(h => h.data.fileId !== item.data.fileId)].slice(0, 10);
-      localStorage.setItem(`mykit_tg_history_v1_${user.uid}`, JSON.stringify(next));
-      return next;
-    });
+    setHistory(next);
+    localStorage.setItem(`mykit_tg_history_v2_${user.uid}`, JSON.stringify(next));
   };
 
-  const handleConfirmDelete = () => {
-    if (!user || !deleteTarget) return;
+  // --- Filtered & Sorted Logic ---
+  const processedHistory = useMemo(() => {
+    return history
+      .filter(item => {
+        const matchesSearch = (item.customName || item.name).toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter = filterType === 'all' || item.data.mime.includes(filterType);
+        return matchesSearch && matchesFilter;
+      })
+      .sort((a, b) => {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        return b.timestamp - a.timestamp;
+      });
+  }, [history, searchQuery, filterType]);
 
-    if (deleteTarget === 'all') {
-      setHistory([]);
-      localStorage.removeItem(`mykit_tg_history_v1_${user.uid}`);
-      toast({ title: "Registry Purged" });
-    } else {
-      const next = history.filter(h => h.id !== deleteTarget);
-      setHistory(next);
-      localStorage.setItem(`mykit_tg_history_v1_${user.uid}`, JSON.stringify(next));
-      toast({ title: "Record Purged" });
-    }
-    setDeleteTarget(null);
-  };
+  const storageStats = useMemo(() => {
+    const totalSize = history.reduce((acc, curr) => acc + curr.data.size, 0);
+    return {
+      count: history.length,
+      size: totalSize
+    };
+  }, [history]);
 
+  // --- Handlers ---
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -144,7 +174,7 @@ export default function TelegramFileHostPage() {
       setFile(selectedFile);
       setResult(null);
       setError(null);
-      toast({ title: "Asset Buffered", description: "Binary matrix ready for transmission." });
+      toast({ title: "Asset Buffered" });
     }
   };
 
@@ -152,26 +182,32 @@ export default function TelegramFileHostPage() {
     if (!file || !user) return;
     
     setIsProcessing(true);
+    setUploadProgress(0);
     setError(null);
-    setResult(null);
+
+    // Simulated progress for better UX on small files
+    const interval = setInterval(() => {
+      setUploadProgress(prev => (prev < 90 ? prev + 5 : prev));
+    }, 150);
 
     try {
       const formData = new FormData();
       formData.append('document', file);
-
       const response = await uploadToTelegram(formData);
+
+      clearInterval(interval);
+      setUploadProgress(100);
 
       if (response.success && response.data) {
         setResult(response.data);
-        
-        saveToHistory({
+        const newItem: HistoryItem = {
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
           timestamp: Date.now(),
           data: response.data
-        });
-
-        toast({ title: "Uplink Success", description: "Asset archived in Telegram matrix." });
+        };
+        saveHistoryToDisk([newItem, ...history].slice(0, 50));
+        toast({ title: "Uplink Success" });
       } else {
         throw new Error(response.error || "Uplink restricted.");
       }
@@ -179,29 +215,62 @@ export default function TelegramFileHostPage() {
       setError(err.message || "Uplink failure.");
       toast({ variant: "destructive", title: "Protocol Failure" });
     } finally {
+      clearInterval(interval);
       setIsProcessing(false);
     }
   };
 
   const handleGenerateLink = async (fileId: string, historyId: string) => {
     setGeneratingIds(prev => new Set(prev).add(historyId));
-    setLinkErrors(prev => { const n = { ...prev }; delete n[historyId]; return n; });
-
     try {
       const response = await getDownloadProtocol(fileId);
       if (response.success && response.url) {
         const fullUrl = window.location.origin + response.url;
         setGeneratedUrls(prev => ({ ...prev, [historyId]: fullUrl }));
-        toast({ title: "Link Synthesized", description: "Temporary access portal ready." });
       } else {
         throw new Error(response.error || "Uplink Failed");
       }
     } catch (err: any) {
       setLinkErrors(prev => ({ ...prev, [historyId]: err.message }));
-      toast({ variant: "destructive", title: "Protocol Blocked", description: err.message });
+      toast({ variant: "destructive", title: "Link Generation Failed" });
     } finally {
       setGeneratingIds(prev => { const n = new Set(prev); n.delete(historyId); return n; });
     }
+  };
+
+  const handleBulkGenerate = async () => {
+    if (selectedIds.size === 0) return;
+    toast({ title: "Batch Processing Initiated" });
+    for (const id of selectedIds) {
+      const item = history.find(h => h.id === id);
+      if (item && !generatedUrls[id]) {
+        await handleGenerateLink(item.data.fileId, id);
+      }
+    }
+  };
+
+  const toggleFavorite = (id: string) => {
+    saveHistoryToDisk(history.map(h => h.id === id ? { ...h, isFavorite: !h.isFavorite } : h));
+    toast({ title: "Registry Updated" });
+  };
+
+  const startRename = (item: HistoryItem) => {
+    setEditingId(item.id);
+    setEditValue(item.customName || item.name);
+  };
+
+  const saveRename = () => {
+    if (!editingId) return;
+    saveHistoryToDisk(history.map(h => h.id === editingId ? { ...h, customName: editValue } : h));
+    setEditingId(null);
+    toast({ title: "Identity Renamed" });
+  };
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -209,6 +278,13 @@ export default function TelegramFileHostPage() {
     setIsCopied(label);
     toast({ title: "Copied" });
     setTimeout(() => setIsCopied(null), 2000);
+  };
+
+  const handleShare = (url: string, platform: 'wa' | 'tg') => {
+    const text = `Shared via MY KIT TOOL: ${url}`;
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent('Archived File')}`;
+    window.open(platform === 'wa' ? waUrl : tgUrl, '_blank');
   };
 
   const formatSize = (bytes: number) => {
@@ -219,68 +295,42 @@ export default function TelegramFileHostPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  const getFileIcon = (mime: string = '') => {
-    if (mime.startsWith('image/')) return <FileImage className="w-6 h-6" />;
-    if (mime.startsWith('audio/')) return <FileAudio className="w-6 h-6" />;
-    if (mime.startsWith('video/')) return <FileVideo className="w-6 h-6" />;
-    if (mime.includes('pdf')) return <FileText className="w-6 h-6" />;
-    if (mime.includes('zip') || mime.includes('archive')) return <FileArchive className="w-6 h-6" />;
-    return <FileText className="w-6 h-6" />;
-  };
-
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
-      <div className="mb-12 animate-reveal">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <MessageCircle className="w-3.5 h-3.5" /> Telegram Protocol
+      <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
+            <MessageCircle className="w-3.5 h-3.5" /> Telegram Protocol Pro
+          </div>
+          <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-none">
+            Telegram <span className="text-primary italic">File Host</span>
+          </h1>
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-           <div>
-              <h1 className="text-4xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-none">
-                Telegram <span className="text-primary italic">File Host</span>
-              </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Securely archive any file type via the Telegram Bot API. Transform binaries into permanent identifiers stored within the global Telegram distributed network.
-              </p>
-           </div>
-           <div className="flex items-center gap-3 shrink-0">
-              <GetHelp toolId="telegram-file-host" />
-              {(file || result) && user && (
-                <Button variant="outline" size="sm" onClick={() => { setFile(null); setResult(null); setError(null); }} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
-                </Button>
-              )}
-           </div>
+        <div className="flex items-center gap-3 shrink-0">
+           <GetHelp toolId="telegram-file-host" />
         </div>
       </div>
 
       {!user && !authLoading ? (
-        <Card className="glass-card border-border shadow-2xl p-12 sm:p-24 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/10 relative z-10">
+        <Card className="glass-card border-border shadow-2xl p-12 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
+          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary shadow-2xl relative z-10">
              <Lock className="w-8 h-8" />
           </div>
-          <div className="space-y-4 relative z-10">
-             <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Identity Required</h2>
-             <p className="text-[10px] sm:text-xs text-foreground/30 font-black uppercase tracking-[0.4em] leading-relaxed max-w-md mx-auto">
-                Secure file hosting requires a professional session to manage and protect your archival registry.
-             </p>
-          </div>
-          <Button asChild className="h-16 w-full max-w-md bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all relative z-10">
+          <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight relative z-10">Authentication Required</h2>
+          <Button asChild className="h-16 w-full max-w-md bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 relative z-10">
              <Link href="/login?redirect=/telegram-file-host">Initialize Session</Link>
           </Button>
         </Card>
       ) : authLoading ? (
         <div className="flex flex-col items-center justify-center py-40 gap-6">
            <Loader2 className="w-12 h-12 text-primary animate-spin" />
-           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">Syncing Registry Node...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          {/* Left Column: Inbound Matrix */}
+          
+          {/* LEFT: Intake Section */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+            <Card className="glass-card border-border shadow-2xl overflow-hidden relative">
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
                    <FileUp className="w-5 h-5 text-primary" /> Inbound Matrix
@@ -289,288 +339,307 @@ export default function TelegramFileHostPage() {
               <CardContent className="pt-10 space-y-8">
                 <div 
                   onClick={() => !isProcessing && fileInputRef.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files[0]) handleFileUpload({ target: { files: e.dataTransfer.files } } as any); }}
                   className={cn(
-                    "relative h-56 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer group/upload",
+                    "relative h-64 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer",
                     file && "border-solid border-primary/20 bg-background/50",
                     isProcessing && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   {file ? (
                     <div className="text-center p-8 space-y-4">
-                       <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-inner transition-transform group-hover/upload:scale-110">
+                       <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-inner">
                           <Paperclip className="w-8 h-8" />
                        </div>
                        <div className="space-y-1">
                           <p className="text-xs font-black uppercase text-foreground truncate max-w-[240px]">{file.name}</p>
-                          <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest">{formatSize(file.size)}</p>
+                          <p className="text-[10px] font-bold text-foreground/30 uppercase">{formatSize(file.size)}</p>
                        </div>
                     </div>
                   ) : (
                     <div className="text-center space-y-6">
-                      <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary transition-all mx-auto shadow-xl">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover:text-primary transition-all mx-auto shadow-xl">
                         <FileUp className="w-8 h-8" />
                       </div>
-                      <span className="text-[10px] font-black uppercase text-foreground/30 tracking-widest group-hover/upload:text-primary transition-colors">Select Any Binary Asset</span>
+                      <span className="text-[10px] font-black uppercase text-foreground/30 tracking-widest">Select Binary Asset</span>
                     </div>
                   )}
                   <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
                 </div>
 
-                <Button 
-                  onClick={executeUpload} 
-                  disabled={isProcessing || !file}
-                  className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
-                >
-                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                  Execute Transmission
-                </Button>
+                <div className="space-y-6">
+                  {isProcessing && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2">
+                       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
+                          <span>Transmitting...</span>
+                          <span>{uploadProgress}%</span>
+                       </div>
+                       <Progress value={uploadProgress} className="h-1" />
+                    </div>
+                  )}
+                  <Button 
+                    onClick={executeUpload} 
+                    disabled={isProcessing || !file}
+                    className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30"
+                  >
+                    {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
+                    Execute Uplink
+                  </Button>
+                </div>
 
                 {error && (
-                  <div className="p-5 rounded-2xl bg-destructive/5 border border-destructive/20 space-y-3 animate-in shake">
-                    <div className="flex items-center gap-3 text-destructive">
-                       <AlertCircle className="w-5 h-5 text-destructive shrink-0" />
-                       <h4 className="text-[10px] font-black uppercase tracking-widest">Handshake Failed</h4>
-                    </div>
-                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase tracking-tighter">{error}</p>
+                  <div className="p-5 rounded-2xl bg-destructive/5 border border-destructive/20 flex items-start gap-4">
+                    <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase">{error}</p>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 gap-6">
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                    <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                       <ShieldCheck className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Archival Fidelity</h4>
-                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
-                        1:1 binary preservation ensures your assets remain identical to the source. No compression or metadata stripping is applied.
-                      </p>
-                    </div>
+            {/* Storage Stats */}
+            <Card className="glass-card border-border shadow-xl">
+               <CardHeader className="py-4 border-b border-white/5 bg-secondary/30">
+                  <CardTitle className="text-[9px] font-black uppercase text-foreground/40 tracking-[0.2em] flex items-center gap-3">
+                    <BarChart3 className="w-3.5 h-3.5 text-primary" /> Matrix Analytics
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className="p-6 grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                     <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Total Assets</p>
+                     <p className="text-xl font-headline font-bold text-foreground">{storageStats.count}</p>
+                  </div>
+                  <div className="space-y-1">
+                     <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Volume Sum</p>
+                     <p className="text-xl font-headline font-bold text-primary">{formatSize(storageStats.size)}</p>
+                  </div>
+               </CardContent>
+            </Card>
+
+            <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group hover:bg-secondary/80 transition-all">
+                <ShieldCheck className="w-5 h-5 text-primary/40 group-hover:text-primary" />
+                <div className="space-y-1">
+                   <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">WASM Buffer Protection</h4>
+                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Binary data is transmitted via secure server-side handshakes to keep bot credentials strictly private.</p>
                 </div>
             </div>
           </div>
 
-          {/* Right Column: Output & Archive */}
-          <div className="lg:col-span-7 xl:col-span-8 space-y-10">
+          {/* RIGHT: Registry Section */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-1">
              
-             {/* Current Results Section */}
-             {result && (
-                <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-500">
-                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
-                   <CardHeader className="py-6 border-b border-emerald-500/10 bg-emerald-500/5 px-6 sm:px-10">
-                      <div className="flex items-center justify-between">
-                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-inner">
-                               <CheckCircle2 className="w-5 h-5" />
-                            </div>
-                            <CardTitle className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.5em]">Archival Result</CardTitle>
-                         </div>
-                         <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 rounded-full text-[8px] font-black uppercase">Verified Upload</Badge>
-                      </div>
-                   </CardHeader>
-                   <CardContent className="p-8 sm:p-12 space-y-10">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                         <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border space-y-4">
-                            <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Metadata Profile</Label>
-                            <div className="space-y-4">
-                               <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                                  <span className="text-[9px] font-black text-foreground/40 uppercase">Filename</span>
-                                  <span className="text-[11px] font-bold text-foreground truncate max-w-[150px] uppercase">{result.name}</span>
-                               </div>
-                               <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                                  <span className="text-[9px] font-black text-foreground/40 uppercase">Binary Volume</span>
-                                  <span className="text-[11px] font-mono font-bold text-primary">{formatSize(result.size)}</span>
-                               </div>
-                               <div className="flex justify-between items-center">
-                                  <span className="text-[9px] font-black text-foreground/40 uppercase">MIME Standard</span>
-                                  <span className="text-[11px] font-bold text-foreground uppercase">{result.mime.split('/')[1] || 'Binary'}</span>
-                               </div>
-                            </div>
-                         </div>
-                         <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border space-y-4">
-                            <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Linguistic Protocol (File ID)</Label>
-                            <div className="p-4 bg-black/40 rounded-xl border border-white/5 shadow-inner">
-                               <p className="text-[10px] font-mono font-bold text-primary break-all leading-relaxed">{result.fileId}</p>
-                            </div>
-                            <Button onClick={() => handleCopy(result.fileId, 'fileId')} variant="outline" className="w-full h-11 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[9px] tracking-widest">
-                               {isCopied === 'fileId' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                               Copy Protocol ID
-                            </Button>
-                         </div>
-                      </div>
+             {/* Registry Controls */}
+             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <History className="w-5 h-5 text-primary" />
+                   <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight">Archival Registry</h3>
+                </div>
+                
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                   <div className="relative flex-1 sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20" />
+                      <Input 
+                        placeholder="Search matrix..." 
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="h-10 pl-9 bg-secondary/50 border-border rounded-xl text-[10px] font-bold uppercase"
+                      />
+                   </div>
+                   <Select value={filterType} onValueChange={(v: any) => setFilterType(v)}>
+                      <SelectTrigger className="h-10 w-32 bg-secondary/50 border-border rounded-xl text-[9px] font-black uppercase">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="glass-card">
+                         <SelectItem value="all">All Types</SelectItem>
+                         <SelectItem value="image">Images</SelectItem>
+                         <SelectItem value="audio">Audio</SelectItem>
+                         <SelectItem value="pdf">PDF Docs</SelectItem>
+                         <SelectItem value="zip">ZIP Files</SelectItem>
+                      </SelectContent>
+                   </Select>
+                </div>
+             </div>
 
-                      <div className="p-8 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group/share">
-                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-0 group-hover/share:opacity-100 transition-opacity" />
-                         <div className="flex items-center gap-6 relative z-10">
-                            <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/30">
-                               <MessageCircle className="w-8 h-8" />
-                            </div>
-                            <div className="space-y-1">
-                               <h4 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">Access Signal</h4>
-                               <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Message ID: #{result.messageId} Registered</p>
-                            </div>
-                         </div>
-                         <div className="flex gap-3 relative z-10 w-full sm:w-auto">
-                            <Button onClick={() => handleCopy(`File: ${result.name}\nID: ${result.fileId}`, 'full')} className="h-14 px-8 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-white/90">
-                               {isCopied === 'full' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                               Share Info
-                            </Button>
-                         </div>
-                      </div>
-                   </CardContent>
-                </Card>
+             {/* Bulk Actions Bar */}
+             {selectedIds.size > 0 && (
+               <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between animate-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center gap-4">
+                     <span className="text-[10px] font-black uppercase text-primary tracking-widest">{selectedIds.size} Selected</span>
+                     <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="text-[9px] font-black uppercase text-foreground/40 h-8">Clear</Button>
+                  </div>
+                  <div className="flex gap-2">
+                     <Button onClick={handleBulkGenerate} className="h-9 px-4 bg-primary text-white text-[9px] font-black uppercase rounded-lg shadow-lg">
+                        Generate Links
+                     </Button>
+                     <Button onClick={() => setDeleteTarget('batch')} variant="outline" className="h-9 w-9 bg-white/5 border-white/10 text-red-500 rounded-lg p-0">
+                        <Trash2 className="w-4 h-4" />
+                     </Button>
+                  </div>
+               </div>
              )}
 
-             {/* History Registry */}
-             <div className="space-y-6 pt-4">
-                <div className="flex items-center justify-between px-2">
-                   <div className="flex items-center gap-3">
-                      <History className="w-4 h-4 text-primary" />
-                      <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight">Archival Registry</h3>
-                   </div>
-                   {history.length > 0 && (
-                      <button onClick={() => setDeleteTarget('all')} className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors">Purge Registry</button>
-                   )}
-                </div>
-
-                {history.length === 0 ? (
-                  <div className="p-20 text-center flex flex-col items-center gap-6 opacity-10 grayscale border-2 border-dashed border-white/5 rounded-[3rem]">
-                     <Activity className="w-12 h-12 text-primary" />
-                     <p className="text-[11px] font-black uppercase tracking-[0.4em]">Zero Discovery Signals</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4">
-                     {history.map((item) => (
-                       <Card key={item.id} className="glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300">
-                          <div 
-                            onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                            className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
-                          >
-                             <div className="flex items-center gap-5 min-w-0">
-                                <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center shrink-0 shadow-inner group-hover/row:border-primary/40 transition-colors">
-                                   {getFileIcon(item.data.mime)}
-                                </div>
-                                <div className="min-w-0">
-                                   <p className="text-xs font-black text-foreground truncate uppercase tracking-tight">{item.name}</p>
-                                   <div className="flex items-center gap-3 mt-1">
-                                      <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
-                                      <div className="w-1 h-1 rounded-full bg-primary/20" />
-                                      <p className="text-[9px] font-bold text-primary uppercase tracking-widest">{formatSize(item.data.size)}</p>
-                                   </div>
-                                </div>
+             {processedHistory.length === 0 ? (
+               <div className="p-24 text-center flex flex-col items-center gap-6 opacity-10 border-2 border-dashed border-white/5 rounded-[3rem]">
+                  <Activity className="w-16 h-16 text-primary" />
+                  <p className="text-[13px] font-black uppercase tracking-[0.4em]">Zero Discovery Signals</p>
+               </div>
+             ) : (
+               <div className="grid grid-cols-1 gap-4">
+                  {processedHistory.map((item) => (
+                    <Card key={item.id} className={cn(
+                      "glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300",
+                      selectedIds.has(item.id) ? "border-primary/40 bg-primary/[0.02]" : "",
+                      item.isFavorite && "border-primary/10"
+                    )}>
+                       <div 
+                         onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                         className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
+                       >
+                          <div className="flex items-center gap-5 min-w-0">
+                             <div 
+                               onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }}
+                               className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/10 hover:text-primary transition-all"
+                             >
+                                {selectedIds.has(item.id) ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5" />}
                              </div>
-                             <div className="flex items-center gap-4 shrink-0">
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }} 
-                                  className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/10 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                                >
-                                   <Trash2 className="w-4 h-4" />
-                                </button>
-                                <div className={cn(
-                                  "w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 group-hover/row:text-primary transition-all",
-                                  expandedId === item.id && "bg-primary text-primary-foreground"
-                                )}>
-                                   {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                             <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center shrink-0 shadow-inner group-hover/row:border-primary/40 transition-colors">
+                                {getFileIcon(item.data.mime)}
+                             </div>
+                             <div className="min-w-0">
+                                {editingId === item.id ? (
+                                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                     <Input 
+                                      value={editValue} 
+                                      onChange={e => setEditValue(e.target.value)} 
+                                      className="h-8 w-48 text-[11px] font-bold bg-background border-primary/40"
+                                      autoFocus
+                                      onKeyDown={e => e.key === 'Enter' && saveRename()}
+                                     />
+                                     <button onClick={saveRename} className="p-1.5 text-primary bg-primary/10 rounded-lg"><Check className="w-3.5 h-3.5" /></button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                     <p className="text-[11px] font-black text-foreground truncate uppercase tracking-tight">
+                                        {item.customName || item.name}
+                                     </p>
+                                     {item.isFavorite && <Star className="w-3 h-3 text-primary fill-current" />}
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-3 mt-1">
+                                   <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
+                                   <div className="w-1 h-1 rounded-full bg-primary/20" />
+                                   <p className="text-[8px] font-bold text-primary uppercase tracking-widest">{formatSize(item.data.size)}</p>
                                 </div>
                              </div>
                           </div>
+                          
+                          <div className="flex items-center gap-4 shrink-0">
+                             <button 
+                               onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }}
+                               className={cn("p-2 rounded-lg transition-all", item.isFavorite ? "text-primary bg-primary/10" : "text-foreground/10 hover:text-primary")}
+                             >
+                                <Star className={cn("w-4 h-4", item.isFavorite && "fill-current")} />
+                             </button>
+                             <button onClick={(e) => { e.stopPropagation(); startRename(item); }} className="p-2 text-foreground/10 hover:text-primary transition-all">
+                                <Edit3 className="w-4 h-4" />
+                             </button>
+                             <button 
+                               onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }} 
+                               className="p-2 text-foreground/10 hover:text-red-500 transition-all"
+                             >
+                                <Trash2 className="w-4 h-4" />
+                             </button>
+                             <div className={cn(
+                               "w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 group-hover/row:text-primary transition-all",
+                               expandedId === item.id && "bg-primary text-primary-foreground shadow-lg"
+                             )}>
+                                {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                             </div>
+                          </div>
+                       </div>
 
-                          {expandedId === item.id && (
-                            <div className="px-5 pb-8 pt-2 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-500">
-                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6">
-                                  <div className="space-y-4">
-                                     <div className="space-y-2">
-                                        <div className="flex items-center justify-between px-1">
-                                           <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Protocol ID</span>
-                                           <button onClick={() => handleCopy(item.data.fileId, `hist-${item.id}`)} className="text-[8px] font-black uppercase text-primary/60 hover:text-primary transition-all">
-                                              {isCopied === `hist-${item.id}` ? 'Isolated' : 'Copy'}
-                                           </button>
-                                        </div>
-                                        <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[9px] font-bold text-foreground/40 overflow-hidden shadow-inner">
-                                           <span className="truncate">{item.data.fileId}</span>
-                                        </div>
+                       {expandedId === item.id && (
+                         <div className="px-5 pb-8 pt-2 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-500">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6">
+                               <div className="space-y-6">
+                                  <div className="space-y-2">
+                                     <div className="flex items-center justify-between px-1">
+                                        <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Protocol Identifier</span>
+                                        <button onClick={() => handleCopy(item.data.fileId, `id-${item.id}`)} className="text-[8px] font-black uppercase text-primary/60 hover:text-primary">
+                                           {isCopied === `id-${item.id}` ? 'Isolated' : 'Copy'}
+                                        </button>
                                      </div>
-                                     <div className="space-y-2">
-                                        <div className="flex items-center justify-between px-1">
-                                           <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Message ID</span>
-                                        </div>
-                                        <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[10px] font-bold text-primary overflow-hidden shadow-inner">
-                                           #{item.data.messageId}
-                                        </div>
+                                     <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[9px] font-bold text-foreground/40 overflow-hidden shadow-inner">
+                                        <span className="truncate">{item.data.fileId}</span>
                                      </div>
                                   </div>
-
-                                  <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex flex-col justify-center gap-4">
-                                     <div className="flex items-center gap-3">
-                                        <Download className="w-4 h-4 text-primary" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60">Download Protocol</span>
+                                  <div className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-white/5">
+                                     <div className="space-y-0.5">
+                                        <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Telegram Trace</p>
+                                        <p className="text-[10px] font-bold text-white uppercase">Message ID: #{item.data.messageId}</p>
                                      </div>
-                                     
-                                     {!generatedUrls[item.id] ? (
-                                       <Button 
-                                        onClick={() => handleGenerateLink(item.data.fileId, item.id)}
-                                        disabled={generatingIds.has(item.id)}
-                                        className="w-full h-12 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-lg"
-                                       >
-                                         {generatingIds.has(item.id) ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <Zap className="w-3.5 h-3.5 mr-2" />}
-                                         Generate Download Link
-                                       </Button>
-                                     ) : (
-                                       <div className="space-y-4 animate-in fade-in">
-                                          <div className="p-3 bg-black/40 rounded-xl border border-primary/20 shadow-inner flex items-center justify-between gap-4">
-                                             <p className="text-[9px] font-mono text-primary truncate max-w-[180px]">{generatedUrls[item.id]}</p>
-                                             <button onClick={() => handleCopy(generatedUrls[item.id], `url-${item.id}`)} className="text-primary hover:text-white transition-colors">
-                                                {isCopied === `url-${item.id}` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                                             </button>
-                                          </div>
-                                          <div className="flex gap-2">
-                                             <Button asChild className="h-10 flex-1 bg-white text-black text-[9px] font-black uppercase tracking-widest rounded-xl">
-                                                <a href={generatedUrls[item.id]} target="_blank">Launch Port <ExternalLink className="w-3 h-3 ml-2" /></a>
-                                             </Button>
-                                             <Button onClick={() => setGeneratedUrls(prev => { const n = {...prev}; delete n[item.id]; return n; })} variant="outline" className="h-10 w-10 border-white/10 bg-white/5 rounded-xl">
-                                                <RotateCcw className="w-3.5 h-3.5" />
-                                             </Button>
-                                          </div>
-                                       </div>
-                                     )}
-                                     {linkErrors[item.id] && (
-                                       <p className="text-[8px] font-bold text-red-500 uppercase tracking-tighter text-center">{linkErrors[item.id]}</p>
-                                     )}
+                                     <Badge className="bg-primary/10 text-primary border-primary/20 text-[7px] font-black uppercase tracking-widest">Active Signal</Badge>
                                   </div>
                                </div>
-                            </div>
-                          )}
-                       </Card>
-                     ))}
-                  </div>
-                )}
-             </div>
 
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6">
-                <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-4 group">
-                   <Activity className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                   <div className="space-y-1">
-                      <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Signal Trace</h4>
-                      <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase">Utilizing secure server-side uplinks to bypass standard browser-CORS restrictions on API handshakes.</p>
-                   </div>
-                </div>
-                <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-4 group">
-                   <Cloud className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                   <div className="space-y-1">
-                      <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Distributed Hosting</h4>
-                      <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase">Files are stored across Telegram's global data matrix, ensuring high availability and permanent archival.</p>
-                   </div>
-                </div>
-             </div>
+                               <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col justify-center gap-5 relative overflow-hidden">
+                                  <div className="absolute -top-4 -right-4 opacity-5 pointer-events-none">
+                                     <Download className="w-24 h-24" />
+                                  </div>
+                                  
+                                  {!generatedUrls[item.id] ? (
+                                    <Button 
+                                      onClick={() => handleGenerateLink(item.data.fileId, item.id)}
+                                      disabled={generatingIds.has(item.id)}
+                                      className="w-full h-14 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl active:scale-95"
+                                    >
+                                      {generatingIds.has(item.id) ? <Loader2 className="w-4 h-4 animate-spin mr-3" /> : <Zap className="w-4 h-4 mr-3" />}
+                                      Synthesize Download Link
+                                    </Button>
+                                  ) : (
+                                    <div className="space-y-4 animate-in fade-in zoom-in duration-300">
+                                       <div className="p-3 bg-black/40 rounded-xl border border-primary/20 shadow-inner flex items-center justify-between gap-4">
+                                          <p className="text-[10px] font-mono text-primary truncate flex-1">{generatedUrls[item.id]}</p>
+                                          <button onClick={() => handleCopy(generatedUrls[item.id], `url-${item.id}`)} className="text-primary hover:text-white transition-colors">
+                                             {isCopied === `url-${item.id}` ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                          </button>
+                                       </div>
+                                       <div className="flex gap-2">
+                                          <Button asChild className="h-11 flex-1 bg-white text-black text-[9px] font-black uppercase rounded-xl">
+                                             <a href={generatedUrls[item.id]} target="_blank">Download Master <ExternalLink className="w-3 h-3 ml-2" /></a>
+                                          </Button>
+                                          <div className="flex gap-1.5">
+                                             <button onClick={() => handleShare(generatedUrls[item.id], 'wa')} className="h-11 w-11 rounded-xl bg-green-500/10 text-green-500 border border-green-500/20 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all"><Share2 className="w-4 h-4" /></button>
+                                             <button onClick={() => handleShare(generatedUrls[item.id], 'tg')} className="h-11 w-11 rounded-xl bg-sky-500/10 text-sky-500 border border-sky-500/20 flex items-center justify-center hover:bg-sky-500 hover:text-white transition-all"><MessageCircle className="w-4 h-4" /></button>
+                                          </div>
+                                       </div>
+                                       <div className="flex items-center gap-2 text-yellow-500/60 justify-center">
+                                          <Clock className="w-3 h-3" />
+                                          <span className="text-[8px] font-black uppercase tracking-widest">Temporary Access Portal (Approx 1 Hour)</span>
+                                       </div>
+                                    </div>
+                                  )}
+                               </div>
+                            </div>
+                         </div>
+                       )}
+                    </Card>
+                  ))}
+               </div>
+             )}
+
+             {/* Registry Footer */}
+             {history.length > 0 && (
+               <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 opacity-30">
+                  <span className="text-[9px] font-black uppercase tracking-[0.4em] text-foreground/60">Historical Registry Stack v2.0</span>
+                  <button onClick={() => setDeleteTarget('all')} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-colors">
+                     <Trash2 className="w-3.5 h-3.5" /> Purge Full Archival Memory
+                  </button>
+               </div>
+             )}
           </div>
         </div>
       )}
       
-      {/* Confirmation Dialog */}
+      {/* Confirmation Dialog Matrix */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
@@ -578,21 +647,33 @@ export default function TelegramFileHostPage() {
                <ShieldAlert className="w-8 h-8" />
             </div>
             <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
-               {deleteTarget === 'all' ? 'Purge Registry?' : 'Final Confirmation'}
+               {deleteTarget === 'all' || deleteTarget === 'batch' ? 'Bulk Purge Protocol' : 'Identity Removal'}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
               {deleteTarget === 'all' 
-                ? "This will definitively purge your entire archival history. This action cannot be reversed." 
-                : "Are you sure you want to remove this file from history?"}
+                ? "This will definitively purge your entire archival registry. This action is terminal and cannot be reversed." 
+                : deleteTarget === 'batch'
+                ? `You are about to remove ${selectedIds.size} identified assets from the registry.`
+                : "Are you sure you want to remove this specific file from history?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
-            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleConfirmDelete}
+              onClick={() => {
+                if (deleteTarget === 'batch') {
+                  const next = history.filter(h => !selectedIds.has(h.id));
+                  saveHistoryToDisk(next);
+                  setSelectedIds(new Set());
+                  setDeleteTarget(null);
+                  toast({ title: "Batch Purge Complete" });
+                } else {
+                  handleConfirmDelete();
+                }
+              }}
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
-              Confirm
+              Confirm Purge
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -604,7 +685,20 @@ export default function TelegramFileHostPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .animate-spin-slow { animation: spin 3s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
+
+  function handleConfirmDelete() {
+    if (!user || !deleteTarget) return;
+    if (deleteTarget === 'all') {
+      saveHistoryToDisk([]);
+    } else {
+      saveHistoryToDisk(history.filter(h => h.id !== deleteTarget));
+    }
+    setDeleteTarget(null);
+    toast({ title: "Registry Sanitized" });
+  }
 }
