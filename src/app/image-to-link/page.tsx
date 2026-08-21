@@ -38,7 +38,6 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
-import { uploadToImgBB } from './actions';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
 
@@ -109,7 +108,7 @@ export default function ImageToLinkPage() {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       if (selectedFile.size > 10 * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Heavy Payload", description: "Standard limit for anonymous uploads is 10MB." });
+        toast({ variant: "destructive", title: "Heavy Payload", description: "Standard limit for high-res uploads is 10MB." });
         return;
       }
       
@@ -134,31 +133,47 @@ export default function ImageToLinkPage() {
     setLinks(null);
 
     try {
-      const result = await uploadToImgBB(image);
-      
-      if (result.success && result.data) {
-        const d = result.data;
-        const matrix: LinkMatrix = {
-          direct: d.url,
-          view: d.url_viewer,
-          markdown: `![Identity](${d.url})`,
-          html: `<img src="${d.url}" alt="Identity">`,
-          bbcode: `[img]${d.url}[/img]`
-        };
-        setLinks(matrix);
-        
-        saveToHistory({
-          id: Math.random().toString(36).substr(2, 9),
-          name: file?.name || 'Untitled Identity',
-          thumb: d.thumb?.url || d.url,
-          timestamp: Date.now(),
-          links: matrix
-        });
+      // Direct Client-Side Protocol to bypass Server Action 1MB limits
+      const apiKey = '7dd99fb70a655cd8730f8c5bac31178f';
+      const parts = image.split(',');
+      if (parts.length < 2) throw new Error("Malformed binary matrix.");
+      const cleanBase64 = parts[1];
 
-        toast({ title: "Uplink Success", description: "Matrix synchronized with ImgBB nodes." });
-      } else {
-        throw new Error(result.error);
+      const formData = new FormData();
+      formData.append('image', cleanBase64);
+
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST',
+        body: formData,
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `ImgBB Node Error: ${response.status}`);
       }
+
+      const result = await response.json();
+      const d = result.data;
+
+      const matrix: LinkMatrix = {
+        direct: d.url,
+        view: d.url_viewer,
+        markdown: `![Identity](${d.url})`,
+        html: `<img src="${d.url}" alt="Identity">`,
+        bbcode: `[img]${d.url}[/img]`
+      };
+      setLinks(matrix);
+      
+      saveToHistory({
+        id: Math.random().toString(36).substr(2, 9),
+        name: file?.name || 'Untitled Identity',
+        thumb: d.thumb?.url || d.url,
+        timestamp: Date.now(),
+        links: matrix
+      });
+
+      toast({ title: "Uplink Success", description: "Matrix synchronized with ImgBB nodes." });
     } catch (err: any) {
       setError(err.message || "Uplink restricted by remote host.");
       toast({ variant: "destructive", title: "Protocol Failure", description: "The upload attempt was rejected." });
@@ -212,7 +227,7 @@ export default function ImageToLinkPage() {
       {!user && !authLoading ? (
         <div className="grid grid-cols-1 gap-8 animate-in fade-in zoom-in duration-500">
            <Card className="glass-card border-border shadow-2xl p-12 sm:p-20 text-center flex flex-col items-center gap-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
               <div className="w-24 h-24 rounded-[2.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/20 relative z-10">
                  <Lock className="w-10 h-10" />
               </div>
@@ -306,9 +321,9 @@ export default function ImageToLinkPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">High Fidelity</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All visual data is transmitted via secure server-side tunnels. We do not store or log your imagery on studio infrastructure.
+                    10MB limit enabled. Direct client-side transmission bypasses standard server action restrictions for peak performance.
                   </p>
                 </div>
              </div>
