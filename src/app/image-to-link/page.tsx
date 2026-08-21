@@ -207,7 +207,7 @@ export default function ImageToLinkPage() {
   const handleTestAndConnect = async () => {
     if (!customKey.trim()) return;
     setIsTestingNode(true);
-    setError(null); // Clear previous errors on new attempt
+    setError(null);
 
     try {
       const res = await testImgBBKey(customKey.trim());
@@ -223,7 +223,6 @@ export default function ImageToLinkPage() {
         setCustomLabel('');
         toast({ title: "Host Node Active", description: `Linked to ${node.label}.` });
       } else {
-        // Display the specific error from ImgBB
         setError(res.error || "Handshake Failed");
         toast({ variant: "destructive", title: "Handshake Failed", description: res.error });
       }
@@ -294,6 +293,7 @@ export default function ImageToLinkPage() {
                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
                 </Button>
               )}
+           </div>
         </div>
       </div>
 
