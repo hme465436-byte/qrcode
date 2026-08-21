@@ -40,7 +40,10 @@ import {
   BarChart3,
   CheckSquare,
   Square,
-  Clock
+  Clock,
+  KeyRound,
+  Shield,
+  Unplug
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,7 +64,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
-import { uploadToTelegram, getDownloadProtocol } from './actions';
+import { uploadToTelegram, getDownloadProtocol, testConnection } from './actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -92,9 +95,6 @@ interface HistoryItem {
 
 type FilterType = 'all' | 'image' | 'audio' | 'video' | 'pdf' | 'zip';
 
-/**
- * Global utility for bitstream volume formatting.
- */
 const formatSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -114,6 +114,13 @@ export default function FILEHOSTPage() {
   const [result, setResult] = useState<TelegramLinkMatrix | null>(null);
   const [error, setError] = useState<string | null>(null);
   
+  // Custom Node State
+  const [showCustomNode, setShowCustomNode] = useState(false);
+  const [customToken, setCustomToken] = useState('');
+  const [customChatId, setCustomChatId] = useState('');
+  const [isTestingNode, setIsTestingNode] = useState(false);
+  const [activeNode, setActiveNode] = useState<{ token: string, chatId: string, name: string } | null>(null);
+
   // Registry Management State
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -141,6 +148,13 @@ export default function FILEHOSTPage() {
         } catch (e) {
           console.error("Archive sync error.");
         }
+      }
+
+      const savedNode = localStorage.getItem(`mykit_custom_node_${user.uid}`);
+      if (savedNode) {
+        try {
+          setActiveNode(JSON.parse(savedNode));
+        } catch (e) {}
       }
     }
   }, [user]);
@@ -203,7 +217,12 @@ export default function FILEHOSTPage() {
     try {
       const formData = new FormData();
       formData.append('document', file);
-      const response = await uploadToTelegram(formData);
+      
+      const response = await uploadToTelegram(
+        formData, 
+        activeNode?.token, 
+        activeNode?.chatId
+      );
 
       clearInterval(interval);
       setUploadProgress(100);
@@ -233,7 +252,7 @@ export default function FILEHOSTPage() {
   const handleGenerateLink = async (fileId: string, historyId: string) => {
     setGeneratingIds(prev => new Set(prev).add(historyId));
     try {
-      const response = await getDownloadProtocol(fileId);
+      const response = await getDownloadProtocol(fileId, activeNode?.token);
       if (response.success && response.url) {
         const fullUrl = window.location.origin + response.url;
         setGeneratedUrls(prev => ({ ...prev, [historyId]: fullUrl }));
@@ -247,15 +266,33 @@ export default function FILEHOSTPage() {
     }
   };
 
-  const handleBulkGenerate = async () => {
-    if (selectedIds.size === 0) return;
-    toast({ title: "Batch Processing" });
-    for (const id of Array.from(selectedIds)) {
-      const item = history.find(h => h.id === id);
-      if (item && !generatedUrls[id]) {
-        await handleGenerateLink(item.data.fileId, id);
+  const handleTestAndConnect = async () => {
+    if (!customToken.trim() || !customChatId.trim()) return;
+    setIsTestingNode(true);
+    try {
+      const res = await testConnection(customToken.trim(), customChatId.trim());
+      if (res.success) {
+        const node = { token: customToken.trim(), chatId: customChatId.trim(), name: res.botName || 'Custom Bot' };
+        setActiveNode(node);
+        localStorage.setItem(`mykit_custom_node_${user?.uid}`, JSON.stringify(node));
+        setShowCustomNode(false);
+        toast({ title: "Sovereign Node Active", description: `Linked to ${node.name}.` });
+      } else {
+        toast({ variant: "destructive", title: "Handshake Failed", description: res.error });
       }
+    } catch (e) {
+      toast({ variant: "destructive", title: "Protocol Error" });
+    } finally {
+      setIsTestingNode(false);
     }
+  };
+
+  const disconnectNode = () => {
+    setActiveNode(null);
+    localStorage.removeItem(`mykit_custom_node_${user?.uid}`);
+    setCustomToken('');
+    setCustomChatId('');
+    toast({ title: "Default Node Restored" });
   };
 
   const toggleFavorite = (id: string) => {
@@ -321,6 +358,18 @@ export default function FILEHOSTPage() {
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="file-host" />
+           <Button 
+            onClick={() => setShowCustomNode(true)}
+            variant="outline" 
+            size="sm" 
+            className={cn(
+              "h-10 px-6 rounded-xl border-white/10 text-[9px] font-black uppercase tracking-widest transition-all shadow-lg",
+              activeNode ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-secondary"
+            )}
+           >
+              {activeNode ? <ShieldCheck className="w-3.5 h-3.5 mr-2" /> : <Zap className="w-3.5 h-3.5 mr-2" />}
+              {activeNode ? 'MY OWN ACTIVE' : 'MY OWN'}
+           </Button>
            {(file || result) && user && (
                 <Button variant="outline" size="sm" onClick={() => { setFile(null); setResult(null); setError(null); }} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
@@ -349,6 +398,57 @@ export default function FILEHOSTPage() {
           
           {/* LEFT: Intake Section */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+            {/* Custom Node Config (Inline overlay) */}
+            {showCustomNode && (
+               <Card className="glass-card border-primary/40 bg-primary/[0.03] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+                  <CardHeader className="py-6 border-b border-primary/10 flex flex-row items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <KeyRound className="w-4 h-4 text-primary" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Sovereign Node Configuration</span>
+                     </div>
+                     <button onClick={() => setShowCustomNode(false)} className="text-primary/40 hover:text-primary"><X className="w-4 h-4" /></button>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-6">
+                     <div className="space-y-4">
+                        <div className="space-y-2">
+                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Bot Token</Label>
+                           <Input 
+                            value={customToken}
+                            onChange={e => setCustomToken(e.target.value)}
+                            type="password"
+                            placeholder="8908364086:AAF..."
+                            className="h-11 bg-background border-border text-xs font-mono"
+                           />
+                        </div>
+                        <div className="space-y-2">
+                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Chat ID</Label>
+                           <Input 
+                            value={customChatId}
+                            onChange={e => setCustomChatId(e.target.value)}
+                            placeholder="7235236896"
+                            className="h-11 bg-background border-border text-xs font-mono"
+                           />
+                        </div>
+                     </div>
+                     <div className="flex flex-col gap-3">
+                        <Button 
+                          onClick={handleTestAndConnect}
+                          disabled={isTestingNode || !customToken || !customChatId}
+                          className="h-12 w-full bg-primary text-white font-black uppercase text-[10px] rounded-xl shadow-lg"
+                        >
+                           {isTestingNode ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+                           Test & Connect Node
+                        </Button>
+                        {activeNode && (
+                          <Button variant="outline" onClick={disconnectNode} className="h-10 text-[9px] font-black uppercase border-destructive/20 text-destructive bg-destructive/5">
+                             <Unplug className="w-3.5 h-3.5 mr-2" /> Disconnect Node
+                          </Button>
+                        )}
+                     </div>
+                  </CardContent>
+               </Card>
+            )}
+
             <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
@@ -399,7 +499,7 @@ export default function FILEHOSTPage() {
                   <Button 
                     onClick={executeUpload} 
                     disabled={isProcessing || !file}
-                    className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                    className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                   >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
                     Execute Uplink
@@ -627,11 +727,11 @@ export default function FILEHOSTPage() {
                                        </div>
                                        <div className="flex gap-2">
                                           <Button asChild className="h-11 flex-1 bg-white text-black text-[9px] font-black uppercase rounded-xl">
-                                             <a href={generatedUrls[item.id]} target="_blank">Download Master <ExternalLink className="w-3 h-3 ml-2" /></a>
+                                             <a href={generatedUrls[item.id]} target="_blank">Download Master <ExternalLink className="w-3.5 h-3.5 ml-2" /></a>
                                           </Button>
                                           <div className="flex gap-1.5">
-                                             <button onClick={() => handleShare(generatedUrls[item.id], 'wa')} className="h-11 w-11 rounded-xl bg-green-500/10 text-green-500 border border-green-500/20 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all"><Share2 className="w-4 h-4" /></button>
-                                             <button onClick={() => handleShare(generatedUrls[item.id], 'tg')} className="h-11 w-11 rounded-xl bg-sky-500/10 text-sky-500 border border-sky-500/20 flex items-center justify-center hover:bg-sky-500 hover:text-white transition-all"><MessageCircle className="w-4 h-4" /></button>
+                                             <button onClick={() => handleShare(generatedUrls[item.id], 'wa')} className="h-11 w-11 rounded-xl bg-green-500/10 text-green-500 border-green-500/20 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all"><Share2 className="w-4 h-4" /></button>
+                                             <button onClick={() => handleShare(generatedUrls[item.id], 'tg')} className="h-11 w-11 rounded-xl bg-sky-500/10 text-sky-500 border-sky-500/20 flex items-center justify-center hover:bg-sky-500 hover:text-white transition-all"><MessageCircle className="w-4 h-4" /></button>
                                           </div>
                                        </div>
                                        <div className="flex items-center gap-2 text-yellow-500/60 justify-center">
@@ -712,3 +812,4 @@ export default function FILEHOSTPage() {
     </div>
   );
 }
+
