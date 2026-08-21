@@ -120,7 +120,7 @@ export default function FILEHOSTPage() {
   const [customToken, setCustomToken] = useState('');
   const [customChatId, setCustomChatId] = useState('');
   const [isTestingNode, setIsTestingNode] = useState(false);
-  const [activeNode, setActiveNode] = useState<{ token: string, chatId: string, name: string } | null>(null);
+  const [activeNode, setActiveNode] = useState<{ token: string, chatId: string, name: string, username?: string } | null>(null);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
   // Registry Management State
@@ -274,7 +274,12 @@ export default function FILEHOSTPage() {
     try {
       const res = await testConnection(customToken.trim(), customChatId.trim());
       if (res.success) {
-        const node = { token: customToken.trim(), chatId: customChatId.trim(), name: res.botName || 'Custom Bot' };
+        const node = { 
+          token: customToken.trim(), 
+          chatId: customChatId.trim(), 
+          name: res.botName || 'Custom Bot',
+          username: res.username
+        };
         setActiveNode(node);
         localStorage.setItem(`mykit_custom_node_${user?.uid}`, JSON.stringify(node));
         setShowCustomNode(false);
@@ -574,6 +579,12 @@ export default function FILEHOSTPage() {
                 </div>
                 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
+                   {activeNode && (
+                     <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-2">
+                        <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                        @{activeNode.username || activeNode.name}
+                     </Badge>
+                   )}
                    <div className="relative flex-1 sm:w-64">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20" />
                       <Input 

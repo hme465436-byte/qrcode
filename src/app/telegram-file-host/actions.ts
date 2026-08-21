@@ -101,7 +101,11 @@ export async function testConnection(token: string, chatId: string) {
       throw new Error("Invalid Chat ID or restricted bot access.");
     }
 
-    return { success: true, botName: data.result.first_name };
+    return { 
+      success: true, 
+      botName: data.result.first_name,
+      username: data.result.username 
+    };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
