@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -25,6 +24,7 @@ export async function uploadToTelegram(formData: FormData) {
     telegramForm.append('caption', `📁 File: ${file.name}\n⚖️ Size: ${(file.size / 1024).toFixed(1)} KB\n🚀 Uploaded via MY KIT TOOL`);
 
     // Execute the POST handshake with the Telegram Bot API
+    // Telegram docs: https://core.telegram.org/bots/api#senddocument
     const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
       method: 'POST',
       body: telegramForm,
