@@ -13,12 +13,6 @@ import {
   AlertCircle,
   Zap,
   Activity,
-  FileImage,
-  ExternalLink,
-  Code2,
-  FileCode,
-  MessageSquare,
-  ShieldCheck,
   ImageIcon,
   RefreshCcw,
   RotateCcw,
@@ -31,20 +25,38 @@ import {
   ChevronDown,
   ChevronUp,
   FileUp,
-  ClipboardCheck,
   Eye,
   Settings2,
-  ArrowRight
+  ArrowRight,
+  KeyRound,
+  Unplug,
+  ShieldCheck,
+  FileCode,
+  Code2,
+  MessageSquare,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
+import { testImgBBKey } from './actions';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface LinkMatrix {
   direct: string;
@@ -74,6 +86,14 @@ export default function ImageToLinkPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Custom Node State
+  const [showCustomNode, setShowCustomNode] = useState(false);
+  const [customKey, setCustomKey] = useState('');
+  const [customLabel, setCustomLabel] = useState('');
+  const [isTestingNode, setIsTestingNode] = useState(false);
+  const [activeNode, setActiveNode] = useState<{ key: string, label: string } | null>(null);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- Persistence Matrix ---
@@ -87,8 +107,21 @@ export default function ImageToLinkPage() {
           console.error("Archive sync error.");
         }
       }
+
+      const savedNode = localStorage.getItem(`mykit_image_host_node_${user.uid}`);
+      if (savedNode) {
+        try {
+          setActiveNode(JSON.parse(savedNode));
+        } catch (e) {}
+      }
     }
   }, [user]);
+
+  const saveHistoryToDisk = (next: HistoryItem[]) => {
+    if (!user) return;
+    setHistory(next);
+    localStorage.setItem(`mykit_img_history_v3_${user.uid}`, JSON.stringify(next));
+  };
 
   const saveToHistory = (item: HistoryItem) => {
     if (!user) return;
@@ -138,7 +171,7 @@ export default function ImageToLinkPage() {
     setLinks(null);
 
     try {
-      const apiKey = '7dd99fb70a655cd8730f8c5bac31178f';
+      const apiKey = activeNode?.key || '7dd99fb70a655cd8730f8c5bac31178f';
       const parts = image.split(',');
       if (parts.length < 2) throw new Error("Malformed binary matrix.");
       const cleanBase64 = parts[1];
@@ -154,7 +187,7 @@ export default function ImageToLinkPage() {
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `ImgBB Node Error: ${response.status}`);
+        throw new Error(errData.error?.message || `Node Error: ${response.status}`);
       }
 
       const result = await response.json();
@@ -177,13 +210,45 @@ export default function ImageToLinkPage() {
         links: matrix
       });
 
-      toast({ title: "Uplink Success", description: "Matrix synchronized with ImgBB nodes." });
+      toast({ title: "Uplink Success", description: "Matrix synchronized with host node." });
     } catch (err: any) {
       setError(err.message || "Uplink restricted by remote host.");
       toast({ variant: "destructive", title: "Protocol Failure", description: "The upload attempt was rejected." });
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleTestAndConnect = async () => {
+    if (!customKey.trim()) return;
+    setIsTestingNode(true);
+    try {
+      const res = await testImgBBKey(customKey.trim());
+      if (res.success) {
+        const node = { 
+          key: customKey.trim(), 
+          label: customLabel.trim() || 'Custom Node'
+        };
+        setActiveNode(node);
+        localStorage.setItem(`mykit_image_host_node_${user?.uid}`, JSON.stringify(node));
+        setShowCustomNode(false);
+        toast({ title: "Host Node Active", description: `Linked to ${node.label}.` });
+      } else {
+        toast({ variant: "destructive", title: "Handshake Failed", description: res.error });
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "Protocol Error" });
+    } finally {
+      setIsTestingNode(false);
+    }
+  };
+
+  const disconnectNode = () => {
+    setActiveNode(null);
+    localStorage.removeItem(`mykit_image_host_node_${user?.uid}`);
+    setCustomKey('');
+    setCustomLabel('');
+    toast({ title: "Default Node Restored" });
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -218,8 +283,20 @@ export default function ImageToLinkPage() {
                 The standard for anonymous professional hosting. Transform high-resolution imagery into permanent linguistic sharing protocols with a single hardware handshake.
               </p>
            </div>
-           <div className="flex items-center gap-3 shrink-0">
+           <div className="flex items-center gap-3 shrink-0 pb-2">
               <GetHelp toolId="image-to-link" />
+              <Button 
+                onClick={() => setShowCustomNode(true)}
+                variant="outline" 
+                size="sm" 
+                className={cn(
+                  "h-10 px-6 rounded-xl border-white/10 text-[9px] font-black uppercase tracking-widest transition-all shadow-lg",
+                  activeNode ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-secondary"
+                )}
+              >
+                {activeNode ? <ShieldCheck className="w-3.5 h-3.5 mr-2" /> : <Zap className="w-3.5 h-3.5 mr-2" />}
+                {activeNode ? activeNode.label.toUpperCase() : 'HOST'}
+              </Button>
               {(image || links) && user && (
                 <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
@@ -231,7 +308,7 @@ export default function ImageToLinkPage() {
 
       {!user && !authLoading ? (
         <div className="grid grid-cols-1 gap-8 animate-in fade-in zoom-in duration-500">
-           <Card className="glass-card border-border shadow-2xl p-12 sm:p-24 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10">
+           <Card className="glass-card border-border shadow-2xl p-12 sm:p-24 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
               <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
               <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/10 relative z-10">
                  <Lock className="w-8 h-8" />
@@ -261,6 +338,60 @@ export default function ImageToLinkPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start animate-in fade-in duration-1000">
           {/* Left Column: Intake & Configuration */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8">
+            {showCustomNode && (
+               <Card className="glass-card border-primary/40 bg-primary/[0.03] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+                  <CardHeader className="py-6 border-b border-primary/10 flex flex-row items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <KeyRound className="w-4 h-4 text-primary" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Host Node Configuration</span>
+                     </div>
+                     <button onClick={() => setShowCustomNode(false)} className="text-primary/40 hover:text-primary"><X className="w-4 h-4" /></button>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-6">
+                     <div className="space-y-4">
+                        <div className="space-y-2">
+                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">API Key</Label>
+                           <Input 
+                            value={customKey}
+                            onChange={e => setCustomKey(e.target.value)}
+                            type="password"
+                            placeholder="Enter your API key"
+                            className="h-11 bg-background border-border text-xs font-mono"
+                           />
+                        </div>
+                        <div className="space-y-2">
+                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Username / Label</Label>
+                           <Input 
+                            value={customLabel}
+                            onChange={e => setCustomLabel(e.target.value)}
+                            placeholder="Enter display name"
+                            className="h-11 bg-background border-border text-xs font-bold"
+                           />
+                        </div>
+                     </div>
+                     <div className="flex flex-col gap-3">
+                        <Button 
+                          onClick={handleTestAndConnect}
+                          disabled={isTestingNode || !customKey}
+                          className="h-12 w-full bg-primary text-white font-black uppercase text-[10px] rounded-xl shadow-lg"
+                        >
+                           {isTestingNode ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+                           Test & Connect Node
+                        </Button>
+                        {activeNode && (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setShowDisconnectConfirm(true)} 
+                            className="h-10 text-[9px] font-black uppercase border-destructive/20 text-destructive bg-destructive/5"
+                          >
+                             <Unplug className="w-3.5 h-3.5 mr-2" /> Disconnect Node
+                          </Button>
+                        )}
+                     </div>
+                  </CardContent>
+               </Card>
+            )}
+
             <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
@@ -333,17 +464,6 @@ export default function ImageToLinkPage() {
                       </p>
                     </div>
                 </div>
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                    <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                       <Maximize2 className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Zero Storage</h4>
-                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
-                        All local history is volatile and held strictly in hardware memory. Your private archive is never logged to our servers.
-                      </p>
-                    </div>
-                </div>
             </div>
           </div>
 
@@ -374,7 +494,7 @@ export default function ImageToLinkPage() {
                               <img src={image!} alt="Final" className="max-w-full max-h-full object-contain rounded-xl" />
                               <div className="absolute bottom-6 right-6">
                                  <Button asChild size="icon" className="h-10 w-10 rounded-xl bg-emerald-500 shadow-xl shadow-emerald-500/20">
-                                    <a href={links.direct} target="_blank"><ExternalLink className="w-5 h-5" /></a>
+                                    <a href={links.direct} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-5 h-5" /></a>
                                  </Button>
                               </div>
                            </div>
@@ -423,12 +543,12 @@ export default function ImageToLinkPage() {
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
                       <History className="w-4 h-4 text-primary" />
-                      <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60">Identity Archive</h3>
+                      <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60 tracking-tight">Identity Archive</h3>
                    </div>
                    {history.length > 0 && (
                       <button 
                         onClick={() => { setHistory([]); localStorage.removeItem(`mykit_img_history_v3_${user?.uid}`); }} 
-                        className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors"
+                        className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors"
                       >
                         Purge Registry
                       </button>
@@ -443,7 +563,10 @@ export default function ImageToLinkPage() {
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                      {history.map((item) => (
-                       <Card key={item.id} className="glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300">
+                       <Card key={item.id} className={cn(
+                         "glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300",
+                         item.isFavorite && "border-primary/10"
+                       )}>
                           <div 
                             onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                             className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
@@ -458,7 +581,7 @@ export default function ImageToLinkPage() {
                                 <div className="min-w-0">
                                    <p className="text-xs font-black text-foreground truncate uppercase tracking-tight">{item.name}</p>
                                    <div className="flex items-center gap-3 mt-1">
-                                      <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
+                                      <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
                                       <div className="w-1 h-1 rounded-full bg-primary/20" />
                                       <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Node Verified</p>
                                    </div>
@@ -472,8 +595,8 @@ export default function ImageToLinkPage() {
                                    <Trash2 className="w-4 h-4" />
                                 </button>
                                 <div className={cn(
-                                  "w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 group-hover/row:text-primary transition-all border border-transparent",
-                                  expandedId === item.id && "bg-primary text-primary-foreground"
+                                  "w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 transition-all",
+                                  expandedId === item.id && "bg-primary text-white"
                                 )}>
                                    {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                 </div>
@@ -513,7 +636,7 @@ export default function ImageToLinkPage() {
                                </div>
                                <div className="mt-6 flex justify-center">
                                   <Button asChild variant="ghost" className="h-8 text-[8px] font-black uppercase text-primary/40 hover:text-primary">
-                                     <a href={item.links.view} target="_blank">Launch Official Registry View <ArrowRight className="ml-2 w-3 h-3" /></a>
+                                     <a href={item.links.view} target="_blank" rel="noopener noreferrer">Launch Official Registry View <ArrowRight className="ml-2 w-3 h-3" /></a>
                                   </Button>
                                </div>
                             </div>
@@ -526,7 +649,36 @@ export default function ImageToLinkPage() {
           </div>
         </div>
       )}
-      
+
+      {/* Disconnect Alert */}
+      <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <Unplug className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               Disconnect Host
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+              Are you sure you want to disconnect your private host node? This action is specific to your current identity session.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                disconnectNode();
+                setShowDisconnectConfirm(false);
+              }}
+              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
