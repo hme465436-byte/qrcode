@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -34,7 +33,8 @@ import {
   FileUp,
   ClipboardCheck,
   Eye,
-  Settings2
+  Settings2,
+  ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -423,7 +423,7 @@ export default function ImageToLinkPage() {
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
                       <History className="w-4 h-4 text-primary" />
-                      <h3 className="text-xl font-headline font-black text-foreground/60 uppercase tracking-tight">Identity Archive</h3>
+                      <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60">Identity Archive</h3>
                    </div>
                    {history.length > 0 && (
                       <button 
