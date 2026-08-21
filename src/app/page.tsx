@@ -145,6 +145,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/background-remove', 
+    icon: Eraser, 
+    title: 'Background Remove', 
+    desc: 'Isolate subjects from photos and export high-fidelity transparent PNGs.', 
+    label: 'IMAGE PRO', 
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    glowClass: 'bg-indigo-400/10',
+    keywords: ['background remove', 'transparent image', 'png maker', 'subject isolate', 'cutout', 'remove.bg'],
+    category: 'image'
+  },
+  { 
     href: '/telegram-file-host', 
     icon: MessageCircle, 
     title: 'FILE HOST', 
@@ -504,7 +515,7 @@ const TOOLS: Tool[] = [
     label: 'FISCAL', 
     color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
-    keywords: ['wps', 'excel', 'spreadsheet', 'table', 'csv', 'inventory', 'invoice', 'sheets'],
+    keywords: ['wps', 'excel', 'spreadsheet', 'table', 'csv', 'inventory', 'income', 'sheets'],
     category: 'utilities'
   },
   { 
@@ -1453,7 +1464,8 @@ export default function Home() {
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
-      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio'
+      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
+      'Background Remove', 'Transparent Image', 'Remove.bg'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

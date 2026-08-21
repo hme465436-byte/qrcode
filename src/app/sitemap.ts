@@ -21,7 +21,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/currency-converter', '/weather', '/namaz-times', '/quran-ayah', '/crypto-prices', '/country', '/advice',
     '/pets', '/jokes', '/facts', '/pokemon', '/books', '/holidays', '/quotes', '/image-gallery', '/translate',
     '/free-games', '/coding-resources', '/wikipedia', '/city-explorer', '/github-user', '/website-trust-checker',
-    '/password-breach-checker', '/dns-lookup', '/url-shortener', '/wallpapers', '/image-to-link', '/telegram-file-host'
+    '/password-breach-checker', '/dns-lookup', '/url-shortener', '/wallpapers', '/image-to-link', '/telegram-file-host',
+    '/background-remove'
   ];
 
   const routes = tools.map(tool => ({

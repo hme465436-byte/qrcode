@@ -67,6 +67,7 @@ import {
   History,
   TrendingUp,
   AlertCircle,
+  Eraser,
   Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -82,6 +83,7 @@ interface Tool {
 
 const TOOLS: Tool[] = [
   { href: '/single', title: 'Single Studio', icon: QrCode, keywords: ['qr', 'generator', 'code', 'brand'], desc: 'Branded QR codes.' },
+  { href: '/background-remove', title: 'Background Remove', icon: Eraser, keywords: ['remove bg', 'transparent', 'cutout', 'remove.bg'], desc: 'Isolate subject.' },
   { href: '/bulk', title: 'Bulk Mode', icon: Layers, keywords: ['bulk', 'batch', 'many'], desc: 'Mass QR production.' },
   { href: '/url-shortener', title: 'URL Shortener', icon: LinkIcon, keywords: ['url', 'short', 'tiny', 'link'], desc: 'Compress long URLs.' },
   { href: '/json-formatter', title: 'JSON Formatter', icon: Braces, keywords: ['json', 'format', 'pretty'], desc: 'Clean JSON data.' },
@@ -109,7 +111,7 @@ const TOOLS: Tool[] = [
   { href: '/vocal-separator', title: 'Vocal Remover', icon: MicOff, keywords: ['vocal', 'karaoke', 'music'], desc: 'Isolate or remove voice.' },
   { href: '/audio-joiner', title: 'Audio Joiner', icon: ListMusic, keywords: ['audio', 'merge', 'join'], desc: 'Combine MP3 tracks.' },
   { href: '/audio-booster', title: 'Volume Booster', icon: Volume2, keywords: ['louder', 'gain', 'amplify'], desc: 'Boost audio volume.' },
-  { href: '/letter-art', title: 'Letter Art', icon: CaseSensitive, keywords: ['ascii', 'text art', 'letter'], desc: 'Img to text art.' },
+  { href: '/letter-art', title: 'Letter Art', icon: CaseSensitive, keywords: ['image to text', 'ascii art', 'letter'], desc: 'Img to text art.' },
   { href: '/dot-art', title: 'Dot Art', icon: Grid3X3, keywords: ['braille', 'dots', 'art'], desc: 'Img to dots.' },
   { href: '/repeater', title: 'Text Repeater', icon: Repeat, keywords: ['repeat', 'multiply', 'spam'], desc: 'Multiply text.' },
   { href: '/hex-converter', title: 'Hex Converter', icon: FileCode, keywords: ['hex', 'binary', 'dump'], desc: 'Binary to hex.' },
