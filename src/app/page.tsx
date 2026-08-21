@@ -145,6 +145,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/telegram-file-host', 
+    icon: MessageCircle, 
+    title: 'Telegram Host', 
+    desc: 'Archive and share any file via the Telegram Bot Protocol.', 
+    label: 'HOSTING', 
+    color: 'text-sky-400 bg-sky-400/10 border-sky-400/20',
+    glowClass: 'bg-sky-400/10',
+    keywords: ['telegram host', 'file sharing', 'send file', 'bot upload', 'archive', 'cloud share'],
+    category: 'utilities'
+  },
+  { 
     href: '/image-to-link', 
     icon: LinkIcon, 
     title: 'Image to Link', 
@@ -1258,7 +1269,7 @@ const TOOLS: Tool[] = [
   { 
     href: '/letter-art', 
     icon: CaseSensitive, 
-    title: 'Letter Art Studio', 
+    title: 'Letter Art', 
     desc: 'Image to text conversion using custom alphabets.', 
     label: 'ASCII', 
     color: 'text-slate-500 bg-slate-500/10 border-slate-500/20',
@@ -1330,28 +1341,6 @@ const TOOLS: Tool[] = [
     color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
-    category: 'utilities'
-  },
-  { 
-    href: '/password-breach-checker', 
-    icon: ShieldAlert, 
-    title: 'Breach Checker', 
-    desc: 'Verify if passwords have been exposed using secure k-Anonymity.', 
-    label: 'SECURITY', 
-    color: 'text-red-500 bg-red-500/10 border-red-500/20',
-    glowClass: 'bg-red-500/10',
-    keywords: ['password breach', 'pwned', 'security check', 'hack check', 'breach checker', 'password safety'],
-    category: 'utilities'
-  },
-  { 
-    href: '/website-trust-checker', 
-    icon: ShieldCheck, 
-    title: 'Trust Checker', 
-    desc: 'Professional multi-node security diagnostics and domain auditing.', 
-    label: 'SECURITY', 
-    color: 'text-red-500 bg-red-500/10 border-red-500/20',
-    glowClass: 'bg-red-500/10',
-    keywords: ['trust', 'security', 'malware', 'dns', 'ip', 'safe', 'website check', 'phishing'],
     category: 'utilities'
   }
 ];
@@ -1464,7 +1453,7 @@ export default function Home() {
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
-      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting'
+      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'Telegram Host', 'Telegram upload'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
