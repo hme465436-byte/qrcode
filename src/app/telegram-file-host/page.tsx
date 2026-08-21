@@ -46,6 +46,16 @@ import { GetHelp } from '@/components/qr-canvas/get-help';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
 import { uploadToTelegram, getDownloadProtocol } from './actions';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TelegramLinkMatrix {
   fileId: string;
@@ -72,6 +82,9 @@ export default function TelegramFileHostPage() {
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  
+  // Delete Confirmation State
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   // Download Link States
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
@@ -110,6 +123,7 @@ export default function TelegramFileHostPage() {
       localStorage.setItem(`mykit_tg_history_v1_${user.uid}`, JSON.stringify(next));
       return next;
     });
+    setDeleteTargetId(null);
     toast({ title: "Record Purged" });
   };
 
@@ -443,7 +457,7 @@ export default function TelegramFileHostPage() {
                              </div>
                              <div className="flex items-center gap-4 shrink-0">
                                 <button 
-                                  onClick={(e) => { e.stopPropagation(); removeFromHistory(item.id); }} 
+                                  onClick={(e) => { e.stopPropagation(); setDeleteTargetId(item.id); }} 
                                   className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/10 hover:text-red-500 hover:bg-red-500/10 transition-all"
                                 >
                                    <Trash2 className="w-4 h-4" />
@@ -548,11 +562,36 @@ export default function TelegramFileHostPage() {
         </div>
       )}
       
+      {/* Confirmation Dialog */}
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <ShieldAlert className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Final Confirmation</AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+              Are you sure you want to remove this file from history?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteTargetId && removeFromHistory(deleteTargetId)}
+              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
