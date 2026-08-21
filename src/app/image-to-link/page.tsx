@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Link as LinkIcon, 
   Upload, 
@@ -24,7 +24,10 @@ import {
   RotateCcw,
   Lock,
   User,
-  AlertTriangle
+  AlertTriangle,
+  History,
+  Maximize2,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,6 +48,15 @@ interface LinkMatrix {
   bbcode: string;
 }
 
+interface HistoryItem {
+  id: string;
+  url: string;
+  thumb: string;
+  viewUrl: string;
+  name: string;
+  timestamp: number;
+}
+
 export default function ImageToLinkPage() {
   const { toast } = useToast();
   const { user, loading: authLoading } = useUser();
@@ -54,8 +66,42 @@ export default function ImageToLinkPage() {
   const [links, setLinks] = useState<LinkMatrix | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // --- Persistence Matrix ---
+  useEffect(() => {
+    if (user) {
+      const saved = localStorage.getItem(`mykit_img_history_v2_${user.uid}`);
+      if (saved) {
+        try {
+          setHistory(JSON.parse(saved));
+        } catch (e) {
+          console.error("Archive sync error.");
+        }
+      }
+    }
+  }, [user]);
+
+  const saveToHistory = (item: HistoryItem) => {
+    if (!user) return;
+    setHistory(prev => {
+      const next = [item, ...prev.filter(h => h.url !== item.url)].slice(0, 10);
+      localStorage.setItem(`mykit_img_history_v2_${user.uid}`, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const removeFromHistory = (id: string) => {
+    if (!user) return;
+    setHistory(prev => {
+      const next = prev.filter(h => h.id !== id);
+      localStorage.setItem(`mykit_img_history_v2_${user.uid}`, JSON.stringify(next));
+      return next;
+    });
+    toast({ title: "Identity Purged" });
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -98,6 +144,16 @@ export default function ImageToLinkPage() {
           bbcode: `[img]${d.url}[/img]`
         };
         setLinks(matrix);
+        
+        saveToHistory({
+          id: Math.random().toString(36).substr(2, 9),
+          url: d.url,
+          thumb: d.thumb?.url || d.url,
+          viewUrl: d.url_viewer,
+          name: file?.name || 'Untitled Identity',
+          timestamp: Date.now()
+        });
+
         toast({ title: "Uplink Success", description: "Matrix synchronized with ImgBB nodes." });
       } else {
         throw new Error(result.error);
@@ -174,21 +230,6 @@ export default function ImageToLinkPage() {
                 </Button>
               </div>
            </Card>
-
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-8 rounded-[3rem] bg-secondary/30 border border-white/5 flex flex-col items-center text-center gap-4">
-                 <ShieldCheck className="w-8 h-8 text-primary/40" />
-                 <p className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Secure Handshake</p>
-              </div>
-              <div className="p-8 rounded-[3rem] bg-secondary/30 border border-white/5 flex flex-col items-center text-center gap-4">
-                 <Zap className="w-8 h-8 text-primary/40" />
-                 <p className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Instant Hosting</p>
-              </div>
-              <div className="p-8 rounded-[3rem] bg-secondary/30 border border-white/5 flex flex-col items-center text-center gap-4">
-                 <Globe className="w-8 h-8 text-primary/40" />
-                 <p className="text-[9px] font-black uppercase text-foreground/40 tracking-widest">Global Reach</p>
-              </div>
-           </div>
         </div>
       ) : authLoading ? (
         <div className="flex flex-col items-center justify-center py-40 gap-6">
@@ -209,6 +250,8 @@ export default function ImageToLinkPage() {
               <CardContent className="pt-10 space-y-8">
                 <div 
                   onClick={() => !isProcessing && fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files[0]) handleFileUpload({ target: { files: e.dataTransfer.files } } as any); }}
                   className={cn(
                     "relative h-64 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer group/upload",
                     image && "border-solid border-primary/20",
@@ -257,17 +300,54 @@ export default function ImageToLinkPage() {
               </CardContent>
             </Card>
 
-            <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-               <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                  <ShieldCheck className="w-7 h-7" />
-               </div>
-               <div className="space-y-2">
-                 <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-                 <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                   All visual data is transmitted via secure server-side tunnels. We do not store or log your imagery on studio infrastructure.
-                 </p>
-               </div>
-            </div>
+            {/* History Matrix */}
+            {history.length > 0 && (
+              <Card className="glass-card border-border shadow-xl flex flex-col max-h-[500px] animate-in slide-in-from-bottom-4">
+                 <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3">
+                       <History className="w-4 h-4 text-primary" />
+                       <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Archive Matrix</CardTitle>
+                    </div>
+                    <button 
+                      onClick={() => { setHistory([]); localStorage.removeItem(`mykit_img_history_v2_${user?.uid}`); }} 
+                      className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors"
+                    >
+                      Purge
+                    </button>
+                 </CardHeader>
+                 <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1">
+                    <div className="divide-y divide-white/5">
+                       {history.map(item => (
+                         <div key={item.id} className="p-4 flex items-center justify-between group/row hover:bg-white/5 transition-all">
+                            <div className="flex items-center gap-4 min-w-0">
+                               <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+                                  <img src={item.thumb} alt="" className="w-full h-full object-cover" />
+                               </div>
+                               <div className="min-w-0">
+                                  <p className="text-[10px] font-bold text-foreground truncate uppercase">{item.name}</p>
+                                  <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
+                               </div>
+                            </div>
+                            <div className="flex items-center gap-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                               <button 
+                                onClick={() => handleCopy(item.url, `hist-${item.id}`)}
+                                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary transition-all"
+                               >
+                                  {isCopied === `hist-${item.id}` ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                               </button>
+                               <button 
+                                onClick={() => removeFromHistory(item.id)}
+                                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground/40 hover:text-destructive transition-all"
+                               >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                               </button>
+                            </div>
+                         </div>
+                       ))}
+                    </div>
+                 </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right Column: Output */}
@@ -300,7 +380,7 @@ export default function ImageToLinkPage() {
                      <div className="flex-1 flex flex-col items-center justify-center space-y-10 py-24">
                         <div className="relative">
                            <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                           <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
+                           <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                         </div>
                         <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Negotiating Cloud Matrix...</p>
                      </div>
@@ -350,6 +430,31 @@ export default function ImageToLinkPage() {
                    )}
                 </CardContent>
              </Card>
+
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                   <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                      <ShieldCheck className="w-7 h-7" />
+                   </div>
+                   <div className="space-y-2">
+                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                       All visual data is transmitted via secure server-side tunnels. We do not store or log your imagery on studio infrastructure.
+                     </p>
+                   </div>
+                </div>
+                <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                   <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                      <Maximize2 className="w-7 h-7" />
+                   </div>
+                   <div className="space-y-2">
+                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">High Fidelity</h4>
+                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                       1:1 binary preservation ensuring your visual assets retain original resolution and metadata during the cloud sync.
+                     </p>
+                   </div>
+                </div>
+             </div>
           </div>
         </div>
       )}
@@ -360,6 +465,19 @@ export default function ImageToLinkPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .bg-checkered {
+          background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+          background-size: 20px 20px;
+        }
+        .dark .bg-checkered {
+           background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
+                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #111113 75%), 
+                            linear-gradient(-45deg, transparent 75%, #111113 75%);
+        }
       `}</style>
     </div>
   );
