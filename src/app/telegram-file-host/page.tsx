@@ -23,7 +23,16 @@ import {
   Lock,
   ArrowLeft,
   Cloud,
-  Trash2
+  Trash2,
+  FileText,
+  FileImage,
+  FileAudio,
+  FileVideo,
+  FileArchive,
+  ExternalLink,
+  Settings2,
+  Maximize2,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -161,8 +170,18 @@ export default function TelegramFileHostPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
+  const getFileIcon = (mime: string = '') => {
+    if (mime.startsWith('image/')) return <FileImage className="w-6 h-6" />;
+    if (mime.startsWith('audio/')) return <FileAudio className="w-6 h-6" />;
+    if (mime.startsWith('video/')) return <FileVideo className="w-6 h-6" />;
+    if (mime.includes('pdf')) return <FileText className="w-6 h-6" />;
+    if (mime.includes('zip') || mime.includes('archive')) return <FileArchive className="w-6 h-6" />;
+    return <FileText className="w-6 h-6" />;
+  };
+
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
+      {/* Header Matrix */}
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <MessageCircle className="w-3.5 h-3.5" /> Telegram Protocol
@@ -210,13 +229,13 @@ export default function TelegramFileHostPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          {/* Left Column */}
+          {/* Left Column: Inbound Matrix */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
             <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                   <Upload className="w-5 h-5 text-primary" /> Inbound Matrix
+                   <FileUp className="w-5 h-5 text-primary" /> Inbound Matrix
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-10 space-y-8">
@@ -257,7 +276,7 @@ export default function TelegramFileHostPage() {
                   className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                 >
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                  Archive to Telegram
+                  Execute Transmission
                 </Button>
 
                 {error && (
@@ -272,33 +291,35 @@ export default function TelegramFileHostPage() {
               </CardContent>
             </Card>
 
-            <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Archival Fidelity</h4>
-                  <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    1:1 binary preservation ensures your assets remain identical to the source. No compression or metadata stripping is applied during the archival cycle.
-                  </p>
+            <div className="grid grid-cols-1 gap-6">
+                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                    <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                       <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Archival Fidelity</h4>
+                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
+                        1:1 binary preservation ensures your assets remain identical to the source. No compression or metadata stripping is applied.
+                      </p>
+                    </div>
                 </div>
             </div>
           </div>
 
-          {/* Right Column */}
+          {/* Right Column: Output & Archive */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-10 animate-in fade-in slide-in-from-right-6 duration-1000">
              {result && (
-                <Card className="glass-card border-primary/20 bg-primary/[0.02] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-500">
-                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-                   <CardHeader className="py-6 border-b border-primary/10 bg-primary/5 px-6 sm:px-10">
+                <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-500">
+                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+                   <CardHeader className="py-6 border-b border-emerald-500/10 bg-emerald-500/5 px-6 sm:px-10">
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-inner">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-inner">
                                <CheckCircle2 className="w-5 h-5" />
                             </div>
-                            <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Archival Result</CardTitle>
+                            <CardTitle className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.5em]">Archival Result</CardTitle>
                          </div>
-                         <Badge className="bg-primary/10 text-primary border-primary/20 text-[8px] font-black uppercase">Verified Upload</Badge>
+                         <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 rounded-full text-[8px] font-black uppercase">Verified Upload</Badge>
                       </div>
                    </CardHeader>
                    <CardContent className="p-8 sm:p-12 space-y-10">
@@ -326,7 +347,7 @@ export default function TelegramFileHostPage() {
                                <p className="text-[10px] font-mono font-bold text-primary break-all leading-relaxed">{result.fileId}</p>
                             </div>
                             <Button onClick={() => handleCopy(result.fileId, 'fileId')} variant="outline" className="w-full h-11 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[9px] tracking-widest">
-                               {isCopied === 'fileId' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                               {isCopied === 'fileId' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                                Copy Protocol ID
                             </Button>
                          </div>
@@ -345,7 +366,7 @@ export default function TelegramFileHostPage() {
                          </div>
                          <div className="flex gap-3 relative z-10 w-full sm:w-auto">
                             <Button onClick={() => handleCopy(`File: ${result.name}\nID: ${result.fileId}`, 'full')} className="h-14 px-8 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-white/90">
-                               {isCopied === 'full' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                               {isCopied === 'full' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                                Share Info
                             </Button>
                          </div>
@@ -381,7 +402,7 @@ export default function TelegramFileHostPage() {
                           >
                              <div className="flex items-center gap-5 min-w-0">
                                 <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center shrink-0 shadow-inner group-hover/row:border-primary/40 transition-colors">
-                                   <Database className="w-6 h-6 text-primary/40 group-hover/row:text-primary transition-colors" />
+                                   {getFileIcon(item.data.mime)}
                                 </div>
                                 <div className="min-w-0">
                                    <p className="text-xs font-black text-foreground truncate uppercase tracking-tight">{item.name}</p>
