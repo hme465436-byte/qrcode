@@ -11,7 +11,6 @@ import {
   Activity,
   ShieldCheck,
   ShieldAlert,
-  RefreshCcw,
   RotateCcw,
   History,
   FileUp,
@@ -22,30 +21,25 @@ import {
   MessageCircle,
   Paperclip,
   Lock,
-  ArrowLeft,
   Cloud,
   Trash2,
-  FileText,
   FileImage,
   FileAudio,
   FileVideo,
   FileArchive,
+  FileText,
   ExternalLink,
   Settings2,
-  Maximize2,
   Check,
   Download,
   Link as LinkIcon,
   Search,
-  Filter,
   Star,
   Edit3,
   Share2,
   BarChart3,
   CheckSquare,
   Square,
-  Smartphone,
-  Save,
   Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -61,6 +55,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -96,6 +91,17 @@ interface HistoryItem {
 }
 
 type FilterType = 'all' | 'image' | 'audio' | 'video' | 'pdf' | 'zip';
+
+/**
+ * Global utility for bitstream volume formatting.
+ */
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
 
 export default function TelegramFileHostPage() {
   const { toast } = useToast();
@@ -244,7 +250,7 @@ export default function TelegramFileHostPage() {
   const handleBulkGenerate = async () => {
     if (selectedIds.size === 0) return;
     toast({ title: "Batch Processing" });
-    for (const id of selectedIds) {
+    for (const id of Array.from(selectedIds)) {
       const item = history.find(h => h.id === id);
       if (item && !generatedUrls[id]) {
         await handleGenerateLink(item.data.fileId, id);
@@ -283,6 +289,16 @@ export default function TelegramFileHostPage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
+  const handleShare = (url: string, platform: 'wa' | 'tg') => {
+    const text = `I sent you some files: ${url}`;
+    const encoded = encodeURIComponent(text);
+    if (platform === 'wa') {
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    } else {
+      window.open(`https://t.me/share/url?url=${url}&text=${encoded}`, '_blank');
+    }
+  };
+
   const getFileIcon = (mime: string) => {
     if (mime.includes('image')) return <FileImage className="w-5 h-5 text-emerald-500" />;
     if (mime.includes('audio')) return <FileAudio className="w-5 h-5 text-amber-500" />;
@@ -305,6 +321,11 @@ export default function TelegramFileHostPage() {
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="telegram-file-host" />
+           {(file || result) && user && (
+                <Button variant="outline" size="sm" onClick={() => { setFile(null); setResult(null); setError(null); }} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
+                </Button>
+            )}
         </div>
       </div>
 
@@ -378,7 +399,7 @@ export default function TelegramFileHostPage() {
                   <Button 
                     onClick={executeUpload} 
                     disabled={isProcessing || !file}
-                    className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95"
+                    className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                   >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
                     Execute Uplink
@@ -413,7 +434,7 @@ export default function TelegramFileHostPage() {
             </Card>
 
             <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group hover:bg-secondary/80 transition-all">
-                <ShieldCheck className="w-5 h-5 text-primary/40 group-hover:text-primary mt-0.5 shrink-0" />
+                <Cloud className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                 <div className="space-y-1">
                    <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Distributed Hosting</h4>
                    <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Files are stored across Telegram's global data matrix, ensuring high availability and permanent archival.</p>
