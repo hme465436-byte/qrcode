@@ -94,7 +94,7 @@ interface AudioVariant {
   size: number;
 }
 
-interface TelegramLinkMatrix {
+interface FileLinkMatrix {
   fileId: string;
   messageId: number;
   name: string;
@@ -109,7 +109,7 @@ interface HistoryItem {
   customName?: string;
   isFavorite?: boolean;
   timestamp: number;
-  data: TelegramLinkMatrix;
+  data: FileLinkMatrix;
 }
 
 type FilterType = 'all' | 'image' | 'audio' | 'video' | 'pdf' | 'zip';
@@ -122,7 +122,7 @@ export default function FILEHOSTPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [result, setResult] = useState<TelegramLinkMatrix | null>(null);
+  const [result, setResult] = useState<FileLinkMatrix | null>(null);
   const [error, setError] = useState<string | null>(null);
   
   // Custom Node State
@@ -183,7 +183,7 @@ export default function FILEHOSTPage() {
     return history
       .filter(item => {
         const matchesSearch = (item.customName || item.name).toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = filterType === 'all' || item.data.mime.includes(filterType);
+        const matchesFilter = filterType === 'all' || item.data.mime.toLowerCase().includes(filterType);
         return matchesSearch && matchesFilter;
       })
       .sort((a, b) => {
@@ -298,10 +298,12 @@ export default function FILEHOSTPage() {
         saveHistoryToDisk(nextHistory);
         toast({ title: "Uplink Success" });
 
-        // Trigger Audio Synthesis Pipeline
+        // Trigger Audio Synthesis Pipeline in background - DO NOT AWAIT
         if (file.type.startsWith('audio/')) {
           handleAudioVariants(response.data.fileId, newItem.id);
         }
+        
+        setFile(null); // Reset intake
       } else {
         throw new Error(response.error || "Uplink restricted.");
       }
@@ -347,7 +349,7 @@ export default function FILEHOSTPage() {
         setActiveNode(node);
         localStorage.setItem(`mykit_custom_node_${user?.uid}`, JSON.stringify(node));
         setShowCustomNode(false);
-        toast({ title: "Sovereign Node Active", description: `Linked to ${node.name}.` });
+        toast({ title: "Host Node Active", description: `Linked to ${node.name}.` });
       } else {
         toast({ variant: "destructive", title: "Handshake Failed", description: res.error });
       }
@@ -479,13 +481,12 @@ export default function FILEHOSTPage() {
           
           {/* LEFT: Intake Section */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-            {/* Custom Node Config */}
             {showCustomNode && (
                <Card className="glass-card border-primary/40 bg-primary/[0.03] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
                   <CardHeader className="py-6 border-b border-primary/10 flex flex-row items-center justify-between">
                      <div className="flex items-center gap-3">
                         <KeyRound className="w-4 h-4 text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Sovereign Node Configuration</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Host Node Configuration</span>
                      </div>
                      <button onClick={() => setShowCustomNode(false)} className="text-primary/40 hover:text-primary"><X className="w-4 h-4" /></button>
                   </CardHeader>
@@ -649,7 +650,7 @@ export default function FILEHOSTPage() {
              </div>
 
              {selectedIds.size > 0 && (
-               <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between animate-in slide-in-from-top-2">
+               <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between animate-in slide-in-from-top-2">
                   <div className="flex items-center gap-4">
                      <span className="text-[10px] font-black uppercase text-primary tracking-widest">{selectedIds.size} Selected</span>
                      <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="text-[9px] font-black uppercase text-foreground/40 h-8">Clear</Button>
@@ -741,7 +742,6 @@ export default function FILEHOSTPage() {
                      {expandedId === item.id && (
                        <div className="px-5 pb-8 pt-2 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-500">
                           <div className="space-y-8 pt-6">
-                             {/* Original Control */}
                              <div className="flex flex-col sm:flex-row items-center gap-4 justify-between bg-white/5 p-5 rounded-3xl border border-white/5">
                                 <div className="flex items-center gap-4">
                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -774,7 +774,6 @@ export default function FILEHOSTPage() {
                                 </div>
                              </div>
 
-                             {/* Audio Format Matrix */}
                              {item.data.mime.includes('audio') && (
                                <div className="space-y-4">
                                   <div className="flex items-center gap-3 px-1">
@@ -785,6 +784,8 @@ export default function FILEHOSTPage() {
                                      {['mp3', 'wav', 'ogg', 'm4a', 'flac'].map(fmt => {
                                        const variant = item.data.variants?.[fmt];
                                        const gKey = `${item.id}-${fmt}`;
+                                       if (!variant && !variantProcessing[item.id]) return null;
+
                                        return (
                                          <div key={fmt} className="p-5 rounded-3xl bg-black/40 border border-white/5 flex items-center justify-between gap-4">
                                             <div className="flex items-center gap-3">
@@ -793,11 +794,11 @@ export default function FILEHOSTPage() {
                                                </div>
                                                <div>
                                                   <p className="text-[9px] font-black text-foreground/60 uppercase">{fmt.toUpperCase()} Variant</p>
-                                                  <p className="text-[7px] font-bold text-foreground/20 uppercase">{variant ? formatSize(variant.size) : 'Awaiting...'}</p>
+                                                  <p className="text-[7px] font-bold text-foreground/20 uppercase">{variant ? formatSize(variant.size) : 'Processing...'}</p>
                                                </div>
                                             </div>
                                             
-                                            {variant ? (
+                                            {variant && (
                                               <div className="flex gap-2">
                                                  {!generatedUrls[gKey] ? (
                                                    <button 
@@ -818,8 +819,6 @@ export default function FILEHOSTPage() {
                                                    </>
                                                  )}
                                               </div>
-                                            ) : (
-                                              <div className="w-1.5 h-1.5 rounded-full bg-white/5" />
                                             )}
                                          </div>
                                        );
@@ -844,7 +843,6 @@ export default function FILEHOSTPage() {
         </div>
       )}
       
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
@@ -864,13 +862,9 @@ export default function FILEHOSTPage() {
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => {
-                if (deleteTarget === 'all') {
-                  saveHistoryToDisk([]);
-                } else {
-                  saveHistoryToDisk(history.filter(h => h.id !== deleteTarget));
-                }
+                if (deleteTarget === 'all') saveHistoryToDisk([]);
+                else saveHistoryToDisk(history.filter(h => h.id !== deleteTarget));
                 setDeleteTarget(null);
-                toast({ title: deleteTarget === 'all' ? "Registry Sanitized" : "Identity Purged" });
               }}
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
@@ -880,7 +874,6 @@ export default function FILEHOSTPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Disconnect Host Confirmation Dialog */}
       <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">

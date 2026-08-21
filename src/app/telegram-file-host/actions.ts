@@ -1,9 +1,8 @@
-
 'use server';
 
 /**
  * @fileOverview Server actions for File Host.
- * Handles secure communication with Bot API using environment secrets or user-provided tokens.
+ * handles secure communication with Bot API using environment secrets or user-provided tokens.
  * Integrated with FFmpeg for multi-format audio synthesis.
  */
 
@@ -75,6 +74,9 @@ export async function convertAndUploadAudioVariant(
   customToken?: string,
   customChatId?: string
 ) {
+  const tmpIn = path.join(os.tmpdir(), `in_${sourceFileId}`);
+  const tmpOut = path.join(os.tmpdir(), `out_${sourceFileId}.${targetFormat}`);
+
   try {
     const token = customToken || process.env.TELEGRAM_BOT_TOKEN;
     const chatId = customChatId || process.env.TELEGRAM_CHAT_ID;
@@ -90,9 +92,6 @@ export async function convertAndUploadAudioVariant(
     // 2. Fetch bitstream
     const fileRes = await fetch(`https://api.telegram.org/file/bot${token}/${filePath}`);
     const buffer = Buffer.from(await fileRes.arrayBuffer());
-
-    const tmpIn = path.join(os.tmpdir(), `in_${sourceFileId}`);
-    const tmpOut = path.join(os.tmpdir(), `out_${sourceFileId}.${targetFormat}`);
 
     fs.writeFileSync(tmpIn, buffer);
 
@@ -124,10 +123,6 @@ export async function convertAndUploadAudioVariant(
     });
 
     const uploadData = await uploadRes.json();
-    
-    // Immediate Hardware Buffer Purge
-    try { fs.unlinkSync(tmpIn); fs.unlinkSync(tmpOut); } catch(e) {}
-
     if (!uploadData.ok) throw new Error(uploadData.description || "Variant upload failed");
 
     const doc = uploadData.result.document;
@@ -142,6 +137,10 @@ export async function convertAndUploadAudioVariant(
   } catch (error: any) {
     console.error('Synthesis Action Failed:', error);
     return { success: false, error: error.message };
+  } finally {
+    // Immediate Hardware Buffer Purge
+    try { if (fs.existsSync(tmpIn)) fs.unlinkSync(tmpIn); } catch(e) {}
+    try { if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut); } catch(e) {}
   }
 }
 
