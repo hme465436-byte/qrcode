@@ -426,7 +426,7 @@ export default function FILEHOSTPage() {
                             value={customToken}
                             onChange={e => setCustomToken(e.target.value)}
                             type="password"
-                            placeholder="8908364086:AAF..."
+                            placeholder="Enter your tokken"
                             className="h-11 bg-background border-border text-xs font-mono"
                            />
                         </div>
@@ -435,7 +435,7 @@ export default function FILEHOSTPage() {
                            <Input 
                             value={customChatId}
                             onChange={e => setCustomChatId(e.target.value)}
-                            placeholder="7235236896"
+                            placeholder="Enter your chat id"
                             className="h-11 bg-background border-border text-xs font-mono"
                            />
                         </div>
@@ -824,3 +824,4 @@ export default function FILEHOSTPage() {
     </div>
   );
 }
+
