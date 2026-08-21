@@ -22,7 +22,9 @@ import {
   Maximize2,
   ImageIcon,
   Save,
-  ArrowRight
+  ArrowRight,
+  X,
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +46,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import Link from 'next/link';
 
 export default function BackgroundRemovePage() {
   const { toast } = useToast();
