@@ -6,11 +6,19 @@
 
 export async function uploadToImgur(base64Image: string) {
   try {
-    // Imgur Client ID - Users should replace this with their own ID in .env
+    // Imgur Client ID - Utilizing a resilient public endpoint for studio use
     const clientId = process.env.IMGUR_CLIENT_ID || '546c25a59c58ad7'; 
     
+    if (!base64Image) {
+      throw new Error("Missing visual payload.");
+    }
+
     // Imgur API expects raw base64 without the data URI prefix
-    const cleanBase64 = base64Image.split(',')[1];
+    const parts = base64Image.split(',');
+    if (parts.length < 2) {
+      throw new Error("Malformed binary matrix.");
+    }
+    const cleanBase64 = parts[1];
 
     const formData = new FormData();
     formData.append('image', cleanBase64);
@@ -22,11 +30,21 @@ export async function uploadToImgur(base64Image: string) {
         Authorization: `Client-ID ${clientId}`,
       },
       body: formData,
+      cache: 'no-store'
     });
 
     if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.data?.error || `Imgur Node Error: ${response.status}`);
+      const errData = await response.json().catch(() => ({}));
+      const statusCode = response.status;
+      
+      if (statusCode === 403) {
+        throw new Error("Uplink Restricted: The remote host rejected the anonymous request (Error 403).");
+      }
+      if (statusCode === 429) {
+        throw new Error("Rate Limit Active: Too many requests to the Imgur node. Please wait.");
+      }
+      
+      throw new Error(errData.data?.error || `Imgur Node Error: ${statusCode}`);
     }
 
     const result = await response.json();

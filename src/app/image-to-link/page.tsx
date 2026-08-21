@@ -23,7 +23,8 @@ import {
   RefreshCcw,
   RotateCcw,
   Lock,
-  User
+  User,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,7 +78,7 @@ export default function ImageToLinkPage() {
   };
 
   const executeUpload = async () => {
-    if (!image) return;
+    if (!image || !user) return;
     
     setIsProcessing(true);
     setError(null);
@@ -102,7 +103,7 @@ export default function ImageToLinkPage() {
       }
     } catch (err: any) {
       setError(err.message || "Uplink restricted by remote host.");
-      toast({ variant: "destructive", title: "Protocol Failure" });
+      toast({ variant: "destructive", title: "Protocol Failure", description: "The upload attempt was rejected." });
     } finally {
       setIsProcessing(false);
     }
@@ -160,7 +161,7 @@ export default function ImageToLinkPage() {
               <div className="space-y-3 relative z-10">
                  <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Login Required</h2>
                  <p className="text-[10px] sm:text-xs text-foreground/40 font-black uppercase tracking-[0.4em] leading-relaxed">
-                    Login required to use Image Upload
+                    You must be logged in to use the high-fidelity upload matrix.
                  </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md relative z-10">
@@ -168,7 +169,7 @@ export default function ImageToLinkPage() {
                    <Link href="/login?redirect=/image-to-link">Sign In to Studio</Link>
                 </Button>
                 <Button asChild variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
-                   <Link href="/about">Learn More</Link>
+                   <Link href="/">Back to Tools</Link>
                 </Button>
               </div>
            </Card>
@@ -191,14 +192,14 @@ export default function ImageToLinkPage() {
       ) : authLoading ? (
         <div className="flex flex-col items-center justify-center py-40 gap-6">
            <Loader2 className="w-12 h-12 text-primary animate-spin" />
-           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">Checking Protocol...</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">Authenticating Protocol...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start animate-in fade-in duration-700">
           {/* Left Column: Intake */}
           <div className="lg:col-span-5 space-y-8">
             <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
                    <Upload className="w-5 h-5 text-primary" /> Inbound Matrix
@@ -244,9 +245,12 @@ export default function ImageToLinkPage() {
                 </Button>
 
                 {error && (
-                  <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
-                    <AlertCircle className="w-4 h-4 text-destructive" />
-                    <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">{error}</p>
+                  <div className="p-6 rounded-2xl bg-destructive/5 border border-destructive/20 space-y-3 animate-in shake duration-500">
+                    <div className="flex items-center gap-3 text-destructive">
+                       <AlertTriangle className="w-4 h-4" />
+                       <h4 className="text-[10px] font-black uppercase tracking-widest">Handshake Failed</h4>
+                    </div>
+                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase tracking-tighter">{error}</p>
                   </div>
                 )}
               </CardContent>
@@ -259,7 +263,7 @@ export default function ImageToLinkPage() {
                <div className="space-y-2">
                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                   Identity hosting is anonymous. Your local visual matrix is transmitted via an encrypted tunnel and not stored on our infrastructure.
+                   All visual data is transmitted via secure server-side tunnels. We do not store or log your imagery on studio infrastructure.
                  </p>
                </div>
             </div>
@@ -287,7 +291,7 @@ export default function ImageToLinkPage() {
                    {!links && !isProcessing && !error && (
                      <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-24">
                         <FileImage className="w-24 h-24 text-primary" />
-                        <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Discovery Signal</p>
+                        <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Signal Detection</p>
                      </div>
                    )}
 
