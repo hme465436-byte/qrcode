@@ -10,6 +10,7 @@ import {
   Zap,
   Activity,
   ShieldCheck,
+  ShieldAlert,
   RefreshCcw,
   RotateCcw,
   History,
@@ -349,7 +350,9 @@ export default function TelegramFileHostPage() {
           </div>
 
           {/* Right Column: Output & Archive */}
-          <div className="lg:col-span-7 xl:col-span-8 space-y-10 animate-in fade-in slide-in-from-right-6 duration-1000">
+          <div className="lg:col-span-7 xl:col-span-8 space-y-10">
+             
+             {/* Current Results Section */}
              {result && (
                 <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-500">
                    <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
