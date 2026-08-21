@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -21,7 +20,8 @@ import {
   MessageCircle,
   Paperclip,
   Lock,
-  ArrowLeft
+  ArrowLeft,
+  Cloud
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -330,7 +330,7 @@ export default function TelegramFileHostPage() {
                          </div>
                       </div>
 
-                      <div className="p-8 rounded-[2.5rem] bg-primary/5 border border-primary/20 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group/share">
+                      <div className="p-8 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group/share">
                          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-0 group-hover/share:opacity-100 transition-opacity" />
                          <div className="flex items-center gap-6 relative z-10">
                             <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/30">
@@ -353,7 +353,7 @@ export default function TelegramFileHostPage() {
              )}
 
              {/* History Registry */}
-             <div className="space-y-6">
+             <div className="space-y-6 pt-4">
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
                       <History className="w-4 h-4 text-primary" />
@@ -449,7 +449,7 @@ export default function TelegramFileHostPage() {
                    <Cloud className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                    <div className="space-y-1">
                       <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Distributed Hosting</h4>
-                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Files are stored across Telegram's global data matrix, ensuring high availability and permanent archival.</p>
+                      <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase">Files are stored across Telegram's global data matrix, ensuring high availability and permanent archival.</p>
                    </div>
                 </div>
              </div>
