@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -85,7 +86,7 @@ export default function TelegramFileHostPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
   // Delete Confirmation State
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null); // 'all' or fileId
 
   // Download Link States
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
@@ -117,15 +118,20 @@ export default function TelegramFileHostPage() {
     });
   };
 
-  const removeFromHistory = (id: string) => {
-    if (!user) return;
-    setHistory(prev => {
-      const next = prev.filter(h => h.id !== id);
+  const handleConfirmDelete = () => {
+    if (!user || !deleteTarget) return;
+
+    if (deleteTarget === 'all') {
+      setHistory([]);
+      localStorage.removeItem(`mykit_tg_history_v1_${user.uid}`);
+      toast({ title: "Registry Purged" });
+    } else {
+      const next = history.filter(h => h.id !== deleteTarget);
+      setHistory(next);
       localStorage.setItem(`mykit_tg_history_v1_${user.uid}`, JSON.stringify(next));
-      return next;
-    });
-    setDeleteTargetId(null);
-    toast({ title: "Record Purged" });
+      toast({ title: "Record Purged" });
+    }
+    setDeleteTarget(null);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,7 +230,6 @@ export default function TelegramFileHostPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
-      {/* Header Matrix */}
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <MessageCircle className="w-3.5 h-3.5" /> Telegram Protocol
@@ -428,7 +433,7 @@ export default function TelegramFileHostPage() {
                       <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight">Archival Registry</h3>
                    </div>
                    {history.length > 0 && (
-                      <button onClick={() => { setHistory([]); localStorage.removeItem(`mykit_tg_history_v1_${user?.uid}`); }} className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors">Purge Registry</button>
+                      <button onClick={() => setDeleteTarget('all')} className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors">Purge Registry</button>
                    )}
                 </div>
 
@@ -460,7 +465,7 @@ export default function TelegramFileHostPage() {
                              </div>
                              <div className="flex items-center gap-4 shrink-0">
                                 <button 
-                                  onClick={(e) => { e.stopPropagation(); setDeleteTargetId(item.id); }} 
+                                  onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }} 
                                   className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/10 hover:text-red-500 hover:bg-red-500/10 transition-all"
                                 >
                                    <Trash2 className="w-4 h-4" />
@@ -566,24 +571,28 @@ export default function TelegramFileHostPage() {
       )}
       
       {/* Confirmation Dialog */}
-      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
             <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
                <ShieldAlert className="w-8 h-8" />
             </div>
-            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Final Confirmation</AlertDialogTitle>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               {deleteTarget === 'all' ? 'Purge Registry?' : 'Final Confirmation'}
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
-              Are you sure you want to remove this file from history?
+              {deleteTarget === 'all' 
+                ? "This will definitively purge your entire archival history. This action cannot be reversed." 
+                : "Are you sure you want to remove this file from history?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => deleteTargetId && removeFromHistory(deleteTargetId)}
+              onClick={handleConfirmDelete}
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
-              Delete
+              Confirm
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
