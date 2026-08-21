@@ -1,9 +1,21 @@
+
 'use server';
 
 /**
  * @fileOverview Server actions for File Host.
  * Handles secure communication with Bot API using environment secrets or user-provided tokens.
+ * Integrated with FFmpeg for multi-format audio synthesis.
  */
+
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegStatic from 'ffmpeg-static';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+
+if (ffmpegStatic) {
+  ffmpeg.setFfmpegPath(ffmpegStatic);
+}
 
 export async function uploadToTelegram(formData: FormData, customToken?: string, customChatId?: string) {
   try {
@@ -50,6 +62,86 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
   } catch (error: any) {
     console.error('Uplink Error:', error);
     return { success: false, error: error.message || 'Uplink failure.' };
+  }
+}
+
+/**
+ * Advanced Audio Synthesis Action.
+ * Downloads the source from Telegram, converts to target format, and re-uploads.
+ */
+export async function convertAndUploadAudioVariant(
+  sourceFileId: string,
+  targetFormat: string,
+  customToken?: string,
+  customChatId?: string
+) {
+  try {
+    const token = customToken || process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = customChatId || process.env.TELEGRAM_CHAT_ID;
+
+    if (!token || !chatId) throw new Error("Credentials restricted.");
+
+    // 1. Resolve source path
+    const getFileRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${sourceFileId}`);
+    const getFileData = await getFileRes.json();
+    if (!getFileData.ok) throw new Error("Source identity unreachable.");
+    const filePath = getFileData.result.file_path;
+
+    // 2. Fetch bitstream
+    const fileRes = await fetch(`https://api.telegram.org/file/bot${token}/${filePath}`);
+    const buffer = Buffer.from(await fileRes.arrayBuffer());
+
+    const tmpIn = path.join(os.tmpdir(), `in_${sourceFileId}`);
+    const tmpOut = path.join(os.tmpdir(), `out_${sourceFileId}.${targetFormat}`);
+
+    fs.writeFileSync(tmpIn, buffer);
+
+    // 3. Spawning FFmpeg Synthesis
+    await new Promise((resolve, reject) => {
+      ffmpeg(tmpIn)
+        .toFormat(targetFormat)
+        .on('end', resolve)
+        .on('error', (err) => {
+          console.error(`FFmpeg Error [${targetFormat}]:`, err);
+          reject(err);
+        })
+        .save(tmpOut);
+    });
+
+    // 4. Re-uploading synthesized variant
+    const stats = fs.statSync(tmpOut);
+    const telegramForm = new FormData();
+    telegramForm.append('chat_id', chatId);
+    
+    const outBuffer = fs.readFileSync(tmpOut);
+    const blob = new Blob([outBuffer], { type: `audio/${targetFormat}` });
+    telegramForm.append('document', blob, `master_synthesis.${targetFormat}`);
+    telegramForm.append('caption', `💠 Format Matrix: ${targetFormat.toUpperCase()}\n⚖️ Volume: ${(stats.size/1024).toFixed(1)} KB`);
+
+    const uploadRes = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+      method: 'POST',
+      body: telegramForm,
+    });
+
+    const uploadData = await uploadRes.json();
+    
+    // Immediate Hardware Buffer Purge
+    try { fs.unlinkSync(tmpIn); fs.unlinkSync(tmpOut); } catch(e) {}
+
+    if (!uploadData.ok) throw new Error(uploadData.description || "Variant upload failed");
+
+    const doc = uploadData.result.document;
+    return {
+      success: true,
+      data: {
+        fileId: doc.file_id,
+        size: doc.file_size,
+        format: targetFormat
+      }
+    };
+  } catch (error: any) {
+    console.error('Synthesis Action Failed:', error);
+    return { success: false, error: error.message };
   }
 }
 

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -44,7 +45,10 @@ import {
   KeyRound,
   Shield,
   Unplug,
-  AlertTriangle
+  AlertTriangle,
+  Music,
+  Waves,
+  RefreshCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,7 +69,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
-import { uploadToTelegram, getDownloadProtocol, testConnection } from './actions';
+import { uploadToTelegram, getDownloadProtocol, testConnection, convertAndUploadAudioVariant } from './actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,12 +81,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// --- Registry & Telemetry Helpers ---
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+interface AudioVariant {
+  fileId: string;
+  size: number;
+}
+
 interface TelegramLinkMatrix {
   fileId: string;
   messageId: number;
   name: string;
   size: number;
   mime: string;
+  variants?: Record<string, AudioVariant>;
 }
 
 interface HistoryItem {
@@ -95,14 +114,6 @@ interface HistoryItem {
 }
 
 type FilterType = 'all' | 'image' | 'audio' | 'video' | 'pdf' | 'zip';
-
-const formatSize = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
 
 export default function FILEHOSTPage() {
   const { toast } = useToast();
@@ -131,6 +142,7 @@ export default function FILEHOSTPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [variantProcessing, setVariantProcessing] = useState<Record<string, string>>({}); // historyId -> currentFormat
   
   // UI Meta
   const [isCopied, setIsCopied] = useState<string | null>(null);
@@ -190,12 +202,57 @@ export default function FILEHOSTPage() {
     };
   }, [history]);
 
-  // --- Handlers ---
+  // --- Audio Synthesis Handlers ---
+  const handleAudioVariants = async (sourceId: string, historyId: string) => {
+    const formats = ['mp3', 'wav', 'ogg', 'm4a', 'flac'];
+    
+    for (const fmt of formats) {
+      setVariantProcessing(prev => ({ ...prev, [historyId]: fmt }));
+      try {
+        const response = await convertAndUploadAudioVariant(
+          sourceId, 
+          fmt, 
+          activeNode?.token, 
+          activeNode?.chatId
+        );
+
+        if (response.success && response.data) {
+          const variant = response.data;
+          setHistory(prev => {
+            const next = prev.map(h => {
+              if (h.id === historyId) {
+                const vars = h.data.variants || {};
+                return { 
+                  ...h, 
+                  data: { 
+                    ...h.data, 
+                    variants: { ...vars, [fmt]: { fileId: variant.fileId, size: variant.size } } 
+                  } 
+                };
+              }
+              return h;
+            });
+            localStorage.setItem(`mykit_tg_history_v2_${user?.uid}`, JSON.stringify(next));
+            return next;
+          });
+        }
+      } catch (e) {
+        console.warn(`Synthesis protocol failed for ${fmt}`, e);
+      }
+    }
+    setVariantProcessing(prev => {
+      const next = { ...prev };
+      delete next[historyId];
+      return next;
+    });
+  };
+
+  // --- Primary Handlers ---
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      if (selectedFile.size > 20 * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Heavy Payload", description: "Standard limit for cloud node is 20MB." });
+      if (selectedFile.size > 25 * 1024 * 1024) {
+        toast({ variant: "destructive", title: "Heavy Payload", description: "Standard limit for cloud node is 25MB." });
         return;
       }
       setFile(selectedFile);
@@ -237,8 +294,15 @@ export default function FILEHOSTPage() {
           timestamp: Date.now(),
           data: response.data
         };
-        saveHistoryToDisk([newItem, ...history].slice(0, 50));
+        
+        const nextHistory = [newItem, ...history].slice(0, 50);
+        saveHistoryToDisk(nextHistory);
         toast({ title: "Uplink Success" });
+
+        // Trigger Audio Synthesis Pipeline
+        if (file.type.startsWith('audio/')) {
+          handleAudioVariants(response.data.fileId, newItem.id);
+        }
       } else {
         throw new Error(response.error || "Uplink restricted.");
       }
@@ -251,20 +315,21 @@ export default function FILEHOSTPage() {
     }
   };
 
-  const handleGenerateLink = async (fileId: string, historyId: string) => {
-    setGeneratingIds(prev => new Set(prev).add(historyId));
+  const handleGenerateLink = async (fileId: string, historyId: string, format?: string) => {
+    const key = format ? `${historyId}-${format}` : historyId;
+    setGeneratingIds(prev => new Set(prev).add(key));
     try {
       const response = await getDownloadProtocol(fileId, activeNode?.token);
       if (response.success && response.url) {
         const fullUrl = window.location.origin + response.url;
-        setGeneratedUrls(prev => ({ ...prev, [historyId]: fullUrl }));
+        setGeneratedUrls(prev => ({ ...prev, [key]: fullUrl }));
       } else {
         throw new Error(response.error || "Uplink Failed");
       }
     } catch (err: any) {
       toast({ variant: "destructive", title: "Link Generation Failed" });
     } finally {
-      setGeneratingIds(prev => { const n = new Set(prev); n.delete(historyId); return n; });
+      setGeneratingIds(prev => { const n = new Set(prev); n.delete(key); return n; });
     }
   };
 
@@ -326,7 +391,7 @@ export default function FILEHOSTPage() {
     setSelectedIds(next);
   };
 
-  const handleCopy = (text: string, label: string) => {
+  const handleCopyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(label);
     toast({ title: "Copied" });
@@ -415,7 +480,7 @@ export default function FILEHOSTPage() {
           
           {/* LEFT: Intake Section */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-            {/* Custom Node Config (Inline overlay) */}
+            {/* Custom Node Config */}
             {showCustomNode && (
                <Card className="glass-card border-primary/40 bg-primary/[0.03] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
                   <CardHeader className="py-6 border-b border-primary/10 flex flex-row items-center justify-between">
@@ -528,16 +593,6 @@ export default function FILEHOSTPage() {
                     Execute Uplink
                   </Button>
                 </div>
-
-                {error && (
-                  <div className="p-5 rounded-2xl bg-destructive/5 border border-destructive/20 space-y-3 animate-in shake duration-500">
-                    <div className="flex items-center gap-3 text-destructive">
-                       <AlertTriangle className="w-4 h-4" />
-                       <h4 className="text-[10px] font-black uppercase tracking-widest">Handshake Failed</h4>
-                    </div>
-                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase tracking-tighter">{error}</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
@@ -558,20 +613,10 @@ export default function FILEHOSTPage() {
                   </div>
                </CardContent>
             </Card>
-
-            <div className="p-6 rounded-[2.5rem] bg-secondary border border-border flex items-start gap-5 group hover:bg-secondary/80 transition-all">
-                <Cloud className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                <div className="space-y-1">
-                   <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Distributed Hosting</h4>
-                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Files are stored across a global data matrix, ensuring high availability and permanent archival.</p>
-                </div>
-            </div>
           </div>
 
           {/* RIGHT: Registry Section */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-1">
-             
-             {/* Registry Controls */}
              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="flex items-center gap-3">
                    <History className="w-5 h-5 text-primary" />
@@ -579,12 +624,6 @@ export default function FILEHOSTPage() {
                 </div>
                 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                   {activeNode && (
-                     <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-2">
-                        <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                        @{activeNode.username || activeNode.name}
-                     </Badge>
-                   )}
                    <div className="relative flex-1 sm:w-64">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20" />
                       <Input 
@@ -610,194 +649,196 @@ export default function FILEHOSTPage() {
                 </div>
              </div>
 
-             {/* Bulk Actions Bar */}
              {selectedIds.size > 0 && (
-               <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between animate-in slide-in-from-top-2 duration-300">
+               <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between animate-in slide-in-from-top-2">
                   <div className="flex items-center gap-4">
                      <span className="text-[10px] font-black uppercase text-primary tracking-widest">{selectedIds.size} Selected</span>
                      <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="text-[9px] font-black uppercase text-foreground/40 h-8">Clear</Button>
                   </div>
-                  <div className="flex gap-2">
-                     <Button onClick={handleBulkGenerate} className="h-9 px-4 bg-primary text-white text-[9px] font-black uppercase rounded-lg shadow-lg">
-                        Generate Links
-                     </Button>
-                     <Button onClick={() => setDeleteTarget('batch')} variant="outline" className="h-9 w-9 bg-white/5 border-white/10 text-red-500 rounded-lg p-0">
-                        <Trash2 className="w-4 h-4" />
-                     </Button>
-                  </div>
+                  <Button onClick={handleBulkGenerate} className="h-9 px-4 bg-primary text-white text-[9px] font-black uppercase rounded-lg shadow-lg">
+                    Generate Links
+                  </Button>
                </div>
              )}
 
-             {processedHistory.length === 0 ? (
-               <div className="p-24 text-center flex flex-col items-center gap-6 opacity-10 border-2 border-dashed border-white/5 rounded-[3rem]">
-                  <Activity className="w-16 h-16 text-primary" />
-                  <p className="text-[13px] font-black uppercase tracking-[0.4em]">Zero Discovery Signals</p>
-               </div>
-             ) : (
-               <div className="grid grid-cols-1 gap-4">
-                  {processedHistory.map((item) => (
-                    <Card key={item.id} className={cn(
-                      "glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300",
-                      selectedIds.has(item.id) ? "border-primary/40 bg-primary/[0.02]" : "",
-                      item.isFavorite && "border-primary/10"
-                    )}>
-                       <div 
-                         onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                         className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
-                       >
-                          <div className="flex items-center gap-5 min-w-0">
-                             <div 
-                               onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }}
-                               className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/10 hover:text-primary transition-all"
-                             >
-                                {selectedIds.has(item.id) ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5" />}
-                             </div>
-                             <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center shrink-0 shadow-inner group-hover/row:border-primary/40 transition-colors">
-                                {getFileIcon(item.data.mime)}
-                             </div>
-                             <div className="min-w-0">
-                                {editingId === item.id ? (
-                                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                     <Input 
-                                      value={editValue} 
-                                      onChange={e => setEditValue(e.target.value)} 
-                                      className="h-8 w-48 text-[11px] font-bold bg-background border-primary/40"
-                                      autoFocus
-                                      onKeyDown={e => e.key === 'Enter' && saveRename()}
-                                     />
-                                     <button onClick={saveRename} className="p-1.5 text-primary bg-primary/10 rounded-lg"><Check className="w-3.5 h-3.5" /></button>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-2">
-                                     <p className="text-[11px] font-black text-foreground truncate uppercase tracking-tight">
-                                        {item.customName || item.name}
-                                     </p>
-                                     {item.isFavorite && <Star className="w-3 h-3 text-primary fill-current" />}
-                                  </div>
-                                )}
-                                <div className="flex items-center gap-3 mt-1">
-                                   <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
-                                   <div className="w-1 h-1 rounded-full bg-primary/20" />
-                                   <p className="text-[8px] font-bold text-primary uppercase tracking-widest">{formatSize(item.data.size)}</p>
+             <div className="grid grid-cols-1 gap-4">
+                {processedHistory.map((item) => (
+                  <Card key={item.id} className={cn(
+                    "glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300",
+                    selectedIds.has(item.id) ? "border-primary/40 bg-primary/[0.02]" : "",
+                    item.isFavorite && "border-primary/10"
+                  )}>
+                     <div 
+                       onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                       className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
+                     >
+                        <div className="flex items-center gap-5 min-w-0">
+                           <div 
+                             onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }}
+                             className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/10 hover:text-primary transition-all"
+                           >
+                              {selectedIds.has(item.id) ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5" />}
+                           </div>
+                           <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center shrink-0 shadow-inner group-hover/row:border-primary/40 transition-colors">
+                              {getFileIcon(item.data.mime)}
+                           </div>
+                           <div className="min-w-0">
+                              {editingId === item.id ? (
+                                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                   <Input 
+                                    value={editValue} 
+                                    onChange={e => setEditValue(e.target.value)} 
+                                    className="h-8 w-48 text-[11px] font-bold bg-background border-primary/40"
+                                    autoFocus
+                                    onKeyDown={e => e.key === 'Enter' && saveRename()}
+                                   />
+                                   <button onClick={saveRename} className="p-1.5 text-primary bg-primary/10 rounded-lg"><Check className="w-3.5 h-3.5" /></button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                   <p className="text-[11px] font-black text-foreground truncate uppercase tracking-tight">
+                                      {item.customName || item.name}
+                                   </p>
+                                   {item.isFavorite && <Star className="w-3 h-3 text-primary fill-current" />}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-3 mt-1">
+                                 <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
+                                 <div className="w-1 h-1 rounded-full bg-primary/20" />
+                                 <p className="text-[8px] font-bold text-primary uppercase tracking-widest">{formatSize(item.data.size)}</p>
+                                 {variantProcessing[item.id] && (
+                                   <>
+                                      <div className="w-1 h-1 rounded-full bg-primary/20" />
+                                      <div className="flex items-center gap-1.5 text-[8px] font-black text-indigo-400 uppercase animate-pulse">
+                                         <RefreshCcw className="w-2.5 h-2.5 animate-spin" /> Synthesizing {variantProcessing[item.id].toUpperCase()}...
+                                      </div>
+                                   </>
+                                 )}
+                              </div>
+                           </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 shrink-0">
+                           <button onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }} className={cn("p-2 rounded-lg transition-all", item.isFavorite ? "text-primary bg-primary/10" : "text-foreground/10 hover:text-primary")}>
+                              <Star className={cn("w-4 h-4", item.isFavorite && "fill-current")} />
+                           </button>
+                           <button onClick={(e) => { e.stopPropagation(); startRename(item); }} className="p-2 text-foreground/10 hover:text-primary transition-all">
+                              <Edit3 className="w-4 h-4" />
+                           </button>
+                           <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }} className="p-2 text-foreground/10 hover:text-red-500 transition-all">
+                              <Trash2 className="w-4 h-4" />
+                           </button>
+                           <div className={cn("w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 transition-all", expandedId === item.id && "bg-primary text-white")}>
+                              {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                           </div>
+                        </div>
+                     </div>
+
+                     {expandedId === item.id && (
+                       <div className="px-5 pb-8 pt-2 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-500">
+                          <div className="space-y-8 pt-6">
+                             {/* Original Control */}
+                             <div className="flex flex-col sm:flex-row items-center gap-4 justify-between bg-white/5 p-5 rounded-3xl border border-white/5">
+                                <div className="flex items-center gap-4">
+                                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                      <Zap className="w-5 h-5" />
+                                   </div>
+                                   <div>
+                                      <p className="text-[10px] font-black uppercase text-foreground">Original Matrix</p>
+                                      <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">{formatSize(item.data.size)}</p>
+                                   </div>
+                                </div>
+                                <div className="flex gap-2">
+                                   {!generatedUrls[item.id] ? (
+                                      <Button 
+                                        onClick={(e) => { e.stopPropagation(); handleGenerateLink(item.data.fileId, item.id); }}
+                                        disabled={generatingIds.has(item.id)}
+                                        className="h-10 px-6 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl"
+                                      >
+                                         {generatingIds.has(item.id) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Generate Link'}
+                                      </Button>
+                                   ) : (
+                                      <div className="flex gap-2">
+                                         <Button onClick={() => handleCopyText(generatedUrls[item.id], `url-${item.id}`)} variant="outline" className="h-10 px-4 bg-background border-border text-primary text-[8px] font-black uppercase">
+                                            {isCopied === `url-${item.id}` ? <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />} Copy
+                                         </Button>
+                                         <Button asChild className="h-10 px-4 bg-white text-black text-[8px] font-black uppercase rounded-xl">
+                                            <a href={generatedUrls[item.id]} target="_blank"><Download className="w-3.5 h-3.5 mr-1.5" /> Download</a>
+                                         </Button>
+                                      </div>
+                                   )}
                                 </div>
                              </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-4 shrink-0">
-                             <button 
-                               onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }}
-                               className={cn("p-2 rounded-lg transition-all", item.isFavorite ? "text-primary bg-primary/10" : "text-foreground/10 hover:text-primary")}
-                             >
-                                <Star className={cn("w-4 h-4", item.isFavorite && "fill-current")} />
-                             </button>
-                             <button onClick={(e) => { e.stopPropagation(); startRename(item); }} className="p-2 text-foreground/10 hover:text-primary transition-all">
-                                <Edit3 className="w-4 h-4" />
-                             </button>
-                             <button 
-                               onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }} 
-                               className="p-2 text-foreground/10 hover:text-red-500 transition-all"
-                             >
-                                <Trash2 className="w-4 h-4" />
-                             </button>
-                             <div className={cn(
-                               "w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-foreground/20 group-hover/row:text-primary transition-all",
-                               expandedId === item.id && "bg-primary text-primary-foreground shadow-lg"
-                             )}>
-                                {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                             </div>
+
+                             {/* Audio Format Matrix */}
+                             {item.data.mime.includes('audio') && (
+                               <div className="space-y-4">
+                                  <div className="flex items-center gap-3 px-1">
+                                     <Waves className="w-4 h-4 text-indigo-400" />
+                                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Multi-Format Matrix</h4>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                     {['mp3', 'wav', 'ogg', 'm4a', 'flac'].map(fmt => {
+                                       const variant = item.data.variants?.[fmt];
+                                       const gKey = `${item.id}-${fmt}`;
+                                       return (
+                                         <div key={fmt} className="p-5 rounded-3xl bg-black/40 border border-white/5 flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3">
+                                               <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground/30 font-black text-[8px] uppercase">
+                                                  {fmt}
+                                               </div>
+                                               <div>
+                                                  <p className="text-[9px] font-black text-foreground/60 uppercase">{fmt.toUpperCase()} Variant</p>
+                                                  <p className="text-[7px] font-bold text-foreground/20 uppercase">{variant ? formatSize(variant.size) : 'Awaiting...'}</p>
+                                               </div>
+                                            </div>
+                                            
+                                            {variant ? (
+                                              <div className="flex gap-2">
+                                                 {!generatedUrls[gKey] ? (
+                                                   <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleGenerateLink(variant.fileId, item.id, fmt); }}
+                                                    disabled={generatingIds.has(gKey)}
+                                                    className="p-2 rounded-lg bg-white/5 text-primary hover:bg-primary/10"
+                                                   >
+                                                      {generatingIds.has(gKey) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LinkIcon className="w-3.5 h-3.5" />}
+                                                   </button>
+                                                 ) : (
+                                                   <>
+                                                      <button onClick={() => handleCopyText(generatedUrls[gKey], gKey)} className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
+                                                         {isCopied === gKey ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                                      </button>
+                                                      <Button asChild variant="ghost" size="icon" className="h-8 w-8 bg-white/5 text-white">
+                                                         <a href={generatedUrls[gKey]} target="_blank"><Download className="w-3.5 h-3.5" /></a>
+                                                      </Button>
+                                                   </>
+                                                 )}
+                                              </div>
+                                            ) : (
+                                              <div className="w-1.5 h-1.5 rounded-full bg-white/5" />
+                                            )}
+                                         </div>
+                                       );
+                                     })}
+                                  </div>
+                               </div>
+                             )}
+
+                             {generatedUrls[item.id] && (
+                               <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 flex items-center justify-center gap-3">
+                                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                                  <p className="text-[8px] font-black uppercase text-amber-600/70 tracking-widest text-center">Temporary Access (Approx 1 Hour)</p>
+                               </div>
+                             )}
                           </div>
                        </div>
-
-                       {expandedId === item.id && (
-                         <div className="px-5 pb-8 pt-2 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-500">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6">
-                               <div className="space-y-6">
-                                  <div className="space-y-2">
-                                     <div className="flex items-center justify-between px-1">
-                                        <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Protocol Identifier</span>
-                                        <button onClick={() => handleCopy(item.data.fileId, `id-${item.id}`)} className="text-[8px] font-black uppercase text-primary/60 hover:text-primary">
-                                           {isCopied === `id-${item.id}` ? 'Isolated' : 'Copy'}
-                                        </button>
-                                     </div>
-                                     <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[9px] font-bold text-foreground/40 overflow-hidden shadow-inner">
-                                        <span className="truncate">{item.data.fileId}</span>
-                                     </div>
-                                  </div>
-                                  <div className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-white/5">
-                                     <div className="space-y-0.5">
-                                        <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Archive Trace</p>
-                                        <p className="text-[10px] font-bold text-white uppercase">Message ID: #{item.data.messageId}</p>
-                                     </div>
-                                     <Badge className="bg-primary/10 text-primary border-primary/20 text-[7px] font-black uppercase tracking-widest">Active Signal</Badge>
-                                  </div>
-                               </div>
-
-                               <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col justify-center gap-5 relative overflow-hidden">
-                                  <div className="absolute -top-4 -right-4 opacity-5 pointer-events-none">
-                                     <Download className="w-24 h-24" />
-                                  </div>
-                                  
-                                  {!generatedUrls[item.id] ? (
-                                    <Button 
-                                      onClick={() => handleGenerateLink(item.data.fileId, item.id)}
-                                      disabled={generatingIds.has(item.id)}
-                                      className="w-full h-14 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl active:scale-95"
-                                    >
-                                      {generatingIds.has(item.id) ? <Loader2 className="w-4 h-4 animate-spin mr-3" /> : <Zap className="w-4 h-4 mr-3" />}
-                                      Synthesize Download Link
-                                    </Button>
-                                  ) : (
-                                    <div className="space-y-4 animate-in fade-in zoom-in duration-300">
-                                       <div className="p-3 bg-black/40 rounded-xl border border-primary/20 shadow-inner flex items-center justify-between gap-4">
-                                          <p className="text-[10px] font-mono text-primary truncate flex-1">{generatedUrls[item.id]}</p>
-                                          <button onClick={() => handleCopy(generatedUrls[item.id], `url-${item.id}`)} className="text-primary hover:text-white transition-colors">
-                                             {isCopied === `url-${item.id}` ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                          </button>
-                                       </div>
-                                       <div className="flex gap-2">
-                                          <Button asChild className="h-11 flex-1 bg-white text-black text-[9px] font-black uppercase rounded-xl">
-                                             <a href={generatedUrls[item.id]} target="_blank">Download Master <ExternalLink className="w-3.5 h-3.5 ml-2" /></a>
-                                          </Button>
-                                          <div className="flex gap-1.5">
-                                             <button onClick={() => handleShare(generatedUrls[item.id], 'wa')} className="h-11 w-11 rounded-xl bg-green-500/10 text-green-500 border-green-500/20 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all"><Share2 className="w-4 h-4" /></button>
-                                             <button onClick={() => handleShare(generatedUrls[item.id], 'tg')} className="h-11 w-11 rounded-xl bg-sky-500/10 text-sky-500 border-sky-500/20 flex items-center justify-center hover:bg-sky-500 hover:text-white transition-all"><MessageCircle className="w-4 h-4" /></button>
-                                          </div>
-                                       </div>
-                                       <div className="flex items-center gap-2 text-yellow-500/60 justify-center">
-                                          <Clock className="w-3 h-3" />
-                                          <span className="text-[8px] font-black uppercase tracking-widest">Temporary Access Portal (Approx 1 Hour)</span>
-                                       </div>
-                                    </div>
-                                  )}
-                               </div>
-                            </div>
-                         </div>
-                       )}
                     </Card>
                   ))}
-               </div>
-             )}
-
-             {/* Registry Footer */}
-             {history.length > 0 && (
-               <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 opacity-30">
-                  <span className="text-[9px] font-black uppercase tracking-[0.4em] text-foreground/60">Historical Registry Stack v2.0</span>
-                  <button onClick={() => setDeleteTarget('all')} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-colors">
-                     <Trash2 className="w-3.5 h-3.5" /> Purge Full Archival Memory
-                  </button>
                </div>
              )}
           </div>
         </div>
       )}
-      
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
       
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
@@ -807,13 +848,11 @@ export default function FILEHOSTPage() {
                <ShieldAlert className="w-8 h-8" />
             </div>
             <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
-               {deleteTarget === 'all' || deleteTarget === 'batch' ? 'Bulk Purge Protocol' : 'Identity Removal'}
+               Identity Removal
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
               {deleteTarget === 'all' 
-                ? "This will definitively purge your entire archival registry. This action is terminal and cannot be reversed." 
-                : deleteTarget === 'batch'
-                ? `You are about to remove ${selectedIds.size} identified assets from the registry.`
+                ? "This will definitively purge your entire archival registry history. This action is terminal and cannot be reversed." 
                 : "Are you sure you want to remove this specific file from history?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -823,9 +862,6 @@ export default function FILEHOSTPage() {
               onClick={() => {
                 if (deleteTarget === 'all') {
                   saveHistoryToDisk([]);
-                } else if (deleteTarget === 'batch') {
-                  saveHistoryToDisk(history.filter(h => !selectedIds.has(h.id)));
-                  setSelectedIds(new Set());
                 } else {
                   saveHistoryToDisk(history.filter(h => h.id !== deleteTarget));
                 }
@@ -868,6 +904,14 @@ export default function FILEHOSTPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
