@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -135,12 +134,12 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
              {/* Secondary Utilities */}
              <Link 
               href="/about" 
               className={cn(
-                "hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all hover:text-primary",
+                "flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all hover:text-primary",
                 pathname === '/about' ? "text-primary border-primary/20" : "text-foreground/40"
               )}
               title="About Studio"
@@ -151,7 +150,7 @@ export function Navbar() {
              <Link 
               href="/donate" 
               className={cn(
-                "hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all hover:text-primary",
+                "flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl bg-secondary/50 border border-white/5 transition-all hover:text-primary",
                 pathname === '/donate' ? "text-primary border-primary/20" : "text-foreground/40"
               )}
               title="Support Developer"
@@ -190,7 +189,7 @@ export function Navbar() {
                  ) : (
                    <Link 
                     href="/login"
-                    className="flex items-center gap-2 px-3 sm:px-5 h-8 sm:h-10 rounded-xl bg-white/5 border border-white/10 text-foreground/40 hover:text-primary hover:bg-white/10 transition-all shadow-xl icon-container-3d"
+                    className="flex items-center gap-2 px-2 sm:px-5 h-8 sm:h-10 rounded-xl bg-white/5 border border-white/10 text-foreground/40 hover:text-primary hover:bg-white/10 transition-all shadow-xl icon-container-3d"
                    >
                       <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
                       <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest">Account</span>
