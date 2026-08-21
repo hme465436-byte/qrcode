@@ -46,7 +46,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
-import { testImgBBKey } from './actions';
+import { uploadToImgBB, testImgBBKey } from './actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -171,46 +171,31 @@ export default function ImageToLinkPage() {
     setLinks(null);
 
     try {
-      const apiKey = activeNode?.key || '7dd99fb70a655cd8730f8c5bac31178f';
-      const parts = image.split(',');
-      if (parts.length < 2) throw new Error("Malformed binary matrix.");
-      const cleanBase64 = parts[1];
+      const response = await uploadToImgBB(image, activeNode?.key);
 
-      const formData = new FormData();
-      formData.append('image', cleanBase64);
+      if (response.success && response.data) {
+        const d = response.data;
+        const matrix: LinkMatrix = {
+          direct: d.url,
+          view: d.url_viewer,
+          markdown: `![Identity](${d.url})`,
+          html: `<img src="${d.url}" alt="Identity">`,
+          bbcode: `[img]${d.url}[/img]`
+        };
+        setLinks(matrix);
+        
+        saveToHistory({
+          id: Math.random().toString(36).substr(2, 9),
+          name: file?.name || 'Untitled Identity',
+          thumb: d.thumb?.url || d.url,
+          timestamp: Date.now(),
+          links: matrix
+        });
 
-      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-        method: 'POST',
-        body: formData,
-        cache: 'no-store'
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `Node Error: ${response.status}`);
+        toast({ title: "Uplink Success", description: "Matrix synchronized with host node." });
+      } else {
+        throw new Error(response.error || "Uplink restricted by remote host.");
       }
-
-      const result = await response.json();
-      const d = result.data;
-
-      const matrix: LinkMatrix = {
-        direct: d.url,
-        view: d.url_viewer,
-        markdown: `![Identity](${d.url})`,
-        html: `<img src="${d.url}" alt="Identity">`,
-        bbcode: `[img]${d.url}[/img]`
-      };
-      setLinks(matrix);
-      
-      saveToHistory({
-        id: Math.random().toString(36).substr(2, 9),
-        name: file?.name || 'Untitled Identity',
-        thumb: d.thumb?.url || d.url,
-        timestamp: Date.now(),
-        links: matrix
-      });
-
-      toast({ title: "Uplink Success", description: "Matrix synchronized with host node." });
     } catch (err: any) {
       setError(err.message || "Uplink restricted by remote host.");
       toast({ variant: "destructive", title: "Protocol Failure", description: "The upload attempt was rejected." });
@@ -232,9 +217,14 @@ export default function ImageToLinkPage() {
         setActiveNode(node);
         localStorage.setItem(`mykit_image_host_node_${user?.uid}`, JSON.stringify(node));
         setShowCustomNode(false);
+        setCustomKey('');
+        setCustomLabel('');
         toast({ title: "Host Node Active", description: `Linked to ${node.label}.` });
       } else {
-        toast({ variant: "destructive", title: "Handshake Failed", description: res.error });
+        const errorMsg = res.error?.includes('forbidden') || res.error?.includes('blocked') 
+          ? "API key not valid or blocked. Create a new key from ImgBB API page." 
+          : (res.error || "Handshake Failed");
+        toast({ variant: "destructive", title: "Handshake Failed", description: errorMsg });
       }
     } catch (e) {
       toast({ variant: "destructive", title: "Protocol Error" });
@@ -286,7 +276,7 @@ export default function ImageToLinkPage() {
            <div className="flex items-center gap-3 shrink-0 pb-2">
               <GetHelp toolId="image-to-link" />
               <Button 
-                onClick={() => setShowCustomNode(true)}
+                onClick={() => { setCustomKey(''); setCustomLabel(''); setShowCustomNode(true); }}
                 variant="outline" 
                 size="sm" 
                 className={cn(
@@ -684,6 +674,7 @@ export default function ImageToLinkPage() {
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .bg-checkered {
           background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
                             linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 

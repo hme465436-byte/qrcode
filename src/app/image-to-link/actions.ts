@@ -28,6 +28,9 @@ export async function uploadToImgBB(base64Image: string, customKey?: string) {
     });
 
     if (!response.ok) {
+      if (response.status === 403 || response.status === 401) {
+        throw new Error("API key not valid or blocked. Create a new key from ImgBB API page.");
+      }
       const errData = await response.json().catch(() => ({}));
       throw new Error(errData.error?.message || `Node Error: ${response.status}`);
     }
@@ -56,6 +59,9 @@ export async function testImgBBKey(key: string) {
     });
 
     if (!response.ok) {
+      if (response.status === 403 || response.status === 401) {
+        return { success: false, error: "API key not valid or blocked. Create a new key from ImgBB API page." };
+      }
       const data = await response.json().catch(() => ({}));
       return { success: false, error: data.error?.message || 'Invalid API Key' };
     }
