@@ -27,7 +27,9 @@ import {
   AlertTriangle,
   History,
   Maximize2,
-  X
+  X,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,11 +52,10 @@ interface LinkMatrix {
 
 interface HistoryItem {
   id: string;
-  url: string;
-  thumb: string;
-  viewUrl: string;
   name: string;
+  thumb: string;
   timestamp: number;
+  links: LinkMatrix;
 }
 
 export default function ImageToLinkPage() {
@@ -67,13 +68,14 @@ export default function ImageToLinkPage() {
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- Persistence Matrix ---
   useEffect(() => {
     if (user) {
-      const saved = localStorage.getItem(`mykit_img_history_v2_${user.uid}`);
+      const saved = localStorage.getItem(`mykit_img_history_v3_${user.uid}`);
       if (saved) {
         try {
           setHistory(JSON.parse(saved));
@@ -87,8 +89,8 @@ export default function ImageToLinkPage() {
   const saveToHistory = (item: HistoryItem) => {
     if (!user) return;
     setHistory(prev => {
-      const next = [item, ...prev.filter(h => h.url !== item.url)].slice(0, 10);
-      localStorage.setItem(`mykit_img_history_v2_${user.uid}`, JSON.stringify(next));
+      const next = [item, ...prev.filter(h => h.links.direct !== item.links.direct)].slice(0, 10);
+      localStorage.setItem(`mykit_img_history_v3_${user.uid}`, JSON.stringify(next));
       return next;
     });
   };
@@ -97,7 +99,7 @@ export default function ImageToLinkPage() {
     if (!user) return;
     setHistory(prev => {
       const next = prev.filter(h => h.id !== id);
-      localStorage.setItem(`mykit_img_history_v2_${user.uid}`, JSON.stringify(next));
+      localStorage.setItem(`mykit_img_history_v3_${user.uid}`, JSON.stringify(next));
       return next;
     });
     toast({ title: "Identity Purged" });
@@ -147,11 +149,10 @@ export default function ImageToLinkPage() {
         
         saveToHistory({
           id: Math.random().toString(36).substr(2, 9),
-          url: d.url,
-          thumb: d.thumb?.url || d.url,
-          viewUrl: d.url_viewer,
           name: file?.name || 'Untitled Identity',
-          timestamp: Date.now()
+          thumb: d.thumb?.url || d.url,
+          timestamp: Date.now(),
+          links: matrix
         });
 
         toast({ title: "Uplink Success", description: "Matrix synchronized with ImgBB nodes." });
@@ -169,7 +170,7 @@ export default function ImageToLinkPage() {
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(label);
-    toast({ title: "Copied", description: `${label} protocol saved.` });
+    toast({ title: "Copied", description: "Data matrix saved." });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -300,94 +301,38 @@ export default function ImageToLinkPage() {
               </CardContent>
             </Card>
 
-            {/* History Matrix */}
-            {history.length > 0 && (
-              <Card className="glass-card border-border shadow-xl flex flex-col max-h-[500px] animate-in slide-in-from-bottom-4">
-                 <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-3">
-                       <History className="w-4 h-4 text-primary" />
-                       <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Archive Matrix</CardTitle>
-                    </div>
-                    <button 
-                      onClick={() => { setHistory([]); localStorage.removeItem(`mykit_img_history_v2_${user?.uid}`); }} 
-                      className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors"
-                    >
-                      Purge
-                    </button>
-                 </CardHeader>
-                 <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1">
-                    <div className="divide-y divide-white/5">
-                       {history.map(item => (
-                         <div key={item.id} className="p-4 flex items-center justify-between group/row hover:bg-white/5 transition-all">
-                            <div className="flex items-center gap-4 min-w-0">
-                               <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
-                                  <img src={item.thumb} alt="" className="w-full h-full object-cover" />
-                               </div>
-                               <div className="min-w-0">
-                                  <p className="text-[10px] font-bold text-foreground truncate uppercase">{item.name}</p>
-                                  <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
-                               </div>
-                            </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                               <button 
-                                onClick={() => handleCopy(item.url, `hist-${item.id}`)}
-                                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary transition-all"
-                               >
-                                  {isCopied === `hist-${item.id}` ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                               </button>
-                               <button 
-                                onClick={() => removeFromHistory(item.id)}
-                                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground/40 hover:text-destructive transition-all"
-                               >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                               </button>
-                            </div>
-                         </div>
-                       ))}
-                    </div>
-                 </CardContent>
-              </Card>
-            )}
+            <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <ShieldCheck className="w-7 h-7" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                    All visual data is transmitted via secure server-side tunnels. We do not store or log your imagery on studio infrastructure.
+                  </p>
+                </div>
+             </div>
           </div>
 
-          {/* Right Column: Output */}
+          {/* Right Column: Output & History */}
           <div className="lg:col-span-7 space-y-8 stagger-2">
-             <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px] bg-black/10">
-                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-                <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
-                   <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                         <Activity className="w-5 h-5" />
-                      </div>
-                      <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Profile</CardTitle>
-                   </div>
-                   {links && (
-                      <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
-                         Uplink Verified
-                      </Badge>
-                   )}
-                </CardHeader>
-                
-                <CardContent className="flex-1 p-8 sm:p-12 flex flex-col justify-center">
-                   {!links && !isProcessing && !error && (
-                     <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-24">
-                        <FileImage className="w-24 h-24 text-primary" />
-                        <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Signal Detection</p>
-                     </div>
-                   )}
-
-                   {isProcessing && (
-                     <div className="flex-1 flex flex-col items-center justify-center space-y-10 py-24">
-                        <div className="relative">
-                           <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                           <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
+             {/* Immediate Results Card */}
+             {links && (
+               <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl overflow-hidden relative flex flex-col animate-in zoom-in-95 duration-500">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+                  <CardHeader className="py-6 border-b border-emerald-500/10 bg-emerald-500/5 flex flex-row items-center justify-between shrink-0">
+                     <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-inner">
+                           <CheckCircle2 className="w-5 h-5" />
                         </div>
-                        <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Negotiating Cloud Matrix...</p>
+                        <CardTitle className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.5em]">Active Result Matrix</CardTitle>
                      </div>
-                   )}
-
-                   {links && (
-                     <div className="space-y-8 animate-in zoom-in-95 duration-500">
+                     <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
+                        Uplink Verified
+                     </Badge>
+                  </CardHeader>
+                  <CardContent className="p-8 sm:p-12 space-y-8">
+                      <div className="space-y-6">
                         {[
                           { label: 'Direct Link', val: links.direct, icon: LinkIcon },
                           { label: 'View Page', val: links.view, icon: ExternalLink },
@@ -419,38 +364,115 @@ export default function ImageToLinkPage() {
                              </div>
                           </div>
                         ))}
+                      </div>
+                  </CardContent>
+               </Card>
+             )}
 
-                        <div className="p-6 rounded-[2rem] bg-secondary border border-border flex items-center justify-between">
-                           <div className="space-y-1">
-                              <p className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Master Protocol</p>
-                              <p className="text-[11px] text-foreground/60 font-medium leading-relaxed uppercase">Links are permanent identifiers. Save these protocols for future deployment.</p>
-                           </div>
-                        </div>
-                     </div>
-                   )}
-                </CardContent>
-             </Card>
-
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                   <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                      <ShieldCheck className="w-7 h-7" />
-                   </div>
-                   <div className="space-y-2">
-                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                       All visual data is transmitted via secure server-side tunnels. We do not store or log your imagery on studio infrastructure.
-                     </p>
-                   </div>
+             {/* Archives Header */}
+             <div className="flex items-center justify-between px-2 pt-4">
+                <div className="flex items-center gap-3">
+                   <History className="w-4 h-4 text-primary" />
+                   <h3 className="text-xl font-headline font-black text-foreground/60 uppercase tracking-tight">Identity Archive</h3>
                 </div>
+                {history.length > 0 && (
+                   <button 
+                    onClick={() => { setHistory([]); localStorage.removeItem(`mykit_img_history_v3_${user?.uid}`); }} 
+                    className="text-[9px] font-black text-foreground/20 hover:text-destructive uppercase transition-colors"
+                  >
+                    Purge All
+                  </button>
+                )}
+             </div>
+
+             {/* History Registry */}
+             <div className="space-y-4">
+                {history.length === 0 ? (
+                  <Card className="glass-card border-border shadow-inner p-20 text-center flex flex-col items-center gap-4 opacity-10">
+                     <Activity className="w-12 h-12 text-primary" />
+                     <p className="text-[10px] font-black uppercase tracking-widest">Awaiting Signal Detection</p>
+                  </Card>
+                ) : (
+                  history.map((item) => (
+                    <Card key={item.id} className="glass-card border-border shadow-xl overflow-hidden group/row animate-in slide-in-from-bottom-2">
+                       <div 
+                        onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                        className="p-6 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
+                       >
+                          <div className="flex items-center gap-6 min-w-0">
+                             <div className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
+                                <img src={item.thumb} alt="" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity">
+                                   <Maximize2 className="w-4 h-4 text-white/60" />
+                                </div>
+                             </div>
+                             <div className="min-w-0">
+                                <p className="text-xs font-black text-foreground truncate uppercase">{item.name}</p>
+                                <div className="flex items-center gap-3 mt-1">
+                                   <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
+                                   <span className="text-white/5 text-[8px]">•</span>
+                                   <p className="text-[9px] font-bold text-primary uppercase">Matrix ID: {item.id}</p>
+                                </div>
+                             </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                             <button onClick={(e) => { e.stopPropagation(); removeFromHistory(item.id); }} className="p-2 text-foreground/10 hover:text-red-500 transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                             </button>
+                             <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-foreground/20 group-hover/row:text-primary transition-all">
+                                {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                             </div>
+                          </div>
+                       </div>
+
+                       {expandedId === item.id && (
+                         <div className="p-6 pt-0 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-300">
+                            <div className="grid grid-cols-1 gap-6 pt-6">
+                               {[
+                                 { label: 'Direct', val: item.links.direct, icon: LinkIcon },
+                                 { label: 'View', val: item.links.view, icon: ExternalLink },
+                                 { label: 'Markdown', val: item.links.markdown, icon: FileCode },
+                                 { label: 'HTML', val: item.links.html, icon: Code2 },
+                                 { label: 'BBCode', val: item.links.bbcode, icon: MessageSquare }
+                               ].map((sub) => (
+                                 <div key={sub.label} className="space-y-2 group/sub">
+                                    <div className="flex items-center justify-between px-1">
+                                       <div className="flex items-center gap-2">
+                                          <sub.icon className="w-3 h-3 text-primary/40" />
+                                          <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">{sub.label} Protocol</span>
+                                       </div>
+                                       <button 
+                                        onClick={() => handleCopy(sub.val, `hist-${item.id}-${sub.label}`)}
+                                        className={cn(
+                                          "text-[8px] font-black uppercase transition-all",
+                                          isCopied === `hist-${item.id}-${sub.label}` ? "text-emerald-500" : "text-primary/60 hover:text-primary"
+                                        )}
+                                       >
+                                          {isCopied === `hist-${item.id}-${sub.label}` ? 'Identity Copied' : 'Copy Snippet'}
+                                       </button>
+                                    </div>
+                                    <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[9px] font-bold text-foreground/60 overflow-hidden shadow-inner group-hover/sub:border-primary/20 transition-all">
+                                       <span className="truncate">{sub.val}</span>
+                                    </div>
+                                 </div>
+                               ))}
+                            </div>
+                         </div>
+                       )}
+                    </Card>
+                  ))
+                )}
+             </div>
+
+             <div className="grid grid-cols-1 gap-6 pt-8">
                 <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                    <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                       <Maximize2 className="w-7 h-7" />
                    </div>
                    <div className="space-y-2">
-                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">High Fidelity</h4>
+                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">High Fidelity Integration</h4>
                      <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                       1:1 binary preservation ensuring your visual assets retain original resolution and metadata during the cloud sync.
+                       1:1 binary preservation ensures your visual assets retain original resolution and metadata during the cloud sync.
                      </p>
                    </div>
                 </div>
