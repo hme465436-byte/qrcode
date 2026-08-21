@@ -103,7 +103,7 @@ const formatSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-export default function TelegramFileHostPage() {
+export default function FILEHOSTPage() {
   const { toast } = useToast();
   const { user, loading: authLoading } = useUser();
   
@@ -179,7 +179,7 @@ export default function TelegramFileHostPage() {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       if (selectedFile.size > 20 * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Heavy Payload", description: "Standard limit for Telegram Bot API is 20MB." });
+        toast({ variant: "destructive", title: "Heavy Payload", description: "Standard limit for cloud node is 20MB." });
         return;
       }
       setFile(selectedFile);
@@ -313,14 +313,14 @@ export default function TelegramFileHostPage() {
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <MessageCircle className="w-3.5 h-3.5" /> Telegram Protocol Pro
+            <MessageCircle className="w-3.5 h-3.5" /> Cloud Protocol Pro
           </div>
           <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-none">
-            Telegram <span className="text-primary italic">File Host</span>
+            FILE <span className="text-primary italic">HOST</span>
           </h1>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
-           <GetHelp toolId="telegram-file-host" />
+           <GetHelp toolId="file-host" />
            {(file || result) && user && (
                 <Button variant="outline" size="sm" onClick={() => { setFile(null); setResult(null); setError(null); }} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
@@ -407,9 +407,12 @@ export default function TelegramFileHostPage() {
                 </div>
 
                 {error && (
-                  <div className="p-5 rounded-2xl bg-destructive/5 border border-destructive/20 flex items-start gap-4">
-                    <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase">{error}</p>
+                  <div className="p-5 rounded-2xl bg-destructive/5 border border-destructive/20 space-y-3 animate-in shake duration-500">
+                    <div className="flex items-center gap-3 text-destructive">
+                       <AlertTriangle className="w-4 h-4" />
+                       <h4 className="text-[10px] font-black uppercase tracking-widest">Handshake Failed</h4>
+                    </div>
+                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase tracking-tighter">{error}</p>
                   </div>
                 )}
               </CardContent>
@@ -437,7 +440,7 @@ export default function TelegramFileHostPage() {
                 <Cloud className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                 <div className="space-y-1">
                    <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Distributed Hosting</h4>
-                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Files are stored across Telegram's global data matrix, ensuring high availability and permanent archival.</p>
+                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Files are stored across a global data matrix, ensuring high availability and permanent archival.</p>
                 </div>
             </div>
           </div>
@@ -593,7 +596,7 @@ export default function TelegramFileHostPage() {
                                   </div>
                                   <div className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-white/5">
                                      <div className="space-y-0.5">
-                                        <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Telegram Trace</p>
+                                        <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Archive Trace</p>
                                         <p className="text-[10px] font-bold text-white uppercase">Message ID: #{item.data.messageId}</p>
                                      </div>
                                      <Badge className="bg-primary/10 text-primary border-primary/20 text-[7px] font-black uppercase tracking-widest">Active Signal</Badge>
@@ -659,6 +662,14 @@ export default function TelegramFileHostPage() {
         </div>
       )}
       
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+      
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
@@ -698,14 +709,6 @@ export default function TelegramFileHostPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
 }

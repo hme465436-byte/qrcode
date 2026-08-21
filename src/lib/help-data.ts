@@ -12,6 +12,23 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'file-host': {
+    title: 'FILE HOST Studio',
+    description: 'Professional distributed archival unit. Securely store and share files of any type via cloud nodes with permanent bitstream preservation.',
+    steps: [
+      'Inject your binary asset (Image, PDF, Audio, ZIP up to 20MB) into the Inbound Matrix.',
+      'Execute the uplink protocol to transmit the bitstream to the cloud node.',
+      'Once synthesized, the asset is automatically recorded in your Archival Registry.',
+      'To share, expand the registry entry and generate a temporary download portal.',
+      'Deploy the link via the one-tap social sharing protocols (WhatsApp/Telegram).'
+    ],
+    tips: [
+      'Favorite important assets to pin them to the top of your registry.',
+      'Generated download links are temporary; re-synthesize them if they expire.',
+      'Rename registry entries for better organizational control within the studio.'
+    ],
+    privacy: 'Uplinks occur via secure server-side handshakes. Your local registry data, including favorites and custom labels, is held strictly in hardware memory.'
+  },
   'image-to-link': {
     title: 'Image to Link Studio',
     description: 'Professional visual hosting unit. Convert photos and graphics into permanent shareable links via the global Imgur anonymous registry.',

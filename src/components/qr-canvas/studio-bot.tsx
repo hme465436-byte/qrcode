@@ -120,6 +120,7 @@ const TOOLS: Tool[] = [
   { href: '/mic-tester', title: 'Mic Tester', icon: Mic, keywords: ['microphone', 'record', 'input'], desc: 'Mic hardware test.' },
   { href: '/live-wallpaper', title: 'Live Wallpaper', icon: MonitorPlay, keywords: ['video', 'loop', 'pc', 'phone'], desc: 'Create live loops.' },
   { href: '/image-to-link', title: 'Image to Link', icon: LinkIcon, keywords: ['host', 'imgur', 'share', 'upload'], desc: 'Image link maker.' },
+  { href: '/telegram-file-host', title: 'FILE HOST', icon: MessageCircle, keywords: ['host', 'upload', 'cloud', 'archive'], desc: 'Cloud file archival.' },
 ];
 
 const QUICK_CHIPS = ["PDF tools", "Image tools", "How to use"];

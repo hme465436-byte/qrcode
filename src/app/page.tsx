@@ -147,12 +147,12 @@ const TOOLS: Tool[] = [
   { 
     href: '/telegram-file-host', 
     icon: MessageCircle, 
-    title: 'Telegram Host', 
-    desc: 'Archive and share any file via the Telegram Bot Protocol.', 
+    title: 'FILE HOST', 
+    desc: 'Archive and share any file via the Cloud Host Protocol.', 
     label: 'HOSTING', 
     color: 'text-sky-400 bg-sky-400/10 border-sky-400/20',
     glowClass: 'bg-sky-400/10',
-    keywords: ['telegram host', 'file sharing', 'send file', 'bot upload', 'archive', 'cloud share'],
+    keywords: ['file host', 'file sharing', 'send file', 'cloud upload', 'archive', 'cloud share'],
     category: 'utilities'
   },
   { 
@@ -1327,7 +1327,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -1338,7 +1338,7 @@ const TOOLS: Tool[] = [
     title: 'Dictionary', 
     desc: 'Professional English word search and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
@@ -1453,7 +1453,7 @@ export default function Home() {
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
-      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'Telegram Host', 'Telegram upload'
+      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
