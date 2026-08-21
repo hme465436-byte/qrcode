@@ -32,7 +32,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
-import { uploadToImgur } from './actions';
+import { uploadToImgBB } from './actions';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
 
@@ -85,19 +85,19 @@ export default function ImageToLinkPage() {
     setLinks(null);
 
     try {
-      const result = await uploadToImgur(image);
+      const result = await uploadToImgBB(image);
       
       if (result.success && result.data) {
         const d = result.data;
         const matrix: LinkMatrix = {
-          direct: d.link,
-          view: `https://imgur.com/${d.id}`,
-          markdown: `![Identity](${d.link})`,
-          html: `<img src="${d.link}" alt="Identity">`,
-          bbcode: `[img]${d.link}[/img]`
+          direct: d.url,
+          view: d.url_viewer,
+          markdown: `![Identity](${d.url})`,
+          html: `<img src="${d.url}" alt="Identity">`,
+          bbcode: `[img]${d.url}[/img]`
         };
         setLinks(matrix);
-        toast({ title: "Uplink Success", description: "Matrix synchronized with Imgur nodes." });
+        toast({ title: "Uplink Success", description: "Matrix synchronized with ImgBB nodes." });
       } else {
         throw new Error(result.error);
       }
@@ -131,13 +131,13 @@ export default function ImageToLinkPage() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Globe className="w-3.5 h-3.5" /> Web Suite Pro
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
            <div>
               <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
                 Image to <span className="text-primary italic">Link Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional-grade visual hosting. Upload imagery to the global Imgur node and synthesize a complete multi-format shareable link matrix instantly.
+                Professional-grade visual hosting. Upload imagery to the global ImgBB node and synthesize a complete multi-format shareable link matrix instantly.
               </p>
            </div>
            <div className="flex items-center gap-3">
