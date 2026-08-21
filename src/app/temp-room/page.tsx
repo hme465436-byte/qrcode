@@ -34,7 +34,8 @@ import {
   Check,
   Eye,
   EyeOff,
-  ArrowRightLeft
+  ArrowRightLeft,
+  ShieldAlert
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,6 +48,16 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // --- Types & Constants ---
 type RoomStatus = 'idle' | 'waiting' | 'verifying' | 'connected' | 'closed';
@@ -114,6 +125,7 @@ export default function TempRoomPage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [showQr, setShowQr] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
@@ -161,7 +173,6 @@ export default function TempRoomPage() {
       
       p.on('error', (err: any) => {
         if (err.type === 'unavailable-id') {
-           // Handled in handleCreate with retries
            reject(err);
         } else {
            toast({ variant: "destructive", title: "Peer Error", description: err.message });
@@ -170,8 +181,12 @@ export default function TempRoomPage() {
         }
       });
 
-      p.on('disconnected', () => setStatus('closed'));
-      p.on('close', () => setStatus('closed'));
+      p.on('disconnected', () => {
+        // Attempt background re-synchronization instead of closing
+        if (!p.destroyed) {
+          p.reconnect();
+        }
+      });
     });
   };
 
@@ -255,7 +270,14 @@ export default function TempRoomPage() {
       }
     });
 
-    connection.on('close', () => setStatus('closed'));
+    connection.on('close', () => {
+      // If the peer leaves, we stay active to wait for reconnect or just preserve notepad
+      setConn(null);
+      if (status === 'connected') {
+        setStatus(isHost ? 'waiting' : 'closed');
+        toast({ title: "Peer Left", description: "Connection terminated." });
+      }
+    });
   };
 
   const handleCreate = async () => {
@@ -397,6 +419,12 @@ export default function TempRoomPage() {
     URL.revokeObjectURL(url);
   };
 
+  const confirmLeave = () => {
+    if (conn) conn.close();
+    if (peer) peer.destroy();
+    window.location.reload();
+  };
+
   // QR Generation
   useEffect(() => {
     if (showQr && qrRef.current && roomCode) {
@@ -434,7 +462,12 @@ export default function TempRoomPage() {
           <div className="flex items-center gap-3">
              <GetHelp toolId="temp-room" />
              {status !== 'idle' && (
-               <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+               <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowLeaveConfirm(true)} 
+                className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all"
+               >
                  <LogOut className="w-3.5 h-3.5 mr-2" /> Leave Session
                </Button>
              )}
@@ -853,7 +886,7 @@ export default function TempRoomPage() {
            <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-4">
               <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <p className="text-[10px] text-foreground/40 font-bold uppercase leading-relaxed">
-                Both browser tabs must remain open to maintain the P2P connection. If either person leaves, the room is definitively destroyed and all volatile data is purged.
+                The studio remains active in the background. Only leave the room via the explicit Leave Session protocol to ensure your shared matrix is correctly closed.
               </p>
            </div>
         </div>
@@ -884,6 +917,32 @@ export default function TempRoomPage() {
            </div>
         </div>
       )}
+
+      {/* Leave Confirmation Alert */}
+      <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <ShieldAlert className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               Terminate Session
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+               Are you sure you want to leave this room? This will definitively destroy the P2P tunnel and purge all volatile shared data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmLeave}
+              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+            >
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
