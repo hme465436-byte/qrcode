@@ -32,7 +32,9 @@ import {
   ExternalLink,
   Settings2,
   Maximize2,
-  Check
+  Check,
+  Download,
+  Link as LinkIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,7 +45,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
-import { uploadToTelegram } from './actions';
+import { uploadToTelegram, getDownloadProtocol } from './actions';
 
 interface TelegramLinkMatrix {
   fileId: string;
@@ -70,6 +72,11 @@ export default function TelegramFileHostPage() {
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Download Link States
+  const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
+  const [generatedUrls, setGeneratedUrls] = useState<Record<string, string>>({});
+  const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -152,6 +159,27 @@ export default function TelegramFileHostPage() {
       toast({ variant: "destructive", title: "Protocol Failure" });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleGenerateLink = async (fileId: string, historyId: string) => {
+    setGeneratingIds(prev => new Set(prev).add(historyId));
+    setLinkErrors(prev => { const n = { ...prev }; delete n[historyId]; return n; });
+
+    try {
+      const response = await getDownloadProtocol(fileId);
+      if (response.success && response.url) {
+        const fullUrl = window.location.origin + response.url;
+        setGeneratedUrls(prev => ({ ...prev, [historyId]: fullUrl }));
+        toast({ title: "Link Synthesized", description: "Temporary access portal ready." });
+      } else {
+        throw new Error(response.error || "Uplink Failed");
+      }
+    } catch (err: any) {
+      setLinkErrors(prev => ({ ...prev, [historyId]: err.message }));
+      toast({ variant: "destructive", title: "Protocol Blocked", description: err.message });
+    } finally {
+      setGeneratingIds(prev => { const n = new Set(prev); n.delete(historyId); return n; });
     }
   };
 
@@ -366,7 +394,7 @@ export default function TelegramFileHostPage() {
                          </div>
                          <div className="flex gap-3 relative z-10 w-full sm:w-auto">
                             <Button onClick={() => handleCopy(`File: ${result.name}\nID: ${result.fileId}`, 'full')} className="h-14 px-8 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-white/90">
-                               {isCopied === 'full' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                               {isCopied === 'full' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                                Share Info
                             </Button>
                          </div>
@@ -432,24 +460,64 @@ export default function TelegramFileHostPage() {
                           {expandedId === item.id && (
                             <div className="px-5 pb-8 pt-2 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-500">
                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6">
-                                  <div className="space-y-2">
-                                     <div className="flex items-center justify-between px-1">
-                                        <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Protocol ID</span>
-                                        <button onClick={() => handleCopy(item.data.fileId, `hist-${item.id}`)} className="text-[8px] font-black uppercase text-primary/60 hover:text-primary transition-all">
-                                           {isCopied === `hist-${item.id}` ? 'Isolated' : 'Copy'}
-                                        </button>
+                                  <div className="space-y-4">
+                                     <div className="space-y-2">
+                                        <div className="flex items-center justify-between px-1">
+                                           <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Protocol ID</span>
+                                           <button onClick={() => handleCopy(item.data.fileId, `hist-${item.id}`)} className="text-[8px] font-black uppercase text-primary/60 hover:text-primary transition-all">
+                                              {isCopied === `hist-${item.id}` ? 'Isolated' : 'Copy'}
+                                           </button>
+                                        </div>
+                                        <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[9px] font-bold text-foreground/40 overflow-hidden shadow-inner">
+                                           <span className="truncate">{item.data.fileId}</span>
+                                        </div>
                                      </div>
-                                     <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[9px] font-bold text-foreground/40 overflow-hidden shadow-inner">
-                                        <span className="truncate">{item.data.fileId}</span>
+                                     <div className="space-y-2">
+                                        <div className="flex items-center justify-between px-1">
+                                           <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Message ID</span>
+                                        </div>
+                                        <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[10px] font-bold text-primary overflow-hidden shadow-inner">
+                                           #{item.data.messageId}
+                                        </div>
                                      </div>
                                   </div>
-                                  <div className="space-y-2">
-                                     <div className="flex items-center justify-between px-1">
-                                        <span className="text-[8px] font-black uppercase text-foreground/30 tracking-widest">Message ID</span>
+
+                                  <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex flex-col justify-center gap-4">
+                                     <div className="flex items-center gap-3">
+                                        <Download className="w-4 h-4 text-primary" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60">Download Protocol</span>
                                      </div>
-                                     <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[10px] font-bold text-primary overflow-hidden shadow-inner">
-                                        #{item.data.messageId}
-                                     </div>
+                                     
+                                     {!generatedUrls[item.id] ? (
+                                       <Button 
+                                        onClick={() => handleGenerateLink(item.data.fileId, item.id)}
+                                        disabled={generatingIds.has(item.id)}
+                                        className="w-full h-12 bg-primary text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-lg"
+                                       >
+                                         {generatingIds.has(item.id) ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <Zap className="w-3.5 h-3.5 mr-2" />}
+                                         Generate Download Link
+                                       </Button>
+                                     ) : (
+                                       <div className="space-y-4 animate-in fade-in">
+                                          <div className="p-3 bg-black/40 rounded-xl border border-primary/20 shadow-inner flex items-center justify-between gap-4">
+                                             <p className="text-[9px] font-mono text-primary truncate max-w-[180px]">{generatedUrls[item.id]}</p>
+                                             <button onClick={() => handleCopy(generatedUrls[item.id], `url-${item.id}`)} className="text-primary hover:text-white transition-colors">
+                                                {isCopied === `url-${item.id}` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                             </button>
+                                          </div>
+                                          <div className="flex gap-2">
+                                             <Button asChild className="h-10 flex-1 bg-white text-black text-[9px] font-black uppercase tracking-widest rounded-xl">
+                                                <a href={generatedUrls[item.id]} target="_blank">Launch Port <ExternalLink className="w-3 h-3 ml-2" /></a>
+                                             </Button>
+                                             <Button onClick={() => setGeneratedUrls(prev => { const n = {...prev}; delete n[item.id]; return n; })} variant="outline" className="h-10 w-10 border-white/10 bg-white/5 rounded-xl">
+                                                <RotateCcw className="w-3.5 h-3.5" />
+                                             </Button>
+                                          </div>
+                                       </div>
+                                     )}
+                                     {linkErrors[item.id] && (
+                                       <p className="text-[8px] font-bold text-red-500 uppercase tracking-tighter text-center">{linkErrors[item.id]}</p>
+                                     )}
                                   </div>
                                </div>
                             </div>
