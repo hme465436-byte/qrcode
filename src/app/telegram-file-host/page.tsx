@@ -379,7 +379,7 @@ export default function FILEHOSTPage() {
             )}
            >
               {activeNode ? <ShieldCheck className="w-3.5 h-3.5 mr-2" /> : <Zap className="w-3.5 h-3.5 mr-2" />}
-              {activeNode ? 'MY OWN ACTIVE' : 'MY OWN'}
+              {activeNode ? 'HOST ACTIVE' : 'HOST'}
            </Button>
            {(file || result) && user && (
                 <Button variant="outline" size="sm" onClick={() => { setFile(null); setResult(null); setError(null); }} className="h-10 px-4 rounded-xl border-white/10 bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
@@ -825,4 +825,3 @@ export default function FILEHOSTPage() {
     </div>
   );
 }
-
