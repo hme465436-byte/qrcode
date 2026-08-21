@@ -102,7 +102,15 @@ export default function BackgroundRemovePage() {
   };
 
   const executeExtraction = async () => {
-    if (!image || !user) return;
+    if (!image) {
+      toast({ variant: "destructive", title: "Protocol Failure", description: "Please select an image first." });
+      return;
+    }
+    
+    if (!user) {
+      toast({ variant: "destructive", title: "Auth Required", description: "Please sign in to process visuals." });
+      return;
+    }
     
     setIsProcessing(true);
     setLocalError(null);

@@ -17,11 +17,14 @@ export async function removeBackground(base64Image: string, customKey?: string) 
       throw new Error("Missing visual payload.");
     }
 
+    // 1. Prepare Binary Matrix from Base64
     const parts = base64Image.split(',');
     const cleanBase64 = parts.length > 1 ? parts[1] : parts[0];
+    const buffer = Buffer.from(cleanBase64, 'base64');
 
     const formData = new FormData();
-    formData.append('image_base64', cleanBase64);
+    // Use 'image_file' field with binary blob for peak node compatibility
+    formData.append('image_file', new Blob([buffer]), 'input.jpg');
     formData.append('size', 'auto');
 
     const response = await fetch('https://api.remove.bg/v1.0/removebg', {
@@ -34,12 +37,14 @@ export async function removeBackground(base64Image: string, customKey?: string) 
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.errors?.[0]?.title || `Uplink Error: ${response.status}`);
+      // Extract specific error identifiers from the response matrix
+      const errorMsg = errData.errors?.[0]?.title || `Uplink Error: ${response.status}`;
+      throw new Error(errorMsg);
     }
 
     const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const resultBase64 = `data:image/png;base64,${buffer.toString('base64')}`;
+    const resultBuffer = Buffer.from(arrayBuffer);
+    const resultBase64 = `data:image/png;base64,${resultBuffer.toString('base64')}`;
 
     return { success: true, data: resultBase64 };
   } catch (error: any) {
