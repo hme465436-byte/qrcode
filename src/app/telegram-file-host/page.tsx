@@ -11,6 +11,7 @@ import {
   Activity,
   ShieldCheck,
   RefreshCcw,
+  RotateCcw,
   History,
   FileUp,
   X,
