@@ -1401,6 +1401,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
+  },
+  { 
+    href: '/png-finder', 
+    icon: FileImage, 
+    title: 'PNG Finder Studio', 
+    desc: 'Search and download PNG images for editing', 
+    label: 'IMAGE', 
+    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    glowClass: 'bg-emerald-400/10',
+    keywords: ['png finder', 'transparent image', 'png download', 'search images'],
+    category: 'image'
   }
 ];
 
