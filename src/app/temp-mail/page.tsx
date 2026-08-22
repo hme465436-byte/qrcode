@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -231,7 +230,9 @@ export default function TempMailPage() {
 
           if (newDetected) {
             if (prev.length > 0) playNotification();
-            setUnreadCount(u => u + 1);
+            const newCount = incomingMsgs.filter(m => !prev.some(p => p.id.toString() === m.id.toString())).length;
+            setUnreadCount(u => u + newCount);
+            
             return Array.from(prevMap.values()).sort((a, b) => 
               new Date(b.date).getTime() - new Date(a.date).getTime()
             );

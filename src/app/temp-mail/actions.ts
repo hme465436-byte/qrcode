@@ -3,6 +3,7 @@
 /**
  * @fileOverview Server actions for Temp Mail Studio.
  * Handles high-fidelity multi-node proxying for temporary email services to bypass CORS.
+ * Specifically re-engineered for Mail.tm and 1secmail production protocols.
  */
 
 const NODES = {
@@ -17,11 +18,12 @@ async function handle1secmail(action: string, params: any) {
   Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, String(v)));
   
   const res = await fetch(url.toString(), { cache: 'no-store' });
+  if (!res.ok) throw new Error(`1secmail node error: ${res.status}`);
   return res.json();
 }
 
 async function handleMailTM(endpoint: string, method: string = 'GET', body?: any, token?: string) {
-  const headers: any = { 'Content-Type': 'application/json' };
+  const headers: any = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const res = await fetch(`${NODES['mailtm']}${endpoint}`, {
@@ -30,7 +32,12 @@ async function handleMailTM(endpoint: string, method: string = 'GET', body?: any
     body: body ? JSON.stringify(body) : undefined,
     cache: 'no-store'
   });
-  return res.json();
+  
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data['hydra:description'] || data.message || `Mail.tm node error: ${res.status}`);
+  }
+  return data;
 }
 
 export async function fetchFromProvider(providerId: string, payload: any) {
@@ -41,9 +48,11 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           const data = await handle1secmail('genRandomMailbox', { count: 1 });
           return { success: true, email: data[0] };
         }
-        if (payload.action === 'getDomains') {
-          const data = await handle1secmail('getDomainList', {});
-          return { success: true, domains: data };
+        if (payload.action === 'genCustomMailbox') {
+          // 1secmail doesn't require "account creation", just use any login on their domains
+          const domains = await handle1secmail('getDomainList', {});
+          const email = `${payload.username}@${domains[0]}`;
+          return { success: true, email };
         }
         if (payload.action === 'getMessages') {
           const [login, domain] = payload.email.split('@');
@@ -53,25 +62,39 @@ export async function fetchFromProvider(providerId: string, payload: any) {
         if (payload.action === 'readMessage') {
           const [login, domain] = payload.email.split('@');
           const data = await handle1secmail('readMessage', { login, domain, id: payload.id });
-          return { success: true, message: data };
+          return { success: true, message: {
+            from: data.from,
+            subject: data.subject,
+            date: data.date,
+            htmlBody: data.htmlBody || data.body || '',
+            body: data.body || data.textBody || ''
+          }};
         }
         break;
 
       case 'mailtm':
         if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
+          // 1. Get Domain Matrix
           const domains = await handleMailTM('/domains');
-          const domain = domains['hydra:member'][0].domain;
+          const domain = domains['hydra:member'][0]?.domain;
+          if (!domain) throw new Error("No domain identified in Mail.tm registry.");
+
           const login = payload.username || Math.random().toString(36).substring(2, 12);
-          const password = Math.random().toString(36).substring(2, 12);
           const address = `${login}@${domain}`;
+          const password = Math.random().toString(36).substring(2, 12);
           
-          const account = await handleMailTM('/accounts', 'POST', { address, password });
-          if (account.error || account['hydra:description']) {
-            throw new Error(account['hydra:description'] || "Username taken");
-          }
+          // 2. Register Account
+          await handleMailTM('/accounts', 'POST', { address, password });
           
+          // 3. Negotiate Bearer Token
           const tokenData = await handleMailTM('/token', 'POST', { address, password });
-          return { success: true, email: account.address, token: tokenData.token, accountId: account.id };
+          
+          return { 
+            success: true, 
+            email: address, 
+            token: tokenData.token, 
+            accountId: tokenData.id 
+          };
         }
         if (payload.action === 'getMessages') {
           const data = await handleMailTM('/messages', 'GET', null, payload.token);
@@ -89,8 +112,8 @@ export async function fetchFromProvider(providerId: string, payload: any) {
             from: data.from.address,
             subject: data.subject,
             date: data.createdAt,
-            htmlBody: data.html || data.text,
-            body: data.text || data.html
+            htmlBody: data.html || data.text || '',
+            body: data.text || data.html || ''
           }};
         }
         break;
