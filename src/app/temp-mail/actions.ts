@@ -3,7 +3,7 @@
 /**
  * @fileOverview Server actions for Temp Mail Studio.
  * Handles high-fidelity multi-node proxying for temporary email services.
- * Supports Guerrilla, TempMail.lol, Mailnesia, TempMailC, MailForSpam, Temporam, Mail.gw, Sharklasers, and Neighbours.
+ * Supports Guerrilla, TempMail.lol, Mailnesia, TempMailC, MailForSpam, Temporam, Sharklasers, and Neighbours.
  */
 
 const NODES = {
@@ -13,7 +13,6 @@ const NODES = {
   tempmailc: 'https://tempmailc.com/api/v1',
   mailforspam: 'https://www.mailforspam.com/api',
   temporam: 'https://temporam.com/api',
-  mail_gw: 'https://api.mail.gw',
   sharklasers: 'https://www.sharklasers.com/ajax.php',
   neighbours: 'https://neighbours.sh'
 };
@@ -21,66 +20,6 @@ const NODES = {
 export async function fetchFromProvider(providerId: string, payload: any) {
   try {
     switch (providerId) {
-      /**
-       * Node: Mail.gw (Same style as Mail.tm)
-       */
-      case 'mail_gw':
-        if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
-          const dRes = await fetch(`${NODES.mail_gw}/domains`, { headers: { 'Accept': 'application/json' } });
-          const dData = await dRes.json();
-          const domain = dData['hydra:member']?.[0]?.domain;
-          if (!domain) throw new Error("Mail.gw domains unavailable");
-          
-          const userPart = payload.username || Math.random().toString(36).substring(2, 10);
-          const address = `${userPart}@${domain}`;
-          const password = Math.random().toString(36).substring(2, 15);
-          
-          const createRes = await fetch(`${NODES.mail_gw}/accounts`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ address, password })
-          });
-          
-          if (!createRes.ok) throw new Error("Account creation failed. Name might be taken.");
-
-          const tokenRes = await fetch(`${NODES.mail_gw}/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ address, password })
-          });
-          const tokenData = await tokenRes.json();
-          return { success: true, email: address, token: tokenData.token };
-        }
-        if (payload.action === 'getMessages') {
-          const res = await fetch(`${NODES.mail_gw}/messages`, {
-            headers: { 'Authorization': `Bearer ${payload.token}`, 'Accept': 'application/json' },
-            cache: 'no-store'
-          });
-          const data = await res.json();
-          const mapped = (data['hydra:member'] || []).map((m: any) => ({
-            id: m.id,
-            from: m.from.address,
-            subject: m.subject,
-            date: new Date(m.createdAt).toLocaleString()
-          }));
-          return { success: true, messages: mapped };
-        }
-        if (payload.action === 'readMessage') {
-          const res = await fetch(`${NODES.mail_gw}/messages/${payload.id}`, {
-            headers: { 'Authorization': `Bearer ${payload.token}`, 'Accept': 'application/json' },
-            cache: 'no-store'
-          });
-          const data = await res.json();
-          return { success: true, message: {
-            from: data.from.address,
-            subject: data.subject,
-            date: new Date(data.createdAt).toLocaleString(),
-            htmlBody: data.html?.[0] || data.text || '',
-            body: data.text || ''
-          }};
-        }
-        break;
-
       /**
        * Node: Neighbours.sh
        */

@@ -74,7 +74,6 @@ const PROVIDERS = [
   { id: 'tempmailc', label: 'TempMailC', icon: Zap },
   { id: 'mailforspam', label: 'MailForSpam', icon: MessageSquare },
   { id: 'temporam', label: 'Temporam', icon: LayoutGrid },
-  { id: 'mail_gw', label: 'Mail.gw', icon: Globe },
   { id: 'sharklasers', label: 'Sharklasers', icon: ShieldCheck },
   { id: 'neighbours', label: 'Neighbours', icon: Smartphone },
 ];
