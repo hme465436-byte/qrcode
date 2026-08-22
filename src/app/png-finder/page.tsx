@@ -1,6 +1,7 @@
+
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, 
   ImagePlus, 
@@ -21,7 +22,10 @@ import {
   FileImage,
   X,
   Palette,
-  Sparkles
+  Sparkles,
+  Layers,
+  Shapes,
+  GripVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +44,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const PROVIDERS = [
   { id: 'auto', label: 'Auto (Best Signal)', icon: Sparkles },
@@ -58,6 +63,7 @@ export default function PngFinderPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<PngResult | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'glyphs' | 'colorful'>('glyphs');
 
   const executeSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -73,6 +79,13 @@ export default function PngFinderPage() {
       if (response.success && response.results.length > 0) {
         setResults(response.results);
         setActiveNode(response.activeNode || null);
+        
+        // Auto-switch tab based on results if one is empty
+        const icons = response.results.filter(r => r.isIcon);
+        const colorful = response.results.filter(r => !r.isIcon);
+        if (icons.length > 0 && colorful.length === 0) setActiveTab('glyphs');
+        else if (colorful.length > 0 && icons.length === 0) setActiveTab('colorful');
+        
         toast({ title: "Signal Isolated", description: `Found ${response.results.length} high-fidelity assets.` });
       } else {
         setError(response.error || "No results identified. Try a simpler keyword.");
@@ -84,10 +97,12 @@ export default function PngFinderPage() {
     }
   };
 
+  const glyphResults = useMemo(() => results.filter(r => r.isIcon), [results]);
+  const colorfulResults = useMemo(() => results.filter(r => !r.isIcon), [results]);
+
   const handleDownload = async (asset: PngResult) => {
     try {
       if (asset.isIcon) {
-        // Special Protocol for SVG Icons: Render to Canvas for PNG export
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
@@ -253,37 +268,98 @@ export default function PngFinderPage() {
              </Card>
            ) : results.length > 0 ? (
              <div className="space-y-12">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                   {results.map((img) => (
-                     <div 
-                      key={img.id} 
-                      onClick={() => setSelectedAsset(img)}
-                      className="group/card relative aspect-square rounded-[2rem] overflow-hidden border border-white/5 bg-secondary/30 cursor-pointer shadow-2xl hover:border-primary/40 transition-all duration-500"
-                     >
-                        <div className="absolute inset-0 bg-checkered opacity-50" />
-                        <img src={img.previewUrl} alt={img.title} className="relative z-10 w-full h-full object-contain p-4 group-hover/card:scale-110 transition-transform duration-700" />
-                        
-                        <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity p-4 flex flex-col justify-end">
-                           <p className="text-[9px] font-bold text-white uppercase truncate mb-3">{img.title}</p>
-                           <div className="flex gap-2">
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handleDownload(img); }} 
-                                className="h-8 w-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-lg active:scale-95 transition-all"
-                              >
-                                 <Download className="w-3.5 h-3.5" />
-                              </button>
-                              <div className="h-8 px-2 rounded-lg bg-white/10 backdrop-blur-md text-white text-[7px] font-black uppercase flex items-center justify-center flex-1 border border-white/10">View Matrix</div>
-                           </div>
-                        </div>
-                        
-                        <div className="absolute top-3 left-3 z-30">
-                           <Badge className="bg-black/60 backdrop-blur-md border-white/10 text-[6px] font-black uppercase tracking-widest text-white/40">
-                              {img.source}
-                           </Badge>
-                        </div>
-                     </div>
-                   ))}
-                </div>
+                <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="w-full">
+                  <TabsList className="bg-secondary/50 p-1 rounded-2xl h-14 border border-white/5 mb-10 w-fit">
+                    <TabsTrigger value="glyphs" className="rounded-xl px-8 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+                       <Shapes className="w-3.5 h-3.5 mr-2" /> Glyphs & Icons
+                    </TabsTrigger>
+                    <TabsTrigger value="colorful" className="rounded-xl px-8 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+                       <Palette className="w-3.5 h-3.5 mr-2" /> Colorful PNGs
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="glyphs" className="m-0 focus-visible:ring-0">
+                    {glyphResults.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                        {glyphResults.map((img) => (
+                          <div 
+                            key={img.id} 
+                            onClick={() => setSelectedAsset(img)}
+                            className="group/card relative aspect-square rounded-[2rem] overflow-hidden border border-white/5 bg-secondary/30 cursor-pointer shadow-2xl hover:border-primary/40 transition-all duration-500"
+                          >
+                            <div className="absolute inset-0 bg-checkered-light opacity-50" />
+                            <img src={img.previewUrl} alt={img.title} className="relative z-10 w-full h-full object-contain p-6 group-hover/card:scale-110 transition-transform duration-700" />
+                            
+                            <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+                                <p className="text-[9px] font-bold text-white uppercase truncate mb-3">{img.title}</p>
+                                <div className="flex gap-2">
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); handleDownload(img); }} 
+                                    className="h-8 w-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </button>
+                                  <div className="h-8 px-2 rounded-lg bg-white/10 backdrop-blur-md text-white text-[7px] font-black uppercase flex items-center justify-center flex-1 border border-white/10">View Matrix</div>
+                                </div>
+                            </div>
+                            
+                            <div className="absolute top-3 left-3 z-30">
+                                <Badge className="bg-black/60 backdrop-blur-md border-white/10 text-[6px] font-black uppercase tracking-widest text-white/40">
+                                  {img.source}
+                                </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 text-center opacity-10">
+                        <Shapes className="w-16 h-16 mx-auto mb-4" />
+                        <p className="text-[10px] font-black uppercase tracking-widest">No glyphs identified for this query.</p>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="colorful" className="m-0 focus-visible:ring-0">
+                    {colorfulResults.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                        {colorfulResults.map((img) => (
+                          <div 
+                            key={img.id} 
+                            onClick={() => setSelectedAsset(img)}
+                            className="group/card relative aspect-square rounded-[2rem] overflow-hidden border border-white/5 bg-secondary/30 cursor-pointer shadow-2xl hover:border-primary/40 transition-all duration-500"
+                          >
+                            <div className="absolute inset-0 bg-checkered opacity-50" />
+                            <img src={img.previewUrl} alt={img.title} className="relative z-10 w-full h-full object-contain p-4 group-hover/card:scale-110 transition-transform duration-700" />
+                            
+                            <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+                                <p className="text-[9px] font-bold text-white uppercase truncate mb-3">{img.title}</p>
+                                <div className="flex gap-2">
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); handleDownload(img); }} 
+                                    className="h-8 w-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </button>
+                                  <div className="h-8 px-2 rounded-lg bg-white/10 backdrop-blur-md text-white text-[7px] font-black uppercase flex items-center justify-center flex-1 border border-white/10">View Matrix</div>
+                                </div>
+                            </div>
+                            
+                            <div className="absolute top-3 left-3 z-30">
+                                <Badge className="bg-black/60 backdrop-blur-md border-white/10 text-[6px] font-black uppercase tracking-widest text-white/40">
+                                  {img.source}
+                                </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 text-center opacity-10">
+                        <Palette className="w-16 h-16 mx-auto mb-4" />
+                        <p className="text-[10px] font-black uppercase tracking-widest">No colorful PNGs identified for this query.</p>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
              </div>
            ) : (
              <Card className="glass-card border-border shadow-2xl h-[600px] flex flex-col items-center justify-center text-center p-12 border-dashed bg-black/10">
@@ -344,6 +420,19 @@ export default function PngFinderPage() {
                             linear-gradient(45deg, transparent 75%, #111113 75%), 
                             linear-gradient(-45deg, transparent 75%, #111113 75%);
           background-size: 20px 20px;
+        }
+        .bg-checkered-light {
+          background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+          background-size: 20px 20px;
+        }
+        .dark .bg-checkered-light {
+          background-image: linear-gradient(45deg, #2a2a2c 25%, transparent 25%), 
+                            linear-gradient(-45deg, #2a2a2c 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #2a2a2c 75%), 
+                            linear-gradient(-45deg, transparent 75%, #2a2a2c 75%);
         }
       `}</style>
     </div>
