@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -100,6 +101,7 @@ export default function TempMailPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [countdown, setCountdown] = useState(REFRESH_RATE);
 
+  // --- Initial Handshake ---
   useEffect(() => {
     const savedPins = localStorage.getItem(PIN_STORAGE_KEY);
     if (savedPins) {
@@ -162,19 +164,21 @@ export default function TempMailPage() {
     }
   }, [provider, email, sessionData]);
 
+  // --- Decoupled Polling Matrix ---
   useEffect(() => {
     if (!email) return;
     const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          fetchMessages(true);
-          return REFRESH_RATE;
-        }
-        return prev - 1;
-      });
+      setCountdown(prev => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
-  }, [email, fetchMessages]);
+  }, [email]);
+
+  useEffect(() => {
+    if (countdown === 0 && email) {
+      fetchMessages(true);
+      setCountdown(REFRESH_RATE);
+    }
+  }, [countdown, email, fetchMessages]);
 
   const handleProviderChange = (newVal: string) => {
     setProvider(newVal);
