@@ -41,6 +41,10 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           const data = await handle1secmail('genRandomMailbox', { count: 1 });
           return { success: true, email: data[0] };
         }
+        if (payload.action === 'getDomains') {
+          const data = await handle1secmail('getDomainList', {});
+          return { success: true, domains: data };
+        }
         if (payload.action === 'getMessages') {
           const [login, domain] = payload.email.split('@');
           const data = await handle1secmail('getMessages', { login, domain });
@@ -54,13 +58,19 @@ export async function fetchFromProvider(providerId: string, payload: any) {
         break;
 
       case 'mailtm':
-        if (payload.action === 'genRandomMailbox') {
+        if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
           const domains = await handleMailTM('/domains');
           const domain = domains['hydra:member'][0].domain;
-          const login = Math.random().toString(36).substring(2, 12);
+          const login = payload.username || Math.random().toString(36).substring(2, 12);
           const password = Math.random().toString(36).substring(2, 12);
-          const account = await handleMailTM('/accounts', 'POST', { address: `${login}@${domain}`, password });
-          const tokenData = await handleMailTM('/token', 'POST', { address: `${login}@${domain}`, password });
+          const address = `${login}@${domain}`;
+          
+          const account = await handleMailTM('/accounts', 'POST', { address, password });
+          if (account.error || account['hydra:description']) {
+            throw new Error(account['hydra:description'] || "Username taken");
+          }
+          
+          const tokenData = await handleMailTM('/token', 'POST', { address, password });
           return { success: true, email: account.address, token: tokenData.token, accountId: account.id };
         }
         if (payload.action === 'getMessages') {
@@ -99,6 +109,16 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           const res = await fetch(buildUrl('get_email_address'), { cache: 'no-store' });
           const data = await res.json();
           return { success: true, email: data.email_addr, sid: data.sid_token };
+        }
+        if (payload.action === 'genCustomMailbox') {
+          const resAddr = await fetch(buildUrl('get_email_address'), { cache: 'no-store' });
+          const dataAddr = await resAddr.json();
+          const resUser = await fetch(buildUrl('set_email_user', { 
+            sid_token: dataAddr.sid_token, 
+            email_user: payload.username 
+          }), { cache: 'no-store' });
+          const dataUser = await resUser.json();
+          return { success: true, email: dataUser.email_addr, sid: dataUser.sid_token };
         }
         if (payload.action === 'getMessages') {
           const res = await fetch(buildUrl('check_email', { sid_token: payload.sid, seq: 0 }), { cache: 'no-store' });
