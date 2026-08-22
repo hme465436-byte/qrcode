@@ -3,7 +3,7 @@
 /**
  * @fileOverview Server actions for Temp Mail Studio.
  * Handles high-fidelity multi-node proxying for temporary email services to bypass CORS.
- * Specifically re-engineered for Mail.tm and 1secmail production protocols.
+ * Specifically re-engineered for Mail.tm (Hydra v2), 1secmail (Cluster), and Guerrilla production protocols.
  */
 
 const NODES = {
@@ -34,7 +34,7 @@ async function handle1secmail(action: string, params: any) {
     }
   }
   
-  throw new Error("1secmail blocked on this server, use Guerrilla or Mail.tm");
+  throw new Error("1secmail cluster blocked. Switch to Guerrilla or Mail.tm.");
 }
 
 async function handleMailTM(endpoint: string, method: string = 'GET', body?: any, token?: string) {
@@ -101,13 +101,22 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           const domain = memberList[0]?.domain;
           if (!domain) throw new Error("Mail.tm domain identity corrupted.");
 
-          const login = payload.username || Math.random().toString(36).substring(2, 12);
+          // Separating the identity string (Optional Custom vs Random)
+          const username = payload.username?.trim();
+          const login = username || Math.random().toString(36).substring(2, 12);
           const address = `${login}@${domain}`;
           const password = Math.random().toString(36).substring(2, 12);
           
           // 2. Register Account
-          const account = await handleMailTM('/accounts', 'POST', { address, password });
-          if (!account || !account.address) throw new Error("Mail.tm account registration failed.");
+          try {
+            const account = await handleMailTM('/accounts', 'POST', { address, password });
+            if (!account || !account.address) throw new Error("Mail.tm registration rejected.");
+          } catch (err: any) {
+            if (payload.action === 'genCustomMailbox') {
+              throw new Error("Custom username not available on this node.");
+            }
+            throw err;
+          }
           
           // 3. Negotiate Bearer Token
           const tokenData = await handleMailTM('/token', 'POST', { address, password });
@@ -126,8 +135,8 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           const memberList = data?.['hydra:member'] || [];
           const mapped = memberList.map((m: any) => ({
             id: m.id,
-            from: m.from.address,
-            subject: m.subject,
+            from: m.from?.address || 'Anonymous Sender',
+            subject: m.subject || '(No Subject)',
             date: m.createdAt
           }));
           return { success: true, messages: mapped };
@@ -136,8 +145,8 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           if (!payload.token) throw new Error("Session token invalid.");
           const data = await handleMailTM(`/messages/${payload.id}`, 'GET', null, payload.token);
           return { success: true, message: {
-            from: data.from.address,
-            subject: data.subject,
+            from: data.from?.address || 'Anonymous Sender',
+            subject: data.subject || '(No Subject)',
             date: data.createdAt,
             htmlBody: data.html || data.text || '',
             body: data.text || data.html || ''

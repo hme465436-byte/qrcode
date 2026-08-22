@@ -74,6 +74,7 @@ const PROVIDERS = [
 const REFRESH_RATE = 10; 
 const PIN_STORAGE_KEY = 'mykit_tempmail_pinned_v1';
 const HISTORY_STORAGE_KEY = 'mykit_tempmail_history_v1';
+const MUTE_STORAGE_KEY = 'mykit_tempmail_mute_v1';
 
 interface MailMessage {
   id: string | number;
@@ -151,8 +152,11 @@ export default function TempMailPage() {
   useEffect(() => {
     const savedPins = localStorage.getItem(PIN_STORAGE_KEY);
     const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+    const savedMute = localStorage.getItem(MUTE_STORAGE_KEY);
+    
     if (savedPins) try { setPinnedIds(new Set(JSON.parse(savedPins))); } catch (e) {}
     if (savedHistory) try { setHistory(JSON.parse(savedHistory)); } catch (e) {}
+    if (savedMute !== null) setIsMuted(savedMute === 'true');
     
     setIsLoaded(true);
     generateMail();
@@ -162,8 +166,9 @@ export default function TempMailPage() {
     if (isLoaded) {
       localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(Array.from(pinnedIds)));
       localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+      localStorage.setItem(MUTE_STORAGE_KEY, isMuted.toString());
     }
-  }, [pinnedIds, history, isLoaded]);
+  }, [pinnedIds, history, isMuted, isLoaded]);
 
   const addToHistory = (newEmail: string, prov: string) => {
     setHistory(prev => {
@@ -404,7 +409,7 @@ export default function TempMailPage() {
                     </div>
 
                     <div className="space-y-3">
-                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Custom Identity (Prefix)</Label>
+                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Custom Identity (Optional Prefix)</Label>
                        <div className="flex gap-2">
                           <Input 
                             value={customUsername} 
@@ -436,10 +441,10 @@ export default function TempMailPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <Button onClick={() => handleCopyText(email || '', 'identity')} disabled={!email} className="h-14 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                          {isCopied === 'identity' ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />} Copy Identity
+                          {isCopied === 'identity' ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />} Copy Address
                        </Button>
                        <Button variant="outline" onClick={() => generateMail()} className="h-14 border-border bg-secondary text-foreground font-black text-[10px] uppercase tracking-widest rounded-2xl hover:text-primary">
-                          <Plus className="w-4 h-4 mr-2" /> Random
+                          <RefreshCcw className="w-4 h-4 mr-2" /> New Random
                        </Button>
                     </div>
                  </div>
