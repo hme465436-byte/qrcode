@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -1411,6 +1412,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-emerald-400/10',
     keywords: ['png finder', 'transparent image', 'png download', 'search images'],
     category: 'image'
+  },
+  { 
+    href: '/icon-studio', 
+    icon: Shapes, 
+    title: 'Icon Studio', 
+    desc: 'Search social icons, recolor, download SVG PNG ICO', 
+    label: 'DESIGN', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['icons', 'social icons', 'svg', 'png', 'ico', 'recolor', 'logo', 'design'],
+    category: 'image'
   }
 ];
 
@@ -1754,19 +1766,9 @@ export default function Home() {
             )}
           </div>
           
-          <div className="mt-20 pt-10 border-t border-white/5 flex flex-col items-center gap-6 animate-reveal">
-             <div className="flex items-center gap-3 px-6 py-2 rounded-full bg-primary/10 border border-primary/20 shadow-2xl shadow-primary/5">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-                   Displaying {visibleCount} of {filteredTools.length} units
-                </span>
-             </div>
-             <div className="flex flex-col items-center gap-3">
-                <Heart className="w-6 h-6 text-primary fill-primary/10 animate-pulse" />
-                <p className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground drop-shadow-sm">
-                   Developed by <span className="text-white">Umar Farooq</span> — <span className="bg-gradient-to-r from-blue-400 via-primary to-indigo-500 bg-clip-text text-transparent">Studio Master v7.2 Pro</span>
-                </p>
-             </div>
+          <div className="text-center opacity-10 flex flex-col items-center gap-4">
+             <Heart className="w-8 h-8 text-primary" />
+             <p className="text-[9px] font-black uppercase tracking-[0.6em] text-foreground">Developed by <span className="text-white">Umar Farooq</span> — Studio Master v7.2 Pro</p>
           </div>
         </div>
       </section>
