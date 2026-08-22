@@ -33,6 +33,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -141,6 +142,14 @@ export default function IconStudioPage() {
       toast({ title: "SVG Matrix Copied" });
       setTimeout(() => setIsCopied(null), 2000);
     } catch (e) {}
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    setResults([]);
+    setSelectedIcon(null);
+    setActiveNode('Standby');
+    setError(null);
   };
 
   return (
@@ -431,12 +440,4 @@ export default function IconStudioPage() {
       `}</style>
     </div>
   );
-
-  function handleClear() {
-    setQuery('');
-    setResults([]);
-    setSelectedIcon(null);
-    setActiveNode('Standby');
-    setError(null);
-  }
 }
