@@ -110,13 +110,14 @@ import {
   Network,
   Mail,
   MailQuestion,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button as ShadButton } from '@/components/ui/button';
 import { SpaceBackground } from '@/components/qr-canvas/space-background';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 const VIEW_MODE_KEY = 'mykit_view_mode';
 
@@ -155,6 +156,17 @@ const TOOLS: Tool[] = [
     color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
     keywords: ['username', 'checker', 'osint', 'find user', 'social search', 'taken', 'available'],
+    category: 'utilities'
+  },
+  { 
+    href: '/domain-whois', 
+    icon: Globe, 
+    title: 'Domain Whois', 
+    desc: 'Isolate domain birth-dates, registrar metadata, and security status.', 
+    label: 'INTEL', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['domain', 'whois', 'age', 'registrar', 'expiration', 'nameserver'],
     category: 'utilities'
   },
   { 
@@ -1729,6 +1741,11 @@ export default function Home() {
                  </p>
               </div>
             )}
+          </div>
+          
+          <div className="text-center opacity-10 flex flex-col items-center gap-4">
+             <Heart className="w-8 h-8 text-primary" />
+             <p className="text-[9px] font-black uppercase tracking-[0.6em] text-foreground">Developed by Umar Farooq — Studio Master v7.2</p>
           </div>
         </div>
       </section>
