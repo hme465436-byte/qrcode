@@ -90,7 +90,7 @@ export default function TempMailPage() {
   const [selectedMsg, setSelectedMsg] = useState<FullMessage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
+  const [isCopied, setIsCopied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   
   // Auto-refresh State
@@ -144,7 +144,7 @@ export default function TempMailPage() {
     }
   }, [provider, email, sessionData]);
 
-  // Decoupled interval logic to prevent "Cannot update a component while rendering" errors
+  // Decoupled interval logic
   useEffect(() => {
     if (!email) return;
 
@@ -195,13 +195,11 @@ export default function TempMailPage() {
     }
   };
 
-  const handleCopy = () => {
-    if (email) {
-      navigator.clipboard.writeText(email);
-      setIsCopied(true);
-      toast({ title: "Identity Isolated" });
-      setTimeout(() => setIsCopied(false), 2000);
-    }
+  const handleCopyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setIsCopied(label);
+    toast({ title: "Identity Isolated" });
+    setTimeout(() => setIsCopied(null), 2000);
   };
 
   return (
@@ -271,8 +269,8 @@ export default function TempMailPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                       <Button onClick={handleCopy} disabled={!email} className="h-14 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                          {isCopied ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
+                       <Button onClick={() => handleCopyText(email || '', 'Identity')} disabled={!email} className="h-14 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                          {isCopied === 'Identity' ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
                           Copy Identity
                        </Button>
                        <Button variant="outline" onClick={() => generateMail()} className="h-14 border-border bg-secondary text-foreground font-black text-[10px] uppercase tracking-widest rounded-2xl hover:text-primary">
@@ -369,44 +367,42 @@ export default function TempMailPage() {
       </div>
 
       <Dialog open={!!selectedMsg} onOpenChange={() => setSelectedMsg(null)}>
-        <DialogContent className="glass-card max-w-4xl border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
+        <DialogContent className="glass-card max-w-5xl border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
           {selectedMsg && (
             <>
-               <DialogHeader className="p-8 border-b border-white/5 bg-secondary/30 shrink-0">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                     <div className="space-y-4 min-w-0">
-                        <div className="space-y-1">
-                           <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em]">Signal Identity Isolated</p>
-                           <DialogTitle className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight truncate max-w-xl">
-                              {selectedMsg.subject || "(NO SUBJECT)" }
-                           </DialogTitle>
-                           <DialogDescription className="sr-only">Detailed message content from {selectedMsg.from}</DialogDescription>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-4">
-                           <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-foreground/40 uppercase">
-                              <User className="w-3 h-3" /> {selectedMsg.from}
+               <DialogHeader className="px-6 py-4 border-b border-white/5 bg-secondary/30 shrink-0">
+                  <div className="flex items-start justify-between gap-4">
+                     <div className="min-w-0 flex-1">
+                        <DialogTitle className="text-xl sm:text-2xl font-headline font-black text-foreground uppercase tracking-tight line-clamp-2">
+                           {selectedMsg.subject || "(NO SUBJECT)" }
+                        </DialogTitle>
+                        <DialogDescription className="sr-only">Detailed message content from {selectedMsg.from}</DialogDescription>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-foreground/40 uppercase">
+                              <User className="w-3 h-3 text-primary/40" /> 
+                              <span className="truncate">{selectedMsg.from}</span>
                            </div>
-                           <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-foreground/40 uppercase">
-                              <Calendar className="w-3 h-3" /> {selectedMsg.date}
+                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-foreground/40 uppercase">
+                              <Calendar className="w-3 h-3 text-primary/40" /> {selectedMsg.date}
                            </div>
                         </div>
                      </div>
-                     <div className="flex gap-2 shrink-0">
-                        <Button onClick={() => handleCopy()} variant="outline" className="h-10 px-4 rounded-xl border-white/10 bg-white/5 text-white text-[9px] font-black uppercase">
-                           <Copy className="w-3.5 h-3.5 mr-2" /> Copy Raw
+                     <div className="flex items-center gap-2 shrink-0">
+                        <Button onClick={() => handleCopyText(selectedMsg.body, 'Content')} variant="outline" size="sm" className="h-9 px-3 rounded-lg border-white/10 bg-white/5 text-white text-[8px] font-black uppercase tracking-widest hidden sm:flex">
+                           {isCopied === 'Content' ? <CheckCircle2 className="w-3 h-3 mr-1.5" /> : <Copy className="w-3 h-3 mr-1.5" />} Copy Raw
                         </Button>
-                        <Button onClick={() => setSelectedMsg(null)} variant="ghost" className="h-10 w-10 rounded-xl text-foreground/20 hover:text-white">
+                        <Button onClick={() => setSelectedMsg(null)} variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-foreground/20 hover:text-white">
                            <X className="w-5 h-5" />
                         </Button>
                      </div>
                   </div>
                </DialogHeader>
                
-               <div className="flex-1 overflow-y-auto custom-scrollbar p-8 sm:p-12 bg-white">
+               <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-10 bg-white">
                   <div className="max-w-none">
                     {selectedMsg.htmlBody ? (
                       <div 
-                        className="text-foreground/80 leading-relaxed text-base"
+                        className="text-foreground/80 leading-relaxed text-base whitespace-pre-wrap"
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }}
                       />
                     ) : (
@@ -415,13 +411,6 @@ export default function TempMailPage() {
                       </pre>
                     )}
                   </div>
-               </div>
-
-               <div className="p-6 bg-secondary/30 border-t border-white/5 flex items-center justify-between shrink-0">
-                  <span className="text-[8px] font-black uppercase text-foreground/10 tracking-[0.4em]">Hardware-Native Matrix Decoder Active</span>
-                  <Badge variant="outline" className="text-[7px] font-black uppercase border-emerald-500/20 text-emerald-500 px-3">
-                    <Check className="w-3 h-3 mr-1" /> Protocol: Clean
-                  </Badge>
                </div>
             </>
           )}
