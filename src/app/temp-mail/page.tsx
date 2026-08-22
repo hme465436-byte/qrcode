@@ -1,6 +1,7 @@
+
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Mail, 
   RefreshCcw, 
@@ -25,10 +26,17 @@ import {
   ChevronRight,
   Globe,
   CheckCircle2,
-  Check
+  Check,
+  Search,
+  Pin,
+  PinOff,
+  Download,
+  FileCode,
+  FileDown,
+  KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from '@/components/ui/input';
 import DOMPurify from 'dompurify';
 import { fetchFromProvider } from './actions';
 
@@ -59,6 +68,7 @@ const PROVIDERS = [
 ];
 
 const REFRESH_RATE = 10; 
+const PIN_STORAGE_KEY = 'mykit_tempmail_pinned_v1';
 
 interface MailMessage {
   id: string | number;
@@ -68,6 +78,7 @@ interface MailMessage {
 }
 
 interface FullMessage {
+  id: string | number;
   from: string;
   subject: string;
   date: string;
@@ -93,10 +104,33 @@ export default function TempMailPage() {
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   
+  // Feature States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pinnedIds, setPinnedIds] = useState<Set<string | number>>(new Set());
+  const [isLoaded, setIsLoaded] = useState(false);
+  
   // Auto-refresh State
   const [countdown, setCountdown] = useState(REFRESH_RATE);
 
-  // --- 1. Generation Protocol ---
+  // --- Persistence Handshake ---
+  useEffect(() => {
+    const savedPins = localStorage.getItem(PIN_STORAGE_KEY);
+    if (savedPins) {
+      try {
+        setPinnedIds(new Set(JSON.parse(savedPins)));
+      } catch (e) {}
+    }
+    setIsLoaded(true);
+    generateMail();
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(Array.from(pinnedIds)));
+    }
+  }, [pinnedIds, isLoaded]);
+
+  // --- Generation Protocol ---
   const generateMail = async (targetProvider = provider) => {
     setIsLoading(true);
     setError(null);
@@ -122,7 +156,7 @@ export default function TempMailPage() {
     }
   };
 
-  // --- 2. Inbox Polling Matrix ---
+  // --- Inbox Polling Matrix ---
   const fetchMessages = useCallback(async (silent = false) => {
     if (!email) return;
     if (!silent) setIsRefreshing(true);
@@ -147,11 +181,9 @@ export default function TempMailPage() {
   // Decoupled interval logic
   useEffect(() => {
     if (!email) return;
-
     const interval = setInterval(() => {
       setCountdown(prev => prev - 1);
     }, 1000);
-
     return () => clearInterval(interval);
   }, [email]);
 
@@ -162,16 +194,12 @@ export default function TempMailPage() {
     }
   }, [countdown, fetchMessages]);
 
-  useEffect(() => {
-    generateMail();
-  }, []);
-
   const handleProviderChange = (newVal: string) => {
     setProvider(newVal);
     generateMail(newVal);
   };
 
-  // --- 3. Message Decoding ---
+  // --- Message Decoding ---
   const readMessage = async (id: string | number) => {
     if (!email) return;
     setIsLoading(true);
@@ -184,7 +212,7 @@ export default function TempMailPage() {
         token: sessionData?.token 
       });
       if (res.success) {
-        setSelectedMsg(res.message);
+        setSelectedMsg({ ...res.message, id });
       } else {
         throw new Error(res.error);
       }
@@ -193,6 +221,75 @@ export default function TempMailPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // --- Features Logic ---
+  const togglePin = (id: string | number) => {
+    const next = new Set(pinnedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setPinnedIds(next);
+    toast({ title: next.has(id) ? "Signal Pinned" : "Signal Unpinned" });
+  };
+
+  const detectedOtp = useMemo(() => {
+    if (!selectedMsg) return null;
+    const searchTarget = (selectedMsg.body + selectedMsg.htmlBody);
+    const match = searchTarget.match(/\b\d{4,8}\b/);
+    return match ? match[0] : null;
+  }, [selectedMsg]);
+
+  const filteredMessages = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    const filtered = messages.filter(m => 
+      m.from.toLowerCase().includes(q) || 
+      m.subject.toLowerCase().includes(q)
+    );
+
+    return [...filtered].sort((a, b) => {
+      const aPinned = pinnedIds.has(a.id);
+      const bPinned = pinnedIds.has(b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return 0;
+    });
+  }, [messages, searchQuery, pinnedIds]);
+
+  const handleDownload = (type: 'html' | 'eml') => {
+    if (!selectedMsg) return;
+    
+    let content = '';
+    let filename = `mail_${selectedMsg.id}`;
+    let mime = 'text/plain';
+
+    if (type === 'html') {
+      content = selectedMsg.htmlBody || selectedMsg.body;
+      filename += '.html';
+      mime = 'text/html';
+    } else {
+      // Construct basic EML structure
+      content = [
+        `From: ${selectedMsg.from}`,
+        `To: ${email}`,
+        `Subject: ${selectedMsg.subject}`,
+        `Date: ${selectedMsg.date}`,
+        `MIME-Version: 1.0`,
+        `Content-Type: text/html; charset=utf-8`,
+        ``,
+        selectedMsg.htmlBody || selectedMsg.body
+      ].join('\r\n');
+      filename += '.eml';
+      mime = 'message/rfc822';
+    }
+
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Master Exported" });
   };
 
   const handleCopyText = (text: string, label: string) => {
@@ -282,7 +379,7 @@ export default function TempMailPage() {
                  {error && (
                     <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3">
                        <AlertCircle className="w-4 h-4 text-destructive" />
-                       <p className="text-[9px] font-bold text-destructive uppercase">{error}</p>
+                       <p className="text-[10px] font-bold text-destructive uppercase">{error}</p>
                     </div>
                  )}
 
@@ -301,56 +398,92 @@ export default function TempMailPage() {
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
-                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                       <Inbox className="w-5 h-5" />
+              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-col gap-6 shrink-0">
+                 <div className="flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                          <Inbox className="w-5 h-5" />
+                        </div>
+                        <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Linguistic Registry</CardTitle>
                     </div>
-                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Linguistic Registry</CardTitle>
+                    {messages.length > 0 && (
+                      <Badge className="bg-primary text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg">{messages.length} Signals Identified</Badge>
+                    )}
                  </div>
-                 {messages.length > 0 && (
-                   <Badge className="bg-primary text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg">{messages.length} Signals Identified</Badge>
-                 )}
+
+                 {/* Inbox Search Matrix */}
+                 <div className="relative group/search">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
+                    <Input 
+                      placeholder="Search registry by sender or subject..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-12 pl-12 bg-background/50 border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                    />
+                 </div>
               </CardHeader>
               
               <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
                  <div className="flex-1 overflow-y-auto custom-scrollbar no-scrollbar">
-                    {messages.length === 0 ? (
+                    {filteredMessages.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center py-40 opacity-10 gap-6 grayscale">
                          <Inbox className="w-24 h-24 text-primary" />
                          <div className="text-center space-y-2">
                             <p className="text-sm font-black uppercase tracking-[0.4em]">Signal Buffer Empty</p>
-                            <p className="text-[9px] font-bold uppercase tracking-widest">Awaiting inbound linguistic data...</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest">
+                              {searchQuery ? "Zero matches in active registry" : "Awaiting inbound linguistic data..."}
+                            </p>
                          </div>
                       </div>
                     ) : (
                       <div className="divide-y divide-white/5">
-                         {messages.map((msg) => (
-                           <div 
-                            key={msg.id} 
-                            onClick={() => readMessage(msg.id)}
-                            className="p-6 flex items-center justify-between group hover:bg-primary/5 transition-all cursor-pointer relative overflow-hidden"
-                           >
-                              <div className="flex items-center gap-6 min-w-0">
-                                 <div className="w-12 h-12 rounded-2xl bg-secondary border border-border flex items-center justify-center text-primary/30 group-hover:text-primary transition-all shadow-inner shrink-0">
-                                    <MessageSquare className="w-5 h-5" />
-                                 </div>
-                                 <div className="min-w-0 space-y-1">
-                                    <p className="text-[8px] font-black text-primary uppercase tracking-widest">Source Node: {msg.from.split('<')[0]}</p>
-                                    <h4 className="text-sm font-bold text-foreground truncate uppercase pr-10">{msg.subject || "(No Subject Identifier)"}</h4>
-                                    <div className="flex items-center gap-3">
-                                       <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-tighter truncate">{msg.from}</p>
-                                    </div>
-                                 </div>
-                              </div>
-                              <div className="text-right flex flex-col items-end gap-3 shrink-0">
-                                 <span className="text-[8px] font-black text-foreground/10 uppercase tracking-widest">{msg.date}</span>
-                                 <div className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-foreground/10 group-hover:text-primary transition-all">
-                                    <ArrowRight className="w-4 h-4" />
-                                 </div>
-                              </div>
-                           </div>
-                         ))}
+                         {filteredMessages.map((msg) => {
+                           const isPinned = pinnedIds.has(msg.id);
+                           return (
+                            <div 
+                              key={msg.id} 
+                              className={cn(
+                                "flex flex-col sm:flex-row items-center group hover:bg-primary/[0.03] transition-all cursor-pointer relative overflow-hidden",
+                                isPinned && "bg-primary/[0.05]"
+                              )}
+                              onClick={() => readMessage(msg.id)}
+                            >
+                                <div className="flex-1 flex items-center gap-6 p-6 min-w-0">
+                                  <div className={cn(
+                                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-inner shrink-0",
+                                    isPinned ? "bg-primary/20 text-primary" : "bg-secondary border border-border text-primary/30 group-hover:text-primary"
+                                  )}>
+                                      <MessageSquare className="w-5 h-5" />
+                                  </div>
+                                  <div className="min-w-0 space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-[8px] font-black text-primary uppercase tracking-widest">Source Node</p>
+                                        {isPinned && <Pin className="w-3 h-3 text-primary fill-current" />}
+                                      </div>
+                                      <h4 className="text-sm font-bold text-foreground truncate uppercase pr-10">{msg.subject || "(No Subject Identifier)"}</h4>
+                                      <div className="flex items-center gap-3">
+                                        <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-tighter truncate">{msg.from}</p>
+                                      </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="p-6 flex sm:flex-col items-center gap-4 shrink-0 sm:border-l border-white/5">
+                                   <button 
+                                      onClick={(e) => { e.stopPropagation(); togglePin(msg.id); }}
+                                      className={cn("p-2 rounded-xl transition-all", isPinned ? "text-primary bg-primary/10" : "text-white/10 hover:text-primary")}
+                                   >
+                                      {isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
+                                   </button>
+                                   <div className="text-right flex flex-col items-end gap-1">
+                                      <span className="text-[8px] font-black text-foreground/10 uppercase tracking-widest">{msg.date}</span>
+                                      <div className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-foreground/10 group-hover:text-primary transition-all">
+                                          <ArrowRight className="w-4 h-4" />
+                                      </div>
+                                   </div>
+                                </div>
+                            </div>
+                           );
+                         })}
                       </div>
                     )}
                  </div>
@@ -367,12 +500,15 @@ export default function TempMailPage() {
       </div>
 
       <Dialog open={!!selectedMsg} onOpenChange={() => setSelectedMsg(null)}>
-        <DialogContent className="glass-card max-w-5xl border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
+        <DialogContent className="glass-card max-w-6xl border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
           {selectedMsg && (
             <>
                <DialogHeader className="px-6 py-4 border-b border-white/5 bg-secondary/30 shrink-0">
                   <div className="flex items-start justify-between gap-4">
                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                           <Badge variant="outline" className="text-[8px] font-black uppercase text-primary border-primary/20">Protocol Verified</Badge>
+                        </div>
                         <DialogTitle className="text-xl sm:text-2xl font-headline font-black text-foreground uppercase tracking-tight line-clamp-2">
                            {selectedMsg.subject || "(NO SUBJECT)" }
                         </DialogTitle>
@@ -397,9 +533,36 @@ export default function TempMailPage() {
                      </div>
                   </div>
                </DialogHeader>
+
+               {/* OTP Matrix Module */}
+               {detectedOtp && (
+                 <div className="px-6 py-4 bg-primary/[0.03] border-b border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-2">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-xl ring-4 ring-primary/5">
+                          <KeyRound className="w-5 h-5 animate-pulse" />
+                       </div>
+                       <div className="space-y-0.5">
+                          <h4 className="text-[10px] font-black uppercase text-foreground tracking-widest">Verification Signal Detected</h4>
+                          <p className="text-[8px] font-bold text-foreground/30 uppercase">Detected OTP Protocol</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                       <div className="px-6 py-2.5 bg-background border-2 border-primary/20 rounded-2xl text-2xl font-mono font-black text-primary tracking-[0.3em] shadow-inner select-all">
+                          {detectedOtp}
+                       </div>
+                       <Button 
+                        onClick={() => handleCopyText(detectedOtp, 'OTP')}
+                        className="h-12 px-6 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-lg"
+                       >
+                          {isCopied === 'OTP' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                          Copy Code
+                       </Button>
+                    </div>
+                 </div>
+               )}
                
                <div className="flex-1 overflow-auto custom-scrollbar p-6 sm:p-10 bg-white">
-                  <div className="max-w-none overflow-x-auto">
+                  <div className="max-w-none overflow-x-auto min-w-full">
                     {selectedMsg.htmlBody ? (
                       <div 
                         className="text-foreground/80 leading-relaxed text-base whitespace-pre-wrap min-w-full"
@@ -410,6 +573,21 @@ export default function TempMailPage() {
                         {selectedMsg.body}
                       </pre>
                     )}
+                  </div>
+               </div>
+
+               {/* Export Protocol Matrix */}
+               <div className="px-6 py-4 border-t border-white/5 bg-secondary/30 shrink-0 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[9px] font-black text-foreground/20 uppercase tracking-widest">
+                     <ShieldCheck className="w-3.5 h-3.5" /> Clinical Integrity Guard
+                  </div>
+                  <div className="flex items-center gap-3">
+                     <Button onClick={() => handleDownload('html')} variant="outline" size="sm" className="h-9 px-4 rounded-xl border-white/5 bg-white/5 text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">
+                        <FileCode className="w-3.5 h-3.5 mr-2" /> Download HTML
+                     </Button>
+                     <Button onClick={() => handleDownload('eml')} variant="outline" size="sm" className="h-9 px-4 rounded-xl border-white/5 bg-white/5 text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">
+                        <FileDown className="w-3.5 h-3.5 mr-2" /> Download EML
+                     </Button>
                   </div>
                </div>
             </>
