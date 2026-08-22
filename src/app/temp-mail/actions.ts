@@ -3,7 +3,7 @@
 /**
  * @fileOverview Server actions for Temp Mail Studio.
  * Handles high-fidelity multi-node proxying for temporary email services.
- * Supports Guerrilla, TempMail.lol, Mailnesia, TempMailC, MailForSpam, Temporam, Sharklasers, and Neighbours.
+ * Supports Guerrilla, TempMail.lol, Mailnesia, TempMailC, MailForSpam, Temporam, and Sharklasers.
  */
 
 const NODES = {
@@ -13,49 +13,12 @@ const NODES = {
   tempmailc: 'https://tempmailc.com/api/v1',
   mailforspam: 'https://www.mailforspam.com/api',
   temporam: 'https://temporam.com/api',
-  sharklasers: 'https://www.sharklasers.com/ajax.php',
-  neighbours: 'https://neighbours.sh'
+  sharklasers: 'https://www.sharklasers.com/ajax.php'
 };
 
 export async function fetchFromProvider(providerId: string, payload: any) {
   try {
     switch (providerId) {
-      /**
-       * Node: Neighbours.sh
-       */
-      case 'neighbours':
-        if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
-          const dRes = await fetch(`${NODES.neighbours}/config/domains`, { cache: 'no-store' });
-          const domains = await dRes.json();
-          const domain = domains[0] || 'neighbours.sh';
-          const name = payload.username || Math.random().toString(36).substring(2, 10);
-          return { success: true, email: `${name}@${domain}` };
-        }
-        if (payload.action === 'getMessages') {
-          const res = await fetch(`${NODES.neighbours}/inbox/${encodeURIComponent(payload.email)}`, { cache: 'no-store' });
-          if (res.status === 404) return { success: true, messages: [] };
-          const data = await res.json();
-          const mapped = (data || []).map((m: any) => ({
-            id: m.uid,
-            from: m.from,
-            subject: m.subject,
-            date: m.date
-          }));
-          return { success: true, messages: mapped };
-        }
-        if (payload.action === 'readMessage') {
-          const res = await fetch(`${NODES.neighbours}/inbox/${encodeURIComponent(payload.email)}/${payload.id}`, { cache: 'no-store' });
-          const data = await res.json();
-          return { success: true, message: {
-            from: data.from,
-            subject: data.subject,
-            date: data.date,
-            htmlBody: data.html || data.body || '',
-            body: data.body || ''
-          }};
-        }
-        break;
-
       /**
        * Node: Sharklasers (Mirror)
        */
@@ -310,9 +273,9 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           const res = await fetch(buildUrl('fetch_email', { sid_token: payload.sid, email_id: payload.id }), { cache: 'no-store' });
           const data = await res.json();
           return { success: true, message: {
-            from: data.mail_from,
-            subject: data.mail_subject,
-            date: data.mail_date,
+            from: data.from,
+            subject: data.subject,
+            date: data.date,
             htmlBody: data.mail_body,
             body: data.mail_body
           }};

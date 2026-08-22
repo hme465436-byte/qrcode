@@ -75,7 +75,6 @@ const PROVIDERS = [
   { id: 'mailforspam', label: 'MailForSpam', icon: MessageSquare },
   { id: 'temporam', label: 'Temporam', icon: LayoutGrid },
   { id: 'sharklasers', label: 'Sharklasers', icon: ShieldCheck },
-  { id: 'neighbours', label: 'Neighbours', icon: Smartphone },
 ];
 
 const REFRESH_RATE = 10; 
