@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -123,7 +124,6 @@ export default function TempMailPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [countdown, setCountdown] = useState(REFRESH_RATE);
 
-  const prevMsgCount = useRef(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   // --- 1. Audio Notification Engine ---
@@ -139,7 +139,7 @@ export default function TempMailPage() {
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); 
       osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
       gain.gain.setValueAtTime(0.1, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
@@ -180,7 +180,6 @@ export default function TempMailPage() {
     setMessages([]);
     setSessionData(null);
     setUnreadCount(0);
-    prevMsgCount.current = 0;
 
     try {
       const action = username ? 'genCustomMailbox' : 'genRandomMailbox';
@@ -213,14 +212,36 @@ export default function TempMailPage() {
         sid: sessionData?.sid, 
         token: sessionData?.token 
       });
-      if (res.success) {
-        const newMsgs = res.messages || [];
-        if (newMsgs.length > prevMsgCount.current) {
-          if (prevMsgCount.current > 0) playNotification();
-          setUnreadCount(prev => prev + (newMsgs.length - prevMsgCount.current));
-        }
-        setMessages(newMsgs);
-        prevMsgCount.current = newMsgs.length;
+
+      if (res.success && Array.isArray(res.messages)) {
+        const incomingMsgs = res.messages;
+        
+        setMessages(prev => {
+          // Safety Guard: If API returns empty while we already have mails, ignore it to prevent flicker/disappearance
+          if (incomingMsgs.length === 0 && prev.length > 0) return prev;
+
+          const prevMap = new Map(prev.map(m => [m.id.toString(), m]));
+          let newDetected = false;
+
+          incomingMsgs.forEach(msg => {
+            if (!prevMap.has(msg.id.toString())) {
+              prevMap.set(msg.id.toString(), msg);
+              newDetected = true;
+            }
+          });
+
+          if (newDetected) {
+            if (prev.length > 0) playNotification();
+            setUnreadCount(u => u + 1);
+            
+            // Merge and sort by date descending
+            return Array.from(prevMap.values()).sort((a, b) => 
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+            );
+          }
+          
+          return prev;
+        });
       }
     } catch (err) {
       console.warn("Polling interrupted.");
@@ -274,6 +295,15 @@ export default function TempMailPage() {
     }
   };
 
+  const togglePin = (id: string | number) => {
+    setPinnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   // --- 4. Logic Matrix ---
   const detectedOtp = useMemo(() => {
     if (!selectedMsg) return null;
@@ -297,6 +327,25 @@ export default function TempMailPage() {
       return 0;
     });
   }, [messages, searchQuery, pinnedIds]);
+
+  const handleDownload = (fmt: 'html' | 'eml') => {
+    if (!selectedMsg) return;
+    const content = fmt === 'html' ? selectedMsg.htmlBody : `From: ${selectedMsg.from}\nSubject: ${selectedMsg.subject}\nDate: ${selectedMsg.date}\n\n${selectedMsg.body}`;
+    const blob = new Blob([content], { type: fmt === 'html' ? 'text/html' : 'message/rfc822' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `email_${selectedMsg.id}.${fmt}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setIsCopied(label);
+    toast({ title: "Copied" });
+    setTimeout(() => setIsCopied(null), 2000);
+  };
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -343,9 +392,9 @@ export default function TempMailPage() {
               <CardContent className="pt-8 space-y-8">
                  <div className="space-y-6">
                     <div className="space-y-3">
-                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Server Node</Label>
+                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Active Server Node</Label>
                        <Select value={provider} onValueChange={handleProviderChange}>
-                          <SelectTrigger className="h-14 bg-secondary border-border rounded-2xl font-bold uppercase text-[10px]">
+                          <SelectTrigger className="h-14 bg-secondary border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest">
                              <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="glass-card">
@@ -390,10 +439,10 @@ export default function TempMailPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                       <Button onClick={() => { navigator.clipboard.writeText(email || ''); toast({ title: "Copied" }); }} disabled={!email} className="h-14 bg-primary text-white font-black uppercase tracking-widest text-[9px] rounded-2xl shadow-xl">
-                          <Copy className="w-5 h-5 mr-2" /> Copy
+                       <Button onClick={() => handleCopyText(email || '', 'identity')} disabled={!email} className="h-14 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                          {isCopied === 'identity' ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />} Copy Identity
                        </Button>
-                       <Button variant="outline" onClick={() => generateMail()} className="h-14 border-border bg-secondary text-foreground font-black text-[9px] uppercase rounded-2xl">
+                       <Button variant="outline" onClick={() => generateMail()} className="h-14 border-border bg-secondary text-foreground font-black text-[10px] uppercase tracking-widest rounded-2xl hover:text-primary">
                           <Plus className="w-4 h-4 mr-2" /> Random
                        </Button>
                     </div>
@@ -430,7 +479,7 @@ export default function TempMailPage() {
                                <p className="text-[11px] font-bold text-foreground truncate uppercase">{h.email}</p>
                                <p className="text-[8px] font-black text-foreground/20 uppercase">{h.provider}</p>
                             </div>
-                            <button onClick={() => { navigator.clipboard.writeText(h.email); toast({ title: "Copied" }); }} className="p-2 text-foreground/10 hover:text-primary transition-colors">
+                            <button onClick={() => handleCopyText(h.email, `hist-${i}`)} className="p-2 text-foreground/10 hover:text-primary transition-colors">
                                <Copy className="w-3.5 h-3.5" />
                             </button>
                          </div>
@@ -537,16 +586,16 @@ export default function TempMailPage() {
                        <span className="text-[10px] font-black uppercase text-primary tracking-widest">Verification Code:</span>
                        <span className="text-base font-mono font-black text-foreground tracking-widest select-all">{detectedOtp}</span>
                     </div>
-                    <Button onClick={() => { navigator.clipboard.writeText(detectedOtp); toast({ title: "OTP Copied" }); }} size="sm" className="h-9 px-4 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl">Copy Code</Button>
+                    <Button onClick={() => handleCopyText(detectedOtp, 'otp')} size="sm" className="h-9 px-4 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl">Copy Code</Button>
                  </div>
                )}
                
-               <div className="flex-1 overflow-auto custom-scrollbar p-6 sm:p-10 bg-white">
+               <div className="flex-1 overflow-auto custom-scrollbar p-0 bg-white">
                   <div className="max-w-none overflow-x-auto min-w-full">
                     {selectedMsg.htmlBody ? (
-                      <div className="text-foreground/80 leading-relaxed text-base whitespace-pre-wrap min-w-full" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }} />
+                      <div className="text-foreground/80 leading-relaxed text-base whitespace-pre-wrap min-w-full p-6 sm:p-10" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }} />
                     ) : (
-                      <pre className="text-slate-700 font-mono text-sm whitespace-pre-wrap p-6 bg-slate-50 rounded-3xl border border-slate-100 min-w-full">{selectedMsg.body}</pre>
+                      <pre className="text-slate-700 font-mono text-sm whitespace-pre-wrap p-6 sm:p-10 bg-slate-50 min-w-full">{selectedMsg.body}</pre>
                     )}
                   </div>
                </div>
