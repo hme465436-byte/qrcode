@@ -14,7 +14,7 @@ import {
   Zap, 
   Globe, 
   ShieldCheck, 
-  Activity,
+  Activity, 
   History,
   RotateCcw,
   ShieldAlert,
@@ -367,7 +367,7 @@ export default function UsernameCheckerPage() {
 
                  {/* Results Footer Actions */}
                  {results.length > 0 && !isProcessing && (
-                    <div className="p-8 border-t border-white/5 bg-[#0a0a0c] flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0 mt-auto">
+                    <div className="p-6 sm:p-8 border-t border-white/5 bg-[#0a0a0c] flex flex-col lg:flex-row items-center justify-between gap-6 shrink-0 mt-auto">
                        <div className="flex items-center gap-4">
                           <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-center min-w-[100px]">
                              <p className="text-[8px] font-black uppercase opacity-60 mb-1">Taken</p>
@@ -378,16 +378,16 @@ export default function UsernameCheckerPage() {
                              <p className="text-lg font-headline font-black">{stats.available}</p>
                           </div>
                        </div>
-                       <div className="flex gap-4 w-full sm:w-auto">
+                       <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                           <Button 
                             onClick={handleCopyTaken} 
                             variant="outline" 
-                            className="h-14 px-8 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl flex-1 sm:flex-none"
+                            className="h-14 px-8 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl w-full sm:flex-1 lg:flex-none"
                           >
                              {isCopied === 'taken' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                              Copy Logs
                           </Button>
-                          <Button onClick={handleExportTxt} className="h-14 px-10 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl active:scale-95 transition-all flex-1 sm:flex-none">
+                          <Button onClick={handleExportTxt} className="h-14 px-10 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl active:scale-95 transition-all w-full sm:flex-1 lg:flex-none">
                              <Download className="w-5 h-5 mr-3" /> Save Report
                           </Button>
                        </div>
