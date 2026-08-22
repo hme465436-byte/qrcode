@@ -2,174 +2,129 @@
 
 /**
  * @fileOverview Server actions for Temp Mail Studio.
- * Handles high-fidelity multi-node proxying for temporary email services to bypass CORS.
- * Re-engineered for robust Mail.tm (Hydra v2) and 1secmail (Cluster) protocols.
+ * Handles high-fidelity multi-node proxying for temporary email services.
+ * Re-engineered for Dropmail (GraphQL), TempMailC, and ThrowawayMail protocols.
  */
 
 const NODES = {
-  '1secmail': 'https://www.1secmail.com/api/v1/',
-  'mailtm': 'https://api.mail.tm',
-  'guerrilla': 'https://api.guerrillamail.com/ajax.php'
+  'guerrilla': 'https://api.guerrillamail.com/ajax.php',
+  'tempmailc': 'https://tempmailc.com/api/v1',
+  'throwawaymail': 'https://throwawaymail.app/api'
 };
 
-async function handle1secmail(action: string, params: any) {
-  const bases = [
-    'https://www.1secmail.com/api/v1/',
-    'https://1secmail.com/api/v1/',
-    'https://www.1secmail.org/api/v1/'
-  ];
-  
-  for (const base of bases) {
-    try {
-      const url = new URL(base);
-      url.searchParams.append('action', action);
-      Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, String(v)));
-      
-      const res = await fetch(url.toString(), { cache: 'no-store' });
-      if (res.status === 403) continue; 
-      if (!res.ok) throw new Error(`Node error: ${res.status}`);
-      return await res.json();
-    } catch (e) {
-      continue; 
-    }
-  }
-  
-  throw new Error("1secmail blocked on this server, use Guerrilla or Mail.tm.");
-}
-
 /**
- * High-fidelity Mail.tm Proxy with multi-node failover.
- * Synchronizes with api.mail.tm and api.mail.gw.
+ * High-fidelity GraphQL Proxy for Dropmail
  */
-async function handleMailTM(endpoint: string, method: string = 'GET', body?: any, token?: string) {
-  const bases = ['https://api.mail.tm', 'https://api.mail.gw'];
-  let lastError = null;
-
-  for (const base of bases) {
-    try {
-      const headers: any = { 
-        'Content-Type': 'application/json', 
-        'Accept': 'application/json' 
-      };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch(`${base}${endpoint}`, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-        cache: 'no-store'
-      });
-      
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data['hydra:description'] || data.message || `Node ${base} error: ${res.status}`);
-      }
-      return data;
-    } catch (err) {
-      lastError = err;
-      continue; 
-    }
+async function handleDropmail(token: string, query: string) {
+  try {
+    const res = await fetch(`https://dropmail.me/api/graphql/${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error(`Dropmail node error: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    throw new Error("Dropmail node unreachable.");
   }
-  
-  throw lastError || new Error("Mail.tm nodes unreachable.");
 }
 
 export async function fetchFromProvider(providerId: string, payload: any) {
   try {
     switch (providerId) {
-      case '1secmail':
+      case 'dropmail':
         if (payload.action === 'genRandomMailbox') {
-          const data = await handle1secmail('genRandomMailbox', { count: 1 });
-          if (!data || !data[0]) throw new Error("1secmail identity generation failed.");
-          return { success: true, email: data[0] };
-        }
-        if (payload.action === 'genCustomMailbox') {
-          const domains = await handle1secmail('getDomainList', {});
-          if (!domains || !Array.isArray(domains) || domains.length === 0) throw new Error("1secmail domains unavailable.");
-          const email = `${payload.username}@${domains[0]}`;
-          return { success: true, email };
-        }
-        if (payload.action === 'getMessages') {
-          const [login, domain] = payload.email.split('@');
-          const data = await handle1secmail('getMessages', { login, domain });
-          return { success: true, messages: Array.isArray(data) ? data : [] };
-        }
-        if (payload.action === 'readMessage') {
-          const [login, domain] = payload.email.split('@');
-          const data = await handle1secmail('readMessage', { login, domain, id: payload.id });
-          return { success: true, message: {
-            from: data.from,
-            subject: data.subject,
-            date: data.date,
-            htmlBody: data.htmlBody || data.body || '',
-            body: data.body || data.textBody || ''
-          }};
-        }
-        break;
-
-      case 'mailtm':
-        if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
-          // 1. Get Domain Matrix with robust Hydra checking
-          const domainsData = await handleMailTM('/domains');
-          
-          // Support various response paths (hydra:member, member, or hydra.member)
-          const memberList = domainsData?.['hydra:member'] || 
-                             domainsData?.['member'] || 
-                             (domainsData?.hydra && domainsData.hydra.member);
-          
-          if (!memberList || !Array.isArray(memberList) || memberList.length === 0) {
-            throw new Error("Mail.tm domains unavailable");
-          }
-          
-          const domain = memberList[0]?.domain;
-          if (!domain) throw new Error("Mail.tm domain identity corrupted.");
-
-          const username = payload.username?.trim();
-          const login = username || Math.random().toString(36).substring(2, 12);
-          const address = `${login}@${domain}`;
-          const password = Math.random().toString(36).substring(2, 12);
-          
-          // 2. Register Account
-          try {
-            const account = await handleMailTM('/accounts', 'POST', { address, password });
-            if (!account || !account.address) throw new Error("Mail.tm registration rejected.");
-          } catch (err: any) {
-            if (payload.action === 'genCustomMailbox') {
-              throw new Error("Custom username not available on this node.");
-            }
-            throw err;
-          }
-          
-          // 3. Negotiate Bearer Token
-          const tokenData = await handleMailTM('/token', 'POST', { address, password });
-          if (!tokenData || !tokenData.token) throw new Error("Mail.tm authorization restricted.");
-          
+          const token = Math.random().toString(36).substring(2, 14);
+          const query = `mutation { introduceSession { id, expiresAt, addresses { address } } }`;
+          const data = await handleDropmail(token, query);
+          const session = data.data.introduceSession;
           return { 
             success: true, 
-            email: address, 
-            token: tokenData.token, 
-            accountId: tokenData.id 
+            email: session.addresses[0].address, 
+            sid: session.id,
+            token: token
           };
         }
         if (payload.action === 'getMessages') {
-          if (!payload.token) throw new Error("Session token invalid.");
-          const data = await handleMailTM('/messages', 'GET', null, payload.token);
-          const memberList = data?.['hydra:member'] || data?.['member'] || [];
-          const mapped = memberList.map((m: any) => ({
+          const query = `query { session(id: "${payload.sid}") { mails { id, fromAddr, headerSubject, receivedAt } } }`;
+          const data = await handleDropmail(payload.token, query);
+          const mapped = (data.data.session?.mails || []).map((m: any) => ({
             id: m.id,
-            from: m.from?.address || 'Anonymous Sender',
-            subject: m.subject || '(No Subject)',
-            date: m.createdAt
+            from: m.fromAddr,
+            subject: m.headerSubject,
+            date: m.receivedAt
           }));
           return { success: true, messages: mapped };
         }
         if (payload.action === 'readMessage') {
-          if (!payload.token) throw new Error("Session token invalid.");
-          const data = await handleMailTM(`/messages/${payload.id}`, 'GET', null, payload.token);
+          const query = `query { session(id: "${payload.sid}") { mails { id, fromAddr, headerSubject, text, html, receivedAt } } }`;
+          const data = await handleDropmail(payload.token, query);
+          const mail = data.data.session.mails.find((m: any) => m.id === payload.id);
           return { success: true, message: {
-            from: data.from?.address || 'Anonymous Sender',
-            subject: data.subject || '(No Subject)',
-            date: data.createdAt,
+            from: mail.fromAddr,
+            subject: mail.headerSubject,
+            date: mail.receivedAt,
+            htmlBody: mail.html || mail.text || '',
+            body: mail.text || mail.html || ''
+          }};
+        }
+        break;
+
+      case 'tempmailc':
+        if (payload.action === 'genRandomMailbox') {
+          const res = await fetch(`${NODES.tempmailc}/new`, { cache: 'no-store' });
+          const data = await res.json();
+          return { success: true, email: data.email };
+        }
+        if (payload.action === 'getMessages') {
+          const res = await fetch(`${NODES.tempmailc}/inbox?email=${payload.email}`, { cache: 'no-store' });
+          const data = await res.json();
+          const mapped = (data.messages || []).map((m: any) => ({
+            id: m.id,
+            from: m.from,
+            subject: m.subject,
+            date: m.created_at
+          }));
+          return { success: true, messages: mapped };
+        }
+        if (payload.action === 'readMessage') {
+          const res = await fetch(`${NODES.tempmailc}/message?email=${payload.email}&msg_id=${payload.id}`, { cache: 'no-store' });
+          const data = await res.json();
+          return { success: true, message: {
+            from: data.from,
+            subject: data.subject,
+            date: data.created_at,
+            htmlBody: data.html_body || data.body || '',
+            body: data.body || data.html_body || ''
+          }};
+        }
+        break;
+
+      case 'throwawaymail':
+        if (payload.action === 'genRandomMailbox') {
+          const res = await fetch(`${NODES.throwawaymail}/mailboxes`, { method: 'POST', cache: 'no-store' });
+          const data = await res.json();
+          return { success: true, email: data.email, sid: data.id };
+        }
+        if (payload.action === 'getMessages') {
+          const res = await fetch(`${NODES.throwawaymail}/mailboxes/${payload.sid}/messages`, { cache: 'no-store' });
+          const data = await res.json();
+          const mapped = (data || []).map((m: any) => ({
+            id: m.id,
+            from: m.from,
+            subject: m.subject,
+            date: m.created_at
+          }));
+          return { success: true, messages: mapped };
+        }
+        if (payload.action === 'readMessage') {
+          const res = await fetch(`${NODES.throwawaymail}/mailboxes/${payload.sid}/messages/${payload.id}`, { cache: 'no-store' });
+          const data = await res.json();
+          return { success: true, message: {
+            from: data.from,
+            subject: data.subject,
+            date: data.created_at,
             htmlBody: data.html || data.text || '',
             body: data.text || data.html || ''
           }};

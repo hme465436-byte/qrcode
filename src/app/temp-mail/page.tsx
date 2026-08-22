@@ -38,7 +38,8 @@ import {
   Volume2,
   VolumeX,
   History,
-  Type
+  Type,
+  LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,9 +67,10 @@ import DOMPurify from 'dompurify';
 import { fetchFromProvider } from './actions';
 
 const PROVIDERS = [
-  { id: '1secmail', label: '1secmail (Global)', icon: Globe },
-  { id: 'mailtm', label: 'Mail.tm (High Fidelity)', icon: ShieldCheck },
-  { id: 'guerrilla', label: 'Guerrilla Mail (Classic)', icon: Activity },
+  { id: 'guerrilla', label: 'Guerrilla Mail (Stable)', icon: ShieldCheck },
+  { id: 'dropmail', label: 'Dropmail (Fast)', icon: Zap },
+  { id: 'tempmailc', label: 'TempMailC (Standard)', icon: Globe },
+  { id: 'throwawaymail', label: 'Throwaway (Cloud)', icon: Server },
 ];
 
 const REFRESH_RATE = 10; 
