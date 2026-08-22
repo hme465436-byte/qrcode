@@ -40,7 +40,9 @@ import {
   History,
   Type,
   LayoutGrid,
-  Smartphone
+  Smartphone,
+  Unplug,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,6 +57,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -67,7 +70,7 @@ import { Input } from '@/components/ui/input';
 import DOMPurify from 'dompurify';
 import { fetchFromProvider } from './actions';
 
-const PROVIDERS = [
+const DEFAULT_PROVIDERS = [
   { id: 'guerrilla', label: 'Guerrilla Mail', icon: ShieldCheck },
   { id: 'tempmail_lol', label: 'TempMail.lol', icon: Zap },
   { id: 'mailnesia', label: 'Mailnesia', icon: Globe },
@@ -81,6 +84,7 @@ const REFRESH_RATE = 10;
 const PIN_STORAGE_KEY = 'mykit_tempmail_pinned_v1';
 const HISTORY_STORAGE_KEY = 'mykit_tempmail_history_v1';
 const MUTE_STORAGE_KEY = 'mykit_tempmail_mute_v1';
+const CUSTOM_PROVIDERS_KEY = 'mykit_tempmail_custom_nodes_v1';
 
 interface MailMessage {
   id: string | number;
@@ -106,11 +110,31 @@ interface HistoryItem {
   timestamp: number;
 }
 
+interface CustomProvider {
+  id: string;
+  label: string;
+  baseUrl: string;
+  createUrl: string;
+  inboxUrl: string;
+  readUrl: string;
+  headers: string;
+  apiKey: string;
+  paths: {
+    email: string;
+    messages: string;
+    id: string;
+    subject: string;
+    from: string;
+    body: string;
+  }
+}
+
 export default function TempMailPage() {
   const { toast } = useToast();
   
   // Settings & Status State
-  const [provider, setProvider] = useState(PROVIDERS[0].id);
+  const [provider, setProvider] = useState(DEFAULT_PROVIDERS[0].id);
+  const [customNodes, setCustomNodes] = useState<CustomProvider[]>([]);
   const [sessionData, setSessionData] = useState<any>(null); 
   const [email, setEmail] = useState<string | null>(null);
   const [customUsername, setCustomUsername] = useState('');
@@ -131,6 +155,28 @@ export default function TempMailPage() {
   const [pinnedIds, setPinnedIds] = useState<Set<string | number>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
   const [countdown, setCountdown] = useState(REFRESH_RATE);
+
+  // Custom Node Form
+  const [showAddNode, setShowAddNode] = useState(false);
+  const [isTestingNode, setIsTestingNode] = useState(false);
+  const [newNode, setNewNode] = useState<CustomProvider>({
+    id: '',
+    label: '',
+    baseUrl: '',
+    createUrl: '',
+    inboxUrl: '',
+    readUrl: '',
+    headers: '{}',
+    apiKey: '',
+    paths: {
+      email: '',
+      messages: '',
+      id: 'id',
+      subject: 'subject',
+      from: 'from',
+      body: 'body'
+    }
+  });
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -161,13 +207,15 @@ export default function TempMailPage() {
     const savedPins = localStorage.getItem(PIN_STORAGE_KEY);
     const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
     const savedMute = localStorage.getItem(MUTE_STORAGE_KEY);
+    const savedNodes = localStorage.getItem(CUSTOM_PROVIDERS_KEY);
     
     if (savedPins) try { setPinnedIds(new Set(JSON.parse(savedPins))); } catch (e) {}
     if (savedHistory) try { setHistory(JSON.parse(savedHistory)); } catch (e) {}
+    if (savedNodes) try { setCustomNodes(JSON.parse(savedNodes)); } catch (e) {}
     if (savedMute !== null) setIsMuted(savedMute === 'true');
     
     setIsLoaded(true);
-    generateMail(PROVIDERS[0].id);
+    generateMail(DEFAULT_PROVIDERS[0].id);
   }, []);
 
   useEffect(() => {
@@ -175,8 +223,14 @@ export default function TempMailPage() {
       localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(Array.from(pinnedIds)));
       localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
       localStorage.setItem(MUTE_STORAGE_KEY, isMuted.toString());
+      localStorage.setItem(CUSTOM_PROVIDERS_KEY, JSON.stringify(customNodes));
     }
-  }, [pinnedIds, history, isMuted, isLoaded]);
+  }, [pinnedIds, history, isMuted, customNodes, isLoaded]);
+
+  const allProviders = useMemo(() => {
+    const customWithIcons = customNodes.map(n => ({ ...n, icon: Smartphone }));
+    return [...DEFAULT_PROVIDERS, ...customWithIcons];
+  }, [customNodes]);
 
   const addToHistory = (newEmail: string, prov: string) => {
     setHistory(prev => {
@@ -192,9 +246,11 @@ export default function TempMailPage() {
     setSessionData(null);
     setUnreadCount(0);
 
+    const customConfig = customNodes.find(n => n.id === targetProvider);
+
     try {
       const action = username ? 'genCustomMailbox' : 'genRandomMailbox';
-      const res = await fetchFromProvider(targetProvider, { action, username });
+      const res = await fetchFromProvider(customConfig ? 'custom' : targetProvider, { action, username, email }, customConfig);
       
       if (res.success && res.email) {
         setEmail(res.email);
@@ -216,19 +272,20 @@ export default function TempMailPage() {
     if (!email) return;
     if (!silent) setIsRefreshing(true);
     
+    const customConfig = customNodes.find(n => n.id === provider);
+
     try {
-      const res = await fetchFromProvider(provider, { 
+      const res = await fetchFromProvider(customConfig ? 'custom' : provider, { 
         action: 'getMessages', 
         email, 
         sid: sessionData?.sid, 
         token: sessionData?.token 
-      });
+      }, customConfig);
 
       if (res.success && Array.isArray(res.messages)) {
         const incomingMsgs = res.messages;
         
         setMessages(prev => {
-          // If no messages on server but we have some, keep existing (Merge & Preserve)
           if (incomingMsgs.length === 0 && prev.length > 0) return prev;
 
           const prevMap = new Map(prev.map(m => [m.id.toString(), m]));
@@ -259,7 +316,7 @@ export default function TempMailPage() {
     } finally {
       if (!silent) setIsRefreshing(false);
     }
-  }, [provider, email, sessionData, playNotification]);
+  }, [provider, email, sessionData, customNodes, playNotification]);
 
   // --- 3. Polling Lifecycle ---
   useEffect(() => {
@@ -285,22 +342,23 @@ export default function TempMailPage() {
   const readMessage = async (msg: MailMessage) => {
     if (!email) return;
     
-    // If the provider returned bodies in the list (like TempMail.lol), use it immediately
     if (msg.body || msg.htmlBody) {
       setSelectedMsg(msg as FullMessage);
       setUnreadCount(prev => Math.max(0, prev - 1));
       return;
     }
 
+    const customConfig = customNodes.find(n => n.id === provider);
+
     setIsLoading(true);
     try {
-      const res = await fetchFromProvider(provider, { 
+      const res = await fetchFromProvider(customConfig ? 'custom' : provider, { 
         action: 'readMessage', 
         id: msg.id, 
         email, 
         sid: sessionData?.sid, 
         token: sessionData?.token 
-      });
+      }, customConfig);
       if (res.success) {
         setSelectedMsg({ ...res.message, id: msg.id });
         setUnreadCount(prev => Math.max(0, prev - 1));
@@ -321,6 +379,40 @@ export default function TempMailPage() {
       else next.add(id);
       return next;
     });
+  };
+
+  const handleTestAndConnectNode = async () => {
+    setIsTestingNode(true);
+    try {
+      // 1. Test "Create Email" protocol
+      const res = await fetchFromProvider('custom', { action: 'genRandomMailbox' }, newNode);
+      if (res.success && res.email) {
+        // 2. Test "Inbox" protocol
+        const inboxRes = await fetchFromProvider('custom', { action: 'getMessages', email: res.email }, newNode);
+        if (inboxRes.success) {
+          const finalNode = { ...newNode, id: `custom_${Date.now()}`, label: newNode.label || 'Custom Server' };
+          setCustomNodes(prev => [...prev, finalNode]);
+          setProvider(finalNode.id);
+          setShowAddNode(false);
+          toast({ title: "Node Integrated", description: "Hardware handshake successful." });
+          generateMail(finalNode.id);
+        } else {
+          throw new Error("Inbox node unreachable.");
+        }
+      } else {
+        throw new Error("Identity provisioning node failed.");
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Handshake Failed", description: err.message });
+    } finally {
+      setIsTestingNode(false);
+    }
+  };
+
+  const disconnectNode = (id: string) => {
+    setCustomNodes(prev => prev.filter(n => n.id !== id));
+    if (provider === id) setProvider(DEFAULT_PROVIDERS[0].id);
+    toast({ title: "Node Decoupled" });
   };
 
   // --- 4. Logic Matrix ---
@@ -401,10 +493,13 @@ export default function TempMailPage() {
         {/* Left Column: Controls & History */}
         <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
            <Card className="glass-card border-border shadow-2xl">
-              <CardHeader className="py-6 border-b border-border bg-secondary/30">
+              <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                  <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-4 text-foreground">
                     <Server className="w-5 h-5 text-primary" /> Matrix Config
                  </CardTitle>
+                 <Button variant="ghost" size="icon" onClick={() => setShowAddNode(true)} className="h-8 w-8 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                    <Plus className="w-4 h-4" />
+                 </Button>
               </CardHeader>
               <CardContent className="pt-8 space-y-8">
                  <div className="space-y-6">
@@ -415,13 +510,21 @@ export default function TempMailPage() {
                              <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="glass-card">
-                             {PROVIDERS.map(p => (
+                             {allProviders.map(p => (
                                <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase">
-                                  {p.label}
+                                  {p.label} {p.id.startsWith('custom_') && ' (Custom)'}
                                </SelectItem>
                              ))}
                           </SelectContent>
                        </Select>
+                       
+                       {provider.startsWith('custom_') && (
+                          <div className="flex justify-end">
+                             <button onClick={() => disconnectNode(provider)} className="text-[8px] font-black text-red-500 uppercase tracking-widest hover:underline flex items-center gap-1.5">
+                                <Unplug className="w-3 h-3" /> Disconnect Node
+                             </button>
+                          </div>
+                       )}
                     </div>
 
                     <div className="space-y-3">
@@ -464,18 +567,11 @@ export default function TempMailPage() {
                        </Button>
                     </div>
                  </div>
-
-                 {error && (
-                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake">
-                       <AlertCircle className="w-4 h-4 text-destructive" />
-                       <p className="text-[10px] font-bold text-destructive uppercase leading-relaxed">{error}</p>
-                    </div>
-                 )}
               </CardContent>
            </Card>
 
            <Card className="glass-card border-border shadow-xl flex flex-col max-h-[350px]">
-              <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
+              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
                     <History className="w-4 h-4 text-primary" />
                     <CardTitle className="text-[10px] font-black uppercase text-foreground">Identity Registry</CardTitle>
@@ -580,6 +676,89 @@ export default function TempMailPage() {
            </Card>
         </div>
       </div>
+
+      {/* Custom Node Modal */}
+      <Dialog open={showAddNode} onOpenChange={setShowAddNode}>
+         <DialogContent className="glass-card max-w-2xl w-[calc(100%-32px)] border-white/20 p-0 overflow-hidden flex flex-col max-h-[90vh]">
+            <DialogHeader className="p-6 border-b border-white/5 bg-secondary/30 shrink-0">
+               <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
+                     <Settings className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                     <DialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight">Add Custom Server</DialogTitle>
+                     <DialogDescription className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">Register a sovereign linguistic identity node</DialogDescription>
+                  </div>
+               </div>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-transparent">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                     <Label className="text-[9px] font-black uppercase text-foreground/30 ml-1">Server Label</Label>
+                     <Input value={newNode.label} onChange={e => setNewNode({...newNode, label: e.target.value})} placeholder="e.g. My Secure Node" className="h-11 bg-secondary/50 border-border text-xs font-bold" />
+                  </div>
+                  <div className="space-y-2">
+                     <Label className="text-[9px] font-black uppercase text-foreground/30 ml-1">Base API URL</Label>
+                     <Input value={newNode.baseUrl} onChange={e => setNewNode({...newNode, baseUrl: e.target.value})} placeholder="https://api.temp.com" className="h-11 bg-secondary/50 border-border text-xs font-mono" />
+                  </div>
+               </div>
+
+               <div className="space-y-4">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Protocol Handshakes</Label>
+                  <div className="grid grid-cols-1 gap-4">
+                     <div className="space-y-2">
+                        <Label className="text-[8px] font-black uppercase text-foreground/20">Create Endpoint</Label>
+                        <Input value={newNode.createUrl} onChange={e => setNewNode({...newNode, createUrl: e.target.value})} placeholder="/new or {baseUrl}/generate" className="h-10 bg-secondary/30 border-border text-[10px] font-mono" />
+                     </div>
+                     <div className="space-y-2">
+                        <Label className="text-[8px] font-black uppercase text-foreground/20">Inbox Endpoint</Label>
+                        <Input value={newNode.inboxUrl} onChange={e => setNewNode({...newNode, inboxUrl: e.target.value})} placeholder="/inbox?email={email}" className="h-10 bg-secondary/30 border-border text-[10px] font-mono" />
+                     </div>
+                     <div className="space-y-2">
+                        <Label className="text-[8px] font-black uppercase text-foreground/20">Read Endpoint</Label>
+                        <Input value={newNode.readUrl} onChange={e => setNewNode({...newNode, readUrl: e.target.value})} placeholder="/message?id={id}" className="h-10 bg-secondary/30 border-border text-[10px] font-mono" />
+                     </div>
+                  </div>
+               </div>
+
+               <div className="space-y-4 pt-4 border-t border-white/5">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Linguistic Path Hints</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                     {Object.keys(newNode.paths).map(key => (
+                        <div key={key} className="space-y-1.5">
+                           <Label className="text-[8px] font-black uppercase text-foreground/30 ml-1">{key} path</Label>
+                           <Input value={newNode.paths[key as keyof typeof newNode.paths]} onChange={e => setNewNode({...newNode, paths: {...newNode.paths, [key]: e.target.value}})} placeholder="e.g. data.email" className="h-9 bg-secondary/20 border-border text-[10px] font-mono" />
+                        </div>
+                     ))}
+                  </div>
+               </div>
+
+               <div className="space-y-4 pt-4 border-t border-white/5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-foreground/30 ml-1">Optional Headers (JSON)</Label>
+                        <Input value={newNode.headers} onChange={e => setNewNode({...newNode, headers: e.target.value})} className="h-11 bg-secondary/20 border-border text-[10px] font-mono" />
+                     </div>
+                     <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-foreground/30 ml-1">Optional API Key</Label>
+                        <Input value={newNode.apiKey} onChange={e => setNewNode({...newNode, apiKey: e.target.value})} type="password" placeholder="••••••••" className="h-11 bg-secondary/20 border-border text-[10px] font-mono" />
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            <DialogFooter className="p-6 border-t border-white/5 bg-secondary/30 shrink-0">
+               <div className="flex gap-3 w-full">
+                  <Button variant="outline" onClick={() => setShowAddNode(false)} className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase">Cancel</Button>
+                  <Button onClick={handleTestAndConnectNode} disabled={isTestingNode} className="h-12 flex-[2] bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-xl shadow-primary/20">
+                     {isTestingNode ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+                     Test & Connect
+                  </Button>
+               </div>
+            </DialogFooter>
+         </DialogContent>
+      </Dialog>
 
       {/* Message Modal */}
       <Dialog open={!!selectedMsg} onOpenChange={() => setSelectedMsg(null)}>

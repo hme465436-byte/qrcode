@@ -3,7 +3,7 @@
 /**
  * @fileOverview Server actions for Temp Mail Studio.
  * Handles high-fidelity multi-node proxying for temporary email services.
- * Supports Guerrilla, TempMail.lol, Mailnesia, TempMailC, MailForSpam, Temporam, and Sharklasers.
+ * Now includes a generic proxy bridge for Custom Providers.
  */
 
 const NODES = {
@@ -16,8 +16,21 @@ const NODES = {
   sharklasers: 'https://www.sharklasers.com/ajax.php'
 };
 
-export async function fetchFromProvider(providerId: string, payload: any) {
+/**
+ * Helper to extract values from nested objects using string paths
+ */
+function getValueByPath(obj: any, path: string) {
+  if (!path || !obj) return obj;
+  return path.split('.').reduce((o, i) => (o ? o[i] : undefined), obj);
+}
+
+export async function fetchFromProvider(providerId: string, payload: any, customConfig?: any) {
   try {
+    // 0. Custom Provider Bridge
+    if (providerId === 'custom' && customConfig) {
+      return await handleCustomNode(customConfig, payload);
+    }
+
     switch (providerId) {
       /**
        * Node: Sharklasers (Mirror)
@@ -285,5 +298,71 @@ export async function fetchFromProvider(providerId: string, payload: any) {
     return { success: false, error: 'Protocol Mismatch' };
   } catch (error: any) {
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Handle Custom Node API Handshakes
+ */
+async function handleCustomNode(config: any, payload: any) {
+  const { baseUrl, createUrl, inboxUrl, readUrl, headers, apiKey, paths } = config;
+  
+  const injectParams = (url: string) => {
+    return url
+      .replace('{email}', payload.email || '')
+      .replace('{id}', payload.id || '')
+      .replace('{key}', apiKey || '')
+      .replace('{username}', payload.username || '');
+  };
+
+  const getFullUrl = (segment: string) => {
+    if (segment.startsWith('http')) return injectParams(segment);
+    return injectParams(`${baseUrl}${segment}`);
+  };
+
+  const commonHeaders: any = { 'Accept': 'application/json' };
+  if (apiKey) commonHeaders['Authorization'] = `Bearer ${apiKey}`;
+  if (headers) {
+    try {
+      const parsed = JSON.parse(headers);
+      Object.assign(commonHeaders, parsed);
+    } catch (e) {}
+  }
+
+  try {
+    if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
+      const res = await fetch(getFullUrl(createUrl), { headers: commonHeaders, cache: 'no-store' });
+      const data = await res.json();
+      const extractedEmail = getValueByPath(data, paths.email);
+      if (!extractedEmail) throw new Error("Could not isolate email in response.");
+      return { success: true, email: extractedEmail, raw: data };
+    }
+
+    if (payload.action === 'getMessages') {
+      const res = await fetch(getFullUrl(inboxUrl), { headers: commonHeaders, cache: 'no-store' });
+      const data = await res.json();
+      const list = getValueByPath(data, paths.messages) || [];
+      const mapped = list.map((m: any) => ({
+        id: getValueByPath(m, paths.id) || Math.random().toString(36).substr(2, 9),
+        from: getValueByPath(m, paths.from) || 'Unknown',
+        subject: getValueByPath(m, paths.subject) || 'No Subject',
+        date: new Date().toLocaleString()
+      }));
+      return { success: true, messages: mapped };
+    }
+
+    if (payload.action === 'readMessage') {
+      const res = await fetch(getFullUrl(readUrl), { headers: commonHeaders, cache: 'no-store' });
+      const data = await res.json();
+      return { success: true, message: {
+        from: getValueByPath(data, paths.from) || 'Unknown',
+        subject: getValueByPath(data, paths.subject) || 'No Subject',
+        date: new Date().toLocaleString(),
+        htmlBody: getValueByPath(data, paths.body) || '',
+        body: getValueByPath(data, paths.body) || ''
+      }};
+    }
+  } catch (err: any) {
+    throw new Error(`Custom Node Error: ${err.message}`);
   }
 }
