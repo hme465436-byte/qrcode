@@ -217,7 +217,6 @@ export default function TempMailPage() {
         const incomingMsgs = res.messages;
         
         setMessages(prev => {
-          // Safety Guard: If API returns empty while we already have mails, ignore it to prevent flicker/disappearance
           if (incomingMsgs.length === 0 && prev.length > 0) return prev;
 
           const prevMap = new Map(prev.map(m => [m.id.toString(), m]));
@@ -233,8 +232,6 @@ export default function TempMailPage() {
           if (newDetected) {
             if (prev.length > 0) playNotification();
             setUnreadCount(u => u + 1);
-            
-            // Merge and sort by date descending
             return Array.from(prevMap.values()).sort((a, b) => 
               new Date(b.date).getTime() - new Date(a.date).getTime()
             );
@@ -593,9 +590,9 @@ export default function TempMailPage() {
                <div className="flex-1 overflow-auto custom-scrollbar p-0 bg-white">
                   <div className="max-w-none overflow-x-auto min-w-full">
                     {selectedMsg.htmlBody ? (
-                      <div className="text-foreground/80 leading-relaxed text-base whitespace-pre-wrap min-w-full p-6 sm:p-10" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }} />
+                      <div className="text-slate-900 leading-relaxed text-base whitespace-pre-wrap min-w-full p-6 sm:p-10" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }} />
                     ) : (
-                      <pre className="text-slate-700 font-mono text-sm whitespace-pre-wrap p-6 sm:p-10 bg-slate-50 min-w-full">{selectedMsg.body}</pre>
+                      <pre className="text-slate-800 font-mono text-sm whitespace-pre-wrap p-6 sm:p-10 bg-slate-50 min-w-full">{selectedMsg.body}</pre>
                     )}
                   </div>
                </div>
