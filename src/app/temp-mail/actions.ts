@@ -3,7 +3,7 @@
 /**
  * @fileOverview Server actions for Temp Mail Studio.
  * Handles high-fidelity multi-node proxying for temporary email services to bypass CORS.
- * Specifically re-engineered for Mail.tm (Hydra v2), 1secmail (Cluster), and Guerrilla production protocols.
+ * Re-engineered for robust Mail.tm (Hydra v2) and 1secmail (Cluster) protocols.
  */
 
 const NODES = {
@@ -26,33 +26,52 @@ async function handle1secmail(action: string, params: any) {
       Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, String(v)));
       
       const res = await fetch(url.toString(), { cache: 'no-store' });
-      if (res.status === 403) continue; // Try next base if blocked
+      if (res.status === 403) continue; 
       if (!res.ok) throw new Error(`Node error: ${res.status}`);
       return await res.json();
     } catch (e) {
-      continue; // Try next base on network failure
+      continue; 
     }
   }
   
-  throw new Error("1secmail cluster blocked. Switch to Guerrilla or Mail.tm.");
+  throw new Error("1secmail blocked on this server, use Guerrilla or Mail.tm.");
 }
 
+/**
+ * High-fidelity Mail.tm Proxy with multi-node failover.
+ * Synchronizes with api.mail.tm and api.mail.gw.
+ */
 async function handleMailTM(endpoint: string, method: string = 'GET', body?: any, token?: string) {
-  const headers: any = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const bases = ['https://api.mail.tm', 'https://api.mail.gw'];
+  let lastError = null;
 
-  const res = await fetch(`${NODES['mailtm']}${endpoint}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-    cache: 'no-store'
-  });
-  
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data['hydra:description'] || data.message || `Mail.tm node error: ${res.status}`);
+  for (const base of bases) {
+    try {
+      const headers: any = { 
+        'Content-Type': 'application/json', 
+        'Accept': 'application/json' 
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`${base}${endpoint}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        cache: 'no-store'
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data['hydra:description'] || data.message || `Node ${base} error: ${res.status}`);
+      }
+      return data;
+    } catch (err) {
+      lastError = err;
+      continue; 
+    }
   }
-  return data;
+  
+  throw lastError || new Error("Mail.tm nodes unreachable.");
 }
 
 export async function fetchFromProvider(providerId: string, payload: any) {
@@ -90,9 +109,13 @@ export async function fetchFromProvider(providerId: string, payload: any) {
 
       case 'mailtm':
         if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
-          // 1. Get Domain Matrix with strict Hydra checking
+          // 1. Get Domain Matrix with robust Hydra checking
           const domainsData = await handleMailTM('/domains');
-          const memberList = domainsData?.['hydra:member'];
+          
+          // Support various response paths (hydra:member, member, or hydra.member)
+          const memberList = domainsData?.['hydra:member'] || 
+                             domainsData?.['member'] || 
+                             (domainsData?.hydra && domainsData.hydra.member);
           
           if (!memberList || !Array.isArray(memberList) || memberList.length === 0) {
             throw new Error("Mail.tm domains unavailable");
@@ -101,7 +124,6 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           const domain = memberList[0]?.domain;
           if (!domain) throw new Error("Mail.tm domain identity corrupted.");
 
-          // Separating the identity string (Optional Custom vs Random)
           const username = payload.username?.trim();
           const login = username || Math.random().toString(36).substring(2, 12);
           const address = `${login}@${domain}`;
@@ -132,7 +154,7 @@ export async function fetchFromProvider(providerId: string, payload: any) {
         if (payload.action === 'getMessages') {
           if (!payload.token) throw new Error("Session token invalid.");
           const data = await handleMailTM('/messages', 'GET', null, payload.token);
-          const memberList = data?.['hydra:member'] || [];
+          const memberList = data?.['hydra:member'] || data?.['member'] || [];
           const mapped = memberList.map((m: any) => ({
             id: m.id,
             from: m.from?.address || 'Anonymous Sender',
