@@ -228,7 +228,7 @@ export default function TempMailPage() {
   }, [pinnedIds, history, isMuted, customNodes, isLoaded]);
 
   const allProviders = useMemo(() => {
-    const customWithIcons = customNodes.map(n => ({ ...n, icon: Smartphone }));
+    const customWithIcons = customNodes.map(n => ({ id: n.id, label: n.label, icon: Smartphone }));
     return [...DEFAULT_PROVIDERS, ...customWithIcons];
   }, [customNodes]);
 
@@ -384,10 +384,10 @@ export default function TempMailPage() {
   const handleTestAndConnectNode = async () => {
     setIsTestingNode(true);
     try {
-      // 1. Test "Create Email" protocol
+      // 1. Validate Identity Provisioning
       const res = await fetchFromProvider('custom', { action: 'genRandomMailbox' }, newNode);
       if (res.success && res.email) {
-        // 2. Test "Inbox" protocol
+        // 2. Validate Inbox Availability
         const inboxRes = await fetchFromProvider('custom', { action: 'getMessages', email: res.email }, newNode);
         if (inboxRes.success) {
           const finalNode = { ...newNode, id: `custom_${Date.now()}`, label: newNode.label || 'Custom Server' };
@@ -492,7 +492,7 @@ export default function TempMailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* Left Column: Controls & History */}
         <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-           <Card className="glass-card border-border shadow-2xl">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                  <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-4 text-foreground">
                     <Server className="w-5 h-5 text-primary" /> Matrix Config

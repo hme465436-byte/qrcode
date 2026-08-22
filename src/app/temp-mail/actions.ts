@@ -3,7 +3,7 @@
 /**
  * @fileOverview Server actions for Temp Mail Studio.
  * Handles high-fidelity multi-node proxying for temporary email services.
- * Now includes a generic proxy bridge for Custom Providers.
+ * Includes a robust proxy bridge for Custom Providers with variable injection.
  */
 
 const NODES = {
@@ -17,11 +17,19 @@ const NODES = {
 };
 
 /**
- * Helper to extract values from nested objects using string paths
+ * Robust path navigator for isolating data in complex JSON structures.
+ * Supports dot-notation: e.g., "data.session.address"
  */
 function getValueByPath(obj: any, path: string) {
-  if (!path || !obj) return obj;
-  return path.split('.').reduce((o, i) => (o ? o[i] : undefined), obj);
+  if (!path || !obj) return undefined;
+  const parts = path.split('.');
+  let current = obj;
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    // Handle array notation if needed (e.g., "results.0.id")
+    current = current[part];
+  }
+  return current;
 }
 
 export async function fetchFromProvider(providerId: string, payload: any, customConfig?: any) {
@@ -303,21 +311,24 @@ export async function fetchFromProvider(providerId: string, payload: any, custom
 
 /**
  * Handle Custom Node API Handshakes
+ * Injects parameters like {email}, {id}, {username}, {key} into the defined URLs.
  */
 async function handleCustomNode(config: any, payload: any) {
   const { baseUrl, createUrl, inboxUrl, readUrl, headers, apiKey, paths } = config;
   
   const injectParams = (url: string) => {
     return url
-      .replace('{email}', payload.email || '')
-      .replace('{id}', payload.id || '')
-      .replace('{key}', apiKey || '')
-      .replace('{username}', payload.username || '');
+      .replace(/{email}/g, payload.email || '')
+      .replace(/{id}/g, payload.id || '')
+      .replace(/{key}/g, apiKey || '')
+      .replace(/{username}/g, payload.username || '');
   };
 
   const getFullUrl = (segment: string) => {
-    if (segment.startsWith('http')) return injectParams(segment);
-    return injectParams(`${baseUrl}${segment}`);
+    if (!segment) return "";
+    const cleanSegment = injectParams(segment);
+    if (cleanSegment.startsWith('http')) return cleanSegment;
+    return `${baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl}${cleanSegment.startsWith('/') ? '' : '/'}${cleanSegment}`;
   };
 
   const commonHeaders: any = { 'Accept': 'application/json' };
@@ -331,15 +342,19 @@ async function handleCustomNode(config: any, payload: any) {
 
   try {
     if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
-      const res = await fetch(getFullUrl(createUrl), { headers: commonHeaders, cache: 'no-store' });
+      const url = getFullUrl(createUrl);
+      if (!url) throw new Error("Creation URL not defined.");
+      const res = await fetch(url, { headers: commonHeaders, cache: 'no-store' });
       const data = await res.json();
       const extractedEmail = getValueByPath(data, paths.email);
-      if (!extractedEmail) throw new Error("Could not isolate email in response.");
+      if (!extractedEmail) throw new Error(`Could not isolate email at path: ${paths.email}`);
       return { success: true, email: extractedEmail, raw: data };
     }
 
     if (payload.action === 'getMessages') {
-      const res = await fetch(getFullUrl(inboxUrl), { headers: commonHeaders, cache: 'no-store' });
+      const url = getFullUrl(inboxUrl);
+      if (!url) throw new Error("Inbox URL not defined.");
+      const res = await fetch(url, { headers: commonHeaders, cache: 'no-store' });
       const data = await res.json();
       const list = getValueByPath(data, paths.messages) || [];
       const mapped = list.map((m: any) => ({
@@ -352,7 +367,9 @@ async function handleCustomNode(config: any, payload: any) {
     }
 
     if (payload.action === 'readMessage') {
-      const res = await fetch(getFullUrl(readUrl), { headers: commonHeaders, cache: 'no-store' });
+      const url = getFullUrl(readUrl);
+      if (!url) throw new Error("Read URL not defined.");
+      const res = await fetch(url, { headers: commonHeaders, cache: 'no-store' });
       const data = await res.json();
       return { success: true, message: {
         from: getValueByPath(data, paths.from) || 'Unknown',
@@ -363,6 +380,6 @@ async function handleCustomNode(config: any, payload: any) {
       }};
     }
   } catch (err: any) {
-    throw new Error(`Custom Node Error: ${err.message}`);
+    throw new Error(`Node Handshake Failure: ${err.message}`);
   }
 }
