@@ -360,61 +360,19 @@ export default function PngFinderPage() {
               </CardContent>
            </Card>
 
-           {/* Filter Card */}
-           <Card className="glass-card border-border shadow-xl">
-              <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Filter className="w-4 h-4 text-primary" /> Filter Matrix
-                 </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-8 space-y-10">
-                 <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Chromatic Filter</Label>
-                    <div className="grid grid-cols-4 gap-3">
-                       {COLOR_CHIPS.map(c => (
-                         <button
-                           key={c.id}
-                           onClick={() => setSelectedColor(selectedColor === c.id ? null : c.id)}
-                           className={cn(
-                             "w-full aspect-square rounded-xl border-2 transition-all flex items-center justify-center relative group",
-                             selectedColor === c.id ? "border-primary scale-110 shadow-lg" : "border-white/5"
-                           )}
-                           style={{ backgroundColor: c.color }}
-                         >
-                            {selectedColor === c.id && <CheckCircle2 className="w-5 h-5 text-background" />}
-                            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
-                         </button>
-                       ))}
-                    </div>
-                 </div>
-
-                 <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Resolution Scale</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                       {['all', 'small', 'large'].map(s => (
-                         <button
-                           key={s}
-                           onClick={() => setSizeFilter(s)}
-                           className={cn(
-                             "h-10 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all",
-                             sizeFilter === s ? "bg-primary text-white border-primary shadow-lg" : "bg-secondary/30 border-border text-foreground/40 hover:text-foreground"
-                           )}
-                         >
-                            {s}
-                         </button>
-                       ))}
-                    </div>
-                 </div>
-
-                 <div className="p-6 rounded-[2rem] bg-secondary/50 border border-border flex items-start gap-4">
-                    <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                    <div className="space-y-1">
-                       <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Safe</h4>
-                       <p className="text-[9px] text-foreground/40 font-medium leading-relaxed uppercase">Discovery signals are volatile and held strictly in local memory.</p>
-                    </div>
-                 </div>
-              </CardContent>
-           </Card>
+           <div className="grid grid-cols-1 gap-6">
+              <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <ShieldCheck className="w-7 h-7" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                    Discovery signals are volatile and held strictly in local memory.
+                  </p>
+                </div>
+             </div>
+           </div>
         </aside>
 
         {/* Results Column */}
@@ -449,7 +407,7 @@ export default function PngFinderPage() {
              <div className="h-[600px] flex flex-col items-center justify-center gap-8 bg-secondary/5 rounded-[3rem] border border-dashed border-white/5">
                 <div className="relative">
                    <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                   <Globe className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
+                   <Globe className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                 </div>
                 <div className="text-center space-y-2">
                    <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Decoding Global Visual Nodes...</p>
@@ -589,7 +547,7 @@ export default function PngFinderPage() {
                 </div>
                 <div className="space-y-4 max-w-sm relative z-10">
                    <h3 className="text-2xl font-headline font-black text-foreground/40 uppercase tracking-widest">Awaiting Discovery Signal</h3>
-                   <p className="text-sm text-foreground/20 font-medium leading-relaxed uppercase tracking-tighter">
+                   <p className="text-sm text-foreground/20 font-medium max-w-xs mt-4 uppercase tracking-tighter">
                      Enter a linguistic identifier to isolate transparent visual identities from the world's most reliable open-source registries.
                    </p>
                 </div>
