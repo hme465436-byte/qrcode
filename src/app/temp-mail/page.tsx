@@ -248,7 +248,7 @@ export default function TempMailPage() {
                              {PROVIDERS.map(p => (
                                <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase tracking-widest">
                                   <div className="flex items-center gap-2">
-                                     {React.createElement(p.icon, { className: "w-3 h-3" })} {p.label}
+                                     {React.createElement(p.icon, { className: "w-3.5 h-3.5" })} {p.label}
                                   </div>
                                </SelectItem>
                              ))}
@@ -398,15 +398,15 @@ export default function TempMailPage() {
                   </div>
                </DialogHeader>
                
-               <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-10 bg-white">
-                  <div className="max-w-none">
+               <div className="flex-1 overflow-auto custom-scrollbar p-6 sm:p-10 bg-white">
+                  <div className="max-w-none overflow-x-auto">
                     {selectedMsg.htmlBody ? (
                       <div 
-                        className="text-foreground/80 leading-relaxed text-base whitespace-pre-wrap"
+                        className="text-foreground/80 leading-relaxed text-base whitespace-pre-wrap min-w-full"
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }}
                       />
                     ) : (
-                      <pre className="text-slate-700 font-mono text-sm whitespace-pre-wrap leading-relaxed p-6 bg-slate-50 rounded-3xl border border-slate-100 shadow-inner">
+                      <pre className="text-slate-700 font-mono text-sm whitespace-pre-wrap leading-relaxed p-6 bg-slate-50 rounded-3xl border border-slate-100 shadow-inner min-w-full">
                         {selectedMsg.body}
                       </pre>
                     )}
