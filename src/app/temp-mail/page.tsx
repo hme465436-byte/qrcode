@@ -5,7 +5,6 @@ import {
   Mail, 
   RefreshCcw, 
   Copy, 
-  CheckCircle2, 
   Trash2, 
   Inbox, 
   ArrowRight, 
@@ -29,7 +28,8 @@ import {
   Database,
   Cloud,
   Lock,
-  Download
+  Download,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -214,7 +214,7 @@ export default function TempMailPage() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Zap className="w-3.5 h-3.5" /> High-Fidelity Studio
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
            <div>
               <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
                 Temp <span className="text-primary italic">Mail Studio Pro</span>
@@ -296,7 +296,7 @@ export default function TempMailPage() {
            </Card>
 
            <div className="grid grid-cols-1 gap-6">
-              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+              <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <Activity className="w-7 h-7" />
                 </div>
@@ -402,7 +402,7 @@ export default function TempMailPage() {
                         </div>
                      </div>
                      <div className="flex gap-2 shrink-0">
-                        <Button onClick={() => handleCopy(selectedMsg.body, 'Content')} variant="outline" className="h-10 px-4 rounded-xl border-white/10 bg-white/5 text-white text-[9px] font-black uppercase">
+                        <Button onClick={() => handleCopy()} variant="outline" className="h-10 px-4 rounded-xl border-white/10 bg-white/5 text-white text-[9px] font-black uppercase">
                            <Copy className="w-3.5 h-3.5 mr-2" /> Copy Raw
                         </Button>
                         <Button onClick={() => setSelectedMsg(null)} variant="ghost" className="h-10 w-10 rounded-xl text-foreground/20 hover:text-white">
