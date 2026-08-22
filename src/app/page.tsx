@@ -108,6 +108,8 @@ import {
   Github,
   Shield,
   Network,
+  Mail,
+  MailQuestion,
   Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -143,6 +145,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/temp-mail', 
+    icon: Mail, 
+    title: 'Temp Mail', 
+    desc: 'Generate instant temporary email identities with real-time private inboxes.', 
+    label: 'ANONYMOUS', 
+    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
+    glowClass: 'bg-rose-500/10',
+    keywords: ['temp mail', 'disposable email', 'anonymous mail', 'fake email', 'temp inbox', '1secmail'],
+    category: 'utilities'
   },
   { 
     href: '/background-remove', 
@@ -1053,7 +1066,7 @@ const TOOLS: Tool[] = [
     desc: 'Resize and frame images for 1280x720 thumbnails.', 
     label: 'YOUTUBE', 
     color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
-    glowClass: 'bg-rose-500/10',
+    glowClass: 'bg-indigo-500/10',
     keywords: ['youtube thumbnail size', '1280x720', 'yt thumbnail maker', 'thumbnail resizer', 'youtube thumbnail resizer'],
     category: 'generators'
   },
@@ -1349,7 +1362,7 @@ const TOOLS: Tool[] = [
     title: 'Dictionary', 
     desc: 'Professional English word search and definitions.', 
     label: 'LANG', 
-    color: 'text-amber-600 bg-amber-500/10 border-amber-600/20',
+    color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
     glowClass: 'bg-amber-500/10',
     keywords: ['dictionary', 'word meaning', 'definition', 'linguistic', 'english'],
     category: 'utilities'
@@ -1465,7 +1478,7 @@ export default function Home() {
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
-      'Background Remove', 'Transparent Image', 'Remove.bg'
+      'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
