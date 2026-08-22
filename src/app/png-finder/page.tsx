@@ -184,6 +184,17 @@ export default function PngFinderPage() {
     }
   };
 
+  const handleReset = () => {
+    setQuery('');
+    setResults([]);
+    setError(null);
+    setPage(1);
+    setActiveNode(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    toast({ title: "Studio Reset" });
+  };
+
   const glyphResults = useMemo(() => results.filter(r => r.isIcon), [results]);
   const colorfulResults = useMemo(() => results.filter(r => !r.isIcon), [results]);
 
@@ -266,14 +277,14 @@ export default function PngFinderPage() {
            
            {/* Search Box */}
            <Card className="glass-card border-border shadow-2xl overflow-visible relative group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
                     <Settings2 className="w-4 h-4 text-primary" /> Discovery Node
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-8 relative">
-                 <form onSubmit={executeSearch} className="space-y-4" ref={searchRef}>
+                 <form onSubmit={(e) => { e.preventDefault(); executeSearch(1); }} className="space-y-4" ref={searchRef}>
                     <div className="space-y-3 relative">
                        <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Linguistic Target</Label>
                        <div className="relative group/input">
@@ -371,7 +382,7 @@ export default function PngFinderPage() {
                            style={{ backgroundColor: c.color }}
                          >
                             {selectedColor === c.id && <CheckCircle2 className="w-5 h-5 text-background" />}
-                            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity rounded-xl" />
+                            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                          </button>
                        ))}
                     </div>
