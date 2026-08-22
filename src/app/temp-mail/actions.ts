@@ -11,9 +11,6 @@ const NODES = {
   'guerrilla': 'https://api.guerrillamail.com/ajax.php'
 };
 
-/**
- * 1secmail Implementation
- */
 async function handle1secmail(action: string, params: any) {
   const url = new URL(NODES['1secmail']);
   url.searchParams.append('action', action);
@@ -23,9 +20,6 @@ async function handle1secmail(action: string, params: any) {
   return res.json();
 }
 
-/**
- * Mail.tm Implementation
- */
 async function handleMailTM(endpoint: string, method: string = 'GET', body?: any, token?: string) {
   const headers: any = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;

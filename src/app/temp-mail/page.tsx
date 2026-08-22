@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -36,7 +35,7 @@ import {
   KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -60,7 +59,6 @@ import { Input } from '@/components/ui/input';
 import DOMPurify from 'dompurify';
 import { fetchFromProvider } from './actions';
 
-// --- Configuration Matrix ---
 const PROVIDERS = [
   { id: '1secmail', label: '1secmail (Global)', icon: Globe },
   { id: 'mailtm', label: 'Mail.tm (High Fidelity)', icon: ShieldCheck },
@@ -88,31 +86,20 @@ interface FullMessage {
 
 export default function TempMailPage() {
   const { toast } = useToast();
-  
-  // Provider State
   const [provider, setProvider] = useState(PROVIDERS[0].id);
   const [sessionData, setSessionData] = useState<any>(null); 
-  
-  // Identity State
   const [email, setEmail] = useState<string | null>(null);
-  
-  // Data State
   const [messages, setMessages] = useState<MailMessage[]>([]);
   const [selectedMsg, setSelectedMsg] = useState<FullMessage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
-  // Feature States
   const [searchQuery, setSearchQuery] = useState('');
   const [pinnedIds, setPinnedIds] = useState<Set<string | number>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
-  
-  // Auto-refresh State
   const [countdown, setCountdown] = useState(REFRESH_RATE);
 
-  // --- Persistence Handshake ---
   useEffect(() => {
     const savedPins = localStorage.getItem(PIN_STORAGE_KEY);
     if (savedPins) {
@@ -130,7 +117,6 @@ export default function TempMailPage() {
     }
   }, [pinnedIds, isLoaded]);
 
-  // --- Generation Protocol ---
   const generateMail = async (targetProvider = provider) => {
     setIsLoading(true);
     setError(null);
@@ -150,13 +136,11 @@ export default function TempMailPage() {
       }
     } catch (err: any) {
       setError(`Node [${targetProvider.toUpperCase()}] restricted. Switch protocol.`);
-      toast({ variant: "destructive", title: "Protocol Failed" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Inbox Polling Matrix ---
   const fetchMessages = useCallback(async (silent = false) => {
     if (!email) return;
     if (!silent) setIsRefreshing(true);
@@ -178,28 +162,25 @@ export default function TempMailPage() {
     }
   }, [provider, email, sessionData]);
 
-  // Decoupled interval logic
   useEffect(() => {
     if (!email) return;
     const interval = setInterval(() => {
-      setCountdown(prev => prev - 1);
+      setCountdown(prev => {
+        if (prev <= 1) {
+          fetchMessages(true);
+          return REFRESH_RATE;
+        }
+        return prev - 1;
+      });
     }, 1000);
     return () => clearInterval(interval);
-  }, [email]);
-
-  useEffect(() => {
-    if (countdown <= 0) {
-      fetchMessages(true);
-      setCountdown(REFRESH_RATE);
-    }
-  }, [countdown, fetchMessages]);
+  }, [email, fetchMessages]);
 
   const handleProviderChange = (newVal: string) => {
     setProvider(newVal);
     generateMail(newVal);
   };
 
-  // --- Message Decoding ---
   const readMessage = async (id: string | number) => {
     if (!email) return;
     setIsLoading(true);
@@ -223,13 +204,11 @@ export default function TempMailPage() {
     }
   };
 
-  // --- Features Logic ---
   const togglePin = (id: string | number) => {
     const next = new Set(pinnedIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
     setPinnedIds(next);
-    toast({ title: next.has(id) ? "Signal Pinned" : "Signal Unpinned" });
   };
 
   const detectedOtp = useMemo(() => {
@@ -267,7 +246,6 @@ export default function TempMailPage() {
       filename += '.html';
       mime = 'text/html';
     } else {
-      // Construct basic EML structure
       content = [
         `From: ${selectedMsg.from}`,
         `To: ${email}`,
@@ -295,7 +273,7 @@ export default function TempMailPage() {
   const handleCopyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(label);
-    toast({ title: "Identity Isolated" });
+    toast({ title: "Copied" });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -324,7 +302,6 @@ export default function TempMailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Left Column: Identity & Node Status */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
@@ -382,19 +359,10 @@ export default function TempMailPage() {
                        <p className="text-[10px] font-bold text-destructive uppercase">{error}</p>
                     </div>
                  )}
-
-                 <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex items-start gap-4">
-                    <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
-                    <div className="space-y-1">
-                       <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Privacy Secure</h4>
-                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">All messages are volatile and definitively purged once the identity node is rotated or the browser session terminates.</p>
-                    </div>
-                 </div>
               </CardContent>
            </Card>
         </div>
 
-        {/* Right Column: Inbox Registry */}
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -411,11 +379,10 @@ export default function TempMailPage() {
                     )}
                  </div>
 
-                 {/* Inbox Search Matrix */}
                  <div className="relative group/search">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
                     <Input 
-                      placeholder="Search registry by sender or subject..."
+                      placeholder="Search registry..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="h-12 pl-12 bg-background/50 border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest"
@@ -430,9 +397,7 @@ export default function TempMailPage() {
                          <Inbox className="w-24 h-24 text-primary" />
                          <div className="text-center space-y-2">
                             <p className="text-sm font-black uppercase tracking-[0.4em]">Signal Buffer Empty</p>
-                            <p className="text-[9px] font-bold uppercase tracking-widest">
-                              {searchQuery ? "Zero matches in active registry" : "Awaiting inbound linguistic data..."}
-                            </p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest">Awaiting inbound data...</p>
                          </div>
                       </div>
                     ) : (
@@ -460,10 +425,8 @@ export default function TempMailPage() {
                                         <p className="text-[8px] font-black text-primary uppercase tracking-widest">Source Node</p>
                                         {isPinned && <Pin className="w-3 h-3 text-primary fill-current" />}
                                       </div>
-                                      <h4 className="text-sm font-bold text-foreground truncate uppercase pr-10">{msg.subject || "(No Subject Identifier)"}</h4>
-                                      <div className="flex items-center gap-3">
-                                        <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-tighter truncate">{msg.from}</p>
-                                      </div>
+                                      <h4 className="text-sm font-bold text-foreground truncate uppercase pr-10">{msg.subject || "(No Subject)"}</h4>
+                                      <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-tighter truncate">{msg.from}</p>
                                   </div>
                                 </div>
                                 
@@ -487,13 +450,6 @@ export default function TempMailPage() {
                       </div>
                     )}
                  </div>
-
-                 {isRefreshing && (
-                   <div className="p-4 bg-primary/5 border-t border-primary/10 flex items-center justify-center gap-3 animate-pulse shrink-0">
-                      <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
-                      <span className="text-[8px] font-black text-primary uppercase tracking-[0.3em]">Synchronizing Registry...</span>
-                   </div>
-                 )}
               </CardContent>
            </Card>
         </div>
@@ -534,7 +490,6 @@ export default function TempMailPage() {
                   </div>
                </DialogHeader>
 
-               {/* OTP Matrix Module */}
                {detectedOtp && (
                  <div className="px-6 py-4 bg-primary/[0.03] border-b border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-2">
                     <div className="flex items-center gap-4">
@@ -576,7 +531,6 @@ export default function TempMailPage() {
                   </div>
                </div>
 
-               {/* Export Protocol Matrix */}
                <div className="px-6 py-4 border-t border-white/5 bg-secondary/30 shrink-0 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[9px] font-black text-foreground/20 uppercase tracking-widest">
                      <ShieldCheck className="w-3.5 h-3.5" /> Clinical Integrity Guard
