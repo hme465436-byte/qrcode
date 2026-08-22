@@ -1755,9 +1755,19 @@ export default function Home() {
             )}
           </div>
           
-          <div className="text-center opacity-10 flex flex-col items-center gap-4">
-             <Heart className="w-8 h-8 text-primary" />
-             <p className="text-[9px] font-black uppercase tracking-[0.6em] text-foreground">Developed by Umar Farooq — Studio Master v7.2 Pro</p>
+          <div className="mt-20 pt-10 border-t border-white/5 flex flex-col items-center gap-6 animate-reveal">
+             <div className="flex items-center gap-3 px-6 py-2 rounded-full bg-primary/10 border border-primary/20 shadow-2xl shadow-primary/5">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                   Displaying {visibleCount} of {filteredTools.length} units
+                </span>
+             </div>
+             <div className="flex flex-col items-center gap-3">
+                <Heart className="w-6 h-6 text-primary fill-primary/10 animate-pulse" />
+                <p className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground bg-gradient-to-r from-blue-400 via-primary to-indigo-500 bg-clip-text text-transparent drop-shadow-sm">
+                   Developed by Umar Farooq — Studio Master v7.2 Pro
+                </p>
+             </div>
           </div>
         </div>
       </section>
