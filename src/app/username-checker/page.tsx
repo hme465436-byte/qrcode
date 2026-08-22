@@ -45,7 +45,7 @@ type CategoryFilter = 'all' | 'social' | 'gaming' | 'dev' | 'media' | 'finance';
 
 export default function UsernameCheckerPage() {
   const { toast } = useToast();
-  const [username, setUsername] = useState('umar');
+  const [username, setUsername] = useState('');
   const [results, setResults] = useState<PlatformResult[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
@@ -138,25 +138,27 @@ export default function UsernameCheckerPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
-      <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div className="min-w-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <ShieldCheck className="w-3.5 h-3.5" /> Identity Intel Pro
-          </div>
-          <h1 className="text-4xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-none">
-            Username <span className="text-primary italic">OSINT Checker</span>
-          </h1>
-          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional high-fidelity identity discovery. Isolate digital footprints across 40+ global registries with 1:1 signal validation and zero-storage local privacy.
-          </p>
+      <div className="mb-12 animate-reveal">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
+          <ShieldCheck className="w-3.5 h-3.5" /> Identity Intel Pro
         </div>
-        <div className="flex items-center gap-3 shrink-0 pb-2">
-           <GetHelp toolId="username-checker" />
-           {results.length > 0 && (
-              <Button variant="outline" size="sm" onClick={() => { setResults([]); setUsername(''); }} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
-              </Button>
-           )}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+           <div>
+              <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+                Username <span className="text-primary italic">OSINT Checker</span>
+              </h1>
+              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+                Professional high-fidelity identity discovery. Isolate digital footprints across 40+ global registries with 1:1 signal validation and zero-storage local privacy.
+              </p>
+           </div>
+           <div className="flex items-center gap-3">
+              <GetHelp toolId="username-checker" />
+              {(results.length > 0 || username) && (
+                <Button variant="outline" size="sm" onClick={() => { setResults([]); setUsername(''); }} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
+                </Button>
+              )}
+           </div>
         </div>
       </div>
 
@@ -178,7 +180,7 @@ export default function UsernameCheckerPage() {
                           <Input 
                             value={username}
                             onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9._-]/g, ''))}
-                            placeholder="Enter handle..."
+                            placeholder="Enter username"
                             autoCapitalize="none"
                             autoComplete="off"
                             spellCheck="false"
