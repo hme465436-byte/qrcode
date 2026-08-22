@@ -147,6 +147,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/username-checker', 
+    icon: Search, 
+    title: 'Username Checker', 
+    desc: 'Check username availability across 20+ major platforms.', 
+    label: 'OSINT', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['username', 'checker', 'osint', 'find user', 'social search', 'taken', 'available'],
+    category: 'utilities'
+  },
+  { 
     href: '/temp-mail', 
     icon: Mail, 
     title: 'Temp Mail Pro', 
@@ -1487,7 +1498,7 @@ export default function Home() {
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
-      'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL'
+      'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
