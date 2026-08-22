@@ -158,6 +158,17 @@ const TOOLS: Tool[] = [
     category: 'utilities'
   },
   { 
+    href: '/link-safety-checker', 
+    icon: ShieldCheck, 
+    title: 'Link Safety', 
+    desc: 'Expand short links and identify potential phishing threats.', 
+    label: 'SECURITY', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['link safety', 'unshorten', 'expand url', 'phishing check', 'security', 'malware', 'check link'],
+    category: 'utilities'
+  },
+  { 
     href: '/background-remove', 
     icon: Eraser, 
     title: 'Background Remove', 
@@ -1476,7 +1487,7 @@ export default function Home() {
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
-      'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail'
+      'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

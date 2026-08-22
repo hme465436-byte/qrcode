@@ -86,6 +86,7 @@ const TOOLS: Tool[] = [
   { href: '/background-remove', title: 'Background Remove', icon: Eraser, keywords: ['remove bg', 'transparent', 'cutout', 'remove.bg'], desc: 'Isolate subject.' },
   { href: '/bulk', title: 'Bulk Mode', icon: Layers, keywords: ['bulk', 'batch', 'many'], desc: 'Mass QR production.' },
   { href: '/url-shortener', title: 'URL Shortener', icon: LinkIcon, keywords: ['url', 'short', 'tiny', 'link'], desc: 'Compress long URLs.' },
+  { href: '/link-safety-checker', title: 'Link Safety', icon: ShieldCheck, keywords: ['safe', 'expand', 'unshorten', 'phishing', 'dangerous'], desc: 'Expand short links.' },
   { href: '/json-formatter', title: 'JSON Formatter', icon: Braces, keywords: ['json', 'format', 'pretty'], desc: 'Clean JSON data.' },
   { href: '/regex-tester', title: 'Regex Test', icon: Search, keywords: ['regex', 'test', 'pattern'], desc: 'Regex evaluator.' },
   { href: '/photo-enhance-fix', title: 'Photo Enhance', icon: Wand2, keywords: ['upscale', 'fix', 'quality'], desc: 'Fix blurry photos.' },
