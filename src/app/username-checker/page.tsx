@@ -177,9 +177,12 @@ export default function UsernameCheckerPage() {
                        <div className="relative group/input">
                           <Input 
                             value={username}
-                            onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
+                            onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9._-]/g, ''))}
                             placeholder="Enter handle..."
-                            className="h-16 bg-secondary border-border rounded-2xl font-bold uppercase px-6 focus:ring-primary/40 text-lg"
+                            autoCapitalize="none"
+                            autoComplete="off"
+                            spellCheck="false"
+                            className="h-16 bg-secondary border-border rounded-2xl font-bold px-6 focus:ring-primary/40 text-lg"
                           />
                           <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within/input:opacity-100 transition-opacity">
                              <Zap className="w-6 h-6 text-primary" />
@@ -394,7 +397,7 @@ export default function UsernameCheckerPage() {
            </Card>
         </div>
       </div>
-
+      
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
