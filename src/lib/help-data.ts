@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.

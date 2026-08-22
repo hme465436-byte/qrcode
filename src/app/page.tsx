@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -821,7 +822,7 @@ const TOOLS: Tool[] = [
   { 
     href: '/photo-enhance-fix', 
     icon: Wand2, 
-    title: 'Photo Enhance / Pixel Fix', 
+    title: 'Photo Enhance', 
     desc: 'Upscale resolution, sharpen edges, and restore clarity.', 
     label: 'IMAGE', 
     color: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
@@ -1610,7 +1611,7 @@ export default function Home() {
         <div className="w-full max-w-5xl mx-auto animate-reveal relative z-10 px-2 sm:px-4">
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[8px] sm:text-[10px] font-black text-primary uppercase tracking-[0.2em]">
-              <Command className="w-2.5 h-2.5 sm:w-3 sm:h-3 icon-3d" /> Digital Studio v7.2
+              <Command className="w-2.5 h-2.5 sm:w-3 sm:h-3 icon-3d" /> Digital Studio v7.2 Pro
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[8px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
               Verified {TOOLS.length} Units
@@ -1745,7 +1746,7 @@ export default function Home() {
           
           <div className="text-center opacity-10 flex flex-col items-center gap-4">
              <Heart className="w-8 h-8 text-primary" />
-             <p className="text-[9px] font-black uppercase tracking-[0.6em] text-foreground">Developed by Umar Farooq — Studio Master v7.2</p>
+             <p className="text-[9px] font-black uppercase tracking-[0.6em] text-foreground">Developed by Umar Farooq — Studio Master v7.2 Pro</p>
           </div>
         </div>
       </section>
