@@ -2,7 +2,7 @@
 
 /**
  * @fileOverview Server actions for Temp Mail Studio.
- * Handles high-fidelity multi-node proxying for temporary email services.
+ * Handles high-fidelity multi-node proxying for temporary email services to bypass CORS.
  */
 
 const NODES = {
@@ -24,7 +24,7 @@ async function handle1secmail(action: string, params: any) {
 }
 
 /**
- * Mail.tm Implementation (Simplified for Proxy)
+ * Mail.tm Implementation
  */
 async function handleMailTM(endpoint: string, method: string = 'GET', body?: any, token?: string) {
   const headers: any = { 'Content-Type': 'application/json' };
@@ -60,7 +60,6 @@ export async function fetchFromProvider(providerId: string, payload: any) {
         break;
 
       case 'mailtm':
-        // Note: Mail.tm requires account creation. This proxy provides a simplified random flow.
         if (payload.action === 'genRandomMailbox') {
           const domains = await handleMailTM('/domains');
           const domain = domains['hydra:member'][0].domain;
@@ -131,7 +130,6 @@ export async function fetchFromProvider(providerId: string, payload: any) {
         }
         break;
     }
-
     return { success: false, error: 'Protocol Mismatch' };
   } catch (error: any) {
     return { success: false, error: error.message };

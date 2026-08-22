@@ -1377,7 +1377,7 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: any }[] = [
   { id: 'utilities', label: 'Utilities', icon: Zap },
 ];
 
-const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list' }) => {
+function ToolItem({ item, mode }: { item: Tool, mode: 'grid' | 'list' }) {
   const isGrid = mode === 'grid';
 
   return (
@@ -1385,12 +1385,12 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
       href={item.href} 
       className={cn(
         "group relative flex transition-all duration-300 min-w-0",
-        isGrid ? "h-full w-full" : "w-full !max-w-full !min-w-0"
+        isGrid ? "h-full w-full" : "w-full"
       )}
     >
       <Card className={cn(
         "relative flex-1 flex rounded-[2rem] sm:rounded-[2.5rem] bg-secondary/30 border border-white/5 bg-white/40 dark:bg-card/40 backdrop-blur-2xl hover:border-primary/20 hover:bg-secondary/50 transition-all duration-500 shadow-2xl group-hover:shadow-primary/5 overflow-hidden",
-        isGrid ? "flex-col p-5 sm:p-6 hover:-translate-y-2 text-left" : "flex-row items-center p-3 sm:p-6 hover:-translate-x-1 gap-4 sm:gap-6 !w-full !max-w-full !min-w-0"
+        isGrid ? "flex-col p-5 sm:p-6 hover:-translate-y-2 text-left" : "flex-row items-center p-3 sm:p-6 hover:-translate-x-1 gap-4 sm:gap-6"
       )}>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
@@ -1438,9 +1438,7 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
       </Card>
     </Link>
   );
-});
-
-ToolItem.displayName = 'ToolItem';
+}
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');

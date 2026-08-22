@@ -43,7 +43,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -62,7 +61,7 @@ const PROVIDERS = [
   { id: 'guerrilla', label: 'Guerrilla Mail (Classic)', icon: Activity },
 ];
 
-const REFRESH_RATE = 10; // seconds
+const REFRESH_RATE = 10; 
 
 interface MailMessage {
   id: string | number;
@@ -84,7 +83,7 @@ export default function TempMailPage() {
   
   // Provider State
   const [provider, setProvider] = useState(PROVIDERS[0].id);
-  const [sessionData, setSessionData] = useState<any>(null); // Stores SID or Token
+  const [sessionData, setSessionData] = useState<any>(null); 
   
   // Identity State
   const [email, setEmail] = useState<string | null>(null);
@@ -113,7 +112,7 @@ export default function TempMailPage() {
       const res = await fetchFromProvider(targetProvider, { action: 'genRandomMailbox' });
       if (res.success && res.email) {
         setEmail(res.email);
-        setSessionData(res); // Store full response (sid/token)
+        setSessionData(res); 
         setCountdown(REFRESH_RATE);
         toast({ title: "Identity Synthesized", description: `${targetProvider.toUpperCase()} mailbox active.` });
       } else {
@@ -146,26 +145,30 @@ export default function TempMailPage() {
     } catch (err) {
       console.warn("Polling interrupted.");
     } finally {
-      setIsRefreshing(false);
-      setCountdown(REFRESH_RATE);
+      if (!silent) setIsRefreshing(false);
     }
   }, [provider, email, sessionData, toast]);
 
-  // Handle auto-refresh cycle
+  // Handle auto-refresh countdown
   useEffect(() => {
-    if (email) {
-      pollingRef.current = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            fetchMessages(true);
-            return REFRESH_RATE;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (!email) return;
+
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) return REFRESH_RATE;
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [email]);
+
+  // Trigger fetch when countdown hits refresh threshold
+  useEffect(() => {
+    if (countdown === REFRESH_RATE && email) {
+      fetchMessages(true);
     }
-    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
-  }, [email, fetchMessages]);
+  }, [countdown, email, fetchMessages]);
 
   useEffect(() => {
     generateMail();
@@ -255,7 +258,7 @@ export default function TempMailPage() {
                              {PROVIDERS.map(p => (
                                <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase tracking-widest">
                                   <div className="flex items-center gap-2">
-                                     <p.icon className="w-3 h-3" /> {p.label}
+                                     {React.createElement(p.icon, { className: "w-3 h-3" })} {p.label}
                                   </div>
                                </SelectItem>
                              ))}
@@ -286,6 +289,13 @@ export default function TempMailPage() {
                     </div>
                  </div>
 
+                 {error && (
+                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3">
+                       <AlertCircle className="w-4 h-4 text-destructive" />
+                       <p className="text-[9px] font-bold text-destructive uppercase">{error}</p>
+                    </div>
+                 )}
+
                  <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex items-start gap-4">
                     <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
                     <div className="space-y-1">
@@ -295,20 +305,6 @@ export default function TempMailPage() {
                  </div>
               </CardContent>
            </Card>
-
-           <div className="grid grid-cols-1 gap-6">
-              <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <Activity className="w-7 h-7" />
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">High-Frequency Polling</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    The studio implements a high-fidelity sync matrix. New signals are identified and synchronized with the inbox node every 10 seconds.
-                  </p>
-                </div>
-             </div>
-           </div>
         </div>
 
         {/* Right Column: Inbox Registry */}
@@ -384,14 +380,14 @@ export default function TempMailPage() {
         <DialogContent className="glass-card max-w-4xl border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
           {selectedMsg && (
             <>
-               <DialogHeader className="p-8 border-b border-white/5 bg-secondary/30 shrink-0">
+               <div className="p-8 border-b border-white/5 bg-secondary/30 shrink-0">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                      <div className="space-y-4 min-w-0">
                         <div className="space-y-1">
                            <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em]">Signal Identity Isolated</p>
-                           <DialogTitle className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight truncate max-w-xl">
+                           <h2 className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight truncate max-w-xl">
                               {selectedMsg.subject || "(NO SUBJECT)" }
-                           </DialogTitle>
+                           </h2>
                         </div>
                         <div className="flex flex-wrap items-center gap-4">
                            <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-foreground/40 uppercase">
@@ -411,7 +407,7 @@ export default function TempMailPage() {
                         </Button>
                      </div>
                   </div>
-               </DialogHeader>
+               </div>
                
                <div className="flex-1 overflow-y-auto custom-scrollbar p-8 sm:p-12 bg-white">
                   <div className="max-w-none">
