@@ -29,7 +29,9 @@ import {
   Cloud,
   Lock,
   Download,
-  Globe
+  Globe,
+  CheckCircle2,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,7 +100,6 @@ export default function TempMailPage() {
   
   // Auto-refresh State
   const [countdown, setCountdown] = useState(REFRESH_RATE);
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- 1. Generation Protocol ---
   const generateMail = async (targetProvider = provider) => {
@@ -140,14 +141,13 @@ export default function TempMailPage() {
       });
       if (res.success) {
         setMessages(res.messages || []);
-        if (!silent && res.messages.length > 0) toast({ title: "Signal Detected", description: `Isolated ${res.messages.length} messages.` });
       }
     } catch (err) {
       console.warn("Polling interrupted.");
     } finally {
       if (!silent) setIsRefreshing(false);
     }
-  }, [provider, email, sessionData, toast]);
+  }, [provider, email, sessionData]);
 
   // Handle auto-refresh countdown
   useEffect(() => {
@@ -155,20 +155,16 @@ export default function TempMailPage() {
 
     const interval = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) return REFRESH_RATE;
+        if (prev <= 1) {
+          fetchMessages(true);
+          return REFRESH_RATE;
+        }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [email]);
-
-  // Trigger fetch when countdown hits refresh threshold
-  useEffect(() => {
-    if (countdown === REFRESH_RATE && email) {
-      fetchMessages(true);
-    }
-  }, [countdown, email, fetchMessages]);
+  }, [email, fetchMessages]);
 
   useEffect(() => {
     generateMail();
@@ -426,7 +422,9 @@ export default function TempMailPage() {
 
                <div className="p-6 bg-secondary/30 border-t border-white/5 flex items-center justify-between shrink-0">
                   <span className="text-[8px] font-black uppercase text-foreground/10 tracking-[0.4em]">Hardware-Native Matrix Decoder Active</span>
-                  <Badge variant="outline" className="text-[7px] font-black uppercase border-emerald-500/20 text-emerald-500 px-3">Protocol: Clean</Badge>
+                  <Badge variant="outline" className="text-[7px] font-black uppercase border-emerald-500/20 text-emerald-500 px-3">
+                    <Check className="w-3 h-3 mr-1" /> Protocol: Clean
+                  </Badge>
                </div>
             </>
           )}
