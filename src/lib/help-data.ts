@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -664,5 +663,21 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Ideal for quick demos, landing page previews, or code sharing.'
     ],
     privacy: 'Code is stored securely in our Firestore matrix. It is publicly accessible to anyone with the link.'
+  },
+  'png-finder': {
+    title: 'PNG Finder Studio',
+    description: 'Professional transparent asset discovery engine. Isolate high-fidelity PNGs and icons from global open-source registries.',
+    steps: [
+      'Enter a search query like "crown png" or "fire icon" in the discovery input.',
+      'Select a specific "Server Node" or use "Auto" for multi-node fallback.',
+      'Browse the identified signal matrix for transparent results.',
+      'Launch the Visual Master to preview the asset with an alpha channel check.',
+      'Execute the download protocol to save the master PNG binary.'
+    ],
+    tips: [
+      'Use the "Auto" mode to recursively search multiple nodes if the primary fails.',
+      'Add "png" to your search query for better results on the Wikimedia node.'
+    ],
+    privacy: 'Discovery signals are volatile and held strictly in local memory. No search history or visual interests are logged.'
   }
 };
