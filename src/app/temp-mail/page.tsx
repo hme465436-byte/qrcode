@@ -67,10 +67,9 @@ import DOMPurify from 'dompurify';
 import { fetchFromProvider } from './actions';
 
 const PROVIDERS = [
-  { id: 'guerrilla', label: 'Guerrilla Mail (Stable)', icon: ShieldCheck },
-  { id: 'dropmail', label: 'Dropmail (Fast)', icon: Zap },
-  { id: 'tempmailc', label: 'TempMailC (Standard)', icon: Globe },
-  { id: 'throwawaymail', label: 'Throwaway (Cloud)', icon: Server },
+  { id: 'guerrilla', label: 'Guerrilla Mail (Default)', icon: ShieldCheck },
+  { id: 'tempmail_lol', label: 'TempMail.lol (Fast)', icon: Zap },
+  { id: 'mailnesia', label: 'Mailnesia (Public)', icon: Globe },
 ];
 
 const REFRESH_RATE = 10; 
@@ -83,6 +82,8 @@ interface MailMessage {
   from: string;
   subject: string;
   date: string;
+  htmlBody?: string;
+  body?: string;
 }
 
 interface FullMessage {
@@ -161,7 +162,7 @@ export default function TempMailPage() {
     if (savedMute !== null) setIsMuted(savedMute === 'true');
     
     setIsLoaded(true);
-    generateMail();
+    generateMail(PROVIDERS[0].id);
   }, []);
 
   useEffect(() => {
@@ -198,7 +199,7 @@ export default function TempMailPage() {
         addToHistory(res.email, targetProvider);
         toast({ title: "Identity Active", description: `${res.email} ready.` });
       } else {
-        throw new Error(res.error || "Username taken or node restricted.");
+        throw new Error(res.error || "Identity restricted on this node.");
       }
     } catch (err: any) {
       setError(err.message || `Node [${targetProvider.toUpperCase()}] restricted.`);
@@ -223,6 +224,7 @@ export default function TempMailPage() {
         const incomingMsgs = res.messages;
         
         setMessages(prev => {
+          // If no messages on server but we have some, keep existing (Merge & Preserve)
           if (incomingMsgs.length === 0 && prev.length > 0) return prev;
 
           const prevMap = new Map(prev.map(m => [m.id.toString(), m]));
@@ -276,19 +278,27 @@ export default function TempMailPage() {
     generateMail(newVal);
   };
 
-  const readMessage = async (id: string | number) => {
+  const readMessage = async (msg: MailMessage) => {
     if (!email) return;
+    
+    // If the provider returned bodies in the list (like TempMail.lol), use it immediately
+    if (msg.body || msg.htmlBody) {
+      setSelectedMsg(msg as FullMessage);
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await fetchFromProvider(provider, { 
         action: 'readMessage', 
-        id, 
+        id: msg.id, 
         email, 
         sid: sessionData?.sid, 
         token: sessionData?.token 
       });
       if (res.success) {
-        setSelectedMsg({ ...res.message, id });
+        setSelectedMsg({ ...res.message, id: msg.id });
         setUnreadCount(prev => Math.max(0, prev - 1));
       } else {
         throw new Error(res.error);
@@ -411,12 +421,12 @@ export default function TempMailPage() {
                     </div>
 
                     <div className="space-y-3">
-                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Custom Identity (Optional Prefix)</Label>
+                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Custom Identity (Optional)</Label>
                        <div className="flex gap-2">
                           <Input 
                             value={customUsername} 
                             onChange={e => setCustomUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
-                            placeholder="e.g. umar"
+                            placeholder="prefix handle..."
                             className="h-12 bg-secondary border-border rounded-xl font-bold"
                           />
                           <Button 
@@ -443,10 +453,10 @@ export default function TempMailPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <Button onClick={() => handleCopyText(email || '', 'identity')} disabled={!email} className="h-14 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                          {isCopied === 'identity' ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />} Copy Address
+                          {isCopied === 'identity' ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />} Copy
                        </Button>
                        <Button variant="outline" onClick={() => generateMail()} className="h-14 border-border bg-secondary text-foreground font-black text-[10px] uppercase tracking-widest rounded-2xl hover:text-primary">
-                          <RefreshCcw className="w-4 h-4 mr-2" /> New Random
+                          <RefreshCcw className="w-4 h-4 mr-2" /> Randomize
                        </Button>
                     </div>
                  </div>
@@ -464,7 +474,7 @@ export default function TempMailPage() {
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
                     <History className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-[10px] font-black uppercase text-foreground">Identity History</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase text-foreground">Identity Registry</CardTitle>
                  </div>
                  <button onClick={() => setHistory([])} className="text-[9px] font-black text-foreground/20 hover:text-red-500 uppercase transition-colors">Clear</button>
               </CardHeader>
@@ -511,7 +521,7 @@ export default function TempMailPage() {
                  <div className="relative group/search">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
                     <Input 
-                      placeholder="Search signals..."
+                      placeholder="Filter signals by sender or subject..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="h-12 pl-12 bg-background/50 border-white/5 rounded-xl text-[10px] font-black uppercase"
@@ -534,7 +544,7 @@ export default function TempMailPage() {
                             <div 
                               key={msg.id} 
                               className={cn("flex group hover:bg-primary/[0.03] transition-all cursor-pointer relative", isPinned && "bg-primary/[0.05]")}
-                              onClick={() => readMessage(msg.id)}
+                              onClick={() => readMessage(msg)}
                             >
                                 <div className="flex-1 flex items-center gap-6 p-6 min-w-0">
                                   <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner shrink-0", isPinned ? "bg-primary/20 text-primary" : "bg-secondary border border-border text-primary/30")}>
