@@ -18,6 +18,7 @@ async function handle1secmail(action: string, params: any) {
   Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, String(v)));
   
   const res = await fetch(url.toString(), { cache: 'no-store' });
+  if (res.status === 403) throw new Error("1secmail blocked, switch provider");
   if (!res.ok) throw new Error(`1secmail node error: ${res.status}`);
   return res.json();
 }
@@ -46,18 +47,19 @@ export async function fetchFromProvider(providerId: string, payload: any) {
       case '1secmail':
         if (payload.action === 'genRandomMailbox') {
           const data = await handle1secmail('genRandomMailbox', { count: 1 });
+          if (!data || !data[0]) throw new Error("1secmail identity generation failed.");
           return { success: true, email: data[0] };
         }
         if (payload.action === 'genCustomMailbox') {
-          // 1secmail doesn't require "account creation", just use any login on their domains
           const domains = await handle1secmail('getDomainList', {});
+          if (!domains || domains.length === 0) throw new Error("1secmail domains unavailable.");
           const email = `${payload.username}@${domains[0]}`;
           return { success: true, email };
         }
         if (payload.action === 'getMessages') {
           const [login, domain] = payload.email.split('@');
           const data = await handle1secmail('getMessages', { login, domain });
-          return { success: true, messages: data };
+          return { success: true, messages: Array.isArray(data) ? data : [] };
         }
         if (payload.action === 'readMessage') {
           const [login, domain] = payload.email.split('@');
@@ -74,20 +76,25 @@ export async function fetchFromProvider(providerId: string, payload: any) {
 
       case 'mailtm':
         if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
-          // 1. Get Domain Matrix
+          // 1. Get Domain Matrix with strict checking
           const domains = await handleMailTM('/domains');
-          const domain = domains['hydra:member'][0]?.domain;
-          if (!domain) throw new Error("No domain identified in Mail.tm registry.");
+          const memberList = domains?.['hydra:member'];
+          if (!memberList || memberList.length === 0) throw new Error("Mail.tm domains unavailable.");
+          
+          const domain = memberList[0]?.domain;
+          if (!domain) throw new Error("Mail.tm domain identity corrupted.");
 
           const login = payload.username || Math.random().toString(36).substring(2, 12);
           const address = `${login}@${domain}`;
           const password = Math.random().toString(36).substring(2, 12);
           
           // 2. Register Account
-          await handleMailTM('/accounts', 'POST', { address, password });
+          const account = await handleMailTM('/accounts', 'POST', { address, password });
+          if (!account || !account.address) throw new Error("Mail.tm account registration failed.");
           
           // 3. Negotiate Bearer Token
           const tokenData = await handleMailTM('/token', 'POST', { address, password });
+          if (!tokenData || !tokenData.token) throw new Error("Mail.tm authorization restricted.");
           
           return { 
             success: true, 
@@ -97,6 +104,7 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           };
         }
         if (payload.action === 'getMessages') {
+          if (!payload.token) throw new Error("Session token invalid.");
           const data = await handleMailTM('/messages', 'GET', null, payload.token);
           const mapped = (data['hydra:member'] || []).map((m: any) => ({
             id: m.id,
@@ -107,6 +115,7 @@ export async function fetchFromProvider(providerId: string, payload: any) {
           return { success: true, messages: mapped };
         }
         if (payload.action === 'readMessage') {
+          if (!payload.token) throw new Error("Session token invalid.");
           const data = await handleMailTM(`/messages/${payload.id}`, 'GET', null, payload.token);
           return { success: true, message: {
             from: data.from.address,

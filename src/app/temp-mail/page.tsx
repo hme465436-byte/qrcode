@@ -358,14 +358,12 @@ export default function TempMailPage() {
         </div>
         <div className="flex items-center gap-3">
            <GetHelp toolId="temp-mail" />
-           <Button 
-            variant="outline" 
-            size="icon" 
+           <button 
             onClick={() => setIsMuted(!isMuted)} 
-            className="h-10 w-10 rounded-xl border-border bg-secondary"
+            className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-foreground/40 hover:text-primary transition-all"
            >
               {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-           </Button>
+           </button>
            <Button 
             variant="outline" 
             size="sm" 
