@@ -39,6 +39,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -371,14 +372,15 @@ export default function TempMailPage() {
         <DialogContent className="glass-card max-w-4xl border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
           {selectedMsg && (
             <>
-               <div className="p-8 border-b border-white/5 bg-secondary/30 shrink-0">
+               <DialogHeader className="p-8 border-b border-white/5 bg-secondary/30 shrink-0">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                      <div className="space-y-4 min-w-0">
                         <div className="space-y-1">
                            <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em]">Signal Identity Isolated</p>
-                           <h2 className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight truncate max-w-xl">
+                           <DialogTitle className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight truncate max-w-xl">
                               {selectedMsg.subject || "(NO SUBJECT)" }
-                           </h2>
+                           </DialogTitle>
+                           <DialogDescription className="sr-only">Detailed message content from {selectedMsg.from}</DialogDescription>
                         </div>
                         <div className="flex flex-wrap items-center gap-4">
                            <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-foreground/40 uppercase">
@@ -398,7 +400,7 @@ export default function TempMailPage() {
                         </Button>
                      </div>
                   </div>
-               </div>
+               </DialogHeader>
                
                <div className="flex-1 overflow-y-auto custom-scrollbar p-8 sm:p-12 bg-white">
                   <div className="max-w-none">
