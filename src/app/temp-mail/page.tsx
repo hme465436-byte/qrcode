@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Mail, 
   RefreshCcw, 
@@ -11,7 +11,6 @@ import {
   Loader2, 
   Clock, 
   User, 
-  Eye, 
   X, 
   Zap, 
   ShieldCheck, 
@@ -23,12 +22,7 @@ import {
   AlertCircle,
   Plus,
   Server,
-  ChevronDown,
   ChevronRight,
-  Database,
-  Cloud,
-  Lock,
-  Download,
   Globe,
   CheckCircle2,
   Check
@@ -149,22 +143,23 @@ export default function TempMailPage() {
     }
   }, [provider, email, sessionData]);
 
-  // Handle auto-refresh countdown
+  // Decoupled interval logic to prevent "Cannot update a component while rendering" errors
   useEffect(() => {
     if (!email) return;
 
     const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          fetchMessages(true);
-          return REFRESH_RATE;
-        }
-        return prev - 1;
-      });
+      setCountdown(prev => prev - 1);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [email, fetchMessages]);
+  }, [email]);
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      fetchMessages(true);
+      setCountdown(REFRESH_RATE);
+    }
+  }, [countdown, fetchMessages]);
 
   useEffect(() => {
     generateMail();

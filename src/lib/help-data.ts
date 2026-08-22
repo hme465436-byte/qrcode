@@ -611,7 +611,7 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     ],
     tips: [
       'Use a 45° rotation on tiled text for high-security asset protection.',
-      'For videos, keep the duration short to ensure rapid browser-side synthesis.',
+      'For videos, keep the duration short to ensure graphic browser-side synthesis.',
       'Draggable positioning works best on a desktop mouse, but touch snapping is optimized for mobile.'
     ],
     privacy: 'Hardware-native synthesis ensures your assets and brand logos never leave your hardware. No data is logged.'
