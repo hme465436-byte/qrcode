@@ -12,6 +12,23 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'icon-studio': {
+    title: 'Icon Studio Pro',
+    description: 'Professional high-fidelity icon discovery and customization engine. Access thousands of icons from global registries including Simple Icons, OpenMoji, and Material Design.',
+    steps: [
+      'Enter a search query (e.g., "instagram", "cloud") in the discovery input.',
+      'Select a "Server Node" from the protocol matrix to prioritize specific collections.',
+      'Click any identified icon to launch the visual master preview.',
+      'Calibrate the identity by choosing a custom hex color and geometric scale.',
+      'Download the final asset as SVG, PNG (up to 1024px), or a Windows-compatible ICO file.'
+    ],
+    tips: [
+      'Use the "Auto" node to recursively search all global registries if the primary signal is weak.',
+      'PNG and ICO exports utilize a high-performance hardware-native rendering buffer to ensure pixel clarity.',
+      'Copy the raw SVG code for direct implementation into your web project source.'
+    ],
+    privacy: 'Identity discovery signals are volatile and held strictly in local memory. The studio does not log or transmit your search history.'
+  },
   'temp-mail': {
     title: 'Temp Mail Studio Pro',
     description: 'Professional-grade temporary email synthesis with multi-node support. Protect your primary address by using instant, disposable identities from various global mail servers.',

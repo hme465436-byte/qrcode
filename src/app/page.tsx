@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -1764,8 +1763,8 @@ export default function Home() {
              </div>
              <div className="flex flex-col items-center gap-3">
                 <Heart className="w-6 h-6 text-primary fill-primary/10 animate-pulse" />
-                <p className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground bg-gradient-to-r from-blue-400 via-primary to-indigo-500 bg-clip-text text-transparent drop-shadow-sm">
-                   Developed by Umar Farooq — Studio Master v7.2 Pro
+                <p className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground drop-shadow-sm">
+                   Developed by <span className="text-white">Umar Farooq</span> — <span className="bg-gradient-to-r from-blue-400 via-primary to-indigo-500 bg-clip-text text-transparent">Studio Master v7.2 Pro</span>
                 </p>
              </div>
           </div>
