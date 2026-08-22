@@ -22,7 +22,14 @@ import {
   Info,
   Calendar,
   AlertCircle,
-  Plus
+  Plus,
+  Server,
+  ChevronDown,
+  ChevronRight,
+  Database,
+  Cloud,
+  Lock,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,32 +44,49 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import DOMPurify from 'dompurify';
+import { fetchFromProvider } from './actions';
 
-// --- Types & Constants ---
+// --- Configuration Matrix ---
+const PROVIDERS = [
+  { id: '1secmail', label: '1secmail (Global)', icon: Globe },
+  { id: 'mailtm', label: 'Mail.tm (High Fidelity)', icon: ShieldCheck },
+  { id: 'guerrilla', label: 'Guerrilla Mail (Classic)', icon: Activity },
+];
+
+const REFRESH_RATE = 10; // seconds
+
 interface MailMessage {
-  id: number;
+  id: string | number;
   from: string;
   subject: string;
   date: string;
 }
 
-interface FullMessage extends MailMessage {
-  body: string;
-  textBody: string;
+interface FullMessage {
+  from: string;
+  subject: string;
+  date: string;
   htmlBody: string;
+  body: string;
 }
-
-const API_BASE = "https://www.1secmail.com/api/v1/";
-const REFRESH_RATE = 10; // seconds
 
 export default function TempMailPage() {
   const { toast } = useToast();
   
-  // Session State
+  // Provider State
+  const [provider, setProvider] = useState(PROVIDERS[0].id);
+  const [sessionData, setSessionData] = useState<any>(null); // Stores SID or Token
+  
+  // Identity State
   const [email, setEmail] = useState<string | null>(null);
-  const [login, setLogin] = useState<string | null>(null);
-  const [domain, setDomain] = useState<string | null>(null);
   
   // Data State
   const [messages, setMessages] = useState<MailMessage[]>([]);
@@ -77,26 +101,25 @@ export default function TempMailPage() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- 1. Generation Protocol ---
-  const generateMail = async () => {
+  const generateMail = async (targetProvider = provider) => {
     setIsLoading(true);
     setError(null);
+    setEmail(null);
+    setMessages([]);
+    setSessionData(null);
+
     try {
-      const res = await fetch(`${API_BASE}?action=genRandomMailbox&count=1`);
-      const data = await res.json();
-      if (data && data[0]) {
-        const fullEmail = data[0];
-        const [l, d] = fullEmail.split('@');
-        setEmail(fullEmail);
-        setLogin(l);
-        setDomain(d);
-        setMessages([]);
+      const res = await fetchFromProvider(targetProvider, { action: 'genRandomMailbox' });
+      if (res.success && res.email) {
+        setEmail(res.email);
+        setSessionData(res); // Store full response (sid/token)
         setCountdown(REFRESH_RATE);
-        toast({ title: "Identity Synthesized", description: "Temporary mailbox active." });
+        toast({ title: "Identity Synthesized", description: `${targetProvider.toUpperCase()} mailbox active.` });
       } else {
-        throw new Error("Registry node restricted.");
+        throw new Error(res.error || "Node restricted.");
       }
-    } catch (err) {
-      setError("Uplink failure. Discovery node unreachable.");
+    } catch (err: any) {
+      setError(`Node [${targetProvider.toUpperCase()}] restricted. Switch protocol.`);
       toast({ variant: "destructive", title: "Protocol Failed" });
     } finally {
       setIsLoading(false);
@@ -105,21 +128,27 @@ export default function TempMailPage() {
 
   // --- 2. Inbox Polling Matrix ---
   const fetchMessages = useCallback(async (silent = false) => {
-    if (!login || !domain) return;
+    if (!email) return;
     if (!silent) setIsRefreshing(true);
     
     try {
-      const res = await fetch(`${API_BASE}?action=getMessages&login=${login}&domain=${domain}`);
-      const data = await res.json();
-      setMessages(data || []);
-      if (!silent) toast({ title: "Inbox Synced" });
+      const res = await fetchFromProvider(provider, { 
+        action: 'getMessages', 
+        email, 
+        sid: sessionData?.sid, 
+        token: sessionData?.token 
+      });
+      if (res.success) {
+        setMessages(res.messages || []);
+        if (!silent && res.messages.length > 0) toast({ title: "Signal Detected", description: `Isolated ${res.messages.length} messages.` });
+      }
     } catch (err) {
       console.warn("Polling interrupted.");
     } finally {
       setIsRefreshing(false);
       setCountdown(REFRESH_RATE);
     }
-  }, [login, domain, toast]);
+  }, [provider, email, sessionData, toast]);
 
   // Handle auto-refresh cycle
   useEffect(() => {
@@ -141,22 +170,34 @@ export default function TempMailPage() {
     generateMail();
   }, []);
 
+  const handleProviderChange = (newVal: string) => {
+    setProvider(newVal);
+    generateMail(newVal);
+  };
+
   // --- 3. Message Decoding ---
-  const readMessage = async (id: number) => {
-    if (!login || !domain) return;
-    setIsProcessing(true);
+  const readMessage = async (id: string | number) => {
+    if (!email) return;
+    setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}?action=readMessage&login=${login}&domain=${domain}&id=${id}`);
-      const data = await res.json();
-      setSelectedMsg(data);
+      const res = await fetchFromProvider(provider, { 
+        action: 'readMessage', 
+        id, 
+        email, 
+        sid: sessionData?.sid, 
+        token: sessionData?.token 
+      });
+      if (res.success) {
+        setSelectedMsg(res.message);
+      } else {
+        throw new Error(res.error);
+      }
     } catch (err) {
       toast({ variant: "destructive", title: "Decode Error" });
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
-
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCopy = () => {
     if (email) {
@@ -165,10 +206,6 @@ export default function TempMailPage() {
       toast({ title: "Identity Isolated" });
       setTimeout(() => setIsCopied(false), 2000);
     }
-  };
-
-  const handleNewMail = () => {
-    generateMail();
   };
 
   return (
@@ -180,33 +217,51 @@ export default function TempMailPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
            <div>
               <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-                Temp <span className="text-primary italic">Mail Pro</span>
+                Temp <span className="text-primary italic">Mail Studio Pro</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional temporary email synthesis. Isolate anonymous digital identities with real-time private inboxes and sanitized visual masters.
+                Professional multi-node disposable email studio. Isolate anonymous digital identities with real-time private inboxes and sanitized visual masters.
               </p>
            </div>
            <div className="flex items-center gap-3">
               <GetHelp toolId="temp-mail" />
               <Button variant="outline" size="sm" onClick={() => fetchMessages()} disabled={isRefreshing || !email} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">
-                <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isRefreshing && "animate-spin")} /> Refresh ({countdown}s)
+                <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isRefreshing && "animate-spin")} /> Sync ({countdown}s)
               </Button>
            </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Left Column: Identity & Status */}
+        {/* Left Column: Identity & Node Status */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
               <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Activity className="w-5 h-5 text-primary" /> Identity Protocol
+                    <Server className="w-5 h-5 text-primary" /> Multi-Node Protocol
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-10 space-y-10">
                  <div className="space-y-6">
+                    <div className="space-y-3">
+                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Active Server Node</Label>
+                       <Select value={provider} onValueChange={handleProviderChange}>
+                          <SelectTrigger className="h-14 bg-secondary border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest">
+                             <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="glass-card">
+                             {PROVIDERS.map(p => (
+                               <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase tracking-widest">
+                                  <div className="flex items-center gap-2">
+                                     <p.icon className="w-3 h-3" /> {p.label}
+                                  </div>
+                               </SelectItem>
+                             ))}
+                          </SelectContent>
+                       </Select>
+                    </div>
+
                     <div className="p-8 rounded-[3rem] bg-secondary/50 border-2 border-primary/20 shadow-inner flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden group/mail">
                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/mail:opacity-100 transition-opacity" />
                        <p className="text-[9px] font-black uppercase text-primary/40 tracking-[0.6em] relative z-10">Active Mailbox Identity</p>
@@ -215,16 +270,16 @@ export default function TempMailPage() {
                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
                          </div>
                        ) : (
-                         <h2 className="text-xl sm:text-2xl font-headline font-black text-foreground break-all select-all relative z-10">{email || "Initializing..."}</h2>
+                         <h2 className="text-xl sm:text-2xl font-headline font-black text-foreground break-all select-all relative z-10">{email || "Uplink Lost"}</h2>
                        )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <Button onClick={handleCopy} disabled={!email} className="h-14 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
                           {isCopied ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
-                          Copy Address
+                          Copy Identity
                        </Button>
-                       <Button variant="outline" onClick={handleNewMail} className="h-14 border-border bg-secondary text-foreground font-black text-[10px] uppercase tracking-widest rounded-2xl hover:text-primary">
+                       <Button variant="outline" onClick={() => generateMail()} className="h-14 border-border bg-secondary text-foreground font-black text-[10px] uppercase tracking-widest rounded-2xl hover:text-primary">
                           <Plus className="w-4 h-4 mr-2" /> New Identity
                        </Button>
                     </div>
@@ -234,28 +289,28 @@ export default function TempMailPage() {
                     <ShieldCheck className="w-6 h-6 text-primary mt-1 shrink-0" />
                     <div className="space-y-1">
                        <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest">Privacy Secure</h4>
-                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">All messages are volatile and definitively purged once the session identity is rotated or the browser is refreshed.</p>
+                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">All messages are volatile and definitively purged once the identity node is rotated or the browser session terminates.</p>
                     </div>
                  </div>
               </CardContent>
            </Card>
 
            <div className="grid grid-cols-1 gap-6">
-              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <Activity className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest">Live Feed Protocol</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">High-Frequency Polling</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    The studio implements a high-frequency polling matrix. New signals are identified and synchronized with the inbox every 10 seconds.
+                    The studio implements a high-fidelity sync matrix. New signals are identified and synchronized with the inbox node every 10 seconds.
                   </p>
                 </div>
              </div>
            </div>
         </div>
 
-        {/* Right Column: Inbox */}
+        {/* Right Column: Inbox Registry */}
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
@@ -264,10 +319,10 @@ export default function TempMailPage() {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <Inbox className="w-5 h-5" />
                     </div>
-                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Digital Inbox Matrix</CardTitle>
+                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Linguistic Registry</CardTitle>
                  </div>
                  {messages.length > 0 && (
-                   <Badge className="bg-primary text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg">{messages.length} Active Signals</Badge>
+                   <Badge className="bg-primary text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg">{messages.length} Signals Identified</Badge>
                  )}
               </CardHeader>
               
@@ -277,8 +332,8 @@ export default function TempMailPage() {
                       <div className="h-full flex flex-col items-center justify-center py-40 opacity-10 gap-6 grayscale">
                          <Inbox className="w-24 h-24 text-primary" />
                          <div className="text-center space-y-2">
-                            <p className="text-sm font-black uppercase tracking-[0.4em]">Empty Protocol Buffer</p>
-                            <p className="text-[9px] font-bold uppercase tracking-widest">Waiting for inbound signals...</p>
+                            <p className="text-sm font-black uppercase tracking-[0.4em]">Signal Buffer Empty</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest">Awaiting inbound linguistic data...</p>
                          </div>
                       </div>
                     ) : (
@@ -294,10 +349,10 @@ export default function TempMailPage() {
                                     <MessageSquare className="w-5 h-5" />
                                  </div>
                                  <div className="min-w-0 space-y-1">
-                                    <p className="text-[8px] font-black text-primary uppercase tracking-widest">Sender ID: {msg.from.split('<')[0]}</p>
-                                    <h4 className="text-sm font-bold text-foreground truncate uppercase pr-10">{msg.subject || "(No Subject)"}</h4>
+                                    <p className="text-[8px] font-black text-primary uppercase tracking-widest">Source Node: {msg.from.split('<')[0]}</p>
+                                    <h4 className="text-sm font-bold text-foreground truncate uppercase pr-10">{msg.subject || "(No Subject Identifier)"}</h4>
                                     <div className="flex items-center gap-3">
-                                       <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-tighter">{msg.from}</p>
+                                       <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-tighter truncate">{msg.from}</p>
                                     </div>
                                  </div>
                               </div>
@@ -332,7 +387,7 @@ export default function TempMailPage() {
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                      <div className="space-y-4 min-w-0">
                         <div className="space-y-1">
-                           <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em]">Inbound Signal Isolated</p>
+                           <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em]">Signal Identity Isolated</p>
                            <DialogTitle className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight truncate max-w-xl">
                               {selectedMsg.subject || "(NO SUBJECT)" }
                            </DialogTitle>
@@ -357,15 +412,15 @@ export default function TempMailPage() {
                   </div>
                </DialogHeader>
                
-               <div className="flex-1 overflow-y-auto custom-scrollbar p-8 sm:p-12 bg-transparent">
-                  <div className="max-w-none prose prose-invert">
+               <div className="flex-1 overflow-y-auto custom-scrollbar p-8 sm:p-12 bg-white">
+                  <div className="max-w-none">
                     {selectedMsg.htmlBody ? (
                       <div 
                         className="text-foreground/80 leading-relaxed text-base"
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }}
                       />
                     ) : (
-                      <pre className="text-foreground/80 font-mono text-sm whitespace-pre-wrap leading-relaxed p-6 bg-black/40 rounded-3xl border border-white/5 shadow-inner">
+                      <pre className="text-slate-700 font-mono text-sm whitespace-pre-wrap leading-relaxed p-6 bg-slate-50 rounded-3xl border border-slate-100 shadow-inner">
                         {selectedMsg.body}
                       </pre>
                     )}
@@ -374,7 +429,7 @@ export default function TempMailPage() {
 
                <div className="p-6 bg-secondary/30 border-t border-white/5 flex items-center justify-between shrink-0">
                   <span className="text-[8px] font-black uppercase text-foreground/10 tracking-[0.4em]">Hardware-Native Matrix Decoder Active</span>
-                  <Badge variant="outline" className="text-[7px] font-black uppercase border-emerald-500/20 text-emerald-500 px-3">Protocol: Sanitized</Badge>
+                  <Badge variant="outline" className="text-[7px] font-black uppercase border-emerald-500/20 text-emerald-500 px-3">Protocol: Clean</Badge>
                </div>
             </>
           )}
@@ -387,13 +442,6 @@ export default function TempMailPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .bg-checkered {
-          background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #111113 75%), 
-                            linear-gradient(-45deg, transparent 75%, #111113 75%);
-          background-size: 20px 20px;
-        }
       `}</style>
     </div>
   );

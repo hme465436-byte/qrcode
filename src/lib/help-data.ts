@@ -13,21 +13,21 @@ export interface HelpContent {
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
   'temp-mail': {
-    title: 'Temp Mail Studio',
-    description: 'Professional-grade temporary email synthesis. Protect your primary address by using instant, disposable identities for signups and testing.',
+    title: 'Temp Mail Studio Pro',
+    description: 'Professional-grade temporary email synthesis with multi-node support. Protect your primary address by using instant, disposable identities from various global mail servers.',
     steps: [
-      'The studio automatically generates a unique identity matrix (email address) upon initialization.',
-      'Copy the identity string to your clipboard for use in external registrations.',
-      'Incoming signals are automatically synchronized with the Digital Inbox every 10 seconds.',
+      'Select a "Server Node" from the protocol matrix (e.g. 1secmail or Mail.tm).',
+      'The studio will automatically synthesize a unique identity mailbox for that node.',
+      'Incoming linguistic signals are polled every 10 seconds and displayed in the Registry.',
       'Click any identified message to launch the high-fidelity visual decoder.',
-      'Execute the "New Identity" protocol to rotate your digital fingerprint and purge current buffers.'
+      'Switch between server nodes anytime to rotate your digital fingerprint or bypass restricted networks.'
     ],
     tips: [
-      'The auto-refresh timer indicates when the next synchronization cycle will occur.',
-      'HTML-based emails are automatically sanitized to ensure security while preserving visual integrity.',
-      'Identities are ephemeral; ensure you finish your tasks before refreshing the page or generating a new mail.'
+      'If one server node is blocked by your target website, try switching to a different provider.',
+      'The "Mail.tm" node offers superior high-fidelity rendering for complex HTML emails.',
+      'The "Auto-Refresh" cycle ensures zero-latency detection of verification codes.'
     ],
-    privacy: 'Linguistic decoding and inbox management occur strictly within your hardware memory. No email payloads or identities are logged to our servers.'
+    privacy: 'All message decoding and polling occurs strictly within volatile memory via secure server-side proxies. No identity data is stored on studio infrastructure.'
   },
   'file-host': {
     title: 'FILE HOST Studio',
@@ -207,166 +207,6 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Hover over cards to see the launch protocol icon.'
     ],
     privacy: 'Linguistic discovery lookups are volatile and held strictly in local hardware memory.'
-  },
-  'translate': {
-    title: 'Translate Studio',
-    description: 'Professional bilingual translation unit. Seamlessly translate between English and Urdu with real-time signal processing.',
-    steps: [
-      'Type or paste your text into the primary linguistic input box.',
-      'The engine will automatically set the source language based on the current mode.',
-      'Click "Execute Translation" to synchronize with the global translation nodes.',
-      'Review the result in the secondary matrix box.',
-      'Use the swap button to invert the translation direction instantly.'
-    ],
-    tips: [
-      'Short, clear sentences yield the highest translation fidelity.',
-      'Use the copy button to save results directly to your local clipboard.'
-    ],
-    privacy: 'Linguistic data is processed in real-time. No text payloads are ever logged or stored on our servers.'
-  },
-  'image-gallery': {
-    title: 'Image Gallery Studio',
-    description: 'Professional high-fidelity visual discovery unit. Aggregate and isolate assets from NASA, Openverse, and the Art Institute of Chicago.',
-    steps: [
-      'Enter a visual keyword or select a category profile to initialize discovery.',
-      'The engine will synchronize with multiple global registries to isolate matching identifiers.',
-      'Review the results in the interactive masonry grid.',
-      'Click any asset to launch the High-Resolution Matrix Viewport.',
-      'Execute the download protocol to save the master binary locally.'
-    ],
-    tips: [
-      'The studio utilizes parallel fetch protocols to ensure 100% signal availability.',
-      'Source badges indicate the origin registry (e.g., NASA, Art Institute).'
-    ],
-    privacy: 'All discovery signals are processed strictly in local memory. Your visual search history is never transmitted or stored.'
-  },
-  'quotes': {
-    title: 'Quote Studio',
-    description: 'Professional high-fidelity inspiration synthesis. Extract unique randomized quotes from the global wisdom matrix with real-time calibration.',
-    steps: [
-      'Click "New Quote" to initialize the inspiration discovery protocol.',
-      'The engine will synchronize with global wisdom nodes to retrieve a unique linguistic matrix.',
-      'Review the quote and author identity in the primary glass-morphic viewport.',
-      'Use the copy protocol to save the quote to your local clipboard.',
-      'Optionally use the share button to instantly deploy the wisdom across social platforms.'
-    ],
-    tips: [
-      'Each query includes a unique timestamp to ensure hardware-native randomization.',
-      'The studio utilizes a dual-node fallback system (ZenQuotes/DummyJSON) to ensure maximum uptime.'
-    ],
-    privacy: 'Inspiration discovery lookups are volatile and held strictly in local memory. No data is logged or transmitted.'
-  },
-  'holidays': {
-    title: 'Holiday Studio Pro',
-    description: 'Professional public holiday discovery and projection unit. Access verified calendar matrices for over 100 global nations.',
-    steps: [
-      'Select a country from the global registry dropdown.',
-      'Calibrate the temporal cycle (Year) for your target search.',
-      'Execute the sync protocol to retrieve the public holiday matrix.',
-      'Analyze dates and local event names in the primary glass viewport.',
-      'Copy the full schedule for external planning or production use.'
-    ],
-    tips: [
-      'Pakistan 2026 is a local high-fidelity matrix and does not require external node sync.',
-      'The "Today" highlight is synchronized with your device hardware clock.'
-    ],
-    privacy: 'Temporal queries are processed strictly in local memory. No search history or calendar interest is logged.'
-  },
-  'books': {
-    title: 'Book Studio Pro',
-    description: 'Professional linguistic discovery engine for global literature. Access 1:1 verified book metadata, author profiles, and high-fidelity cover imagery.',
-    steps: [
-      'Enter a book title or author name in the search matrix to initialize discovery.',
-      'The engine will synchronize with the Open Library registry to isolate matching signals.',
-      'Review the top 10 relevant book identities including publication years and author rosters.',
-      'Analyze visual assets (covers) and click "View Logic" for deep metadata lookup.',
-      'Reset the studio buffer for a new bibliographic search.'
-    ],
-    tips: [
-      'Use specific titles for more precise identity isolation.',
-      'Cover imagery is served directly from library hardware for maximum fidelity.'
-    ],
-    privacy: 'All textual queries are processed strictly in local memory. No search history or bibliographic interest is logged.'
-  },
-  'pokemon': {
-    title: 'Pokemon Finder Studio',
-    description: 'Professional linguistic discovery engine for Pokémon data. Access 1:1 verified stats, sprites, and identity profiles.',
-    steps: [
-      'Enter a name or numeric ID in the search matrix to initialize discovery.',
-      'The engine will synchronize with the PokeAPI registry to isolate the target unit.',
-      'Analyze the base stat telemetry grid (HP, Attack, Defense).',
-      'Review the biometric data and ability protocol modules.',
-      'Use the copy protocol to save the identity data or reset for a new search.'
-    ],
-    tips: [
-      'Enter numeric IDs (e.g., 25) for direct astronomical identification.',
-      'The "official artwork" sprite is prioritized for peak visual fidelity.'
-    ],
-    privacy: 'All textual queries are processed strictly in local memory. No search history or identity interest is logged.'
-  },
-  'facts': {
-    title: 'Fact Studio',
-    description: 'Professional knowledge synthesis unit. Retrieve randomized high-fidelity facts with 1:1 linguistic precision.',
-    steps: [
-      'Click "New Fact" to initialize the knowledge discovery protocol.',
-      'The engine will synchronize with the Useless Facts registry to retrieve a unique knowledge matrix.',
-      'Review the fact text in the primary glass-morphic display area.',
-      'Use the copy protocol to save the fact to your local clipboard.',
-      'Optionally click the source link to verify the fact on the external host.'
-    ],
-    tips: [
-      'Each query includes a unique timestamp to ensure hardware-native randomization.',
-      'Use the share button to instantly deploy knowledge across social platforms.'
-    ],
-    privacy: 'All knowledge lookups are volatile and held strictly in local memory. No reading history is logged or transmitted.'
-  },
-  'jokes': {
-    title: 'Joke Studio',
-    description: 'Professional humor synthesis unit. Retrieve and reveal randomized jokes with linguistic precision.',
-    steps: [
-      'Click "New Joke" to initialize the humor discovery protocol.',
-      'The "Setup" of the joke will be isolated in the primary matrix.',
-      'Click "Reveal Punchline" to execute the final humor synthesis.',
-      'Analyze the punchline and linguistic type of the identified slip.',
-      'Use the copy protocol to save the humor matrix for external deployment.'
-    ],
-    tips: [
-      'The punchline is hidden by default to preserve the discovery experience.',
-      'A unique timestamp is added to each query to bypass browser cache.'
-    ],
-    privacy: 'All humor lookups are volatile and held strictly in local memory. No reading history is logged or transmitted.'
-  },
-  'country-info': {
-    title: 'Country Info Studio',
-    description: 'Professional geographic discovery engine. Isolate flags, demographics, and fiscal protocols of global nations.',
-    steps: [
-      'Enter a country name in the search matrix to initialize discovery.',
-      'Select a specific nation from the 5-row live suggestion dropdown.',
-      'The engine will synchronize with the REST Countries registry to retrieve current data.',
-      'Review the demographic, political, and fiscal modules in the result matrix.',
-      'Click "Launch Map Protocol" to see the coordinates on Google Maps.'
-    ],
-    tips: [
-      'Enter partial names (e.g. "Pak") to see rapid identity matches.',
-      'Population and Area values are synchronized with standard geographic databases.'
-    ],
-    privacy: 'All geographic queries are volatile and processed locally. No data intent is logged.'
-  },
-  'quran-ayah': {
-    title: 'Quran Ayah Studio',
-    description: 'Professional linguistic discovery engine for Quranic verses with original script and English translations.',
-    steps: [
-      'Click "New Ayah" to shuffle the randomization matrix and discover a new verse.',
-      'To find a specific verse, enter the "Surah:Ayah" reference in the search box (e.g., 2:255).',
-      'The engine will synchronize with the global registry to retrieve both Uthmani script and Asad translation.',
-      'Analyze the Surah identity and Ayah index metadata displayed in the result cards.',
-      'Use the copy protocol to save the textual matrix to your clipboard.'
-    ],
-    tips: [
-      'Enter 2:255 for Ayat-ul-Kursi or 1:1 for the opening verse.',
-      'The Arabic script uses the professional Uthmani font for peak readability.'
-    ],
-    privacy: 'All textual queries are processed strictly in local memory. No reading history is logged or transmitted.'
   },
   'single': {
     title: 'Single Studio QR',

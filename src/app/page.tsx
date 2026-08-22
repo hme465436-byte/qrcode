@@ -149,8 +149,8 @@ const TOOLS: Tool[] = [
   { 
     href: '/temp-mail', 
     icon: Mail, 
-    title: 'Temp Mail', 
-    desc: 'Generate instant temporary email identities with real-time private inboxes.', 
+    title: 'Temp Mail Pro', 
+    desc: 'Advanced multi-node temporary email synthesis.', 
     label: 'ANONYMOUS', 
     color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
     glowClass: 'bg-rose-500/10',
@@ -1351,7 +1351,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
