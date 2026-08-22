@@ -67,9 +67,12 @@ import DOMPurify from 'dompurify';
 import { fetchFromProvider } from './actions';
 
 const PROVIDERS = [
-  { id: 'guerrilla', label: 'Guerrilla Mail (Default)', icon: ShieldCheck },
-  { id: 'tempmail_lol', label: 'TempMail.lol (Fast)', icon: Zap },
-  { id: 'mailnesia', label: 'Mailnesia (Public)', icon: Globe },
+  { id: 'guerrilla', label: 'Guerrilla Mail', icon: ShieldCheck },
+  { id: 'tempmail_lol', label: 'TempMail.lol', icon: Zap },
+  { id: 'mailnesia', label: 'Mailnesia', icon: Globe },
+  { id: 'tempmailc', label: 'TempMailC', icon: Zap },
+  { id: 'mailforspam', label: 'MailForSpam', icon: MessageSquare },
+  { id: 'temporam', label: 'Temporam', icon: LayoutGrid },
 ];
 
 const REFRESH_RATE = 10; 
@@ -183,7 +186,6 @@ export default function TempMailPage() {
   const generateMail = async (targetProvider = provider, username?: string) => {
     setIsLoading(true);
     setError(null);
-    setEmail(null);
     setMessages([]);
     setSessionData(null);
     setUnreadCount(0);
