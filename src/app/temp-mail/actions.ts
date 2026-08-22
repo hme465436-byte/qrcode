@@ -3,7 +3,7 @@
 /**
  * @fileOverview Server actions for Temp Mail Studio.
  * Handles high-fidelity multi-node proxying for temporary email services.
- * Supports Guerrilla, TempMail.lol, Mailnesia, TempMailC, MailForSpam, and Temporam.
+ * Supports Guerrilla, TempMail.lol, Mailnesia, TempMailC, MailForSpam, Temporam, Mail.gw, Sharklasers, and Neighbours.
  */
 
 const NODES = {
@@ -12,12 +12,163 @@ const NODES = {
   mailnesia: 'https://mailnesia.com/api',
   tempmailc: 'https://tempmailc.com/api/v1',
   mailforspam: 'https://www.mailforspam.com/api',
-  temporam: 'https://temporam.com/api'
+  temporam: 'https://temporam.com/api',
+  mail_gw: 'https://api.mail.gw',
+  sharklasers: 'https://www.sharklasers.com/ajax.php',
+  neighbours: 'https://neighbours.sh'
 };
 
 export async function fetchFromProvider(providerId: string, payload: any) {
   try {
     switch (providerId) {
+      /**
+       * Node: Mail.gw (Same style as Mail.tm)
+       */
+      case 'mail_gw':
+        if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
+          const dRes = await fetch(`${NODES.mail_gw}/domains`, { headers: { 'Accept': 'application/json' } });
+          const dData = await dRes.json();
+          const domain = dData['hydra:member']?.[0]?.domain;
+          if (!domain) throw new Error("Mail.gw domains unavailable");
+          
+          const userPart = payload.username || Math.random().toString(36).substring(2, 10);
+          const address = `${userPart}@${domain}`;
+          const password = Math.random().toString(36).substring(2, 15);
+          
+          const createRes = await fetch(`${NODES.mail_gw}/accounts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ address, password })
+          });
+          
+          if (!createRes.ok) throw new Error("Account creation failed. Name might be taken.");
+
+          const tokenRes = await fetch(`${NODES.mail_gw}/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ address, password })
+          });
+          const tokenData = await tokenRes.json();
+          return { success: true, email: address, token: tokenData.token };
+        }
+        if (payload.action === 'getMessages') {
+          const res = await fetch(`${NODES.mail_gw}/messages`, {
+            headers: { 'Authorization': `Bearer ${payload.token}`, 'Accept': 'application/json' },
+            cache: 'no-store'
+          });
+          const data = await res.json();
+          const mapped = (data['hydra:member'] || []).map((m: any) => ({
+            id: m.id,
+            from: m.from.address,
+            subject: m.subject,
+            date: new Date(m.createdAt).toLocaleString()
+          }));
+          return { success: true, messages: mapped };
+        }
+        if (payload.action === 'readMessage') {
+          const res = await fetch(`${NODES.mail_gw}/messages/${payload.id}`, {
+            headers: { 'Authorization': `Bearer ${payload.token}`, 'Accept': 'application/json' },
+            cache: 'no-store'
+          });
+          const data = await res.json();
+          return { success: true, message: {
+            from: data.from.address,
+            subject: data.subject,
+            date: new Date(data.createdAt).toLocaleString(),
+            htmlBody: data.html?.[0] || data.text || '',
+            body: data.text || ''
+          }};
+        }
+        break;
+
+      /**
+       * Node: Neighbours.sh
+       */
+      case 'neighbours':
+        if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
+          const dRes = await fetch(`${NODES.neighbours}/config/domains`, { cache: 'no-store' });
+          const domains = await dRes.json();
+          const domain = domains[0] || 'neighbours.sh';
+          const name = payload.username || Math.random().toString(36).substring(2, 10);
+          return { success: true, email: `${name}@${domain}` };
+        }
+        if (payload.action === 'getMessages') {
+          const res = await fetch(`${NODES.neighbours}/inbox/${encodeURIComponent(payload.email)}`, { cache: 'no-store' });
+          if (res.status === 404) return { success: true, messages: [] };
+          const data = await res.json();
+          const mapped = (data || []).map((m: any) => ({
+            id: m.uid,
+            from: m.from,
+            subject: m.subject,
+            date: m.date
+          }));
+          return { success: true, messages: mapped };
+        }
+        if (payload.action === 'readMessage') {
+          const res = await fetch(`${NODES.neighbours}/inbox/${encodeURIComponent(payload.email)}/${payload.id}`, { cache: 'no-store' });
+          const data = await res.json();
+          return { success: true, message: {
+            from: data.from,
+            subject: data.subject,
+            date: data.date,
+            htmlBody: data.html || data.body || '',
+            body: data.body || ''
+          }};
+        }
+        break;
+
+      /**
+       * Node: Sharklasers (Mirror)
+       */
+      case 'sharklasers':
+        const buildSharkUrl = (f: string, extra = {}) => {
+          const u = new URL(NODES.sharklasers);
+          u.searchParams.append('f', f);
+          u.searchParams.append('ip', '127.0.0.1');
+          u.searchParams.append('agent', 'Mozilla/5.0');
+          Object.entries(extra).forEach(([k, v]) => u.searchParams.append(k, String(v)));
+          return u.toString();
+        };
+
+        if (payload.action === 'genRandomMailbox') {
+          const res = await fetch(buildSharkUrl('get_email_address'), { cache: 'no-store' });
+          const data = await res.json();
+          return { success: true, email: data.email_addr, sid: data.sid_token };
+        }
+        if (payload.action === 'genCustomMailbox') {
+          const resAddr = await fetch(buildSharkUrl('get_email_address'), { cache: 'no-store' });
+          const dataAddr = await resAddr.json();
+          const resUser = await fetch(buildSharkUrl('set_email_user', { 
+            sid_token: dataAddr.sid_token, 
+            email_user: payload.username 
+          }), { cache: 'no-store' });
+          const dataUser = await resUser.json();
+          return { success: true, email: dataUser.email_addr, sid: dataUser.sid_token };
+        }
+        if (payload.action === 'getMessages') {
+          const res = await fetch(buildSharkUrl('check_email', { sid_token: payload.sid, seq: 0 }), { cache: 'no-store' });
+          const data = await res.json();
+          const mapped = (data.list || []).map((m: any) => ({
+            id: m.mail_id,
+            from: m.mail_from,
+            subject: m.mail_subject,
+            date: m.mail_date
+          }));
+          return { success: true, messages: mapped };
+        }
+        if (payload.action === 'readMessage') {
+          const res = await fetch(buildSharkUrl('fetch_email', { sid_token: payload.sid, email_id: payload.id }), { cache: 'no-store' });
+          const data = await res.json();
+          return { success: true, message: {
+            from: data.mail_from,
+            subject: data.mail_subject,
+            date: data.mail_date,
+            htmlBody: data.mail_body,
+            body: data.mail_body
+          }};
+        }
+        break;
+
       /**
        * Node: TempMailC
        */

@@ -39,7 +39,8 @@ import {
   VolumeX,
   History,
   Type,
-  LayoutGrid
+  LayoutGrid,
+  Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,6 +74,9 @@ const PROVIDERS = [
   { id: 'tempmailc', label: 'TempMailC', icon: Zap },
   { id: 'mailforspam', label: 'MailForSpam', icon: MessageSquare },
   { id: 'temporam', label: 'Temporam', icon: LayoutGrid },
+  { id: 'mail_gw', label: 'Mail.gw', icon: Globe },
+  { id: 'sharklasers', label: 'Sharklasers', icon: ShieldCheck },
+  { id: 'neighbours', label: 'Neighbours', icon: Smartphone },
 ];
 
 const REFRESH_RATE = 10; 
