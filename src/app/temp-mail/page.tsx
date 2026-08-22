@@ -33,7 +33,9 @@ import {
   Download,
   FileCode,
   FileDown,
-  KeyRound
+  KeyRound,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -495,28 +497,24 @@ export default function TempMailPage() {
                </DialogHeader>
 
                {detectedOtp && (
-                 <div className="px-6 py-4 bg-primary/[0.03] border-b border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-2">
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-xl ring-4 ring-primary/5">
-                          <KeyRound className="w-5 h-5 animate-pulse" />
+                 <div className="px-6 py-3 bg-primary/[0.03] border-b border-primary/10 flex items-center justify-between gap-4 animate-in slide-in-from-top-2 shrink-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                       <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <KeyRound className="w-4 h-4 animate-pulse" />
                        </div>
-                       <div className="space-y-0.5">
-                          <h4 className="text-[10px] font-black uppercase text-foreground tracking-widest">Verification Signal Detected</h4>
-                          <p className="text-[8px] font-bold text-foreground/30 uppercase">Detected OTP Protocol</p>
+                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 truncate">
+                          <span className="text-[9px] font-black uppercase text-primary tracking-widest whitespace-nowrap">Verification Code:</span>
+                          <span className="text-base font-mono font-black text-foreground tracking-widest select-all">{detectedOtp}</span>
                        </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                       <div className="px-6 py-2.5 bg-background border-2 border-primary/20 rounded-2xl text-2xl font-mono font-black text-primary tracking-[0.3em] shadow-inner select-all">
-                          {detectedOtp}
-                       </div>
-                       <Button 
-                        onClick={() => handleCopyText(detectedOtp, 'OTP')}
-                        className="h-12 px-6 bg-primary text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-lg"
-                       >
-                          {isCopied === 'OTP' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                          Copy Code
-                       </Button>
-                    </div>
+                    <Button 
+                      onClick={() => handleCopyText(detectedOtp, 'OTP')}
+                      size="sm"
+                      className="h-9 px-4 bg-primary text-white font-black text-[8px] uppercase tracking-widest rounded-xl shadow-lg shrink-0"
+                    >
+                      {isCopied === 'OTP' ? <Check className="w-3.5 h-3.5 mr-1.5" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+                      Copy
+                    </Button>
                  </div>
                )}
                
