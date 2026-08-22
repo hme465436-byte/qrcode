@@ -445,9 +445,9 @@ export default function TempMailPage() {
                  </div>
 
                  {error && (
-                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3">
+                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake">
                        <AlertCircle className="w-4 h-4 text-destructive" />
-                       <p className="text-[10px] font-bold text-destructive uppercase">{error}</p>
+                       <p className="text-[10px] font-bold text-destructive uppercase leading-relaxed">{error}</p>
                     </div>
                  )}
               </CardContent>

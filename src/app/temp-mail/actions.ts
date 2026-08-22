@@ -13,14 +13,28 @@ const NODES = {
 };
 
 async function handle1secmail(action: string, params: any) {
-  const url = new URL(NODES['1secmail']);
-  url.searchParams.append('action', action);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, String(v)));
+  const bases = [
+    'https://www.1secmail.com/api/v1/',
+    'https://1secmail.com/api/v1/',
+    'https://www.1secmail.org/api/v1/'
+  ];
   
-  const res = await fetch(url.toString(), { cache: 'no-store' });
-  if (res.status === 403) throw new Error("1secmail blocked, switch provider");
-  if (!res.ok) throw new Error(`1secmail node error: ${res.status}`);
-  return res.json();
+  for (const base of bases) {
+    try {
+      const url = new URL(base);
+      url.searchParams.append('action', action);
+      Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, String(v)));
+      
+      const res = await fetch(url.toString(), { cache: 'no-store' });
+      if (res.status === 403) continue; // Try next base if blocked
+      if (!res.ok) throw new Error(`Node error: ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      continue; // Try next base on network failure
+    }
+  }
+  
+  throw new Error("1secmail blocked on this server, use Guerrilla or Mail.tm");
 }
 
 async function handleMailTM(endpoint: string, method: string = 'GET', body?: any, token?: string) {
@@ -52,7 +66,7 @@ export async function fetchFromProvider(providerId: string, payload: any) {
         }
         if (payload.action === 'genCustomMailbox') {
           const domains = await handle1secmail('getDomainList', {});
-          if (!domains || domains.length === 0) throw new Error("1secmail domains unavailable.");
+          if (!domains || !Array.isArray(domains) || domains.length === 0) throw new Error("1secmail domains unavailable.");
           const email = `${payload.username}@${domains[0]}`;
           return { success: true, email };
         }
@@ -76,10 +90,13 @@ export async function fetchFromProvider(providerId: string, payload: any) {
 
       case 'mailtm':
         if (payload.action === 'genRandomMailbox' || payload.action === 'genCustomMailbox') {
-          // 1. Get Domain Matrix with strict checking
-          const domains = await handleMailTM('/domains');
-          const memberList = domains?.['hydra:member'];
-          if (!memberList || memberList.length === 0) throw new Error("Mail.tm domains unavailable.");
+          // 1. Get Domain Matrix with strict Hydra checking
+          const domainsData = await handleMailTM('/domains');
+          const memberList = domainsData?.['hydra:member'];
+          
+          if (!memberList || !Array.isArray(memberList) || memberList.length === 0) {
+            throw new Error("Mail.tm domains unavailable");
+          }
           
           const domain = memberList[0]?.domain;
           if (!domain) throw new Error("Mail.tm domain identity corrupted.");
@@ -106,7 +123,8 @@ export async function fetchFromProvider(providerId: string, payload: any) {
         if (payload.action === 'getMessages') {
           if (!payload.token) throw new Error("Session token invalid.");
           const data = await handleMailTM('/messages', 'GET', null, payload.token);
-          const mapped = (data['hydra:member'] || []).map((m: any) => ({
+          const memberList = data?.['hydra:member'] || [];
+          const mapped = memberList.map((m: any) => ({
             id: m.id,
             from: m.from.address,
             subject: m.subject,
