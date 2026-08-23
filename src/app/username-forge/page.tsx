@@ -235,7 +235,7 @@ export default function UsernameForgePage() {
 
     await Promise.all(promises);
     setIsProcessing(false);
-    toast({ title: "Matrix Audited", description: "Batch synchronization complete." });
+    toast({ title: "Scan Finished", description: "Checked all platforms." });
   };
 
   const forgeUsernames = useCallback((overrideBase?: string) => {
@@ -295,7 +295,7 @@ export default function UsernameForgePage() {
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(id);
-    toast({ title: "Identity Isolated" });
+    toast({ title: "Copied" });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -310,7 +310,7 @@ export default function UsernameForgePage() {
     setBaseWord(name);
     forgeUsernames(name);
     setStep(3);
-    toast({ title: "Isolating Linguistic Vector", description: `Synthesizing variants for "${name}".` });
+    toast({ title: "Refining", description: `Creating variants of "${name}".` });
   };
 
   // --- Dynamic Ranking Matrix ---
@@ -351,7 +351,7 @@ export default function UsernameForgePage() {
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <Sparkles className="w-3.5 h-3.5" /> Identity Suite PRO
+            <Sparkles className="w-3.5 h-3.5" /> Identity Finder
           </div>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
              <div>
@@ -359,7 +359,7 @@ export default function UsernameForgePage() {
                   Username <span className="text-primary italic">Forge Studio</span>
                 </h1>
                 <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                  Professional linguistic identity synthesis. Forge premium handles across global social registries with clinical 1:1 availability auditing.
+                  Professional handle generation and availability checker. Find the perfect name across all your social profiles in one click.
                 </p>
              </div>
           </div>
@@ -386,7 +386,7 @@ export default function UsernameForgePage() {
                    {step > s ? <Check className="w-6 h-6" /> : <span className="text-xs font-black">0{s}</span>}
                 </div>
                 <span className={cn("text-[8px] font-black uppercase tracking-widest", step === s ? "text-primary" : "text-foreground/20")}>
-                   {s === 1 ? 'DNA Config' : s === 2 ? 'Nodes' : 'Production'}
+                   {s === 1 ? 'Settings' : s === 2 ? 'Platforms' : 'Results'}
                 </span>
              </div>
              {s < 3 && <div className={cn("flex-1 h-[1px] mb-8 transition-all duration-1000", step > s ? "bg-emerald-500/40" : "bg-white/5")} />}
@@ -396,20 +396,20 @@ export default function UsernameForgePage() {
 
       <div className="grid grid-cols-1 gap-10">
         
-        {/* PHASE 1: DNA CONFIG */}
+        {/* PHASE 1: CONFIG */}
         {step === 1 && (
           <div className="max-w-5xl mx-auto w-full animate-in fade-in slide-in-from-bottom-6 duration-700">
              <Card className="glass-card border-border shadow-2xl overflow-hidden relative">
                 <CardHeader className="py-8 border-b border-border bg-secondary/30">
                    <CardTitle className="text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                      <Settings2 className="w-5 h-5 text-primary" /> Linguistic DNA Config
+                      <Settings2 className="w-5 h-5 text-primary" /> Identity Settings
                    </CardTitle>
                 </CardHeader>
                 <CardContent className="p-8 sm:p-12 space-y-12">
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                       <div className="space-y-10">
                          <div className="space-y-4">
-                            <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Identity Category</Label>
+                            <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Category</Label>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                {CATEGORIES.map(cat => (
                                  <button
@@ -428,7 +428,7 @@ export default function UsernameForgePage() {
                          </div>
 
                          <div className="space-y-4">
-                            <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Linguistic Constraints</Label>
+                            <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Username Rules</Label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                {[
                                  { label: 'No Numbers', state: noNumbers, set: setNoNumbers },
@@ -448,7 +448,7 @@ export default function UsernameForgePage() {
                             <div className="space-y-2">
                                <div className="flex justify-between items-center px-1">
                                   <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Base Word (Optional)</Label>
-                                  <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded">Autonomous Mode Available</span>
+                                  <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded">Auto Mode Enabled</span>
                                </div>
                                <Input value={baseWord} onChange={e => setBaseWord(e.target.value)} placeholder="e.g. Vesper, Nova" className="h-16 bg-secondary border-border rounded-2xl font-bold uppercase text-lg px-6" />
                             </div>
@@ -456,16 +456,16 @@ export default function UsernameForgePage() {
 
                          <div className="space-y-4">
                             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-foreground/30">
-                               <Label>Max Character Density</Label>
+                               <Label>Max Length</Label>
                                <span className="text-primary font-mono">{maxLength}</span>
                             </div>
                             <Slider value={[maxLength]} min={4} max={30} step={1} onValueChange={v => setMaxLength(v[0])} />
                          </div>
 
                          <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-4">
-                            <Info className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                            <Info className="w-5 h-5 text-primary/40 mt-0.5 shrink-0" />
                             <p className="text-[10px] text-foreground/40 font-bold uppercase leading-relaxed">
-                               If "Base Word" is empty, the forge will autonomously synthesize roots based on your chosen Category and Tone.
+                               If left blank, the studio will invent a unique name for you based on the category.
                             </p>
                          </div>
                       </div>
@@ -474,9 +474,9 @@ export default function UsernameForgePage() {
                    <div className="pt-8 border-t border-white/5">
                       <Button 
                         onClick={() => setStep(2)}
-                        className="w-full h-20 bg-primary text-white font-black text-xs uppercase tracking-[0.4em] rounded-[2.5rem] shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                        className="w-full h-20 bg-primary text-white font-black text-sm uppercase tracking-[0.4em] rounded-[2.5rem] shadow-xl shadow-primary/30 active:scale-95 transition-all"
                       >
-                         Configure Registry Nodes <ChevronRight className="w-6 h-6 ml-4" />
+                         Next <ChevronRight className="w-6 h-6 ml-4" />
                       </Button>
                    </div>
                 </CardContent>
@@ -484,13 +484,13 @@ export default function UsernameForgePage() {
           </div>
         )}
 
-        {/* PHASE 2: NODES */}
+        {/* PHASE 2: PLATFORMS */}
         {step === 2 && (
           <div className="max-w-3xl mx-auto w-full animate-in fade-in slide-in-from-right-6 duration-700">
              <Card className="glass-card border-border shadow-2xl overflow-hidden">
                 <CardHeader className="py-8 border-b border-border bg-secondary/30">
                    <CardTitle className="text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                      <Globe className="w-5 h-5 text-primary" /> Target Registries
+                      <Globe className="w-5 h-5 text-primary" /> Platform Selection
                    </CardTitle>
                 </CardHeader>
                 <CardContent className="p-8 sm:p-12 space-y-10">
@@ -516,7 +516,7 @@ export default function UsernameForgePage() {
                         disabled={selectedPlatforms.size === 0}
                         className="w-full h-20 bg-primary text-white font-black text-sm uppercase tracking-[0.4em] rounded-[2.5rem] shadow-xl active:scale-95 transition-all"
                       >
-                         <Zap className="w-6 h-6 mr-4" /> Initialize Forge Batch
+                         <Zap className="w-6 h-6 mr-4" /> Generate
                       </Button>
                    </div>
                 </CardContent>
@@ -524,16 +524,16 @@ export default function UsernameForgePage() {
           </div>
         )}
 
-        {/* PHASE 3: PRODUCTION */}
+        {/* PHASE 3: RESULTS */}
         {step === 3 && (
           <div className="space-y-12 animate-in fade-in duration-1000">
              
-             {/* Best Picks Viewport */}
+             {/* Best Matches */}
              {!isProcessing && bestPicks.length > 0 && (
                <div className="space-y-6 animate-in slide-in-from-top-4 duration-700">
                   <div className="flex items-center gap-3 px-2">
                      <BadgeCheck className="w-6 h-6 text-emerald-500" />
-                     <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60">Registry Perfect Matches</h3>
+                     <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60">Perfect Matches</h3>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                      {bestPicks.map(name => (
@@ -543,11 +543,11 @@ export default function UsernameForgePage() {
                           </div>
                           <CardContent className="p-8 space-y-6">
                              <div className="space-y-2">
-                                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Fidelity Score: {getIdentityScore(name)}%</span>
+                                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Score: {getIdentityScore(name)}%</span>
                                 <h4 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight select-all truncate">{name}</h4>
                              </div>
                              <Button onClick={() => handleCopy(name, `best-${name}`)} className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] rounded-xl shadow-lg">
-                                {isCopied === `best-${name}` ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />} Copy ID
+                                {isCopied === `best-${name}` ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />} Copy Name
                              </Button>
                           </CardContent>
                        </Card>
@@ -556,7 +556,7 @@ export default function UsernameForgePage() {
                </div>
              )}
 
-             {/* Master Result Matrix */}
+             {/* Results Matrix */}
              <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 items-start">
                 <div className="xl:col-span-8 space-y-8">
                    <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px]">
@@ -566,7 +566,7 @@ export default function UsernameForgePage() {
                             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                                <Activity className="w-5 h-5" />
                             </div>
-                            <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Matrix Feed</CardTitle>
+                            <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Available Usernames</CardTitle>
                          </div>
                          <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={() => forgeUsernames()} disabled={isProcessing} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">
@@ -640,14 +640,14 @@ export default function UsernameForgePage() {
                 <div className="xl:col-span-4 space-y-8">
                    <Card className="glass-card border-border shadow-xl">
                       <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                         <CardTitle className="text-[10px] font-black uppercase tracking-widest text-primary">Forge Telemetry</CardTitle>
+                         <CardTitle className="text-[10px] font-black uppercase tracking-widest text-primary">Forge Data</CardTitle>
                       </CardHeader>
                       <CardContent className="pt-8 space-y-8">
                          <div className="grid grid-cols-1 gap-4">
                             <div className="p-8 rounded-[3rem] bg-secondary border border-border text-center space-y-2 relative overflow-hidden">
                                <div className="absolute inset-0 bg-primary/[0.02] animate-pulse" />
                                <p className="text-4xl font-headline font-black text-foreground">{stats.available}</p>
-                               <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Viable Signals Identified</p>
+                               <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Available Names</p>
                             </div>
                          </div>
 
@@ -659,12 +659,12 @@ export default function UsernameForgePage() {
                                 <h4 className="text-[11px] font-black uppercase text-foreground">Verified Registry Check</h4>
                             </div>
                             <p className="text-[11px] text-foreground/40 font-medium leading-relaxed uppercase tracking-tight">
-                               Identity validation uses clinical-grade HTTP probing. Nodes that restrict automated probes are marked as "Unknown" for protocol accuracy.
+                               We use clinical-grade node checking to verify if a handle is truly free.
                             </p>
                          </div>
 
                          <Button onClick={() => setStep(1)} variant="outline" className="w-full h-16 border-border bg-white/5 text-foreground/60 text-[9px] font-black uppercase tracking-widest rounded-2xl shadow-lg">
-                            Re-Calibrate DNA Matrix
+                            Adjust Settings
                          </Button>
                       </CardContent>
                    </Card>
