@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -112,7 +111,8 @@ import {
   Mail,
   MailQuestion,
   Link as LinkIcon,
-  Heart
+  Heart,
+  Hammer
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -1423,6 +1423,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['icons', 'social icons', 'svg', 'png', 'ico', 'recolor', 'logo', 'design'],
     category: 'image'
+  },
+  { 
+    href: '/username-forge', 
+    icon: Hammer, 
+    title: 'Username Forge', 
+    desc: 'Forge unique usernames and check cross-platform availability.', 
+    label: 'IDENTITY', 
+    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+    glowClass: 'bg-amber-500/10',
+    keywords: ['username', 'forge', 'generator', 'checker', 'social handle', 'gamertag', 'available'],
+    category: 'generators'
   }
 ];
 
@@ -1533,7 +1544,8 @@ export default function Home() {
       'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
-      'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker'
+      'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
+      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1766,9 +1778,11 @@ export default function Home() {
             )}
           </div>
           
-          <div className="text-center opacity-10 flex flex-col items-center gap-4">
+          <div className="text-center opacity-100 flex flex-col items-center gap-4">
              <Heart className="w-8 h-8 text-primary" />
-             <p className="text-[9px] font-black uppercase tracking-[0.6em] text-foreground">Developed by <span className="text-white">Umar Farooq</span> — Studio Master v7.2 Pro</p>
+             <p className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground bg-gradient-to-r from-blue-400 via-primary to-indigo-500 bg-clip-text text-transparent drop-shadow-sm">
+                Developed by <span className="text-white">Umar Farooq</span> — Studio Master v7.2 Pro
+             </p>
           </div>
         </div>
       </section>

@@ -12,6 +12,23 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'username-forge': {
+    title: 'Username Forge Studio',
+    description: 'Help creators and businesses identify unique, available identities across global social registries using advanced linguistic synthesis.',
+    steps: [
+      'Enter your base identity DNA (Category, Profession, Hobby).',
+      'Select a "Linguistic Style" to determine the structural tone of the forged names.',
+      'Choose target platform registries (Instagram, GitHub, etc.) for real-time verification.',
+      'Execute the forge protocol to generate and audit a batch of 20 identifiers.',
+      'Analyze the "Availability Matrix" to see which handles are ready for registration.'
+    ],
+    tips: [
+      'Use the "Mixed" style for the highest variety of linguistic combinations.',
+      'Platform blocks are common for aggressive checking; use "Re-Audit" sparingly to avoid rate limits.',
+      'Underscores and digits are added strategically based on the selected category.'
+    ],
+    privacy: 'Identity synthesis and OSINT discovery lookups are volatile and held strictly in local memory. No search history or identity targets are logged.'
+  },
   'icon-studio': {
     title: 'Icon Studio Pro',
     description: 'Professional high-fidelity icon discovery and customization engine. Access thousands of icons from global registries including Simple Icons, OpenMoji, and Material Design.',
