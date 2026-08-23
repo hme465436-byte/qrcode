@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -27,22 +26,30 @@ export default function CodeConverterPage() {
   const [byteCount, setByteCount] = useState(0);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Parse input into an array of clean hex values or '??'
+  // Robust parser for multiple input styles
   const parseInput = (str: string) => {
-    // Remove 0x, \x, commas, and handle common wildcards
-    const cleaned = str
+    if (!str.trim()) return [];
+
+    // 1. Normalize wildcards and prefixes
+    let cleaned = str
+      .replace(/0x\?\?/g, ' ?? ')
+      .replace(/\\x\?\?/g, ' ?? ')
       .replace(/0x/g, ' ')
       .replace(/\\x/g, ' ')
       .replace(/,/g, ' ')
-      .replace(/\?/g, '??')
-      .replace(/\*/g, '??');
+      .replace(/\?\?/g, ' ?? ')
+      .replace(/'\?'/g, ' ?? ')
+      .replace(/\?/g, ' ?? ')
+      .replace(/\*/g, ' ?? ');
     
+    // 2. Tokenize and sanitize
     return cleaned.split(/\s+/).filter(part => part.length > 0).map(part => {
-      if (part.includes('??') || part === '?') return '??';
+      if (part === '??') return '??';
       // Keep only hex chars
       const hex = part.replace(/[^0-9A-Fa-f]/g, '');
+      if (!hex) return null;
       return hex.padStart(2, '0').toUpperCase().substring(0, 2);
-    }).filter(part => part.length > 0);
+    }).filter((part): part is string => part !== null);
   };
 
   useEffect(() => {
@@ -60,15 +67,19 @@ export default function CodeConverterPage() {
     let result = '';
     switch (format) {
       case 'csharp':
+        // C# AOB: space-separated hex + ?? wildcards
         result = parts.join(' ');
         break;
       case 'byte':
+        // BYTE AOB: 0x00, 0x??, '?' (trainer style)
         result = parts.map(p => p === '??' ? "'?'" : `0x${p}`).join(', ');
         break;
       case 'python':
+        // PYTHON: b'\x00\x??' wildcards as \xff
         result = `b'${parts.map(p => p === '??' ? '\\xff' : `\\x${p}`).join('')}'`;
         break;
       case 'cpp':
+        // C++: Standard hex array
         result = `{ ${parts.map(p => p === '??' ? '0x00' : `0x${p}`).join(', ')} }`;
         break;
     }
@@ -132,7 +143,7 @@ export default function CodeConverterPage() {
             <CardContent className="pt-10 space-y-8">
               <div className="space-y-4">
                 <Textarea 
-                  placeholder="Paste AOB pattern... e.g. 00 A5 43 ?? 0xAA"
+                  placeholder="Paste AOB pattern... e.g. 0x90, 0x??, 0xCC, ??"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   className="min-h-[160px] bg-secondary border-border text-lg rounded-3xl focus:ring-primary/40 p-6 text-foreground font-mono leading-relaxed resize-none transition-all hover:bg-secondary/80 focus:bg-secondary/80"
@@ -201,7 +212,7 @@ export default function CodeConverterPage() {
                 </div>
                 <div className="p-4 rounded-xl bg-secondary border border-border hover:border-primary/20 transition-all">
                   <span className="text-foreground font-black block mb-1">Wildcards</span>
-                  ??, ?, * are all supported.
+                  ??, ?, * are all supported and normalized.
                 </div>
               </div>
             </CardContent>
@@ -210,7 +221,7 @@ export default function CodeConverterPage() {
 
         {/* Output Section */}
         <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group min-h-[400px] flex flex-col">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-border bg-secondary/30">
               <div className="flex items-center justify-between">
@@ -259,7 +270,7 @@ export default function CodeConverterPage() {
                  <div className="space-y-1">
                     <p className="text-[10px] font-black text-primary uppercase tracking-widest">Sanitized Conversion</p>
                     <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
-                      Our engine automatically pads hex values to 2 digits and sanitizes formatting for compiler-ready production.
+                      Our engine automatically pads hex values to 2 digits and handles multi-format wildcards for compiler-ready production.
                     </p>
                  </div>
               </div>
