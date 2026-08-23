@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -112,7 +113,8 @@ import {
   MailQuestion,
   Link as LinkIcon,
   Heart,
-  Hammer
+  Hammer,
+  Hash as HashIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -1434,6 +1436,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-amber-500/10',
     keywords: ['username', 'forge', 'generator', 'checker', 'social handle', 'gamertag', 'available'],
     category: 'generators'
+  },
+  { 
+    href: '/hashtag-engine', 
+    icon: HashIcon, 
+    title: 'Hashtag Engine', 
+    desc: 'Generate strong hashtags for social growth and niche discovery', 
+    label: 'GROWTH', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['hashtag', 'instagram tags', 'tiktok tags', 'growth', 'social media', 'tags generator'],
+    category: 'generators'
   }
 ];
 
@@ -1545,7 +1558,7 @@ export default function Home() {
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
-      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator'
+      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -12,6 +13,23 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'hashtag-engine': {
+    title: 'Hashtag Engine Studio',
+    description: 'Professional high-fidelity hashtag discovery engine. Isolate high-growth identifiers for social media platforms using a multi-node API failover protocol.',
+    steps: [
+      'Enter your primary niche or topic keyword in the discovery input.',
+      'Select a "Platform Target" to calibrate the density and tone of the tags.',
+      'Choose a "Linguistic Style" (Growth, Niche, or Aesthetic) to match your brand DNA.',
+      'Execute the synthesis protocol to generate a batch of 15 or 30 identifiers.',
+      'Use the copy protocols to save individual tags or the entire master set.'
+    ],
+    tips: [
+      'Use the "Mixed" style for a balanced blend of broad reach and specific niche tags.',
+      'The engine automatically filters out low-fidelity and restricted characters.',
+      'Auto-Failover ensures you always receive results even if primary API nodes are busy.'
+    ],
+    privacy: 'Identity discovery signals are volatile and held strictly in local memory. The studio does not log or transmit your search history or topic interests.'
+  },
   'username-forge': {
     title: 'Username Forge Studio',
     description: 'Help creators and businesses identify unique, available identities across global social registries using advanced linguistic synthesis.',
