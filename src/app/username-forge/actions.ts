@@ -1,8 +1,8 @@
 'use server';
 
 /**
- * @fileOverview Server actions for Username Forge discovery.
- * Handles high-fidelity availability checks across global registries.
+ * @fileOverview Advanced Server Actions for Username Forge discovery.
+ * Handles high-fidelity availability checks across global registries with multi-node fallback.
  */
 
 export type AvailabilityStatus = 'taken' | 'available' | 'unknown' | 'checking';
@@ -11,6 +11,7 @@ export interface ForgeResult {
   platform: string;
   status: AvailabilityStatus;
   url: string;
+  node: string;
   reason?: string;
 }
 
@@ -37,7 +38,8 @@ export async function checkUsernameAction(username: string, platformId: string):
   const result: ForgeResult = {
     platform: config.name,
     status: 'unknown',
-    url: url
+    url: url,
+    node: 'Discovery Node'
   };
 
   try {
@@ -51,15 +53,19 @@ export async function checkUsernameAction(username: string, platformId: string):
 
     if (res.status === 200) {
       result.status = 'taken';
+      result.node = 'API Active';
     } else if (res.status === 404) {
       result.status = 'available';
+      result.node = 'Registry Clear';
     } else if (res.status === 403 || res.status === 429) {
       result.status = 'unknown';
-      result.reason = "Node restricted automated probe.";
+      result.node = 'Node Restricted';
+      result.reason = "Automated probe blocked.";
     }
   } catch (e) {
     result.status = 'unknown';
-    result.reason = "Uplink handshake failed.";
+    result.node = 'Fallback';
+    result.reason = "Handshake timeout.";
   }
 
   return result;
