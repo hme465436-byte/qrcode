@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -254,12 +253,34 @@ export default function UsernameForgePage() {
     setSelectedPlatforms(next);
   };
 
+  const sortedNames = useMemo(() => {
+    return [...generatedNames].sort((a, b) => {
+      // Prioritize available ones if checks are done
+      const resA = Object.values(checkResults[a] || {});
+      const resB = Object.values(checkResults[b] || {});
+      
+      const availA = resA.filter(r => r.status === 'available').length;
+      const availB = resB.filter(r => r.status === 'available').length;
+
+      if (availA !== availB) return availB - availA;
+      
+      // Then by internal score
+      return getScore(b) - getScore(a);
+    });
+  }, [generatedNames, checkResults]);
+
   const bestPicks = useMemo(() => {
-    return generatedNames.filter(n => {
+    return sortedNames.filter(n => {
       const res = Object.values(checkResults[n] || {});
       return res.length > 0 && res.every(r => r.status === 'available');
     }).slice(0, 6);
-  }, [generatedNames, checkResults]);
+  }, [sortedNames, checkResults]);
+
+  const stats = useMemo(() => ({
+    available: Object.keys(checkResults).filter(n => 
+      Object.values(checkResults[n]).some(r => r.status === 'available')
+    ).length
+  }), [checkResults]);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -377,7 +398,7 @@ export default function UsernameForgePage() {
                          <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-4">
                             <Info className="w-5 h-5 text-primary/40 mt-0.5 shrink-0" />
                             <p className="text-[10px] text-foreground/40 font-bold uppercase leading-relaxed">
-                               If "Base Word" is empty, the forge will autonomously synthesize high-quality roots based on your chosen Category and Tone.
+                               If "Base Word" is empty, the forge will autonomously synthesize roots based on your chosen Category and Tone.
                             </p>
                          </div>
                       </div>
