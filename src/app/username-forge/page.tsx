@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -202,6 +201,43 @@ export default function UsernameForgePage() {
     return score;
   };
 
+  const executeChecks = async (names: string[]) => {
+    setIsProcessing(true);
+    const platforms = Array.from(selectedPlatforms);
+    
+    // Initial State Matrix
+    const initialMap: Record<string, Record<string, ForgeResult>> = {};
+    names.forEach(n => {
+      initialMap[n] = {};
+      platforms.forEach(p => {
+        initialMap[n][p] = { platform: p, status: 'checking', url: '', node: 'Pending' };
+      });
+    });
+    setCheckResults(initialMap);
+
+    // High-Concurrency Audit
+    const promises = names.flatMap(n => 
+      platforms.map(async (p) => {
+        try {
+          const res = await checkUsernameAction(n, p);
+          setCheckResults(prev => ({
+            ...prev,
+            [n]: { ...prev[n], [p]: res }
+          }));
+        } catch (e) {
+          setCheckResults(prev => ({
+            ...prev,
+            [n]: { ...prev[n], [p]: { platform: p, status: 'unknown', url: '', node: 'Failed' } }
+          }));
+        }
+      })
+    );
+
+    await Promise.all(promises);
+    setIsProcessing(false);
+    toast({ title: "Matrix Audited", description: "Batch synchronization complete." });
+  };
+
   const forgeUsernames = useCallback((overrideBase?: string) => {
     const results = new Set<string>();
     const count = 30;
@@ -256,43 +292,6 @@ export default function UsernameForgePage() {
     executeChecks(finalBatch);
   }, [baseWord, category, noNumbers, noUnderscore, maxLength, selectedPlatforms]);
 
-  const executeChecks = async (names: string[]) => {
-    setIsProcessing(true);
-    const platforms = Array.from(selectedPlatforms);
-    
-    // Initial State Matrix
-    const initialMap: Record<string, Record<string, ForgeResult>> = {};
-    names.forEach(n => {
-      initialMap[n] = {};
-      platforms.forEach(p => {
-        initialMap[n][p] = { platform: p, status: 'checking', url: '', node: 'Pending' };
-      });
-    });
-    setCheckResults(initialMap);
-
-    // High-Concurrency Audit
-    const promises = names.flatMap(n => 
-      platforms.map(async (p) => {
-        try {
-          const res = await checkUsernameAction(n, p);
-          setCheckResults(prev => ({
-            ...prev,
-            [n]: { ...prev[n], [p]: res }
-          }));
-        } catch (e) {
-          setCheckResults(prev => ({
-            ...prev,
-            [n]: { ...prev[n], [p]: { platform: p, status: 'unknown', url: '', node: 'Failed' } }
-          }));
-        }
-      })
-    );
-
-    await Promise.all(promises);
-    setIsProcessing(false);
-    toast({ title: "Matrix Audited", description: "Batch synchronization complete." });
-  };
-
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(id);
@@ -307,8 +306,15 @@ export default function UsernameForgePage() {
     setSelectedPlatforms(next);
   };
 
+  const handleMoreLikeThis = (name: string) => {
+    setBaseWord(name);
+    forgeUsernames(name);
+    setStep(3);
+    toast({ title: "Isolating Linguistic Vector", description: `Synthesizing variants for "${name}".` });
+  };
+
   // --- Dynamic Ranking Matrix ---
-  const sortedByAvailability = useMemo(() => {
+  const sortedNames = useMemo(() => {
     return [...generatedNames].sort((a, b) => {
       const resA = Object.values(checkResults[a] || {});
       const resB = Object.values(checkResults[b] || {});
@@ -325,11 +331,20 @@ export default function UsernameForgePage() {
   }, [generatedNames, checkResults]);
 
   const bestPicks = useMemo(() => {
-    return sortedByAvailability.filter(n => {
+    return sortedNames.filter(n => {
       const res = Object.values(checkResults[n] || {});
       return res.length > 0 && res.every(r => r.status === 'available');
     }).slice(0, 8);
-  }, [sortedByAvailability, checkResults]);
+  }, [sortedNames, checkResults]);
+
+  const stats = useMemo(() => {
+    const allResults = Object.values(checkResults).flatMap(r => Object.values(r));
+    return {
+      available: allResults.filter(r => r.status === 'available').length,
+      taken: allResults.filter(r => r.status === 'taken').length,
+      unknown: allResults.filter(r => r.status === 'unknown').length,
+    };
+  }, [checkResults]);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -338,12 +353,16 @@ export default function UsernameForgePage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
             <Sparkles className="w-3.5 h-3.5" /> Identity Suite PRO
           </div>
-          <h1 className="text-3xl md:text-5xl lg:text-7xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
-            Username <span className="text-primary italic">Forge Studio</span>
-          </h1>
-          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional linguistic identity synthesis. Forge premium handles across global social registries with clinical 1:1 availability auditing.
-          </p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+             <div>
+                <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+                  Username <span className="text-primary italic">Forge Studio</span>
+                </h1>
+                <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+                  Professional linguistic identity synthesis. Forge premium handles across global social registries with clinical 1:1 availability auditing.
+                </p>
+             </div>
+          </div>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="username-forge" />
@@ -413,7 +432,7 @@ export default function UsernameForgePage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                {[
                                  { label: 'No Numbers', state: noNumbers, set: setNoNumbers },
-                                 { label: 'No Special Chars', state: noUnderscore, set: setNoUnderscore },
+                                 { label: 'No Underscore', state: noUnderscore, set: setNoUnderscore },
                                ].map(t => (
                                  <div key={t.label} className="p-5 rounded-2xl bg-secondary/30 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
                                     <span className="text-[10px] font-black uppercase text-foreground/40">{t.label}</span>
@@ -443,10 +462,10 @@ export default function UsernameForgePage() {
                             <Slider value={[maxLength]} min={4} max={30} step={1} onValueChange={v => setMaxLength(v[0])} />
                          </div>
 
-                         <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6">
-                            <Info className="w-6 h-6 text-primary/40 mt-0.5 shrink-0" />
-                            <p className="text-[11px] text-foreground/40 font-bold uppercase leading-relaxed">
-                               If "Base Word" is empty, the forge will autonomously synthesize phonetic roots tailored to your chosen category and stylistic tone.
+                         <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-4">
+                            <Info className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                            <p className="text-[10px] text-foreground/40 font-bold uppercase leading-relaxed">
+                               If "Base Word" is empty, the forge will autonomously synthesize roots based on your chosen Category and Tone.
                             </p>
                          </div>
                       </div>
@@ -524,7 +543,7 @@ export default function UsernameForgePage() {
                           </div>
                           <CardContent className="p-8 space-y-6">
                              <div className="space-y-2">
-                                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Score: {getIdentityScore(name)}</span>
+                                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Fidelity Score: {getIdentityScore(name)}%</span>
                                 <h4 className="text-2xl font-headline font-black text-foreground uppercase tracking-tight select-all truncate">{name}</h4>
                              </div>
                              <Button onClick={() => handleCopy(name, `best-${name}`)} className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] rounded-xl shadow-lg">
@@ -550,7 +569,7 @@ export default function UsernameForgePage() {
                             <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Matrix Feed</CardTitle>
                          </div>
                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={() => forgeUsernames()} disabled={isProcessing} className="h-10 px-6 rounded-xl border-border bg-secondary text-[9px] font-black uppercase tracking-widest hover:text-primary transition-all">
+                            <Button variant="outline" size="sm" onClick={() => forgeUsernames()} disabled={isProcessing} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary transition-all">
                                <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isProcessing && "animate-spin")} /> Regenerate
                             </Button>
                          </div>
@@ -558,7 +577,7 @@ export default function UsernameForgePage() {
                       
                       <CardContent className="p-0 flex-1 flex flex-col">
                          <div className="divide-y divide-border max-h-[800px] overflow-auto custom-scrollbar">
-                            {sortedByAvailability.map((name, idx) => {
+                            {sortedNames.map((name, idx) => {
                               const resMap = checkResults[name] || {};
                               const availCount = Object.values(resMap).filter(r => r.status === 'available').length;
                               const isPerfect = availCount === selectedPlatforms.size && selectedPlatforms.size > 0;
@@ -574,7 +593,7 @@ export default function UsernameForgePage() {
                                            <h3 className="text-2xl sm:text-3xl font-headline font-black text-foreground uppercase tracking-tight truncate select-all">{name}</h3>
                                            <div className="flex gap-2">
                                               <Badge className={cn("text-[7px] font-black uppercase px-2", getIdentityScore(name) > 70 ? "bg-primary/20 text-primary border-primary/20" : "bg-white/5 text-white/20 border-white/5")}>
-                                                 FIDELITY: {getIdentityScore(name)}%
+                                                 Score: {getIdentityScore(name)}%
                                               </Badge>
                                            </div>
                                         </div>
@@ -620,7 +639,7 @@ export default function UsernameForgePage() {
                 {/* Sidebar Analytics */}
                 <div className="xl:col-span-4 space-y-8">
                    <Card className="glass-card border-border shadow-xl">
-                      <CardHeader className="py-6 border-b border-white/5 bg-secondary/30">
+                      <CardHeader className="py-6 border-b border-border bg-secondary/30">
                          <CardTitle className="text-[10px] font-black uppercase tracking-widest text-primary">Forge Telemetry</CardTitle>
                       </CardHeader>
                       <CardContent className="pt-8 space-y-8">
