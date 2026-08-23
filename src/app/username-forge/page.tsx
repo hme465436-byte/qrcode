@@ -59,6 +59,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -179,7 +181,7 @@ export default function UsernameForgePage() {
     });
     setCheckResults(initialMap);
 
-    // Parallel Batch Checks (with concurrency cap in real production, here we use simple map)
+    // Parallel Batch Checks
     const promises = names.flatMap(n => 
       platforms.map(async (p) => {
         try {
@@ -235,6 +237,13 @@ export default function UsernameForgePage() {
       return res.length > 0 && res.every(r => r.status === 'available');
     });
   }, [sortedNames, checkResults]);
+
+  const stats = useMemo(() => {
+    const allResults = Object.values(checkResults).flatMap(r => Object.values(r));
+    return {
+      available: allResults.filter(r => r.status === 'available').length,
+    };
+  }, [checkResults]);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -314,7 +323,7 @@ export default function UsernameForgePage() {
                          </div>
 
                          <div className="space-y-4">
-                            <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Linguistic Constraints</ize>
+                            <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Linguistic Constraints</Label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                {[
                                  { label: 'No Numbers', state: noNumbers, set: setNoNumbers },
