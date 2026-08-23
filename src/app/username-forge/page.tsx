@@ -45,6 +45,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -381,7 +382,7 @@ export default function UsernameForgePage() {
                 
                 {/* Main Results List */}
                 <div className="xl:col-span-8 space-y-6">
-                   <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px]">
+                   <Card className="glass-card border-border shadow-2xl overflow-hidden relative group flex flex-col min-h-[600px]">
                       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
                       <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
                          <div className="flex items-center gap-4">
@@ -430,7 +431,7 @@ export default function UsernameForgePage() {
                                      </div>
                                      <div className="flex gap-2 shrink-0">
                                         <Button variant="outline" size="sm" onClick={() => executeChecks([name])} className="h-9 px-4 rounded-xl border-border bg-background text-[8px] font-black uppercase">
-                                           <RefreshCcw className="w-3 h-3 mr-2" /> Re-Audit
+                                           <RefreshCcw className="w-3.5 h-3.5 mr-2" /> Re-Audit
                                         </Button>
                                      </div>
                                   </div>
