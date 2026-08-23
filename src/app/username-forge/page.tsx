@@ -34,7 +34,8 @@ import {
   LayoutGrid,
   Sparkles,
   Target,
-  AlertCircle
+  AlertCircle,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -152,11 +153,8 @@ export default function UsernameForgePage() {
     setCheckResults(initialMap);
 
     // Parallel Batch Checks
-    const totalChecks = names.length * platforms.length;
-    let completed = 0;
-
-    for (const n of names) {
-      for (const p of platforms) {
+    const promises = names.flatMap(n => 
+      platforms.map(async (p) => {
         try {
           const res = await checkUsernameAction(n, p);
           setCheckResults(prev => ({
@@ -169,10 +167,10 @@ export default function UsernameForgePage() {
             [n]: { ...prev[n], [p]: { platform: p, status: 'unknown', url: '' } }
           }));
         }
-        completed++;
-      }
-    }
-    
+      })
+    );
+
+    await Promise.all(promises);
     setIsProcessing(false);
     toast({ title: "Forge Complete", description: "Audit of all identity signals finished." });
   };
@@ -399,7 +397,7 @@ export default function UsernameForgePage() {
                       </CardHeader>
                       
                       <CardContent className="p-0 overflow-hidden flex-1">
-                         <div className="divide-y divide-border max-h-[700px] overflow-y-auto custom-scrollbar">
+                         <div className="divide-y divide-border max-h-[700px] overflow-auto custom-scrollbar">
                             {generatedNames.map((name, idx) => (
                                <div key={idx} className="p-6 sm:p-8 hover:bg-secondary/30 transition-all group/item">
                                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -446,9 +444,7 @@ export default function UsernameForgePage() {
                 <div className="xl:col-span-4 space-y-8 animate-in slide-in-from-right-6 duration-1000 stagger-2">
                    <Card className="glass-card border-border shadow-xl">
                       <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                            <Activity className="w-4 h-4 text-primary" /> Matrix Analytics
-                         </CardTitle>
+                         <CardTitle className="text-[10px] font-black uppercase tracking-widest text-primary">Matrix Analytics</CardTitle>
                       </CardHeader>
                       <CardContent className="pt-8 space-y-8">
                          <div className="grid grid-cols-2 gap-4">
@@ -487,18 +483,6 @@ export default function UsernameForgePage() {
                          </div>
                       </CardContent>
                    </Card>
-
-                   <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                    <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                       <ShieldCheck className="w-7 h-7" />
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-                      <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                        All deconstruction occurs strictly via secure server-side handshakes. Search payloads are never logged or stored.
-                      </p>
-                    </div>
-                 </div>
                 </div>
              </div>
           </div>
@@ -515,4 +499,3 @@ export default function UsernameForgePage() {
     </div>
   );
 }
-
