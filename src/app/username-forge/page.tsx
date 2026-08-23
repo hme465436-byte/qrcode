@@ -49,7 +49,8 @@ import {
   BadgeCheck,
   Fingerprint,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -130,6 +131,17 @@ export default function UsernameForgePage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
 
+  const applyLeet = (text: string) => {
+    return text.split('').map(char => {
+      const low = char.toLowerCase();
+      return (Math.random() > 0.4 && LEET_MAP[low]) ? LEET_MAP[low] : char;
+    }).join('');
+  };
+
+  const LEET_MAP: Record<string, string> = {
+    'a': '4', 'e': '3', 'i': '1', 'o': '0', 's': '5', 't': '7', 'g': '6', 'b': '8'
+  };
+
   const forgeUsernames = useCallback(() => {
     const results: string[] = [];
     const count = 30;
@@ -165,7 +177,7 @@ export default function UsernameForgePage() {
     setGeneratedNames(final);
     setStep(3);
     executeChecks(final);
-  }, [baseWord, profession, hobby, category, style, noNumbers, noUnderscore, shortOnly, maxLength]);
+  }, [baseWord, profession, hobby, category, noNumbers, noUnderscore, shortOnly, maxLength]);
 
   const executeChecks = async (names: string[]) => {
     setIsProcessing(true);
