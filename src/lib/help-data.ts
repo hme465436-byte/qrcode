@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Centralized help registry for MY KIT TOOL.
  * Maps tool IDs to specific clinical documentation.
@@ -13,6 +12,23 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'site-backup-cloner': {
+    title: 'Site Backup Cloner Studio',
+    description: 'Professional high-fidelity web archival tool. Isolate and package public frontend assets (HTML, CSS, JS, Images) from any live URL into a structured ZIP backup.',
+    steps: [
+      'Enter the destination URL of the website you wish to archive.',
+      'Execute the "Clone Protocol" to initialize the multi-node discovery cycle.',
+      'Monitor the Linguistic Monitor to verify successful asset retrieval.',
+      'Review the extraction report for successfully isolated vs. blocked signals.',
+      'Download the final master project.zip bundle for local storage.'
+    ],
+    tips: [
+      'The browser strictly enforces CORS; assets without open access headers may be blocked.',
+      'Large websites with many subfolders are best handled on high-bandwidth desktop hardware.',
+      'The engine automatically sanitizes file identifiers for production consistency.'
+    ],
+    privacy: 'All binary synthesis and ZIP generation occur 100% locally in your browser memory. Your target URLs and retrieved assets are never stored on our cloud infrastructure.'
+  },
   'html-site-rescue': {
     title: 'HTML Site Rescue Studio',
     description: 'Professional utility for recovering and re-packaging web projects. Sanitize broken path identifiers and bundle local assets into production-ready ZIP archives.',
@@ -58,7 +74,7 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Analyze the "Availability Matrix" to see which handles are ready for registration.'
     ],
     tips: [
-      'Use the "Mixed" style for the highest variety of linguistic combinations.',
+      'Use "Mixed" style for the highest variety of linguistic combinations.',
       'Platform blocks are common for aggressive checking; use "Re-Audit" sparingly to avoid rate limits.',
       'Underscores and digits are added strategically based on the selected category.'
     ],
@@ -269,7 +285,7 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'The engine will automatically narrow the resource registry.',
       'Review identified signals including topics, levels, and descriptions.',
       'Click any card to launch the external resource in a secure new tab.',
-      'Use the Re-Sync button to re-calibrate with the global source nodes.'
+      'Use the Re-Sync button to re-calibrate with the global resources nodes.'
     ],
     tips: [
       'Search for specific technologies like "React", "Python", or "API" for faster mapping.',

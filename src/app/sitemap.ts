@@ -1,4 +1,3 @@
-
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -23,7 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/pets', '/jokes', '/facts', '/pokemon', '/books', '/holidays', '/quotes', '/image-gallery', '/translate',
     '/free-games', '/coding-resources', '/wikipedia', '/city-explorer', '/github-user', '/website-trust-checker',
     '/password-breach-checker', '/dns-lookup', '/url-shortener', '/wallpapers', '/image-to-link', '/telegram-file-host',
-    '/background-remove', '/temp-mail', '/link-safety-checker', '/username-checker', '/domain-whois'
+    '/background-remove', '/temp-mail', '/link-safety-checker', '/username-checker', '/domain-whois', '/site-backup-cloner'
   ];
 
   const routes = tools.map(tool => ({

@@ -151,6 +151,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/site-backup-cloner', 
+    icon: FileArchive, 
+    title: 'Site Backup Cloner', 
+    desc: 'Isolate and download public frontend assets into a local ZIP backup.', 
+    label: 'MAINTENANCE', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['backup', 'clone', 'download site', 'save page', 'html backup', 'zip assets'],
+    category: 'utilities'
+  },
+  { 
     href: '/username-checker', 
     icon: Search, 
     title: 'Username Checker', 
@@ -1570,7 +1581,7 @@ export default function Home() {
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
       'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
-      'Shadow Chat', 'Realtime Messenger', 'Private ephemeral chat'
+      'Shadow Chat', 'Realtime Messenger', 'Private ephemeral chat', 'Site Backup Cloner', 'Backup static website'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1676,7 +1687,7 @@ export default function Home() {
               Verified {TOOLS.length} Units
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-[8px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(59,130,246,0.1)] shadow-primary/20">
-              <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" /> Dev UMAR FAROOQ
+              <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current animate-fade-pulse" style={{ filter: 'drop-shadow(0 0 8px hsl(var(--primary)))' }} /> Dev UMAR FAROOQ
             </div>
           </div>
           
