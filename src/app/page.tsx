@@ -1675,6 +1675,9 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[8px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
               Verified {TOOLS.length} Units
             </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-[8px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+              <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" /> Dev UMAR FAROOQ
+            </div>
           </div>
           
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-headline font-black mb-4 leading-[1.1] sm:leading-[1.1] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere px-2">
