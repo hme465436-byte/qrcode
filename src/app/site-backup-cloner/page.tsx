@@ -50,14 +50,6 @@ interface AssetItem {
   retries: number;
 }
 
-const formatSize = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
-
 export default function SiteBackupClonerPage() {
   const { toast } = useToast();
   const [url, setUrl] = useState('');
@@ -66,6 +58,16 @@ export default function SiteBackupClonerPage() {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<'idle' | 'scanning' | 'downloading' | 'complete' | 'error'>('idle');
   const [isCopied, setIsCopied] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
 
   // --- Asset Discovery Logic ---
   const extractAssets = (html: string, baseUrl: string): AssetItem[] => {
@@ -78,7 +80,6 @@ export default function SiteBackupClonerPage() {
       try {
         const absolute = new URL(attrValue, baseUrl).href;
         const urlObj = new URL(absolute);
-        // We only clone from the same domain to prevent massive external creep
         const isSameDomain = urlObj.hostname === new URL(baseUrl).hostname;
         
         let localPath = urlObj.pathname;
@@ -106,7 +107,6 @@ export default function SiteBackupClonerPage() {
       }
     };
 
-    // 1. Core HTML (Internal)
     discovered.push({
       id: 'index-html',
       url: baseUrl,
@@ -116,16 +116,9 @@ export default function SiteBackupClonerPage() {
       retries: 0
     });
 
-    // 2. CSS
     doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => add(el.getAttribute('href'), 'css'));
-    
-    // 3. JS
     doc.querySelectorAll('script[src]').forEach(el => add(el.getAttribute('src'), 'js'));
-    
-    // 4. Images
     doc.querySelectorAll('img[src]').forEach(el => add(el.getAttribute('src'), 'image'));
-    
-    // 5. Favicons
     doc.querySelectorAll('link[rel*="icon"]').forEach(el => add(el.getAttribute('href'), 'icon'));
 
     return discovered;
@@ -140,7 +133,6 @@ export default function SiteBackupClonerPage() {
     setProgress(5);
 
     try {
-      // Phase 1: HTML Extraction
       const response = await fetchHtmlAction(url);
       if (!response.success || !response.html) {
         throw new Error(response.error || "Uplink restricted by remote host.");
@@ -152,10 +144,7 @@ export default function SiteBackupClonerPage() {
       setStatus('downloading');
       setProgress(10);
 
-      // Phase 2: Parallel Asset Retrieval
       const zip = new JSZip();
-      
-      // Save original HTML as index.html
       zip.file("index.html", response.html);
 
       const downloadAsset = async (item: AssetItem): Promise<void> => {
@@ -163,18 +152,14 @@ export default function SiteBackupClonerPage() {
         
         try {
           setAssets(prev => prev.map(a => a.id === item.id ? { ...a, status: 'downloading' } : a));
-          
           const res = await fetch(item.url);
           if (!res.ok) throw new Error("CORS or 404");
-          
           const blob = await res.blob();
           const buffer = await blob.arrayBuffer();
           zip.file(item.path, buffer);
-          
           setAssets(prev => prev.map(a => a.id === item.id ? { ...a, status: 'success', size: blob.size } : a));
         } catch (e) {
           if (item.retries < 1) {
-            // Simple Retry Protocol
             const retryItem = { ...item, retries: 1 };
             await downloadAsset(retryItem);
           } else {
@@ -183,7 +168,6 @@ export default function SiteBackupClonerPage() {
         }
       };
 
-      // Limit concurrency to avoid hardware lag
       const chunks = [];
       const batchSize = 5;
       for (let i = 0; i < initialAssets.length; i += batchSize) {
@@ -195,7 +179,6 @@ export default function SiteBackupClonerPage() {
         setProgress(10 + Math.round(((i + 1) / chunks.length) * 80));
       }
 
-      // Phase 3: ZIP Synthesis
       setStatus('complete');
       setProgress(100);
       
@@ -205,10 +188,8 @@ export default function SiteBackupClonerPage() {
       a.href = downloadLink;
       a.download = `site_backup_${new URL(base).hostname.replace(/\./g, '_')}.zip`;
       a.click();
-
-      toast({ title: "Backup Complete", description: "Project ZIP has been synthesized." });
+      toast({ title: "Backup Complete" });
     } catch (err: any) {
-      console.error(err);
       setStatus('error');
       toast({ variant: "destructive", title: "Protocol Failure", description: err.message });
     } finally {
@@ -272,7 +253,6 @@ export default function SiteBackupClonerPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Input Pane */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
@@ -326,18 +306,17 @@ export default function SiteBackupClonerPage() {
                     <div className="space-y-1">
                       <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Matrix</h4>
                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
-                        All binary synthesis and ZIP generation occur 100% locally in your browser memory. Your target URLs are never stored.
+                        All binary synthesis and ZIP generation occur 100% locally in your browser memory. Your target URLs are never stored on our cloud infrastructure.
                       </p>
                     </div>
                 </div>
            </div>
         </div>
 
-        {/* Status Pane */}
         <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0">
+              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
                  <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
                        <Activity className="w-5 h-5" />
@@ -381,7 +360,7 @@ export default function SiteBackupClonerPage() {
                                 </div>
                                 <div className="min-w-0">
                                    <p className="text-[11px] font-bold text-foreground truncate uppercase">{asset.path}</p>
-                                   <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{asset.url}</p>
+                                   <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest truncate">{asset.url}</p>
                                 </div>
                              </div>
                              <div className="flex items-center gap-3 shrink-0">
