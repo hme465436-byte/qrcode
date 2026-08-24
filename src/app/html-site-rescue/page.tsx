@@ -34,7 +34,16 @@ import {
   Edit3,
   FileEdit,
   Type,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft,
+  Undo2,
+  Redo2,
+  Minus,
+  Maximize2,
+  Minimize2,
+  Replace,
+  X,
+  Menu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,7 +64,8 @@ interface LocalFile {
   type: string;
   size: number;
   blob: Blob;
-  content?: string; // Stored for text-based files
+  content?: string;
+  isDirty?: boolean;
 }
 
 interface AssetReference {
@@ -81,15 +91,21 @@ export default function HtmlSiteRescuePage() {
   const [assets, setAssets] = useState<LocalFile[]>([]);
   const [references, setReferences] = useState<AssetReference[]>([]);
   
-  // Editor State
+  // Advanced Editor State
   const [activeEditId, setActiveEditId] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState('');
-  
-  // UI State
-  const [isCopied, setIsCopied] = useState<string | null>(null);
+  const [editHistory, setEditHistory] = useState<string[]>([]);
+  const [historyPointer, setHistoryPointer] = useState(-1);
+  const [editorFontSize, setFontSize] = useState(13);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [replaceTerm, setReplaceTerm] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const assetInputRef = useRef<HTMLInputElement>(null);
+  const editorTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
 
   // --- 1. Analysis Engine ---
   const scanHtml = useCallback((html: string, currentAssets: LocalFile[]) => {
@@ -154,7 +170,6 @@ export default function HtmlSiteRescuePage() {
     if (uploaded.length === 0) return;
 
     setIsProcessing(true);
-    
     const newAssets: LocalFile[] = [];
 
     for (const f of uploaded) {
@@ -168,7 +183,8 @@ export default function HtmlSiteRescuePage() {
         size: f.size,
         type: f.type,
         blob: f,
-        content
+        content,
+        isDirty: false
       };
 
       newAssets.push(item);
@@ -183,7 +199,6 @@ export default function HtmlSiteRescuePage() {
 
     setAssets(prev => [...prev, ...newAssets]);
     toast({ title: "Signal Injected", description: `Synchronized ${uploaded.length} nodes.` });
-    
     setIsProcessing(false);
     if (e.target) e.target.value = '';
   };
@@ -192,12 +207,48 @@ export default function HtmlSiteRescuePage() {
     handleFileUpload(e, false);
   };
 
+  // --- 3. Advanced Editor Logic ---
+  
   const handleSelectFile = (item: LocalFile) => {
     if (item.content !== undefined) {
       setActiveEditId(item.id);
       setEditBuffer(item.content);
+      setEditHistory([item.content]);
+      setHistoryPointer(0);
+      setSearchTerm('');
+      setReplaceTerm('');
+      setShowSearch(false);
+      if (window.innerWidth < 1024) setIsSidebarOpen(false);
     } else {
-      toast({ variant: "default", title: "Non-Text Node", description: "Binary assets cannot be edited in the linguistic studio." });
+      toast({ title: "Non-Text Node", description: "Binary assets are protected from textual modification." });
+    }
+  };
+
+  const onBufferChange = (val: string) => {
+    setEditBuffer(val);
+    const updatedHistory = editHistory.slice(0, historyPointer + 1);
+    updatedHistory.push(val);
+    if (updatedHistory.length > 50) updatedHistory.shift();
+    setEditHistory(updatedHistory);
+    setHistoryPointer(updatedHistory.length - 1);
+    
+    // Mark as dirty
+    setAssets(prev => prev.map(a => a.id === activeEditId ? { ...a, isDirty: true } : a));
+  };
+
+  const handleUndo = () => {
+    if (historyPointer > 0) {
+      const nextPtr = historyPointer - 1;
+      setHistoryPointer(nextPtr);
+      setEditBuffer(editHistory[nextPtr]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyPointer < editHistory.length - 1) {
+      const nextPtr = historyPointer + 1;
+      setHistoryPointer(nextPtr);
+      setEditBuffer(editHistory[nextPtr]);
     }
   };
 
@@ -207,7 +258,7 @@ export default function HtmlSiteRescuePage() {
     const updatedAssets = assets.map(a => {
       if (a.id === activeEditId) {
         const nextBlob = new Blob([editBuffer], { type: a.type });
-        return { ...a, content: editBuffer, blob: nextBlob, size: nextBlob.size };
+        return { ...a, content: editBuffer, blob: nextBlob, size: nextBlob.size, isDirty: false };
       }
       return a;
     });
@@ -219,9 +270,59 @@ export default function HtmlSiteRescuePage() {
       setIndexHtml(editBuffer);
     }
 
-    toast({ title: "Node Synchronized", description: "Modifications saved to memory." });
+    toast({ title: "Matrix Synchronized", description: "Node persisted to local buffer." });
   };
 
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = e.currentTarget.selectionStart;
+      const end = e.currentTarget.selectionEnd;
+      const val = e.currentTarget.value;
+      const next = val.substring(0, start) + "  " + val.substring(end);
+      onBufferChange(next);
+      // Wait for re-render then set selection
+      setTimeout(() => {
+        if (editorTextareaRef.current) {
+          editorTextareaRef.current.selectionStart = editorTextareaRef.current.selectionEnd = start + 2;
+        }
+      }, 0);
+    }
+    
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      saveEdit();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      e.preventDefault();
+      handleUndo();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      setShowSearch(true);
+    }
+  };
+
+  const executeReplace = () => {
+    if (!searchTerm) return;
+    const next = editBuffer.split(searchTerm).join(replaceTerm);
+    onBufferChange(next);
+    toast({ title: "Find & Replace Executed" });
+  };
+
+  const lineNumbers = useMemo(() => {
+    const lines = editBuffer.split('\n').length;
+    return Array.from({ length: lines }, (_, i) => i + 1);
+  }, [editBuffer]);
+
+  // Sync scroll between textarea and line numbers
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
+    }
+  };
+
+  // --- 4. Production ---
   const executeFix = () => {
     let fixedHtml = indexHtml;
     references.forEach(ref => {
@@ -243,37 +344,20 @@ export default function HtmlSiteRescuePage() {
   const packageProject = async () => {
     setIsProcessing(true);
     const zip = new JSZip();
-    
-    assets.forEach(f => {
-      zip.file(f.path, f.blob);
-    });
-
+    assets.forEach(f => { zip.file(f.path, f.blob); });
     const readme = `[MY KIT TOOL - RESCUE BUNDLE]\nMode: ${mode.toUpperCase()}\nCreated: ${new Date().toLocaleString()}\n\nDeploy instructions:\n1. Extract ZIP\n2. Upload contents to Firebase, Vercel, or Netlify public root.`;
     zip.file("README_DEPLOY.txt", readme);
-
     const content = await zip.generateAsync({ type: "blob" });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(content);
-    link.download = `mykit_site_${Date.now()}.zip`;
+    link.download = `mykit_site_bundle_${Date.now()}.zip`;
     link.click();
-    
     setIsProcessing(false);
-    toast({ title: "Production Packaged", description: "ZIP archive saved successfully." });
-  };
-
-  const handleCopy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setIsCopied(id);
-    setTimeout(() => setIsCopied(null), 2000);
+    toast({ title: "Production Packaged" });
   };
 
   const clearStudio = () => {
-    setIndexHtml('');
-    setAssets([]);
-    setReferences([]);
-    setStep(1);
-    setActiveEditId(null);
-    setEditBuffer('');
+    setIndexHtml(''); setAssets([]); setReferences([]); setStep(1); setActiveEditId(null); setEditBuffer('');
     toast({ title: "Studio Reset" });
   };
 
@@ -285,112 +369,102 @@ export default function HtmlSiteRescuePage() {
   }), [references]);
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-7xl">
-      <div className="mb-12 animate-reveal">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <History className="w-3.5 h-3.5" /> Maintenance Suite
-        </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-           <div>
-              <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-                HTML Site <span className="text-primary italic">Rescue Studio</span>
-              </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional project re-packaging engine. Fix broken path identifiers and update source code locally before generating sanitized production ZIPs.
-              </p>
-           </div>
-           <div className="flex items-center gap-3">
-              <GetHelp toolId="html-site-rescue" />
-              {step > 1 && (
-                <Button variant="outline" size="sm" onClick={clearStudio} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset Matrix
-                </Button>
-              )}
-           </div>
-        </div>
-      </div>
+    <div className={cn("container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-7xl transition-all duration-500", mode === 'update' && step === 2 && "max-w-full px-0 py-0 sm:px-0 sm:py-0")}>
+      
+      {/* 1. Dashboard UI (Standard) */}
+      {(mode === 'simple' || step !== 2) && (
+        <>
+          <div className="mb-12 animate-reveal">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
+              <History className="w-3.5 h-3.5" /> Maintenance Suite
+            </div>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+               <div>
+                  <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
+                    HTML Site <span className="text-primary italic">Rescue Studio</span>
+                  </h1>
+                  <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+                    Professional project re-packaging engine. Fix broken path identifiers and update source code locally before generating sanitized production ZIPs.
+                  </p>
+               </div>
+               <div className="flex items-center gap-3">
+                  <GetHelp toolId="html-site-rescue" />
+                  {step > 1 && (
+                    <Button variant="outline" size="sm" onClick={clearStudio} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                      <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset Matrix
+                    </Button>
+                  )}
+               </div>
+            </div>
+          </div>
 
-      <div className="flex justify-center mb-12">
-        <div className="inline-flex p-1.5 rounded-[2rem] bg-secondary border border-white/5 shadow-2xl backdrop-blur-xl">
-           <button 
-            onClick={() => setMode('simple')}
-            className={cn(
-              "px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-              mode === 'simple' ? "bg-primary text-white shadow-xl scale-105" : "text-foreground/30 hover:text-foreground"
-            )}
-           >
-              Simple Rescue
-           </button>
-           <button 
-            onClick={() => setMode('update')}
-            className={cn(
-              "px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-              mode === 'update' ? "bg-primary text-white shadow-xl scale-105" : "text-foreground/30 hover:text-foreground"
-            )}
-           >
-              Site Update
-           </button>
-        </div>
-      </div>
+          <div className="flex justify-center mb-12">
+            <div className="inline-flex p-1.5 rounded-[2rem] bg-secondary border border-white/5 shadow-2xl backdrop-blur-xl">
+               <button onClick={() => setMode('simple')} className={cn("px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all", mode === 'simple' ? "bg-primary text-white shadow-xl scale-105" : "text-foreground/30 hover:text-foreground")}>Simple Rescue</button>
+               <button onClick={() => setMode('update')} className={cn("px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all", mode === 'update' ? "bg-primary text-white shadow-xl scale-105" : "text-foreground/30 hover:text-foreground")}>Site Update</button>
+            </div>
+          </div>
+        </>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        <aside className="lg:col-span-3 space-y-6">
-           <div className="flex flex-col gap-3">
-              {[
-                { s: 1, label: 'Intake', desc: 'Import source' },
-                { s: 2, label: mode === 'simple' ? 'Clinical Scan' : 'Update Studio', desc: mode === 'simple' ? 'Identify deps' : 'Edit nodes' },
-                { s: 3, label: 'Production', desc: 'Generate bundle' }
-              ].map((item) => (
-                <div key={item.s} className={cn(
-                  "p-6 rounded-[2rem] border transition-all duration-500 flex items-center gap-5",
-                  step === item.s ? "bg-primary/10 border-primary shadow-xl scale-105" : step > item.s ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-secondary/30 border-border opacity-40"
-                )}>
-                   <div className={cn(
-                     "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner",
-                     step === item.s ? "bg-primary text-white" : step > item.s ? "bg-emerald-500 text-white" : "bg-background text-foreground/10"
-                   )}>
-                      {step > item.s ? <CheckCircle2 className="w-6 h-6" /> : <span className="text-xs font-black">0{item.s}</span>}
+      {/* 2. Step Wizard Column */}
+      <div className={cn("grid grid-cols-1 gap-10 items-start", (mode === 'simple' || step !== 2) && "lg:grid-cols-12")}>
+        
+        {/* PROGRESS TRACKER */}
+        {(mode === 'simple' || step !== 2) && (
+          <aside className="lg:col-span-3 space-y-6">
+             <div className="flex flex-col gap-3">
+                {[
+                  { s: 1, label: 'Intake', desc: 'Import source' },
+                  { s: 2, label: mode === 'simple' ? 'Clinical Scan' : 'Update Studio', desc: mode === 'simple' ? 'Identify deps' : 'Edit nodes' },
+                  { s: 3, label: 'Production', desc: 'Generate bundle' }
+                ].map((item) => (
+                  <div key={item.s} className={cn(
+                    "p-6 rounded-[2rem] border transition-all duration-500 flex items-center gap-5",
+                    step === item.s ? "bg-primary/10 border-primary shadow-xl scale-105" : step > item.s ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-secondary/30 border-border opacity-40"
+                  )}>
+                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner", step === item.s ? "bg-primary text-white" : step > item.s ? "bg-emerald-500 text-white" : "bg-background text-foreground/10")}>
+                        {step > item.s ? <CheckCircle2 className="w-6 h-6" /> : <span className="text-xs font-black">0{item.s}</span>}
+                     </div>
+                     <div className="min-w-0">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">{item.label}</h4>
+                        <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-tighter truncate">{item.desc}</p>
+                     </div>
+                  </div>
+                ))}
+             </div>
+
+             <Card className="glass-card border-border shadow-xl">
+                <CardHeader className="py-4 border-b border-white/5 bg-secondary/30">
+                   <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-foreground">
+                      <Activity className="w-4 h-4 text-primary" /> Matrix Intel
+                   </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                   <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                         <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Refs</p>
+                         <p className="text-xl font-headline font-black text-foreground">{stats.total}</p>
+                      </div>
+                      <div className="space-y-1">
+                         <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Nodes</p>
+                         <p className="text-xl font-headline font-black text-primary">{assets.length}</p>
+                      </div>
                    </div>
-                   <div className="min-w-0">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">{item.label}</h4>
-                      <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-tighter truncate">{item.desc}</p>
-                   </div>
-                </div>
-              ))}
-           </div>
+                </CardContent>
+             </Card>
+          </aside>
+        )}
 
-           <Card className="glass-card border-border shadow-xl">
-              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30">
-                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-foreground">
-                    <Activity className="w-4 h-4 text-primary" /> Matrix Intel
-                 </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                 <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Refs</p>
-                       <p className="text-xl font-headline font-black text-foreground">{stats.total}</p>
-                    </div>
-                    <div className="space-y-1">
-                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Nodes</p>
-                       <p className="text-xl font-headline font-black text-primary">{assets.length}</p>
-                    </div>
-                 </div>
-              </CardContent>
-           </Card>
-        </aside>
-
-        <div className="lg:col-span-9 space-y-8 animate-in fade-in duration-1000">
+        <div className={cn("lg:col-span-9 space-y-8 animate-in fade-in duration-1000", mode === 'update' && step === 2 && "lg:col-span-12 space-y-0")}>
+           
+           {/* PHASE 1: INTAKE */}
            {step === 1 && (
              <Card 
                 className="glass-card border-border shadow-2xl p-12 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]"
                 onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-primary/40'); }}
                 onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('border-primary/40'); }}
-                onDrop={(e) => { 
-                  e.preventDefault(); 
-                  e.currentTarget.classList.remove('border-primary/40'); 
-                  if (e.dataTransfer.files) handleFileUpload({ target: { files: e.dataTransfer.files } } as any); 
-                }}
+                onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('border-primary/40'); if (e.dataTransfer.files) handleFileUpload({ target: { files: e.dataTransfer.files } } as any, true); }}
              >
                 <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
                 <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl relative z-10">
@@ -398,7 +472,7 @@ export default function HtmlSiteRescuePage() {
                 </div>
                 <div className="space-y-3 relative z-10">
                    <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Initialize Rescue Protocol</h2>
-                   <p className="text-sm text-foreground/30 font-bold uppercase tracking-widest">Select your index.html or folder to begin</p>
+                   <p className="text-sm text-foreground/30 font-bold uppercase tracking-widest">Select your index.html or paste source code to begin</p>
                 </div>
                 
                 <div className="w-full max-w-lg space-y-6 relative z-10">
@@ -412,10 +486,10 @@ export default function HtmlSiteRescuePage() {
                    </div>
                    <div className="space-y-4">
                       <Textarea 
-                        placeholder="Paste raw HTML matrix here..." 
+                        placeholder="Paste raw HTML source matrix..." 
                         value={indexHtml}
                         onChange={e => setIndexHtml(e.target.value)}
-                        className="h-40 bg-secondary/30 border-white/10 rounded-2xl text-[11px] font-mono p-6 resize-none shadow-inner"
+                        className="h-32 bg-secondary/30 border-white/10 rounded-2xl text-[11px] font-mono p-6 resize-none shadow-inner"
                       />
                       {indexHtml.trim() && (
                         <Button onClick={() => setStep(2)} className="h-12 w-full bg-white text-black font-black uppercase text-[9px] rounded-xl shadow-2xl">
@@ -424,10 +498,11 @@ export default function HtmlSiteRescuePage() {
                       )}
                    </div>
                 </div>
-                <input type="file" ref={fileInputRef} accept=".html" onChange={handleFileUpload} className="hidden" />
+                <input type="file" ref={fileInputRef} accept=".html" onChange={handleHtmlUpload} className="hidden" />
              </Card>
            )}
 
+           {/* PHASE 2: PROCESSING */}
            {step === 2 && (
              <div className="space-y-8 animate-in slide-in-from-right-8 duration-700">
                 {mode === 'simple' ? (
@@ -441,7 +516,7 @@ export default function HtmlSiteRescuePage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <Button onClick={() => assetInputRef.current?.click()} variant="outline" size="sm" className="h-9 px-4 rounded-xl border-dashed border-primary/20 bg-primary/5 text-primary text-[9px] font-black uppercase tracking-widest">
-                              <Plus className="w-3.5 h-3.5 mr-2" /> Add Assets
+                              <Plus className="w-3.5 h-3.5 mr-2" /> Add Assets Folder
                           </Button>
                           <input type="file" ref={assetInputRef} multiple onChange={handleAssetUpload} className="hidden" />
                         </div>
@@ -489,7 +564,7 @@ export default function HtmlSiteRescuePage() {
                         <div className="p-8 border-t border-border bg-secondary/10 flex justify-between items-center">
                           <div className="flex items-center gap-4">
                               <div className="px-3 py-1 rounded-lg bg-background border border-border text-[9px] font-black text-foreground/30 uppercase">
-                                {assets.length} Buffered Nodes
+                                {assets.length} Local Files Buffered
                               </div>
                           </div>
                           <Button onClick={executeFix} className="h-14 px-10 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
@@ -499,16 +574,61 @@ export default function HtmlSiteRescuePage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[600px]">
-                     {/* File List - Left */}
-                     <Card className="lg:col-span-4 glass-card border-border flex flex-col overflow-hidden">
-                        <CardHeader className="py-4 border-b border-white/5 bg-secondary/20">
-                           <CardTitle className="text-[10px] font-black uppercase text-foreground/40 tracking-widest flex items-center gap-3">
-                              <LayoutGrid className="w-3.5 h-3.5 text-primary" /> Directory Tree
-                           </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 overflow-auto custom-scrollbar max-h-80 bg-black/10">
-                           <div className="space-y-1">
+                  /* ADVANCED FULL-PAGE EDITOR UI */
+                  <div className="fixed inset-0 z-[100] bg-[#0a0a0c] flex flex-col animate-in fade-in duration-500">
+                     {/* Editor Top Bar */}
+                     <div className="h-16 border-b border-white/5 bg-[#0a0a0c] flex items-center justify-between px-6 shrink-0 z-20">
+                        <div className="flex items-center gap-6">
+                           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg bg-white/5 text-foreground/40 hover:text-white transition-all">
+                              <Menu className="w-5 h-5" />
+                           </button>
+                           <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
+                                 <Edit3 className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                 <h2 className="text-sm font-black uppercase text-foreground truncate max-w-[300px]">
+                                    {assets.find(a => a.id === activeEditId)?.name || 'Matrix Editor'}
+                                 </h2>
+                                 <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-[0.2em]">Sovereign Node Editing</p>
+                              </div>
+                              {assets.find(a => a.id === activeEditId)?.isDirty && (
+                                 <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[7px] font-black uppercase tracking-widest px-2 ml-2">Unsaved</Badge>
+                              )}
+                           </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                           <div className="flex bg-white/5 p-1 rounded-xl border border-white/5 mr-4">
+                              <button onClick={handleUndo} className="p-2 text-white/20 hover:text-primary"><Undo2 className="w-3.5 h-3.5" /></button>
+                              <button onClick={handleRedo} className="p-2 text-white/20 hover:text-primary"><Redo2 className="w-3.5 h-3.5" /></button>
+                           </div>
+
+                           <div className="flex bg-white/5 p-1 rounded-xl border border-white/5 mr-4 items-center">
+                              <button onClick={() => setFontSize(s => Math.max(8, s - 1))} className="p-2 text-white/20 hover:text-white"><Minus className="w-3 h-3" /></button>
+                              <span className="text-[9px] font-black text-white/10 w-8 text-center uppercase tracking-tighter">{editorFontSize}px</span>
+                              <button onClick={() => setFontSize(s => Math.min(24, s + 1))} className="p-2 text-white/20 hover:text-white"><Plus className="w-3 h-3" /></button>
+                           </div>
+
+                           <Button onClick={saveEdit} className="h-10 px-6 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest shadow-xl shadow-emerald-500/10 rounded-xl">
+                              <Save className="w-3.5 h-3.5 mr-2" /> Save Node
+                           </Button>
+                           <Button onClick={() => setStep(3)} variant="outline" className="h-10 px-6 border-white/10 bg-white/5 text-white/40 text-[9px] font-black uppercase tracking-widest rounded-xl">
+                              Finish Edits
+                           </Button>
+                        </div>
+                     </div>
+
+                     <div className="flex-1 flex overflow-hidden relative">
+                        {/* Sidebar */}
+                        <div className={cn(
+                          "absolute lg:relative z-30 h-full w-[280px] bg-secondary/30 border-r border-white/5 flex flex-col transition-transform duration-500 ease-out",
+                          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:-ml-[280px]"
+                        )}>
+                           <div className="p-4 border-b border-white/5">
+                              <p className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.3em]">Project Matrix</p>
+                           </div>
+                           <div className="flex-1 overflow-auto custom-scrollbar p-3 space-y-1 bg-black/10">
                               {assets.map(asset => (
                                 <button
                                   key={asset.id}
@@ -521,72 +641,89 @@ export default function HtmlSiteRescuePage() {
                                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
                                       {asset.content !== undefined ? <FileCode className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
                                    </div>
-                                   <span className="text-[10px] font-bold truncate uppercase tracking-tight">{asset.name}</span>
+                                   <div className="min-w-0 flex-1">
+                                      <p className="text-[10px] font-bold truncate uppercase tracking-tight">{asset.name}</p>
+                                      {asset.isDirty && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-0.5" />}
+                                   </div>
                                 </button>
                               ))}
                            </div>
-                        </CardContent>
-                        <div className="p-4 border-t border-white/5 mt-auto">
-                           <Button onClick={() => setStep(3)} className="w-full h-11 bg-primary text-white font-black uppercase text-[9px] rounded-xl shadow-lg">Finish Edits <ChevronRight className="w-3.5 h-3.5 ml-2" /></Button>
+                           <div className="p-4 border-t border-white/5 bg-black/20">
+                              <button onClick={() => setShowLeaveConfirm(true)} className="flex items-center gap-3 text-[9px] font-black uppercase text-foreground/20 hover:text-red-500 transition-colors">
+                                 <LogOut className="w-3.5 h-3.5" /> Abort Studio
+                              </button>
+                           </div>
                         </div>
-                     </Card>
 
-                     {/* Editor - Right */}
-                     <Card className="lg:col-span-8 glass-card border-border flex flex-col overflow-hidden bg-black/40">
-                        {activeEditId ? (
-                           <>
-                              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex flex-row items-center justify-between px-6">
-                                 <div className="flex items-center gap-3">
-                                    <Edit3 className="w-4 h-4 text-primary" />
-                                    <span className="text-[10px] font-black uppercase text-foreground truncate max-w-[200px]">{assets.find(a => a.id === activeEditId)?.name}</span>
-                                 </div>
-                                 <Button onClick={saveEdit} size="sm" className="h-8 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[8px] tracking-widest shadow-lg">
-                                    <Save className="w-3 h-3 mr-1.5" /> Save Node
-                                 </Button>
-                              </CardHeader>
-                              <CardContent className="flex-1 p-0 relative">
-                                 <textarea 
-                                    value={editBuffer}
-                                    onChange={e => setEditBuffer(e.target.value)}
-                                    spellCheck={false}
-                                    className="w-full h-full p-8 bg-transparent text-foreground font-mono text-xs leading-relaxed resize-none focus:outline-none custom-scrollbar"
-                                 />
-                              </CardContent>
-                           </>
-                        ) : (
-                          <div className="flex-1 flex flex-col items-center justify-center gap-6 opacity-10">
-                             <FileEdit className="w-16 h-16 text-primary" />
-                             <p className="text-[10px] font-black uppercase tracking-widest">Select a text node to update</p>
-                          </div>
-                        )}
-                     </Card>
+                        {/* Editor Workspace */}
+                        <div className="flex-1 flex flex-col overflow-hidden bg-[#060608] relative">
+                           {/* Find/Replace Floating Bar */}
+                           {showSearch && (
+                             <div className="absolute top-4 right-8 z-40 animate-in slide-in-from-top-4 duration-300">
+                                <Card className="p-4 glass-card border-primary/40 bg-card/95 shadow-2xl flex flex-col gap-4 w-[320px]">
+                                   <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2 text-primary">
+                                         <Search className="w-4 h-4" />
+                                         <span className="text-[9px] font-black uppercase tracking-widest">Find & Replace</span>
+                                      </div>
+                                      <button onClick={() => setShowSearch(false)} className="text-foreground/20 hover:text-white"><X className="w-4 h-4" /></button>
+                                   </div>
+                                   <Input 
+                                    value={searchTerm} 
+                                    onChange={e => setSearchTerm(e.target.value)} 
+                                    placeholder="Find string..." 
+                                    className="h-10 bg-background border-white/10 text-xs font-mono" 
+                                   />
+                                   <Input 
+                                    value={replaceTerm} 
+                                    onChange={e => setReplaceTerm(e.target.value)} 
+                                    placeholder="Replace with..." 
+                                    className="h-10 bg-background border-white/10 text-xs font-mono" 
+                                   />
+                                   <Button onClick={executeReplace} className="h-10 bg-primary text-white text-[9px] font-black uppercase">Execute Global Replacement</Button>
+                                </Card>
+                             </div>
+                           )}
+
+                           <div className="flex-1 flex overflow-hidden">
+                              {/* Line Numbers */}
+                              <div 
+                                ref={lineNumbersRef}
+                                className="w-12 bg-black/40 border-r border-white/5 pt-10 flex flex-col items-center text-[10px] font-mono text-white/10 select-none overflow-hidden"
+                              >
+                                {lineNumbers.map(n => (
+                                  <div key={n} className="h-6 leading-6">{n}</div>
+                                ))}
+                              </div>
+
+                              <div className="flex-1 relative">
+                                 {activeEditId ? (
+                                   <textarea 
+                                     ref={editorTextareaRef}
+                                     value={editBuffer}
+                                     onChange={e => onBufferChange(e.target.value)}
+                                     onKeyDown={handleEditorKeyDown}
+                                     onScroll={handleScroll}
+                                     spellCheck={false}
+                                     style={{ fontSize: `${editorFontSize}px` }}
+                                     className="w-full h-full p-10 pt-10 bg-transparent text-foreground font-mono leading-6 resize-none focus:outline-none custom-scrollbar whitespace-pre"
+                                   />
+                                 ) : (
+                                   <div className="h-full flex flex-col items-center justify-center gap-8 opacity-10">
+                                      <FileEdit className="w-20 h-20 text-primary" />
+                                      <p className="text-xl font-headline font-black uppercase tracking-[0.5em]">Select Node to Edit</p>
+                                   </div>
+                                 )}
+                              </div>
+                           </div>
+                        </div>
+                     </div>
                   </div>
                 )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:bg-secondary/80 transition-all">
-                      <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                         <Zap className="w-7 h-7" />
-                      </div>
-                      <div className="space-y-1">
-                         <h4 className="text-[11px] font-black uppercase text-foreground">Portable Architecture</h4>
-                         <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Root-level identifiers (/) are automatically translated to relative paths to ensure your site functions on any hosting protocol.</p>
-                      </div>
-                   </div>
-                   <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:bg-secondary/80 transition-all">
-                      <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                         <ShieldCheck className="w-7 h-7" />
-                      </div>
-                      <div className="space-y-1">
-                         <h4 className="text-[11px] font-black uppercase text-foreground">Secure Re-Matricing</h4>
-                         <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">All processing occurs 100% locally in your browser memory. Your site source and assets never touch our cloud nodes.</p>
-                      </div>
-                   </div>
-                </div>
              </div>
            )}
 
-           {/* Step 3: Download */}
+           {/* PHASE 3: PRODUCTION */}
            {step === 3 && (
              <div className="max-w-4xl mx-auto w-full space-y-8 animate-in zoom-in-95 duration-500">
                 <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl p-10 sm:p-16 text-center flex flex-col items-center gap-10">
@@ -621,9 +758,6 @@ export default function HtmlSiteRescuePage() {
                          <p>3. Move contents of ZIP to /public</p>
                          <p>4. Deploy: firebase deploy</p>
                       </div>
-                      <Button variant="ghost" onClick={() => handleCopy("firebase init\nfirebase deploy", "fb")} className="h-9 w-full text-[8px] font-black uppercase tracking-widest border border-white/5 rounded-xl">
-                         {isCopied === 'fb' ? 'Copied' : 'Copy CLI Matrix'}
-                      </Button>
                    </Card>
                    <Card className="glass-card border-border p-8 space-y-6 group hover:border-primary/20 transition-all">
                       <div className="flex items-center gap-3">
@@ -634,9 +768,6 @@ export default function HtmlSiteRescuePage() {
                       </div>
                       <div className="space-y-4">
                          <p className="text-[11px] text-foreground/40 font-medium leading-relaxed uppercase">Drop the extracted folder into the deployment dashboard. Our normalized paths ensure instant visual calibration.</p>
-                         <Button variant="ghost" onClick={() => handleCopy("https://vercel.com/new", "vercel")} className="h-9 w-full text-[8px] font-black uppercase tracking-widest border border-white/5 rounded-xl">
-                            {isCopied === 'vercel' ? 'Copied' : 'Launch Dashboard'}
-                         </Button>
                       </div>
                    </Card>
                 </div>
@@ -645,14 +776,40 @@ export default function HtmlSiteRescuePage() {
         </div>
       </div>
 
+      {/* Confirmation Modals */}
+      <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <ShieldAlert className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               Terminate Session
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+               Are you sure you want to abort the current studio session? All unsaved edits will be definitively purged.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => { setShowLeaveConfirm(false); setStep(1); setMode('simple'); }}
+              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+            >
+              Confirm Abort
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        textarea { caret-color: hsl(var(--primary)); }
       `}</style>
     </div>
   );
 }
-
