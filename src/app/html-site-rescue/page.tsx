@@ -54,7 +54,8 @@ import {
   Monitor,
   Terminal,
   Hash,
-  AlignLeft
+  AlignLeft,
+  PanelLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,7 +97,7 @@ import {
 interface LocalFile {
   id: string;
   name: string;
-  path: string; // The relative path in the zip/project
+  path: string; 
   type: string;
   size: number;
   blob: Blob;
@@ -114,13 +115,6 @@ interface AssetReference {
   type: 'script' | 'style' | 'image' | 'link';
 }
 
-interface FileTreeNode {
-  name: string;
-  path: string;
-  children?: Record<string, FileTreeNode>;
-  fileId?: string;
-}
-
 export default function HtmlSiteRescuePage() {
   const { toast } = useToast();
   
@@ -128,11 +122,11 @@ export default function HtmlSiteRescuePage() {
   const [mode, setMode] = useState<'simple' | 'update'>('simple');
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [indexHtmlId, setIndexHtmlId] = useState<string | null>(null);
   
-  // File State (The primary registry)
+  // File State
   const [assets, setAssets] = useState<LocalFile[]>([]);
   const [references, setReferences] = useState<AssetReference[]>([]);
-  const [indexHtmlId, setIndexHtmlId] = useState<string | null>(null);
 
   // Advanced IDE State
   const [openFileIds, setOpenFileIds] = useState<string[]>([]);
@@ -148,19 +142,23 @@ export default function HtmlSiteRescuePage() {
   const [globalReplace, setGlobalReplace] = useState('');
 
   // UI State
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [replaceTerm, setReplaceTerm] = useState('');
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const editorTextareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
 
-  // --- 1. Analysis & Path Logic ---
+  // --- 1. View Initialization ---
+  useEffect(() => {
+    // Open sidebar on desktop, closed on mobile by default
+    if (typeof window !== 'undefined') {
+      setIsSidebarOpen(window.innerWidth >= 1024);
+    }
+  }, []);
+
+  // --- 2. Analysis & Path Logic ---
 
   const scanHtml = useCallback((html: string, currentAssets: LocalFile[]) => {
     if (!html) return;
@@ -211,38 +209,20 @@ export default function HtmlSiteRescuePage() {
     setReferences(detected);
   }, []);
 
-  // Update references when the active index changes or assets change
   useEffect(() => {
     const main = assets.find(a => a.id === indexHtmlId);
     if (main?.content) scanHtml(main.content, assets);
   }, [indexHtmlId, assets, scanHtml]);
 
-  // --- 2. File Tree & Navigation ---
-
-  const fileTree = useMemo(() => {
-    const root: FileTreeNode = { name: 'root', path: '', children: {} };
-    assets.forEach(file => {
-      const parts = file.path.split('/');
-      let current = root;
-      parts.forEach((part, i) => {
-        if (i === parts.length - 1) {
-          current.children![part] = { name: part, path: file.path, fileId: file.id };
-        } else {
-          if (!current.children![part]) {
-            current.children![part] = { name: part, path: parts.slice(0, i + 1).join('/'), children: {} };
-          }
-          current = current.children![part];
-        }
-      });
-    });
-    return root;
-  }, [assets]);
+  // --- 3. File Tree Logic ---
 
   const openFile = (id: string) => {
     if (!openFileIds.includes(id)) {
       setOpenFileIds(prev => [...prev, id]);
     }
     setActiveFileId(id);
+    // Auto-close sidebar on mobile after selecting a file
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
   };
 
   const closeFile = (e: React.MouseEvent, id: string) => {
@@ -254,7 +234,7 @@ export default function HtmlSiteRescuePage() {
     }
   };
 
-  // --- 3. Handlers ---
+  // --- 4. Handlers ---
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploaded = Array.from(e.target.files || []);
@@ -282,7 +262,6 @@ export default function HtmlSiteRescuePage() {
 
     setAssets(prev => {
       const combined = [...prev, ...newAssets];
-      // Auto-detect index.html if not set
       if (!indexHtmlId) {
         const foundIndex = combined.find(a => a.name.toLowerCase() === 'index.html');
         if (foundIndex) setIndexHtmlId(foundIndex.id);
@@ -321,18 +300,6 @@ export default function HtmlSiteRescuePage() {
     toast({ title: "Node Purged" });
   };
 
-  const renameFile = (id: string, newName: string) => {
-    setAssets(prev => prev.map(a => {
-      if (a.id === id) {
-        const parts = a.path.split('/');
-        parts[parts.length - 1] = newName;
-        return { ...a, name: newName, path: parts.join('/') };
-      }
-      return a;
-    }));
-    toast({ title: "Node Relabeled" });
-  };
-
   const saveFileContent = (id: string, content: string) => {
     setAssets(prev => prev.map(a => {
       if (a.id === id) {
@@ -343,7 +310,7 @@ export default function HtmlSiteRescuePage() {
     }));
   };
 
-  // --- 4. Global Operations ---
+  // --- 5. Global Operations ---
 
   const createSnapshot = () => {
     setSnapshots(prev => [...prev.slice(-4), assets.map(a => ({ ...a }))]);
@@ -354,7 +321,7 @@ export default function HtmlSiteRescuePage() {
     const last = snapshots[snapshots.length - 1];
     setAssets(last);
     setSnapshots(prev => prev.slice(0, -1));
-    toast({ title: "Matrix Restored", description: "Reverted to previous project state." });
+    toast({ title: "Matrix Restored" });
   };
 
   const executeGlobalReplace = () => {
@@ -372,10 +339,10 @@ export default function HtmlSiteRescuePage() {
     }));
 
     setShowGlobalReplace(false);
-    toast({ title: "Global Sync Complete", description: `Updated ${count} files across project.` });
+    toast({ title: "Global Sync Complete", description: `Updated ${count} files.` });
   };
 
-  // --- 5. Production & Preview ---
+  // --- 6. Production ---
 
   const generatePreview = () => {
     const index = assets.find(a => a.id === indexHtmlId);
@@ -385,7 +352,6 @@ export default function HtmlSiteRescuePage() {
     }
 
     let html = index.content;
-    // Attempt relative path resolution for preview
     assets.forEach(asset => {
       if (asset.id === indexHtmlId || !asset.content) return;
       const blobUrl = URL.createObjectURL(asset.blob);
@@ -396,7 +362,6 @@ export default function HtmlSiteRescuePage() {
 
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    setPreviewUrl(url);
     window.open(url, '_blank');
   };
 
@@ -425,7 +390,7 @@ export default function HtmlSiteRescuePage() {
       zip.file(f.path, f.blob);
     });
     
-    const readme = `[MY KIT TOOL - RESCUE BUNDLE]\nMode: ${mode.toUpperCase()}\nCreated: ${new Date().toLocaleString()}\n\nDeploy instructions:\n1. Extract ZIP\n2. Upload contents to Firebase, Vercel, or Netlify public root.`;
+    const readme = `[MY KIT TOOL - RESCUE BUNDLE]\nMode: ${mode.toUpperCase()}\nCreated: ${new Date().toLocaleString()}\n\nDeploy instructions:\n1. Extract ZIP\n2. Upload contents to public root.`;
     zip.file("README_DEPLOY.txt", readme);
     
     const content = await zip.generateAsync({ type: "blob" });
@@ -446,7 +411,7 @@ export default function HtmlSiteRescuePage() {
     toast({ title: "Studio Reset" });
   };
 
-  // --- 6. Editor Visual Component ---
+  // --- 7. Editor Helpers ---
   
   const ActiveFile = useMemo(() => assets.find(a => a.id === activeFileId), [assets, activeFileId]);
   
@@ -494,20 +459,33 @@ export default function HtmlSiteRescuePage() {
           </div>
           
           {step === 2 && (
-            <div className="flex p-1 bg-white/5 rounded-xl border border-white/5">
-              <button 
-                onClick={() => setMode('simple')} 
-                className={cn("px-4 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", mode === 'simple' ? "bg-primary text-white" : "text-white/20 hover:text-white")}
-              >
-                Simple
-              </button>
-              <button 
-                onClick={() => setMode('update')} 
-                className={cn("px-4 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", mode === 'update' ? "bg-primary text-white" : "text-white/20 hover:text-white")}
-              >
-                Advanced
-              </button>
-            </div>
+            <>
+              <div className="flex p-1 bg-white/5 rounded-xl border border-white/5">
+                <button 
+                  onClick={() => setMode('simple')} 
+                  className={cn("px-4 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", mode === 'simple' ? "bg-primary text-white" : "text-white/20 hover:text-white")}
+                >
+                  Simple
+                </button>
+                <button 
+                  onClick={() => setMode('update')} 
+                  className={cn("px-4 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", mode === 'update' ? "bg-primary text-white" : "text-white/20 hover:text-white")}
+                >
+                  Advanced
+                </button>
+              </div>
+              
+              {mode === 'update' && (
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className={cn("h-9 px-3 rounded-xl transition-all", isSidebarOpen ? "bg-primary/10 text-primary" : "text-white/40 hover:text-white")}
+                >
+                   <PanelLeft className="w-4 h-4 mr-2" />
+                   <span className="text-[9px] font-black uppercase hidden md:inline">Explorer</span>
+                </Button>
+              )}
+            </>
           )}
         </div>
 
@@ -535,7 +513,7 @@ export default function HtmlSiteRescuePage() {
       </header>
 
       {/* WORKSPACE */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         
         {/* STEP 1: INTAKE */}
         {step === 1 && (
@@ -557,31 +535,6 @@ export default function HtmlSiteRescuePage() {
                   <Button variant="outline" onClick={() => folderInputRef.current?.click()} className="h-16 w-full border-white/10 bg-white/5 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
                      <FolderOpen className="w-5 h-5 mr-3" /> Import Full Folder
                   </Button>
-                  
-                  <div className="pt-4 space-y-4">
-                     <div className="flex items-center gap-4">
-                        <div className="h-[1px] flex-1 bg-white/5" />
-                        <span className="text-[8px] font-black text-white/10 uppercase tracking-[0.6em]">OR PASTE SOURCE</span>
-                        <div className="h-[1px] flex-1 bg-white/5" />
-                     </div>
-                     <Textarea 
-                       placeholder="Paste raw HTML source matrix..." 
-                       value={ActiveFile?.content || ''}
-                       onChange={e => {
-                         const id = Math.random().toString(36).substr(2,9);
-                         setAssets([{
-                           id, name: 'index.html', path: 'index.html', type: 'text/html', size: e.target.value.length, blob: new Blob([e.target.value]), content: e.target.value
-                         }]);
-                         setIndexHtmlId(id);
-                       }}
-                       className="h-40 bg-secondary/30 border-white/10 rounded-2xl text-[11px] font-mono p-6 resize-none shadow-inner"
-                     />
-                     {(assets.length > 0) && (
-                       <Button onClick={() => setStep(2)} className="h-14 w-full bg-white text-black font-black uppercase text-[11px] rounded-2xl shadow-2xl active:scale-95 transition-all">
-                          Enter Studio <ArrowRight className="w-4 h-4 ml-3" />
-                       </Button>
-                     )}
-                  </div>
                </div>
                <input type="file" ref={fileInputRef} multiple onChange={handleFileUpload} className="hidden" />
                <input type="file" ref={folderInputRef} {...{webkitdirectory: "", directory: ""} as any} onChange={handleFileUpload} className="hidden" />
@@ -673,23 +626,36 @@ export default function HtmlSiteRescuePage() {
         {step === 2 && mode === 'update' && (
           <div className="flex-1 flex overflow-hidden">
              
-             {/* 1. IDE Sidebar */}
+             {/* 1. IDE Sidebar (Collapsible) */}
+             {isSidebarOpen && (
+               <div 
+                 onClick={() => window.innerWidth < 1024 && setIsSidebarOpen(false)}
+                 className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden animate-in fade-in"
+               />
+             )}
+             
              <div className={cn(
-               "absolute lg:relative z-40 h-full w-[280px] bg-[#0d0d0f] border-r border-white/5 flex flex-col transition-transform duration-500 ease-out",
-               isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:-ml-[280px]"
+               "absolute lg:relative z-50 h-full w-[280px] bg-[#0d0d0f] border-r border-white/5 flex flex-col transition-all duration-500 ease-out",
+               isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:w-0 lg:opacity-0"
              )}>
-                <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                   <p className="text-[9px] font-black text-foreground/20 uppercase tracking-[0.4em]">Project Explorer</p>
-                   <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                         <button className="p-1 text-white/20 hover:text-white"><Plus className="w-3.5 h-3.5" /></button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="glass-card border-white/10 w-40">
-                         <DropdownMenuItem onClick={() => addNewFile('html')} className="text-[10px] font-black uppercase text-foreground/60 focus:text-primary cursor-pointer"><FileCode className="w-3.5 h-3.5 mr-2" /> New HTML</DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => addNewFile('css')} className="text-[10px] font-black uppercase text-foreground/60 focus:text-primary cursor-pointer"><Zap className="w-3.5 h-3.5 mr-2" /> New CSS</DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => addNewFile('js')} className="text-[10px] font-black uppercase text-foreground/60 focus:text-primary cursor-pointer"><Terminal className="w-3.5 h-3.5 mr-2" /> New JS</DropdownMenuItem>
-                      </DropdownMenuContent>
-                   </DropdownMenu>
+                <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/40">
+                   <div className="flex items-center gap-3">
+                      <FolderOpen className="w-4 h-4 text-primary/40" />
+                      <p className="text-[9px] font-black text-foreground/20 uppercase tracking-[0.4em]">Explorer</p>
+                   </div>
+                   <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-1.5 text-white/20 hover:text-white hover:bg-white/5 rounded-lg transition-colors"><Plus className="w-3.5 h-3.5" /></button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="glass-card border-white/10 w-40">
+                            <DropdownMenuItem onClick={() => addNewFile('html')} className="text-[10px] font-black uppercase cursor-pointer"><FileCode className="w-3.5 h-3.5 mr-2" /> New HTML</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => addNewFile('css')} className="text-[10px] font-black uppercase cursor-pointer"><Zap className="w-3.5 h-3.5 mr-2" /> New CSS</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => addNewFile('js')} className="text-[10px] font-black uppercase cursor-pointer"><Terminal className="w-3.5 h-3.5 mr-2" /> New JS</DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                      <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-1.5 text-white/20 hover:text-white"><X className="w-4 h-4" /></button>
+                   </div>
                 </div>
                 
                 <div className="flex-1 overflow-auto custom-scrollbar p-3 space-y-1 bg-black/20">
@@ -702,12 +668,12 @@ export default function HtmlSiteRescuePage() {
                             activeFileId === asset.id ? "bg-primary/10 border-primary/20 text-primary" : "text-foreground/40 hover:bg-white/5"
                           )}
                         >
-                           <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                           <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center shrink-0 shadow-inner">
                               {asset.content !== undefined ? <FileCode className="w-3.5 h-3.5" /> : <ImageIcon className="w-3.5 h-3.5" />}
                            </div>
                            <div className="min-w-0 flex-1">
                               <p className="text-[10px] font-bold truncate uppercase tracking-tight">{asset.name}</p>
-                              {asset.isDirty && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary" />}
+                              {asset.isDirty && <div className="absolute top-2.5 right-2 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_5px_rgba(59,130,246,1)]" />}
                            </div>
                         </button>
                         
@@ -717,7 +683,7 @@ export default function HtmlSiteRescuePage() {
                                  <button className="p-1.5 text-white/20 hover:text-white"><MoreVertical className="w-3 h-3" /></button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent className="glass-card border-white/10">
-                                 <DropdownMenuItem onClick={() => setIndexHtmlId(asset.id)} className="text-[9px] font-black uppercase cursor-pointer">Set as Entry Point</DropdownMenuItem>
+                                 <DropdownMenuItem onClick={() => setIndexHtmlId(asset.id)} className="text-[9px] font-black uppercase cursor-pointer">Set Entry Point</DropdownMenuItem>
                                  <DropdownMenuItem onClick={() => setShowDeleteConfirm(asset.id)} className="text-[9px] font-black uppercase text-red-500 cursor-pointer">Purge Node</DropdownMenuItem>
                               </DropdownMenuContent>
                            </DropdownMenu>
@@ -726,16 +692,16 @@ export default function HtmlSiteRescuePage() {
                    ))}
                 </div>
 
-                <div className="p-6 bg-black/40 border-t border-white/5 space-y-4">
-                   <Button onClick={() => setShowGlobalReplace(true)} variant="outline" className="w-full h-10 border-white/5 bg-white/5 text-[8px] font-black uppercase tracking-widest">
+                <div className="p-6 bg-[#0d0d0f] border-t border-white/5 space-y-4 shrink-0">
+                   <Button onClick={() => setShowGlobalReplace(true)} variant="outline" className="w-full h-10 border-white/5 bg-white/5 text-[8px] font-black uppercase tracking-widest hover:text-primary">
                       <Replace className="w-3.5 h-3.5 mr-2" /> Global Replace
                    </Button>
-                   <button onClick={restoreSnapshot} disabled={snapshots.length === 0} className="w-full text-[8px] font-black uppercase text-foreground/20 hover:text-primary disabled:opacity-0 transition-all">Restore Snapshot</button>
+                   <button onClick={restoreSnapshot} disabled={snapshots.length === 0} className="w-full text-[8px] font-black uppercase text-foreground/20 hover:text-primary disabled:opacity-0 transition-all">Restore Matrix</button>
                 </div>
              </div>
 
-             {/* 2. Editor Core */}
-             <div className="flex-1 flex flex-col overflow-hidden bg-[#060608]">
+             {/* 2. Editor Core Area */}
+             <div className="flex-1 flex flex-col overflow-hidden bg-[#060608] transition-all duration-500">
                 
                 {/* Tabs Bar */}
                 <div className="h-11 border-b border-white/5 bg-[#0a0a0c] flex items-center overflow-x-auto no-scrollbar shrink-0 px-2">
@@ -753,7 +719,7 @@ export default function HtmlSiteRescuePage() {
                         >
                            <FileCode className={cn("w-3.5 h-3.5", activeFileId === id ? "text-primary" : "opacity-30")} />
                            <span className="text-[10px] font-bold uppercase truncate">{f.name}</span>
-                           {f.isDirty && <div className="w-1 h-1 rounded-full bg-primary" />}
+                           {f.isDirty && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                            <button onClick={(e) => closeFile(e, id)} className="p-1 rounded-md hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
                               <X className="w-3 h-3" />
                            </button>
@@ -762,21 +728,21 @@ export default function HtmlSiteRescuePage() {
                    })}
                 </div>
 
-                {/* Main Text Editor Workspace */}
+                {/* Editor Workspace */}
                 <div className="flex-1 flex overflow-hidden relative">
                    {ActiveFile ? (
                      <div className="flex-1 flex overflow-hidden">
                         {/* Line Numbers */}
                         <div 
                           ref={lineNumbersRef}
-                          className="w-12 bg-[#08080a] border-r border-white/5 pt-10 flex flex-col items-center text-[10px] font-mono text-white/5 select-none overflow-hidden"
+                          className="w-12 bg-[#08080a] border-r border-white/5 pt-10 flex flex-col items-center text-[10px] font-mono text-white/5 select-none overflow-hidden shrink-0"
                         >
                           {lineNumbers.map(n => (
                             <div key={n} className="h-6 leading-6">{n}</div>
                           ))}
                         </div>
 
-                        {/* Editor Textarea */}
+                        {/* Textarea */}
                         <div className="flex-1 relative bg-transparent">
                            <textarea 
                              ref={editorTextareaRef}
@@ -799,11 +765,11 @@ export default function HtmlSiteRescuePage() {
                            
                            {/* Floating Controls Overlay */}
                            <div className="absolute top-4 right-8 z-20 flex items-center gap-3">
-                              <div className="flex bg-black/60 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
+                              <div className="flex bg-black/80 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
                                  <button onClick={() => setFontSize(s => Math.max(8, s-1))} className="p-1.5 text-white/20 hover:text-white"><Minus className="w-3.5 h-3.5" /></button>
                                  <span className="w-10 text-center text-[9px] font-black text-white/30">{editorFontSize}px</span>
                                  <button onClick={() => setFontSize(s => Math.min(24, s+1))} className="p-1.5 text-white/20 hover:text-white"><Plus className="w-3.5 h-3.5" /></button>
-                                 <div className="w-[1px] h-4 bg-white/10 mx-2 mt-1.5" />
+                                 <div className="w-[1px] h-4 bg-white/10 mx-2 mt-1.5 opacity-20" />
                                  <button onClick={() => setSoftWrap(!softWrap)} className={cn("p-1.5 rounded-lg transition-all", softWrap ? "text-primary bg-primary/10" : "text-white/20")} title="Soft Wrap">
                                     <AlignLeft className="w-3.5 h-3.5" />
                                  </button>
@@ -818,6 +784,9 @@ export default function HtmlSiteRescuePage() {
                      <div className="flex-1 flex flex-col items-center justify-center gap-8 opacity-10">
                         <FileEdit className="w-24 h-24 text-primary" />
                         <p className="text-xl font-headline font-black uppercase tracking-[0.5em]">Select Node to Initialize</p>
+                        {!isSidebarOpen && (
+                          <Button onClick={() => setIsSidebarOpen(true)} variant="outline" className="h-11 px-8 rounded-xl bg-white/5 border-white/10 text-white font-black uppercase text-[10px] tracking-widest">Open Explorer</Button>
+                        )}
                      </div>
                    )}
                 </div>
@@ -827,7 +796,7 @@ export default function HtmlSiteRescuePage() {
 
         {/* STEP 3: PRODUCTION SUMMARY */}
         {step === 3 && (
-          <div className="max-w-4xl mx-auto w-full space-y-8 animate-in zoom-in-95 duration-500">
+          <div className="max-w-4xl mx-auto w-full space-y-8 animate-in zoom-in-95 duration-500 p-6 md:p-12">
              <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl p-16 text-center flex flex-col items-center gap-10">
                 <div className="w-24 h-24 rounded-[3rem] bg-emerald-500 text-white flex items-center justify-center shadow-[0_20px_50px_rgba(16,185,129,0.4)] border-4 border-white/10">
                    <CheckCircle2 className="w-12 h-12" />
