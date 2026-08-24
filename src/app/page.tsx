@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -1340,17 +1339,6 @@ const TOOLS: Tool[] = [
     category: 'image'
   },
   { 
-    href: '/ocr', 
-    icon: FileText, 
-    title: 'Photo to Text', 
-    desc: 'Extract text from images locally and securely.', 
-    label: 'INTEL', 
-    color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
-    glowClass: 'bg-emerald-500/10',
-    keywords: ['text', 'extract', 'ocr', 'image to text', 'recognize', 'scan', 'read', 'photo to text'],
-    category: 'utilities'
-  },
-  { 
     href: '/dot-art', 
     icon: Grid3X3, 
     title: 'Dot Art Studio', 
@@ -1458,6 +1446,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['html', 'rescue', 'index', 'host', 'zip', 'package', 'fix links'],
+    category: 'utilities'
+  },
+  { 
+    href: '/shadow-chat', 
+    icon: Ghost, 
+    title: 'Shadow Chat', 
+    desc: 'Premium ephemeral real-time messaging rooms.', 
+    label: 'SECURE', 
+    color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['chat', 'ephemeral', 'messenger', 'secure chat', 'private room', 'realtime'],
     category: 'utilities'
   }
 ];
@@ -1570,7 +1569,8 @@ export default function Home() {
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
-      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site'
+      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
+      'Shadow Chat', 'Realtime Messenger', 'Private ephemeral chat'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1794,7 +1794,7 @@ export default function Home() {
                  <ShadButton 
                    onClick={() => setVisibleCount(prev => prev + 6)}
                    variant="outline"
-                   className="h-14 sm:h-16 px-10 sm:px-12 rounded-full border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-[10px] sm:text-xs backdrop-blur-xl hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] group/see"
+                   className="h-14 sm:h-16 px-10 sm:px-12 rounded-full border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-[10px] sm:xs backdrop-blur-xl hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] group/see"
                  >
                     <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 group-hover/see:translate-y-1 transition-transform" />
                     See More Tools
@@ -1807,7 +1807,7 @@ export default function Home() {
           </div>
           
           <div className="text-center opacity-100 flex flex-col items-center gap-4">
-             <Heart className="w-8 h-8 text-primary" />
+             <Heart className="w-8 h-8 text-primary fill-current drop-shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse" />
              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-foreground bg-gradient-to-r from-blue-400 via-primary to-indigo-500 bg-clip-text text-transparent drop-shadow-sm">
                 Developed by <span className="text-white">Umar Farooq</span> — Studio Master v7.2 Pro
              </p>
