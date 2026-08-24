@@ -1,6 +1,7 @@
+
 "use client"
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { 
   FileArchive, 
   Search, 
@@ -27,7 +28,11 @@ import {
   Copy,
   Terminal,
   FileSearch,
-  FolderOpen
+  FolderOpen,
+  X,
+  Play,
+  StopCircle,
+  FileDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,11 +49,23 @@ interface AssetItem {
   id: string;
   url: string;
   path: string; 
-  type: 'html' | 'css' | 'js' | 'image' | 'icon';
+  type: 'html' | 'css' | 'js' | 'image' | 'icon' | 'media';
   status: 'pending' | 'downloading' | 'success' | 'failed';
   size?: number;
   retries: number;
+  reason?: string;
 }
+
+/**
+ * Utility: Standard Binary Size Formatting
+ */
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
 
 export default function SiteBackupClonerPage() {
   const { toast } = useToast();
@@ -58,16 +75,9 @@ export default function SiteBackupClonerPage() {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<'idle' | 'scanning' | 'downloading' | 'complete' | 'error'>('idle');
   const [isCopied, setIsCopied] = useState(false);
-
+  
+  const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
 
   // --- Asset Discovery Logic ---
   const extractAssets = (html: string, baseUrl: string): AssetItem[] => {
@@ -76,16 +86,26 @@ export default function SiteBackupClonerPage() {
     const discovered: AssetItem[] = [];
     const seen = new Set<string>();
 
-    const normalizePath = (attrValue: string) => {
+    const normalizeUrl = (attrValue: string) => {
       try {
         const absolute = new URL(attrValue, baseUrl).href;
-        const urlObj = new URL(absolute);
-        const isSameDomain = urlObj.hostname === new URL(baseUrl).hostname;
+        const u = new URL(absolute);
         
-        let localPath = urlObj.pathname;
-        if (localPath === '/') localPath = '/index.html';
+        // Skip non-http protocols and data URIs
+        if (!u.protocol.startsWith('http')) return null;
         
-        return { absolute, localPath: localPath.startsWith('/') ? localPath.slice(1) : localPath, isSameDomain };
+        // Determine local directory mapping
+        let dir = 'assets/';
+        const ext = u.pathname.split('.').pop()?.toLowerCase();
+        if (ext === 'css') dir = 'css/';
+        else if (ext === 'js' || ext === 'mjs') dir = 'js/';
+        else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico'].includes(ext || '')) dir = 'img/';
+        else if (['mp4', 'webm', 'mp3', 'wav', 'ogg'].includes(ext || '')) dir = 'media/';
+
+        const fileName = u.pathname.split('/').pop() || `asset_${Math.random().toString(36).substr(2, 5)}`;
+        const localPath = dir + fileName;
+        
+        return { absolute, localPath };
       } catch (e) {
         return null;
       }
@@ -93,13 +113,13 @@ export default function SiteBackupClonerPage() {
 
     const add = (raw: string | null, type: AssetItem['type']) => {
       if (!raw) return;
-      const pathData = normalizePath(raw);
-      if (pathData && !seen.has(pathData.absolute)) {
-        seen.add(pathData.absolute);
+      const mapping = normalizeUrl(raw);
+      if (mapping && !seen.has(mapping.absolute)) {
+        seen.add(mapping.absolute);
         discovered.push({
           id: Math.random().toString(36).substr(2, 9),
-          url: pathData.absolute,
-          path: pathData.localPath,
+          url: mapping.absolute,
+          path: mapping.localPath,
           type,
           status: 'pending',
           retries: 0
@@ -107,21 +127,28 @@ export default function SiteBackupClonerPage() {
       }
     };
 
-    discovered.push({
-      id: 'index-html',
-      url: baseUrl,
-      path: 'index.html',
-      type: 'html',
-      status: 'success',
-      retries: 0
-    });
-
+    // Deep Crawl Matrix
     doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => add(el.getAttribute('href'), 'css'));
     doc.querySelectorAll('script[src]').forEach(el => add(el.getAttribute('src'), 'js'));
     doc.querySelectorAll('img[src]').forEach(el => add(el.getAttribute('src'), 'image'));
+    doc.querySelectorAll('img[srcset]').forEach(el => {
+      const srcset = el.getAttribute('srcset');
+      srcset?.split(',').forEach(s => add(s.trim().split(' ')[0], 'image'));
+    });
     doc.querySelectorAll('link[rel*="icon"]').forEach(el => add(el.getAttribute('href'), 'icon'));
+    doc.querySelectorAll('video[poster]').forEach(el => add(el.getAttribute('poster'), 'image'));
+    doc.querySelectorAll('source[src]').forEach(el => add(el.getAttribute('src'), 'media'));
 
     return discovered;
+  };
+
+  const handleCancel = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setIsProcessing(false);
+    setStatus('idle');
+    toast({ title: "Protocol Aborted", description: "Archival process terminated by hardware." });
   };
 
   const executeClone = async () => {
@@ -130,9 +157,11 @@ export default function SiteBackupClonerPage() {
     setIsProcessing(true);
     setStatus('scanning');
     setAssets([]);
-    setProgress(5);
+    setProgress(0);
+    abortControllerRef.current = new AbortController();
 
     try {
+      // 1. Initial Handshake
       const response = await fetchHtmlAction(url);
       if (!response.success || !response.html) {
         throw new Error(response.error || "Uplink restricted by remote host.");
@@ -142,68 +171,109 @@ export default function SiteBackupClonerPage() {
       const initialAssets = extractAssets(response.html, base);
       setAssets(initialAssets);
       setStatus('downloading');
-      setProgress(10);
-
+      
       const zip = new JSZip();
-      zip.file("index.html", response.html);
+      const mappingTable: Record<string, string> = {}; // URL -> LocalPath
 
+      // 2. Controlled Download Pool (Concurrency 5)
       const downloadAsset = async (item: AssetItem): Promise<void> => {
-        if (item.id === 'index-html') return;
+        if (abortControllerRef.current?.signal.aborted) return;
         
-        try {
-          setAssets(prev => prev.map(a => a.id === item.id ? { ...a, status: 'downloading' } : a));
-          const res = await fetch(item.url);
-          if (!res.ok) throw new Error("CORS or 404");
-          const blob = await res.blob();
-          const buffer = await blob.arrayBuffer();
-          zip.file(item.path, buffer);
-          setAssets(prev => prev.map(a => a.id === item.id ? { ...a, status: 'success', size: blob.size } : a));
-        } catch (e) {
-          if (item.retries < 1) {
-            const retryItem = { ...item, retries: 1 };
-            await downloadAsset(retryItem);
-          } else {
-            setAssets(prev => prev.map(a => a.id === item.id ? { ...a, status: 'failed' } : a));
+        const attempt = async (retryNum: number): Promise<boolean> => {
+          try {
+            setAssets(prev => prev.map(a => a.id === item.id ? { ...a, status: 'downloading' } : a));
+            
+            // Timeout protection
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), 12000);
+            
+            const res = await fetch(item.url, { signal: controller.signal });
+            clearTimeout(id);
+            
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            const blob = await res.blob();
+            const buffer = await blob.arrayBuffer();
+            zip.file(item.path, buffer);
+            
+            mappingTable[item.url] = item.path;
+            
+            setAssets(prev => prev.map(a => a.id === item.id ? { 
+              ...a, 
+              status: 'success', 
+              size: blob.size 
+            } : a));
+            return true;
+          } catch (e: any) {
+            if (retryNum < 2) return await attempt(retryNum + 1);
+            setAssets(prev => prev.map(a => a.id === item.id ? { 
+              ...a, 
+              status: 'failed', 
+              reason: e.message || 'CORS/Timeout' 
+            } : a));
+            return false;
           }
-        }
+        };
+
+        await attempt(0);
       };
 
-      const chunks = [];
-      const batchSize = 5;
-      for (let i = 0; i < initialAssets.length; i += batchSize) {
-        chunks.push(initialAssets.slice(i, i + batchSize));
+      const concurrency = 5;
+      for (let i = 0; i < initialAssets.length; i += concurrency) {
+        if (abortControllerRef.current?.signal.aborted) break;
+        const batch = initialAssets.slice(i, i + concurrency);
+        await Promise.all(batch.map(downloadAsset));
+        setProgress(Math.round(((i + batch.length) / initialAssets.length) * 90));
       }
 
-      for (let i = 0; i < chunks.length; i++) {
-        await Promise.all(chunks[i].map(downloadAsset));
-        setProgress(10 + Math.round(((i + 1) / chunks.length) * 80));
-      }
+      // 3. Linguistic Post-Process (Link Rewriting)
+      setStatus('scanning'); // Re-using for rewrite phase
+      let finalHtml = response.html;
+      initialAssets.forEach(a => {
+        if (mappingTable[a.url]) {
+          // Robust replacement for common attribute patterns
+          const local = mappingTable[a.url];
+          finalHtml = finalHtml.split(`"${a.url}"`).join(`"${local}"`);
+          finalHtml = finalHtml.split(`'${a.url}'`).join(`'${local}'`);
+          // Also try to catch unquoted or relative patterns if they were normalized
+          const relative = a.url.replace(base, '');
+          if (relative && relative !== a.url) {
+             finalHtml = finalHtml.split(`"${relative}"`).join(`"${local}"`);
+             finalHtml = finalHtml.split(`'${relative}'`).join(`'${local}'`);
+          }
+        </div>
+      });
 
-      setStatus('complete');
-      setProgress(100);
-      
+      zip.file("index.html", finalHtml);
+
+      // 4. Final Export
       const zipContent = await zip.generateAsync({ type: "blob" });
       const downloadLink = URL.createObjectURL(zipContent);
       const a = document.createElement('a');
       a.href = downloadLink;
-      a.download = `site_backup_${new URL(base).hostname.replace(/\./g, '_')}.zip`;
+      a.download = `backup_${new URL(base).hostname.replace(/\./g, '_')}.zip`;
       a.click();
-      toast({ title: "Backup Complete" });
+
+      setStatus('complete');
+      setProgress(100);
+      toast({ title: "Archival Complete", description: "Structured project bundle generated." });
     } catch (err: any) {
+      if (err.name === 'AbortError') return;
       setStatus('error');
       toast({ variant: "destructive", title: "Protocol Failure", description: err.message });
     } finally {
       setIsProcessing(false);
+      abortControllerRef.current = null;
     }
   };
 
   const handleCopyFailed = () => {
-    const failedList = assets.filter(a => a.status === 'failed').map(a => a.url).join('\n');
+    const failedList = assets.filter(a => a.status === 'failed').map(a => `${a.url} (${a.reason})`).join('\n');
     if (failedList) {
       navigator.clipboard.writeText(failedList);
       setIsCopied(true);
-      toast({ title: "Failed URLs Copied" });
-      setTimeout(() => setIsCopied(null), 2000);
+      toast({ title: "Failure Log Copied" });
+      setTimeout(() => setIsCopied(false), 2000);
     }
   };
 
@@ -222,6 +292,7 @@ export default function SiteBackupClonerPage() {
       case 'js': return <Terminal className="w-4 h-4 text-yellow-400" />;
       case 'image': return <ImageIcon className="w-4 h-4 text-emerald-400" />;
       case 'html': return <FileCode className="w-4 h-4 text-orange-400" />;
+      case 'media': return <Film className="w-4 h-4 text-rose-400" />;
       default: return <FileText className="w-4 h-4 text-primary/40" />;
     }
   };
@@ -237,8 +308,8 @@ export default function SiteBackupClonerPage() {
               <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight leading-none overflow-wrap-anywhere">
                 Site Backup <span className="text-primary italic">Cloner Studio</span>
               </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed overflow-wrap-anywhere">
-                Professional linguistic asset archival. Isolate and download public frontend components into a structured ZIP bundle locally in your browser.
+              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+                Professional linguistic asset archival. Isolate public components into a structured ZIP bundle locally in your browser.
               </p>
            </div>
            <div className="flex items-center gap-3 shrink-0 pb-2">
@@ -277,14 +348,25 @@ export default function SiteBackupClonerPage() {
                     </div>
                  </div>
 
-                 <Button 
-                   onClick={executeClone} 
-                   disabled={isProcessing || !url.trim()}
-                   className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
-                 >
-                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Layers className="w-5 h-5 mr-3" />}
-                   Execute Clone Protocol
-                 </Button>
+                 {isProcessing ? (
+                   <Button 
+                     onClick={handleCancel}
+                     variant="destructive"
+                     className="w-full h-16 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl active:scale-95 transition-all"
+                   >
+                     <StopCircle className="w-5 h-5 mr-3 animate-pulse" />
+                     Abort Protocol
+                   </Button>
+                 ) : (
+                   <Button 
+                     onClick={executeClone} 
+                     disabled={!url.trim()}
+                     className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                   >
+                     <Layers className="w-5 h-5 mr-3" />
+                     Execute Clone Protocol
+                   </Button>
+                 )}
 
                  <div className="p-6 rounded-[2rem] bg-amber-500/5 border border-amber-500/10 space-y-3">
                     <div className="flex items-center gap-3 text-amber-600">
@@ -295,7 +377,7 @@ export default function SiteBackupClonerPage() {
                        Browser security protocols strictly prevent the archival of files restricted by remote CORS headers. Private backend logic and server-side code cannot be retrieved.
                     </p>
                  </div>
-              </CardContent>
+              </div>
            </Card>
 
            <div className="grid grid-cols-1 gap-6">
@@ -351,9 +433,12 @@ export default function SiteBackupClonerPage() {
                         </div>
                      )}
 
-                     <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-10 space-y-2">
+                     <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-10 space-y-2 bg-[#060608]">
                         {assets.map((asset) => (
-                          <div key={asset.id} className="p-4 rounded-2xl bg-secondary/40 border border-border flex items-center justify-between gap-6 transition-all animate-in slide-in-from-bottom-2">
+                          <div key={asset.id} className={cn(
+                            "p-4 rounded-2xl border flex items-center justify-between gap-6 transition-all animate-in slide-in-from-bottom-2",
+                            asset.status === 'failed' ? "bg-red-500/5 border-red-500/10" : "bg-secondary/40 border-border"
+                          )}>
                              <div className="flex items-center gap-4 min-w-0">
                                 <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center shrink-0">
                                    {getIcon(asset.type)}
@@ -366,7 +451,7 @@ export default function SiteBackupClonerPage() {
                              <div className="flex items-center gap-3 shrink-0">
                                 {asset.status === 'downloading' && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
                                 {asset.status === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                                {asset.status === 'failed' && <XCircle className="w-4 h-4 text-red-500" />}
+                                {asset.status === 'failed' && <XCircle className="w-4 h-4 text-red-500" title={asset.reason} />}
                                 <span className={cn(
                                   "text-[8px] font-black uppercase tracking-widest",
                                   asset.status === 'success' ? 'text-emerald-500' : 
