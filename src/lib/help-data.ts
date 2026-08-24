@@ -13,6 +13,23 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'html-site-rescue': {
+    title: 'HTML Site Rescue Studio',
+    description: 'Professional utility for recovering and re-packaging web projects. Sanitize broken path identifiers and bundle local assets into production-ready ZIP archives.',
+    steps: [
+      'Import your index.html file or paste its raw source code into the intake matrix.',
+      'Upload the associated asset folders (CSS, JS, Images) to satisfy dependency requirements.',
+      'Analyze the Discovery Matrix to identify broken root-level paths or missing files.',
+      'Execute the Path Normalization protocol to convert absolute markers into portable relative paths.',
+      'Download the finalized project.zip bundle ready for modern hosting (Firebase/Vercel).'
+    ],
+    tips: [
+      'Use the "Normalize Path Matrix" button to automatically fix root-level (/) issues.',
+      'Ensure you upload all subfolders to verify dependency integrity before export.',
+      'The studio supports large HTML files up to 5MB for clinical extraction.'
+    ],
+    privacy: 'All processing occurs 100% locally in your browser memory. Your source code and assets are never transmitted or stored on our cloud nodes.'
+  },
   'hashtag-engine': {
     title: 'Hashtag Engine Studio',
     description: 'Professional high-fidelity hashtag discovery engine. Isolate high-growth identifiers for social media platforms using a multi-node API failover protocol.',
@@ -319,7 +336,7 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
       'Click "Refresh Matrix" to re-calibrate your signal identifiers.'
     ],
     tips: [
-      'If discovery fails, ensure your firewall is not blocking external edge APIs.',
+      'If discovery failed, ensure your firewall is not blocking external edge APIs.',
       'Use the copy button next to the IP address for rapid technical documentation.'
     ],
     privacy: 'All discovery lookups are performed via edge APIs. No identity data or IP records are stored on our servers.'
