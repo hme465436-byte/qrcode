@@ -108,6 +108,8 @@ interface LocalFile {
   blob: Blob;
   content?: string;
   isDirty?: boolean;
+  undoStack?: string[];
+  redoStack?: string[];
 }
 
 interface AssetReference {
@@ -316,7 +318,9 @@ export default function HtmlSiteRescuePage() {
         type: f.type,
         blob: f,
         content,
-        isDirty: false
+        isDirty: false,
+        undoStack: [],
+        redoStack: []
       };
       newAssets.push(item);
     }
@@ -336,17 +340,21 @@ export default function HtmlSiteRescuePage() {
     if (e.target) e.target.value = '';
   };
 
+  const handleHtmlUpload = handleFileUpload;
+
   const addNewFile = (type: 'html' | 'css' | 'js') => {
     const name = `new_file_${assets.length + 1}.${type}`;
     const newItem: LocalFile = {
       id: Math.random().toString(36).substr(2, 9),
       name,
       path: name,
-      type: type === 'html' ? 'text/html' : type === 'css' ? 'text/css' : 'text/javascript',
+      type: type === 'html' ? 'text/html' : type === 'css' ? 'text/css' : type === 'javascript',
       size: 0,
       blob: new Blob([''], { type: 'text/plain' }),
       content: '',
-      isDirty: false
+      isDirty: false,
+      undoStack: [],
+      redoStack: []
     };
     setAssets(prev => [...prev, newItem]);
     openFile(newItem.id);
@@ -401,6 +409,42 @@ export default function HtmlSiteRescuePage() {
 
     setShowGlobalReplace(false);
     toast({ title: "Global Sync Complete", description: `Updated ${count} files.` });
+  };
+
+  const undoActiveFile = () => {
+    const file = assets.find(a => a.id === activeFileId);
+    if (!file || !file.undoStack || file.undoStack.length === 0) return;
+    
+    const currentContent = file.content || '';
+    const lastState = file.undoStack[file.undoStack.length - 1];
+    const newUndoStack = file.undoStack.slice(0, -1);
+    const newRedoStack = [currentContent, ...(file.redoStack || [])].slice(0, 20);
+    
+    setAssets(prev => prev.map(a => a.id === file.id ? { 
+      ...a, 
+      content: lastState, 
+      undoStack: newUndoStack, 
+      redoStack: newRedoStack,
+      isDirty: true 
+    } : a));
+  };
+
+  const redoActiveFile = () => {
+    const file = assets.find(a => a.id === activeFileId);
+    if (!file || !file.redoStack || file.redoStack.length === 0) return;
+    
+    const currentContent = file.content || '';
+    const nextState = file.redoStack[0];
+    const newRedoStack = file.redoStack.slice(1);
+    const newUndoStack = [...(file.undoStack || []), currentContent].slice(-20);
+    
+    setAssets(prev => prev.map(a => a.id === file.id ? { 
+      ...a, 
+      content: nextState, 
+      undoStack: newUndoStack, 
+      redoStack: newRedoStack,
+      isDirty: true 
+    } : a));
   };
 
   // --- 7. Production ---
@@ -503,6 +547,15 @@ export default function HtmlSiteRescuePage() {
       e.preventDefault();
       setShowSearch(true);
       setTimeout(() => findInputRef.current?.focus(), 50);
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      e.preventDefault();
+      if (e.shiftKey) redoActiveFile();
+      else undoActiveFile();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+      e.preventDefault();
+      redoActiveFile();
     }
   };
 
@@ -814,7 +867,15 @@ export default function HtmlSiteRescuePage() {
                              onChange={e => {
                                if (ActiveFile.content !== undefined) {
                                  const val = e.target.value;
-                                 setAssets(prev => prev.map(a => a.id === ActiveFile.id ? { ...a, content: val, isDirty: true } : a));
+                                 const oldVal = ActiveFile.content;
+                                 setAssets(prev => prev.map(a => {
+                                   if (a.id === ActiveFile.id) {
+                                     if (val === oldVal) return a;
+                                     const newUndo = [...(a.undoStack || []), oldVal].slice(-20);
+                                     return { ...a, content: val, isDirty: true, undoStack: newUndo, redoStack: [] };
+                                   }
+                                   return a;
+                                 }));
                                  setShowSearch(false);
                                }
                              }}
@@ -858,6 +919,9 @@ export default function HtmlSiteRescuePage() {
                               )}
 
                               <div className="flex bg-black/80 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
+                                 <button onClick={undoActiveFile} disabled={!ActiveFile?.undoStack?.length} className="p-1.5 text-white/20 hover:text-white disabled:opacity-5 transition-all"><Undo2 className="w-3.5 h-3.5" /></button>
+                                 <button onClick={redoActiveFile} disabled={!ActiveFile?.redoStack?.length} className="p-1.5 text-white/20 hover:text-white disabled:opacity-5 transition-all"><Redo2 className="w-3.5 h-3.5" /></button>
+                                 <div className="w-[1px] h-4 bg-white/10 mx-2 mt-1.5 opacity-20" />
                                  <button onClick={() => setShowSearch(true)} className={cn("p-1.5 rounded-lg transition-all", showSearch ? "text-primary bg-primary/10" : "text-white/20 hover:text-white")} title="Find (Ctrl+F)">
                                     <Search className="w-3.5 h-3.5" />
                                  </button>
@@ -1009,3 +1073,4 @@ export default function HtmlSiteRescuePage() {
     </div>
   );
 }
+
