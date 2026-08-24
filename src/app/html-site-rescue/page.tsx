@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -55,7 +56,8 @@ import {
   Terminal,
   Hash,
   AlignLeft,
-  PanelLeft
+  PanelLeft,
+  ChevronUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -135,6 +137,12 @@ export default function HtmlSiteRescuePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [softWrap, setSoftWrap] = useState(false);
   
+  // Find/Search State
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchMatches, setSearchMatches] = useState<number[]>([]);
+  const [currentMatchIdx, setCurrentMatchIdx] = useState(0);
+
   // Batch Operations State
   const [snapshots, setSnapshots] = useState<LocalFile[][]>([]);
   const [showGlobalReplace, setShowGlobalReplace] = useState(false);
@@ -142,23 +150,72 @@ export default function HtmlSiteRescuePage() {
   const [globalReplace, setGlobalReplace] = useState('');
 
   // UI State
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const editorTextareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const findInputRef = useRef<HTMLInputElement>(null);
+
+  const ActiveFile = useMemo(() => assets.find(a => a.id === activeFileId), [assets, activeFileId]);
 
   // --- 1. View Initialization ---
   useEffect(() => {
-    // Open sidebar on desktop, closed on mobile by default
     if (typeof window !== 'undefined') {
       setIsSidebarOpen(window.innerWidth >= 1024);
     }
   }, []);
 
-  // --- 2. Analysis & Path Logic ---
+  // --- 2. Internal Search Logic ---
+
+  const performSearch = useCallback((q: string) => {
+    if (!q || !ActiveFile?.content) {
+      setSearchMatches([]);
+      setCurrentMatchIdx(0);
+      return;
+    }
+    const content = ActiveFile.content.toLowerCase();
+    const lowerQ = q.toLowerCase();
+    const indices: number[] = [];
+    let pos = content.indexOf(lowerQ);
+    while (pos !== -1) {
+      indices.push(pos);
+      pos = content.indexOf(lowerQ, pos + 1);
+    }
+    setSearchMatches(indices);
+    setCurrentMatchIdx(indices.length > 0 ? 0 : 0);
+    if (indices.length > 0) jumpToMatch(indices[0], q.length);
+  }, [ActiveFile]);
+
+  const jumpToMatch = (start: number, len: number) => {
+    if (!editorTextareaRef.current) return;
+    const el = editorTextareaRef.current;
+    el.focus();
+    el.setSelectionRange(start, start + len);
+    
+    // Calculate line for scrolling (hacky but works for standard textarea)
+    const lines = el.value.substring(0, start).split('\n');
+    const lineNum = lines.length;
+    const lineHeight = 24; // from leading-6
+    el.scrollTop = (lineNum - 5) * lineHeight;
+  };
+
+  const nextMatch = () => {
+    if (searchMatches.length === 0) return;
+    const nextIdx = (currentMatchIdx + 1) % searchMatches.length;
+    setCurrentMatchIdx(nextIdx);
+    jumpToMatch(searchMatches[nextIdx], searchQuery.length);
+  };
+
+  const prevMatch = () => {
+    if (searchMatches.length === 0) return;
+    const nextIdx = (currentMatchIdx - 1 + searchMatches.length) % searchMatches.length;
+    setCurrentMatchIdx(nextIdx);
+    jumpToMatch(searchMatches[nextIdx], searchQuery.length);
+  };
+
+  // --- 3. Analysis & Path Logic ---
 
   const scanHtml = useCallback((html: string, currentAssets: LocalFile[]) => {
     if (!html) return;
@@ -214,14 +271,14 @@ export default function HtmlSiteRescuePage() {
     if (main?.content) scanHtml(main.content, assets);
   }, [indexHtmlId, assets, scanHtml]);
 
-  // --- 3. File Tree Logic ---
+  // --- 4. File Tree Logic ---
 
   const openFile = (id: string) => {
     if (!openFileIds.includes(id)) {
       setOpenFileIds(prev => [...prev, id]);
     }
     setActiveFileId(id);
-    // Auto-close sidebar on mobile after selecting a file
+    setShowSearch(false);
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
   };
 
@@ -234,7 +291,7 @@ export default function HtmlSiteRescuePage() {
     }
   };
 
-  // --- 4. Handlers ---
+  // --- 5. Handlers ---
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploaded = Array.from(e.target.files || []);
@@ -310,7 +367,7 @@ export default function HtmlSiteRescuePage() {
     }));
   };
 
-  // --- 5. Global Operations ---
+  // --- 6. Global Operations ---
 
   const createSnapshot = () => {
     setSnapshots(prev => [...prev.slice(-4), assets.map(a => ({ ...a }))]);
@@ -342,7 +399,7 @@ export default function HtmlSiteRescuePage() {
     toast({ title: "Global Sync Complete", description: `Updated ${count} files.` });
   };
 
-  // --- 6. Production ---
+  // --- 7. Production ---
 
   const generatePreview = () => {
     const index = assets.find(a => a.id === indexHtmlId);
@@ -411,9 +468,7 @@ export default function HtmlSiteRescuePage() {
     toast({ title: "Studio Reset" });
   };
 
-  // --- 7. Editor Helpers ---
-  
-  const ActiveFile = useMemo(() => assets.find(a => a.id === activeFileId), [assets, activeFileId]);
+  // --- 8. Editor Helpers ---
   
   const lineNumbers = useMemo(() => {
     if (!ActiveFile?.content) return [1];
@@ -439,6 +494,11 @@ export default function HtmlSiteRescuePage() {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault();
       if (ActiveFile?.content !== undefined) saveFileContent(ActiveFile.id, ActiveFile.content);
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      setShowSearch(true);
+      setTimeout(() => findInputRef.current?.focus(), 50);
     }
   };
 
@@ -721,7 +781,7 @@ export default function HtmlSiteRescuePage() {
                            <span className="text-[10px] font-bold uppercase truncate">{f.name}</span>
                            {f.isDirty && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                            <button onClick={(e) => closeFile(e, id)} className="p-1 rounded-md hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <X className="w-3 h-3" />
+                              <X className="w-3.5 h-3.5" />
                            </button>
                         </div>
                      );
@@ -731,7 +791,7 @@ export default function HtmlSiteRescuePage() {
                 {/* Editor Workspace */}
                 <div className="flex-1 flex overflow-hidden relative">
                    {ActiveFile ? (
-                     <div className="flex-1 flex overflow-hidden">
+                     <div className="flex-1 flex overflow-hidden relative">
                         {/* Line Numbers */}
                         <div 
                           ref={lineNumbersRef}
@@ -751,6 +811,7 @@ export default function HtmlSiteRescuePage() {
                                if (ActiveFile.content !== undefined) {
                                  const val = e.target.value;
                                  setAssets(prev => prev.map(a => a.id === ActiveFile.id ? { ...a, content: val, isDirty: true } : a));
+                                 setShowSearch(false);
                                }
                              }}
                              onKeyDown={handleEditorKeyDown}
@@ -765,7 +826,38 @@ export default function HtmlSiteRescuePage() {
                            
                            {/* Floating Controls Overlay */}
                            <div className="absolute top-4 right-8 z-20 flex items-center gap-3">
+                              {/* Internal Search Bar */}
+                              {showSearch && (
+                                <div className="bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl px-4 py-1.5 flex items-center gap-3 shadow-2xl animate-in slide-in-from-top-4">
+                                   <div className="relative group/find">
+                                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
+                                      <input 
+                                        ref={findInputRef}
+                                        value={searchQuery}
+                                        onChange={e => { setSearchQuery(e.target.value); performSearch(e.target.value); }}
+                                        onKeyDown={e => { if(e.key === 'Enter') nextMatch(); if(e.key === 'Escape') setShowSearch(false); }}
+                                        placeholder="Find..."
+                                        className="h-8 w-40 bg-white/5 border-none rounded-lg pl-8 text-[10px] font-bold text-white outline-none focus:ring-1 focus:ring-primary/40 transition-all"
+                                      />
+                                   </div>
+                                   {searchMatches.length > 0 && (
+                                     <div className="flex items-center gap-3 border-l border-white/5 pl-3">
+                                        <span className="text-[9px] font-mono font-bold text-white/30">{currentMatchIdx + 1}/{searchMatches.length}</span>
+                                        <div className="flex gap-1">
+                                           <button onClick={prevMatch} className="p-1.5 text-white/40 hover:text-white"><ChevronUp className="w-3.5 h-3.5" /></button>
+                                           <button onClick={nextMatch} className="p-1.5 text-white/40 hover:text-white"><ChevronDown className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                     </div>
+                                   )}
+                                   <button onClick={() => setShowSearch(false)} className="p-1.5 text-white/20 hover:text-white ml-1"><X className="w-3.5 h-3.5" /></button>
+                                </div>
+                              )}
+
                               <div className="flex bg-black/80 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
+                                 <button onClick={() => setShowSearch(true)} className={cn("p-1.5 rounded-lg transition-all", showSearch ? "text-primary bg-primary/10" : "text-white/20 hover:text-white")} title="Find (Ctrl+F)">
+                                    <Search className="w-3.5 h-3.5" />
+                                 </button>
+                                 <div className="w-[1px] h-4 bg-white/10 mx-2 mt-1.5 opacity-20" />
                                  <button onClick={() => setFontSize(s => Math.max(8, s-1))} className="p-1.5 text-white/20 hover:text-white"><Minus className="w-3.5 h-3.5" /></button>
                                  <span className="w-10 text-center text-[9px] font-black text-white/30">{editorFontSize}px</span>
                                  <button onClick={() => setFontSize(s => Math.min(24, s+1))} className="p-1.5 text-white/20 hover:text-white"><Plus className="w-3.5 h-3.5" /></button>
