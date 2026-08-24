@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -1458,17 +1459,6 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['html', 'rescue', 'index', 'host', 'zip', 'package', 'fix links'],
     category: 'utilities'
-  },
-  { 
-    href: '/shadow-chat', 
-    icon: Ghost, 
-    title: 'Shadow Chat', 
-    desc: 'Premium ephemeral real-time messaging rooms.', 
-    label: 'SECURE', 
-    color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-    glowClass: 'bg-blue-500/10',
-    keywords: ['chat', 'ephemeral', 'messenger', 'secure chat', 'private room', 'realtime'],
-    category: 'utilities'
   }
 ];
 
@@ -1580,8 +1570,7 @@ export default function Home() {
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
-      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
-      'Shadow Chat', 'Realtime Messenger', 'Private ephemeral chat', 'Site Backup Cloner', 'Backup static website'
+      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1701,13 +1690,17 @@ export default function Home() {
           {/* Search & Category Bar */}
           <div className="w-full max-w-4xl mx-auto space-y-6">
              {/* Search Input */}
-             <div className="w-full max-w-2xl mx-auto group relative">
-                <div className="absolute -inset-10 bg-primary/10 blur-[60px] rounded-full opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000 pointer-events-none" />
-                <div className="absolute -inset-[3px] rounded-[1.4rem] bg-primary/30 opacity-0 group-hover:opacity-60 group-focus-within/search:opacity-0 transition-opacity duration-500 animate-search-glow blur-[2px] pointer-events-none" />
-
-                <div className="relative h-14 sm:h-16 w-full rounded-2xl p-[1px] bg-gradient-to-b from-white/20 to-transparent shadow-2xl duration-500 group-hover:from-primary/30 group-focus-within/search:from-primary/60 group-focus-within/search:to-primary/30">
-                  <div className="moving-border-matrix" />
-                  <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 group-focus-within/search:border-primary/50 group-focus-within/search:shadow-[0_0_60px_-5px_rgba(59,130,246,0.6)] transition-all duration-300 z-10 box-border">
+             <div className="w-full max-w-2xl mx-auto group/search relative">
+                {/* 1. Always-on outer glow */}
+                <div className="search-container-glow" />
+                
+                {/* 2. Container for moving border */}
+                <div className="relative h-14 sm:h-16 w-full rounded-2xl p-[1px] bg-white/10 overflow-hidden shadow-2xl transition-all duration-500 group-hover/search:bg-primary/20 group-focus-within/search:bg-primary/40">
+                  {/* Moving line */}
+                  <div className="search-moving-border" />
+                  
+                  {/* 3. Inner content with inner glow */}
+                  <div className="relative flex items-center w-full h-full bg-card rounded-[calc(1rem-1px)] overflow-hidden border border-white/10 search-inner-glow z-10 box-border">
                     <div className="absolute inset-y-0 left-4 sm:left-5 flex items-center pointer-none">
                       <Search className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/20 group-focus-within/search:text-primary transition-colors icon-3d" />
                     </div>
