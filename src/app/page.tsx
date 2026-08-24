@@ -114,7 +114,8 @@ import {
   Link as LinkIcon,
   Heart,
   Hammer,
-  Hash as HashIcon
+  Hash as HashIcon,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -1388,7 +1389,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -1447,6 +1448,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['hashtag', 'instagram tags', 'tiktok tags', 'growth', 'social media', 'tags generator'],
     category: 'generators'
+  },
+  { 
+    href: '/html-site-rescue', 
+    icon: History, 
+    title: 'HTML Site Rescue', 
+    desc: 'Recover local index.html + libs into hosting ZIP', 
+    label: 'MAINTENANCE', 
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    glowClass: 'bg-blue-500/10',
+    keywords: ['html', 'rescue', 'index', 'host', 'zip', 'package', 'fix links'],
+    category: 'utilities'
   }
 ];
 
@@ -1558,7 +1570,7 @@ export default function Home() {
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
-      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator'
+      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
