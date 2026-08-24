@@ -42,12 +42,20 @@ import JSZip from 'jszip';
 interface AssetItem {
   id: string;
   url: string;
-  path: string;
+  path: string; 
   type: 'html' | 'css' | 'js' | 'image' | 'icon';
   status: 'pending' | 'downloading' | 'success' | 'failed';
   size?: number;
   retries: number;
 }
+
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
 
 export default function SiteBackupClonerPage() {
   const { toast } = useToast();
@@ -247,7 +255,7 @@ export default function SiteBackupClonerPage() {
               <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight leading-none overflow-wrap-anywhere">
                 Site Backup <span className="text-primary italic">Cloner Studio</span>
               </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed overflow-wrap-anywhere">
                 Professional linguistic asset archival. Isolate and download public frontend components into a structured ZIP bundle locally in your browser.
               </p>
            </div>
@@ -445,4 +453,3 @@ export default function SiteBackupClonerPage() {
     </div>
   );
 }
-
