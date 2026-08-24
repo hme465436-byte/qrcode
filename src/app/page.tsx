@@ -1104,7 +1104,7 @@ const TOOLS: Tool[] = [
     desc: 'Resize and frame images for 1280x720 thumbnails.', 
     label: 'YOUTUBE', 
     color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
-    glowClass: 'bg-indigo-500/10',
+    glowClass: 'bg-rose-500/10',
     keywords: ['youtube thumbnail size', '1280x720', 'yt thumbnail maker', 'thumbnail resizer', 'youtube thumbnail resizer'],
     category: 'generators'
   },
@@ -1675,7 +1675,7 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[8px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
               Verified {TOOLS.length} Units
             </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-[8px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-[8px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(59,130,246,0.1)] shadow-primary/20">
               <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" /> Dev UMAR FAROOQ
             </div>
           </div>
