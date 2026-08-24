@@ -30,7 +30,11 @@ import {
   Plus,
   RotateCcw,
   Search,
-  LayoutGrid
+  LayoutGrid,
+  Edit3,
+  FileEdit,
+  Monitor,
+  Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,6 +55,7 @@ interface LocalFile {
   type: string;
   size: number;
   blob: Blob;
+  content?: string; // Stored for text-based files
 }
 
 interface AssetReference {
@@ -63,23 +68,27 @@ interface AssetReference {
   type: 'script' | 'style' | 'image' | 'link';
 }
 
-const ACCEPT_TYPES = ".html,.htm,.css,.js,.mjs,.json,.png,.jpg,.jpeg,.gif,.webp,.svg,.ico,.woff,.woff2,.ttf,.eot,.txt,.md,.map,.xml,.webmanifest";
-
 export default function HtmlSiteRescuePage() {
   const { toast } = useToast();
+  
+  // Studio Config
+  const [mode, setMode] = useState<'simple' | 'update'>('simple');
+  const [step, setStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // File State
   const [indexHtml, setIndexHtml] = useState<string>('');
   const [assets, setAssets] = useState<LocalFile[]>([]);
   const [references, setReferences] = useState<AssetReference[]>([]);
   
+  // Editor State
+  const [activeEditId, setActiveEditId] = useState<string | null>(null);
+  const [editBuffer, setEditBuffer] = useState('');
+  
   // UI State
-  const [step, setStep] = useState(1);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
   const assetInputRef = useRef<HTMLInputElement>(null);
 
   // --- 1. Analysis Engine ---
@@ -90,7 +99,6 @@ export default function HtmlSiteRescuePage() {
     const doc = parser.parseFromString(html, 'text/html');
     const detected: AssetReference[] = [];
 
-    // Helper to check if file exists in our buffer
     const findInAssets = (path: string) => {
       const cleanPath = path.startsWith('/') ? path.slice(1) : path;
       return currentAssets.find(a => a.path === cleanPath || a.name === cleanPath);
@@ -107,12 +115,10 @@ export default function HtmlSiteRescuePage() {
         if (val.startsWith('http') || val.startsWith('//')) {
           status = 'absolute';
         } else {
-          // Normalize root paths to relative for portable hosting
           if (val.startsWith('/')) {
             fixed = val.slice(1);
             status = 'fixed';
           }
-          
           if (!findInAssets(fixed)) {
             status = 'missing';
           }
@@ -143,51 +149,91 @@ export default function HtmlSiteRescuePage() {
   }, [indexHtml, assets, scanHtml]);
 
   // --- 2. Handlers ---
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, isCore = false) => {
     const uploaded = Array.from(e.target.files || []);
     if (uploaded.length === 0) return;
 
     setIsProcessing(true);
     
-    // Attempt to identify a core index node
-    let foundIndex = uploaded.find(f => f.name.toLowerCase() === 'index.html');
-    
-    const newAssets: LocalFile[] = uploaded.map(f => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: f.name,
-      path: f.webkitRelativePath || f.name,
-      size: f.size,
-      type: f.type,
-      blob: f
-    }));
+    const newAssets: LocalFile[] = [];
+
+    for (const f of uploaded) {
+      const isText = f.type.includes('text') || f.type.includes('javascript') || f.type.includes('json') || f.name.endsWith('.css') || f.name.endsWith('.js');
+      const content = isText ? await f.text() : undefined;
+      
+      const item: LocalFile = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: f.name,
+        path: f.webkitRelativePath || f.name,
+        size: f.size,
+        type: f.type,
+        blob: f,
+        content
+      };
+
+      newAssets.push(item);
+
+      if (isCore || f.name.toLowerCase() === 'index.html') {
+        if (content) {
+          setIndexHtml(content);
+          setStep(2);
+        }
+      }
+    }
 
     setAssets(prev => [...prev, ...newAssets]);
-
-    if (foundIndex) {
-      const text = await foundIndex.text();
-      setIndexHtml(text);
-      setStep(2);
-      toast({ title: "Core Matrix Isolated", description: "index.html identified and loaded." });
-    } else if (step === 1 && !indexHtml) {
-      toast({ variant: "default", title: "Assets Buffered", description: "Select index.html or paste source to proceed." });
-    } else {
-      toast({ title: "Batch Injected", description: `Synchronized ${uploaded.length} assets.` });
-    }
+    toast({ title: "Signal Injected", description: `Synchronized ${uploaded.length} nodes.` });
     
     setIsProcessing(false);
     if (e.target) e.target.value = '';
+  };
+
+  const handleSelectFile = (item: LocalFile) => {
+    if (item.content !== undefined) {
+      setActiveEditId(item.id);
+      setEditBuffer(item.content);
+    } else {
+      toast({ variant: "default", title: "Non-Text Node", description: "Binary assets cannot be edited in the linguistic studio." });
+    }
+  };
+
+  const saveEdit = () => {
+    if (!activeEditId) return;
+    
+    const updatedAssets = assets.map(a => {
+      if (a.id === activeEditId) {
+        const nextBlob = new Blob([editBuffer], { type: a.type });
+        return { ...a, content: editBuffer, blob: nextBlob, size: nextBlob.size };
+      }
+      return a;
+    });
+
+    setAssets(updatedAssets);
+    
+    // If we edited the active index.html, update the master scan state
+    const editedFile = updatedAssets.find(a => a.id === activeEditId);
+    if (editedFile && editedFile.name.toLowerCase() === 'index.html') {
+      setIndexHtml(editBuffer);
+    }
+
+    toast({ title: "Node Synchronized", description: "Modifications saved to memory." });
   };
 
   const executeFix = () => {
     let fixedHtml = indexHtml;
     references.forEach(ref => {
       if (ref.status === 'fixed' || ref.status === 'ok') {
-        // Simple string replacement for valid/normalized paths
         fixedHtml = fixedHtml.split(`"${ref.originalValue}"`).join(`"${ref.fixedValue}"`);
         fixedHtml = fixedHtml.split(`'${ref.originalValue}'`).join(`'${ref.fixedValue}'`);
       }
     });
     setIndexHtml(fixedHtml);
+    
+    // Sync back to the asset list for packaging
+    setAssets(prev => prev.map(a => 
+      a.name.toLowerCase() === 'index.html' ? { ...a, content: fixedHtml, blob: new Blob([fixedHtml], { type: 'text/html' }) } : a
+    ));
+
     setStep(3);
     toast({ title: "Matrix Optimized", description: "Path vectors normalized for hosting." });
   };
@@ -196,28 +242,22 @@ export default function HtmlSiteRescuePage() {
     setIsProcessing(true);
     const zip = new JSZip();
     
-    // Add sanitized index.html
-    zip.file("index.html", indexHtml);
-    
-    // Add Assets with original relative paths
+    // Add all assets from buffer
     assets.forEach(f => {
-      if (f.name.toLowerCase() !== 'index.html') {
-        zip.file(f.path, f.blob);
-      }
+      zip.file(f.path, f.blob);
     });
 
-    // Add README
-    const readme = `[MY KIT TOOL - RESCUE BUNDLE]\nCreated: ${new Date().toLocaleString()}\n\nDeploy to Firebase/Vercel/Netlify by uploading these contents to your public root.`;
+    const readme = `[MY KIT TOOL - RESCUE BUNDLE]\nMode: ${mode.toUpperCase()}\nCreated: ${new Date().toLocaleString()}\n\nDeploy instructions:\n1. Extract ZIP\n2. Upload contents to Firebase, Vercel, or Netlify public root.`;
     zip.file("README_DEPLOY.txt", readme);
 
     const content = await zip.generateAsync({ type: "blob" });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(content);
-    link.download = `rescued_project_${Date.now()}.zip`;
+    link.download = `mykit_site_${Date.now()}.zip`;
     link.click();
     
     setIsProcessing(false);
-    toast({ title: "Bundle Exported", description: "ZIP archive saved to local storage." });
+    toast({ title: "Production Packaged", description: "ZIP archive saved successfully." });
   };
 
   const handleCopy = (text: string, id: string) => {
@@ -226,15 +266,6 @@ export default function HtmlSiteRescuePage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
-  const clearStudio = () => {
-    setIndexHtml('');
-    setAssets([]);
-    setReferences([]);
-    setStep(1);
-    toast({ title: "Studio Reset" });
-  };
-
-  // --- 3. View Logic ---
   const stats = useMemo(() => ({
     total: references.length,
     missing: references.filter(r => r.status === 'missing').length,
@@ -254,32 +285,48 @@ export default function HtmlSiteRescuePage() {
                 HTML Site <span className="text-primary italic">Rescue Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional project re-packaging engine. Fix broken path identifiers and bundle local assets into sanitized production ZIPs for modern hosting providers.
+                Professional project re-packaging engine. Fix broken path identifiers and update source code locally before generating sanitized production ZIPs.
               </p>
-           </div>
-           <div className="flex items-center gap-3">
-              <GetHelp toolId="html-site-rescue" />
-              {step > 1 && (
-                <Button variant="outline" size="sm" onClick={clearStudio} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset Matrix
-                </Button>
-              )}
            </div>
         </div>
       </div>
 
+      {/* Mode Toggle */}
+      <div className="flex justify-center mb-12">
+        <div className="inline-flex p-1.5 rounded-[2rem] bg-secondary border border-white/5 shadow-2xl backdrop-blur-xl">
+           <button 
+            onClick={() => setMode('simple')}
+            className={cn(
+              "px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+              mode === 'simple' ? "bg-primary text-white shadow-xl scale-105" : "text-foreground/30 hover:text-foreground"
+            )}
+           >
+              Simple Rescue
+           </button>
+           <button 
+            onClick={() => setMode('update')}
+            className={cn(
+              "px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+              mode === 'update' ? "bg-primary text-white shadow-xl scale-105" : "text-foreground/30 hover:text-foreground"
+            )}
+           >
+              Site Update
+           </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Progress Tracker Column */}
-        <aside className="lg:col-span-4 xl:col-span-3 space-y-6">
+        {/* Progress Sidebar */}
+        <aside className="lg:col-span-3 space-y-6">
            <div className="flex flex-col gap-3">
               {[
-                { s: 1, label: 'Intake Payload', desc: 'Import source matrix' },
-                { s: 2, label: 'Clinical Scan', desc: 'Identify dependencies' },
-                { s: 3, label: 'Pack Master', desc: 'Generate ZIP bundle' }
+                { s: 1, label: 'Intake', desc: 'Import source' },
+                { s: 2, label: mode === 'simple' ? 'Clinical Scan' : 'Update Studio', desc: mode === 'simple' ? 'Identify deps' : 'Edit nodes' },
+                { s: 3, label: 'Production', desc: 'Generate bundle' }
               ].map((item) => (
                 <div key={item.s} className={cn(
                   "p-6 rounded-[2rem] border transition-all duration-500 flex items-center gap-5",
-                  step === item.s ? "bg-primary/10 border-primary shadow-xl scale-105" : step > item.s ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-500" : "bg-secondary/30 border-border opacity-40"
+                  step === item.s ? "bg-primary/10 border-primary shadow-xl scale-105" : step > item.s ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-secondary/30 border-border opacity-40"
                 )}>
                    <div className={cn(
                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner",
@@ -304,28 +351,22 @@ export default function HtmlSiteRescuePage() {
               <CardContent className="p-6 space-y-6">
                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">References</p>
+                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Refs</p>
                        <p className="text-xl font-headline font-black text-foreground">{stats.total}</p>
                     </div>
                     <div className="space-y-1">
-                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Assets</p>
+                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">Nodes</p>
                        <p className="text-xl font-headline font-black text-primary">{assets.length}</p>
                     </div>
                  </div>
-                 {stats.missing > 0 && (
-                   <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
-                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                      <p className="text-[9px] font-bold text-amber-700 uppercase tracking-widest">{stats.missing} Broken Links Detected</p>
-                   </div>
-                 )}
               </CardContent>
            </Card>
         </aside>
 
-        {/* Main Workspace Column */}
-        <div className="lg:col-span-8 xl:col-span-9 space-y-8 animate-in fade-in duration-1000">
+        {/* Main Workspace */}
+        <div className="lg:col-span-9 space-y-8 animate-in fade-in duration-1000">
            
-           {/* Step 1: Upload */}
+           {/* STEP 1: UPLOAD */}
            {step === 1 && (
              <Card 
                 className="glass-card border-border shadow-2xl p-12 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]"
@@ -343,126 +384,171 @@ export default function HtmlSiteRescuePage() {
                 </div>
                 <div className="space-y-3 relative z-10">
                    <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Initialize Rescue Protocol</h2>
-                   <p className="text-sm text-foreground/30 font-bold uppercase tracking-widest">Select your project assets or paste source code to begin</p>
+                   <p className="text-sm text-foreground/30 font-bold uppercase tracking-widest">Select your index.html or folder to begin</p>
                 </div>
                 
                 <div className="w-full max-w-lg space-y-6 relative z-10">
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Button onClick={() => fileInputRef.current?.click()} className="h-16 w-full bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30">
-                        <Upload className="w-5 h-5 mr-3" /> Select Files
-                      </Button>
-                      <Button variant="outline" onClick={() => folderInputRef.current?.click()} className="h-16 w-full bg-white/5 border-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
-                        <FolderOpen className="w-6 h-6 mr-3" /> Import Folder
-                      </Button>
-                   </div>
-                   
+                   <Button onClick={() => fileInputRef.current?.click()} className="h-16 w-full bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30">
+                      <Upload className="w-5 h-5 mr-3" /> Select Local index.html
+                   </Button>
                    <div className="flex items-center gap-4">
                       <div className="h-[1px] flex-1 bg-white/5" />
-                      <span className="text-[8px] font-black text-white/10 uppercase tracking-[0.5em]">OR PASTE HTML</span>
+                      <span className="text-[8px] font-black text-white/10 uppercase tracking-[0.5em]">OR PASTE SOURCE</span>
                       <div className="h-[1px] flex-1 bg-white/5" />
                    </div>
-
                    <div className="space-y-4">
                       <Textarea 
-                        placeholder="Paste raw HTML source matrix..." 
+                        placeholder="Paste raw HTML matrix here..." 
                         value={indexHtml}
                         onChange={e => setIndexHtml(e.target.value)}
-                        className="h-32 bg-secondary/30 border-white/10 rounded-2xl text-[11px] font-mono p-6 resize-none"
+                        className="h-40 bg-secondary/30 border-white/10 rounded-2xl text-[11px] font-mono p-6 resize-none shadow-inner"
                       />
                       {indexHtml.trim() && (
                         <Button onClick={() => setStep(2)} className="h-12 w-full bg-white text-black font-black uppercase text-[9px] rounded-xl shadow-2xl">
-                           Initialize Matrix Scan <ArrowRight className="w-4 h-4 ml-2" />
+                           Process Source <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                       )}
                    </div>
                 </div>
-                <input type="file" ref={fileInputRef} multiple accept={ACCEPT_TYPES} onChange={handleFileUpload} className="hidden" />
-                <input type="file" ref={folderInputRef} {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} className="hidden" />
+                <input type="file" ref={fileInputRef} accept=".html" onChange={handleFileUpload} className="hidden" />
              </Card>
            )}
 
-           {/* Step 2: Scan & Fix */}
+           {/* STEP 2: SCAN OR UPDATE */}
            {step === 2 && (
              <div className="space-y-8 animate-in slide-in-from-right-8 duration-700">
-                <Card className="glass-card border-border shadow-2xl">
-                   <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
-                      <div className="flex items-center gap-4">
-                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                            <Search className="w-5 h-5" />
-                         </div>
-                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Discovery Matrix</CardTitle>
-                      </div>
-                      <div className="flex items-center gap-3">
-                         <Button onClick={() => assetInputRef.current?.click()} variant="outline" size="sm" className="h-9 px-4 rounded-xl border-dashed border-primary/20 bg-primary/5 text-primary text-[9px] font-black uppercase tracking-widest">
-                            <Plus className="w-3.5 h-3.5 mr-2" /> Add Assets
-                         </Button>
-                         <input type="file" ref={assetInputRef} multiple accept={ACCEPT_TYPES} onChange={handleFileUpload} className="hidden" />
-                      </div>
-                   </CardHeader>
-                   <CardContent className="p-0">
-                      <div className="divide-y divide-border max-h-[500px] overflow-auto custom-scrollbar">
-                         {references.length === 0 ? (
-                            <div className="p-20 text-center opacity-10">
-                               <p className="text-[10px] font-black uppercase tracking-widest">No dependencies discovered</p>
-                            </div>
-                         ) : (
-                           references.map(ref => (
-                             <div key={ref.id} className="p-5 flex items-center justify-between group hover:bg-white/[0.02] transition-all">
-                                <div className="flex items-center gap-5 min-w-0">
-                                   <div className={cn(
-                                     "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border",
-                                     ref.status === 'ok' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                                     ref.status === 'fixed' ? "bg-primary/10 text-primary border-primary/20" :
-                                     ref.status === 'absolute' ? "bg-secondary text-foreground/40 border-border" :
-                                     "bg-red-500/10 text-red-500 border-red-500/20"
-                                   )}>
-                                      {ref.type === 'script' ? <FileCode className="w-5 h-5" /> :
-                                       ref.type === 'style' ? <Zap className="w-5 h-5" /> :
-                                       ref.type === 'image' ? <ImageIcon className="w-5 h-5" /> :
-                                       <LinkIcon className="w-5 h-5" />}
-                                   </div>
-                                   <div className="min-w-0">
-                                      <p className="text-[11px] font-bold text-foreground truncate uppercase">{ref.originalValue}</p>
-                                      <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{ref.tag}.{ref.attr} | Type: {ref.type}</p>
-                                   </div>
-                                </div>
-                                <Badge className={cn(
-                                  "text-[8px] font-black uppercase px-2 py-0.5",
-                                  ref.status === 'ok' ? "bg-emerald-500/20 text-emerald-500" :
-                                  ref.status === 'fixed' ? "bg-primary/20 text-primary" :
-                                  ref.status === 'absolute' ? "bg-white/5 text-white/40" :
-                                  "bg-red-500/20 text-red-500"
-                                )}>
-                                   {ref.status === 'ok' ? 'Verified' : ref.status === 'fixed' ? 'Normalized' : ref.status === 'absolute' ? 'Remote' : 'Missing'}
-                                </Badge>
-                             </div>
-                           ))
-                         )}
-                      </div>
-
-                      {/* Asset List Preview */}
-                      {assets.length > 0 && (
-                        <div className="p-4 bg-black/20 border-t border-white/5 overflow-x-auto no-scrollbar whitespace-nowrap flex gap-2">
-                           {assets.map(a => (
-                             <Badge key={a.id} variant="outline" className="bg-background/30 border-white/5 text-[7px] font-black uppercase tracking-tighter">
-                                {a.name}
-                             </Badge>
-                           ))}
+                {mode === 'simple' ? (
+                  <Card className="glass-card border-border shadow-2xl">
+                    <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                              <Search className="w-5 h-5" />
+                          </div>
+                          <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Discovery Matrix</CardTitle>
                         </div>
-                      )}
+                        <div className="flex items-center gap-3">
+                          <Button onClick={() => assetInputRef.current?.click()} variant="outline" size="sm" className="h-9 px-4 rounded-xl border-dashed border-primary/20 bg-primary/5 text-primary text-[9px] font-black uppercase tracking-widest">
+                              <Plus className="w-3.5 h-3.5 mr-2" /> Add Assets
+                          </Button>
+                          <input type="file" ref={assetInputRef} multiple onChange={handleAssetUpload} className="hidden" />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="divide-y divide-border max-h-[500px] overflow-auto custom-scrollbar">
+                          {references.length === 0 ? (
+                              <div className="p-20 text-center opacity-10">
+                                <p className="text-[10px] font-black uppercase tracking-widest">No dependencies discovered</p>
+                              </div>
+                          ) : (
+                            references.map(ref => (
+                              <div key={ref.id} className="p-5 flex items-center justify-between group hover:bg-white/[0.02] transition-all">
+                                  <div className="flex items-center gap-5 min-w-0">
+                                    <div className={cn(
+                                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border",
+                                      ref.status === 'ok' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                                      ref.status === 'fixed' ? "bg-primary/10 text-primary border-primary/20" :
+                                      ref.status === 'absolute' ? "bg-secondary text-foreground/40 border-border" :
+                                      "bg-red-500/10 text-red-500 border-red-500/20"
+                                    )}>
+                                        {ref.type === 'script' ? <FileCode className="w-5 h-5" /> :
+                                        ref.type === 'style' ? <Zap className="w-5 h-5" /> :
+                                        ref.type === 'image' ? <ImageIcon className="w-5 h-5" /> :
+                                        <LinkIcon className="w-5 h-5" />}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] font-bold text-foreground truncate uppercase">{ref.originalValue}</p>
+                                        <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{ref.tag}.{ref.attr} | Type: {ref.type}</p>
+                                    </div>
+                                  </div>
+                                  <Badge className={cn(
+                                    "text-[8px] font-black uppercase px-2 py-0.5",
+                                    ref.status === 'ok' ? "bg-emerald-500/20 text-emerald-500" :
+                                    ref.status === 'fixed' ? "bg-primary/20 text-primary" :
+                                    ref.status === 'absolute' ? "bg-white/5 text-white/40" :
+                                    "bg-red-500/20 text-red-500"
+                                  )}>
+                                    {ref.status === 'ok' ? 'Verified' : ref.status === 'fixed' ? 'Normalized' : ref.status === 'absolute' ? 'Remote' : 'Missing'}
+                                  </Badge>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        <div className="p-8 border-t border-border bg-secondary/10 flex justify-between items-center">
+                          <div className="flex items-center gap-4">
+                              <div className="px-3 py-1 rounded-lg bg-background border border-border text-[9px] font-black text-foreground/30 uppercase">
+                                {assets.length} Buffered Nodes
+                              </div>
+                          </div>
+                          <Button onClick={executeFix} className="h-14 px-10 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                              Normalize Path Matrix <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
+                        </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[600px]">
+                     {/* File List - Left */}
+                     <Card className="lg:col-span-4 glass-card border-border flex flex-col overflow-hidden">
+                        <CardHeader className="py-4 border-b border-white/5 bg-secondary/20">
+                           <CardTitle className="text-[10px] font-black uppercase text-foreground/40 tracking-widest flex items-center gap-3">
+                              <LayoutGrid className="w-3.5 h-3.5 text-primary" /> Directory Tree
+                           </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 overflow-auto custom-scrollbar max-h-80 bg-black/10">
+                           <div className="space-y-1">
+                              {assets.map(asset => (
+                                <button
+                                  key={asset.id}
+                                  onClick={() => handleSelectFile(asset)}
+                                  className={cn(
+                                    "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all",
+                                    activeEditId === asset.id ? "bg-primary/10 border border-primary/20 text-primary" : "text-foreground/30 hover:bg-white/5"
+                                  )}
+                                >
+                                   <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                                      {asset.content !== undefined ? <FileCode className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
+                                   </div>
+                                   <span className="text-[10px] font-bold truncate uppercase tracking-tight">{asset.name}</span>
+                                </button>
+                              ))}
+                           </div>
+                        </CardContent>
+                        <div className="p-4 border-t border-white/5 mt-auto">
+                           <Button onClick={() => setStep(3)} className="w-full h-11 bg-primary text-white font-black uppercase text-[9px] rounded-xl shadow-lg">Finish Edits <ChevronRight className="w-3.5 h-3.5 ml-2" /></Button>
+                        </div>
+                     </Card>
 
-                      <div className="p-8 border-t border-border bg-secondary/10 flex justify-between items-center">
-                         <div className="flex items-center gap-4">
-                            <div className="px-3 py-1 rounded-lg bg-background border border-border text-[9px] font-black text-foreground/30 uppercase">
-                               {assets.length} Buffered Nodes
-                            </div>
-                         </div>
-                         <Button onClick={executeFix} className="h-14 px-10 bg-primary text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                            Normalize Path Matrix <ArrowRight className="w-4 h-4 ml-2" />
-                         </Button>
-                      </div>
-                   </CardContent>
-                </Card>
+                     {/* Editor - Right */}
+                     <Card className="lg:col-span-8 glass-card border-border flex flex-col overflow-hidden bg-black/40">
+                        {activeEditId ? (
+                           <>
+                              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex flex-row items-center justify-between px-6">
+                                 <div className="flex items-center gap-3">
+                                    <Edit3 className="w-4 h-4 text-primary" />
+                                    <span className="text-[10px] font-black uppercase text-foreground truncate max-w-[200px]">{assets.find(a => a.id === activeEditId)?.name}</span>
+                                 </div>
+                                 <Button onClick={saveEdit} size="sm" className="h-8 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[8px] tracking-widest shadow-lg">
+                                    <Save className="w-3 h-3 mr-1.5" /> Save Node
+                                 </Button>
+                              </CardHeader>
+                              <CardContent className="flex-1 p-0 relative">
+                                 <textarea 
+                                    value={editBuffer}
+                                    onChange={e => setEditBuffer(e.target.value)}
+                                    spellCheck={false}
+                                    className="w-full h-full p-8 bg-transparent text-foreground font-mono text-xs leading-relaxed resize-none focus:outline-none custom-scrollbar"
+                                 />
+                              </CardContent>
+                           </>
+                        ) : (
+                          <div className="flex-1 flex flex-col items-center justify-center gap-6 opacity-10">
+                             <FileEdit className="w-16 h-16 text-primary" />
+                             <p className="text-[10px] font-black uppercase tracking-widest">Select a text node to update</p>
+                          </div>
+                        )}
+                     </Card>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:bg-secondary/80 transition-all">
@@ -487,7 +573,7 @@ export default function HtmlSiteRescuePage() {
              </div>
            )}
 
-           {/* Step 3: Download */}
+           {/* STEP 3: DOWNLOAD */}
            {step === 3 && (
              <div className="max-w-4xl mx-auto w-full space-y-8 animate-in zoom-in-95 duration-500">
                 <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl p-10 sm:p-16 text-center flex flex-col items-center gap-10">
@@ -504,7 +590,7 @@ export default function HtmlSiteRescuePage() {
                          {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Download className="w-8 h-8 mr-4" />}
                          Download project.zip
                       </Button>
-                      <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-tighter">Includes sanitized index.html and all buffered assets</p>
+                      <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-tighter">Includes sanitized index.html and {assets.length - 1} buffered assets</p>
                    </div>
                 </Card>
 
