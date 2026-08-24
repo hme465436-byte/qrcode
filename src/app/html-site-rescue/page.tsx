@@ -33,8 +33,8 @@ import {
   LayoutGrid,
   Edit3,
   FileEdit,
-  Monitor,
-  Smartphone
+  Type,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -188,6 +189,10 @@ export default function HtmlSiteRescuePage() {
     if (e.target) e.target.value = '';
   };
 
+  const handleAssetUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileUpload(e, false);
+  };
+
   const handleSelectFile = (item: LocalFile) => {
     if (item.content !== undefined) {
       setActiveEditId(item.id);
@@ -210,10 +215,9 @@ export default function HtmlSiteRescuePage() {
 
     setAssets(updatedAssets);
     
-    // If we edited the active index.html, update the master scan state
     const editedFile = updatedAssets.find(a => a.id === activeEditId);
     if (editedFile && editedFile.name.toLowerCase() === 'index.html') {
-      setIndexHtml(editBuffer);
+      setIndexHtml(editedBuffer);
     }
 
     toast({ title: "Node Synchronized", description: "Modifications saved to memory." });
@@ -229,7 +233,6 @@ export default function HtmlSiteRescuePage() {
     });
     setIndexHtml(fixedHtml);
     
-    // Sync back to the asset list for packaging
     setAssets(prev => prev.map(a => 
       a.name.toLowerCase() === 'index.html' ? { ...a, content: fixedHtml, blob: new Blob([fixedHtml], { type: 'text/html' }) } : a
     ));
@@ -242,7 +245,6 @@ export default function HtmlSiteRescuePage() {
     setIsProcessing(true);
     const zip = new JSZip();
     
-    // Add all assets from buffer
     assets.forEach(f => {
       zip.file(f.path, f.blob);
     });
@@ -291,7 +293,6 @@ export default function HtmlSiteRescuePage() {
         </div>
       </div>
 
-      {/* Mode Toggle */}
       <div className="flex justify-center mb-12">
         <div className="inline-flex p-1.5 rounded-[2rem] bg-secondary border border-white/5 shadow-2xl backdrop-blur-xl">
            <button 
@@ -316,7 +317,6 @@ export default function HtmlSiteRescuePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Progress Sidebar */}
         <aside className="lg:col-span-3 space-y-6">
            <div className="flex flex-col gap-3">
               {[
@@ -363,10 +363,7 @@ export default function HtmlSiteRescuePage() {
            </Card>
         </aside>
 
-        {/* Main Workspace */}
         <div className="lg:col-span-9 space-y-8 animate-in fade-in duration-1000">
-           
-           {/* STEP 1: UPLOAD */}
            {step === 1 && (
              <Card 
                 className="glass-card border-border shadow-2xl p-12 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]"
@@ -414,7 +411,6 @@ export default function HtmlSiteRescuePage() {
              </Card>
            )}
 
-           {/* STEP 2: SCAN OR UPDATE */}
            {step === 2 && (
              <div className="space-y-8 animate-in slide-in-from-right-8 duration-700">
                 {mode === 'simple' ? (
@@ -573,7 +569,7 @@ export default function HtmlSiteRescuePage() {
              </div>
            )}
 
-           {/* STEP 3: DOWNLOAD */}
+           {/* Step 3: Download */}
            {step === 3 && (
              <div className="max-w-4xl mx-auto w-full space-y-8 animate-in zoom-in-95 duration-500">
                 <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl p-10 sm:p-16 text-center flex flex-col items-center gap-10">
@@ -642,3 +638,4 @@ export default function HtmlSiteRescuePage() {
     </div>
   );
 }
+
