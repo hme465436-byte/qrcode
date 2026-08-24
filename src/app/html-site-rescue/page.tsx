@@ -53,7 +53,8 @@ import {
   Eye,
   Monitor,
   Terminal,
-  Hash
+  Hash,
+  AlignLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,6 +77,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -428,6 +437,15 @@ export default function HtmlSiteRescuePage() {
     toast({ title: "Bundle Generated" });
   };
 
+  const clearStudio = () => {
+    setAssets([]);
+    setOpenFileIds([]);
+    setActiveFileId(null);
+    setIndexHtmlId(null);
+    setStep(1);
+    toast({ title: "Studio Reset" });
+  };
+
   // --- 6. Editor Visual Component ---
   
   const ActiveFile = useMemo(() => assets.find(a => a.id === activeFileId), [assets, activeFileId]);
@@ -580,7 +598,7 @@ export default function HtmlSiteRescuePage() {
                    <Card className="glass-card border-border shadow-2xl">
                       <CardHeader className="py-6 border-b border-border bg-secondary/30 flex items-center justify-between">
                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
                                <Search className="w-5 h-5" />
                             </div>
                             <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Discovery Matrix</CardTitle>
@@ -787,7 +805,7 @@ export default function HtmlSiteRescuePage() {
                                  <button onClick={() => setFontSize(s => Math.min(24, s+1))} className="p-1.5 text-white/20 hover:text-white"><Plus className="w-3.5 h-3.5" /></button>
                                  <div className="w-[1px] h-4 bg-white/10 mx-2 mt-1.5" />
                                  <button onClick={() => setSoftWrap(!softWrap)} className={cn("p-1.5 rounded-lg transition-all", softWrap ? "text-primary bg-primary/10" : "text-white/20")} title="Soft Wrap">
-                                    <ListIcon className="w-3.5 h-3.5" />
+                                    <AlignLeft className="w-3.5 h-3.5" />
                                  </button>
                               </div>
                               <Button onClick={() => saveFileContent(ActiveFile.id, ActiveFile.content || '')} className="h-10 px-5 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-xl shadow-emerald-500/10">
@@ -850,7 +868,7 @@ export default function HtmlSiteRescuePage() {
                       <h4 className="text-[11px] font-black uppercase text-foreground">Vercel / Netlify</h4>
                    </div>
                    <div className="space-y-4">
-                      <p className="text-[11px] text-foreground/40 font-medium leading-relaxed uppercase">Drop the extracted folder into the deployment dashboard. Our normalized paths ensure instant visual calibration.</p>
+                      <p className="text-[11px] text-foreground/40 font-medium leading-relaxed uppercase tracking-tight">Drop the extracted folder into the deployment dashboard. Our normalized paths ensure instant visual calibration.</p>
                    </div>
                 </Card>
              </div>
