@@ -41,7 +41,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -217,7 +216,7 @@ export default function HtmlSiteRescuePage() {
     
     const editedFile = updatedAssets.find(a => a.id === activeEditId);
     if (editedFile && editedFile.name.toLowerCase() === 'index.html') {
-      setIndexHtml(editedBuffer);
+      setIndexHtml(editBuffer);
     }
 
     toast({ title: "Node Synchronized", description: "Modifications saved to memory." });
@@ -268,6 +267,16 @@ export default function HtmlSiteRescuePage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
+  const clearStudio = () => {
+    setIndexHtml('');
+    setAssets([]);
+    setReferences([]);
+    setStep(1);
+    setActiveEditId(null);
+    setEditBuffer('');
+    toast({ title: "Studio Reset" });
+  };
+
   const stats = useMemo(() => ({
     total: references.length,
     missing: references.filter(r => r.status === 'missing').length,
@@ -289,6 +298,14 @@ export default function HtmlSiteRescuePage() {
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
                 Professional project re-packaging engine. Fix broken path identifiers and update source code locally before generating sanitized production ZIPs.
               </p>
+           </div>
+           <div className="flex items-center gap-3">
+              <GetHelp toolId="html-site-rescue" />
+              {step > 1 && (
+                <Button variant="outline" size="sm" onClick={clearStudio} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset Matrix
+                </Button>
+              )}
            </div>
         </div>
       </div>
@@ -586,7 +603,7 @@ export default function HtmlSiteRescuePage() {
                          {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Download className="w-8 h-8 mr-4" />}
                          Download project.zip
                       </Button>
-                      <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-tighter">Includes sanitized index.html and {assets.length - 1} buffered assets</p>
+                      <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-tighter">Includes sanitized index.html and all buffered assets</p>
                    </div>
                 </Card>
 
