@@ -43,7 +43,9 @@ import {
   Minimize2,
   Replace,
   X,
-  Menu
+  Menu,
+  LogOut,
+  ShieldAlert
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,6 +58,16 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import JSZip from 'jszip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface LocalFile {
   id: string;
@@ -101,6 +113,7 @@ export default function HtmlSiteRescuePage() {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [replaceTerm, setReplaceTerm] = useState('');
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const assetInputRef = useRef<HTMLInputElement>(null);
@@ -165,7 +178,7 @@ export default function HtmlSiteRescuePage() {
   }, [indexHtml, assets, scanHtml]);
 
   // --- 2. Handlers ---
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, isCore = false) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | { target: { files: FileList } }, isCore = false) => {
     const uploaded = Array.from(e.target.files || []);
     if (uploaded.length === 0) return;
 
@@ -200,7 +213,11 @@ export default function HtmlSiteRescuePage() {
     setAssets(prev => [...prev, ...newAssets]);
     toast({ title: "Signal Injected", description: `Synchronized ${uploaded.length} nodes.` });
     setIsProcessing(false);
-    if (e.target) e.target.value = '';
+    if ('value' in e.target) e.target.value = '';
+  };
+
+  const handleHtmlUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileUpload(e, true);
   };
 
   const handleAssetUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,7 +235,6 @@ export default function HtmlSiteRescuePage() {
       setSearchTerm('');
       setReplaceTerm('');
       setShowSearch(false);
-      if (window.innerWidth < 1024) setIsSidebarOpen(false);
     } else {
       toast({ title: "Non-Text Node", description: "Binary assets are protected from textual modification." });
     }
@@ -232,7 +248,6 @@ export default function HtmlSiteRescuePage() {
     setEditHistory(updatedHistory);
     setHistoryPointer(updatedHistory.length - 1);
     
-    // Mark as dirty
     setAssets(prev => prev.map(a => a.id === activeEditId ? { ...a, isDirty: true } : a));
   };
 
@@ -281,7 +296,6 @@ export default function HtmlSiteRescuePage() {
       const val = e.currentTarget.value;
       const next = val.substring(0, start) + "  " + val.substring(end);
       onBufferChange(next);
-      // Wait for re-render then set selection
       setTimeout(() => {
         if (editorTextareaRef.current) {
           editorTextareaRef.current.selectionStart = editorTextareaRef.current.selectionEnd = start + 2;
@@ -315,7 +329,6 @@ export default function HtmlSiteRescuePage() {
     return Array.from({ length: lines }, (_, i) => i + 1);
   }, [editBuffer]);
 
-  // Sync scroll between textarea and line numbers
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
