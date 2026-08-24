@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
@@ -32,7 +31,8 @@ import {
   X,
   Play,
   StopCircle,
-  FileDown
+  FileDown,
+  Film
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -241,7 +241,7 @@ export default function SiteBackupClonerPage() {
              finalHtml = finalHtml.split(`"${relative}"`).join(`"${local}"`);
              finalHtml = finalHtml.split(`'${relative}'`).join(`'${local}'`);
           }
-        </div>
+        }
       });
 
       zip.file("index.html", finalHtml);
