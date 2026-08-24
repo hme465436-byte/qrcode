@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -54,7 +53,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -95,6 +94,9 @@ export default function HtmlSiteRescuePage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   
+  // Input Matrix (Raw Paste)
+  const [indexHtml, setIndexHtml] = useState('');
+
   // Transformation Settings
   const [transMode, setTransMode] = useState<TransformationMode>('relative');
   const [localizeExternal, setLocalizeExternal] = useState(false);
@@ -338,6 +340,7 @@ Linguistic Nodes: ${entries.filter(e => e.isHtml).length}
     setStep(1);
     setSearchQuery('');
     setReplaceQuery('');
+    setIndexHtml('');
     toast({ title: "Studio Reset" });
   };
 
@@ -824,3 +827,4 @@ Linguistic Nodes: ${entries.filter(e => e.isHtml).length}
     </div>
   );
 }
+
