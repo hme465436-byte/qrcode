@@ -28,7 +28,8 @@ import {
   ListFilter,
   Hammer,
   Plus,
-  RotateCcw
+  RotateCcw,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -312,7 +313,7 @@ export default function HtmlSiteRescuePage() {
            
            {/* Step 1: Upload */}
            {step === 1 && (
-             <Card className="glass-card border-border shadow-2xl p-12 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10">
+             <Card className="glass-card border-border shadow-2xl p-12 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
                 <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl relative z-10">
                    <FileCode className="w-10 h-10" />
@@ -353,7 +354,7 @@ export default function HtmlSiteRescuePage() {
            {step === 2 && (
              <div className="space-y-8 animate-in slide-in-from-right-8 duration-700">
                 <Card className="glass-card border-border shadow-2xl">
-                   <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+                   <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
                       <div className="flex items-center gap-4">
                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                             <Search className="w-5 h-5" />
@@ -461,9 +462,11 @@ export default function HtmlSiteRescuePage() {
                 </Card>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <Card className="glass-card border-border p-8 space-y-6">
+                   <Card className="glass-card border-border p-8 space-y-6 group hover:border-primary/20 transition-all">
                       <div className="flex items-center gap-3">
-                         <Globe className="w-5 h-5 text-primary" />
+                         <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary shadow-inner">
+                            <Globe className="w-5 h-5" />
+                         </div>
                          <h4 className="text-[11px] font-black uppercase text-foreground">Firebase Protocol</h4>
                       </div>
                       <div className="p-4 bg-black/40 rounded-2xl border border-white/5 font-mono text-[10px] text-foreground/50 space-y-2">
@@ -476,9 +479,11 @@ export default function HtmlSiteRescuePage() {
                          {isCopied === 'fb' ? 'Copied' : 'Copy CLI Matrix'}
                       </Button>
                    </Card>
-                   <Card className="glass-card border-border p-8 space-y-6">
+                   <Card className="glass-card border-border p-8 space-y-6 group hover:border-primary/20 transition-all">
                       <div className="flex items-center gap-3">
-                         <Zap className="w-5 h-5 text-primary" />
+                         <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary shadow-inner">
+                            <Zap className="w-5 h-5" />
+                         </div>
                          <h4 className="text-[11px] font-black uppercase text-foreground">Vercel / Netlify</h4>
                       </div>
                       <div className="space-y-4">
