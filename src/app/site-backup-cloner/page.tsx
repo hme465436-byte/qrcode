@@ -22,6 +22,7 @@ import {
   ChevronRight,
   AlertCircle,
   RotateCcw,
+  RefreshCcw,
   Maximize2,
   Copy,
   Terminal,
@@ -142,7 +143,7 @@ export default function SiteBackupClonerPage() {
       // Phase 1: HTML Extraction
       const response = await fetchHtmlAction(url);
       if (!response.success || !response.html) {
-        throw new Error(response.error || "Uplink restricted by remote node.");
+        throw new Error(response.error || "Uplink restricted by remote host.");
       }
 
       const base = response.finalUrl || url;
@@ -221,7 +222,7 @@ export default function SiteBackupClonerPage() {
       navigator.clipboard.writeText(failedList);
       setIsCopied(true);
       toast({ title: "Failed URLs Copied" });
-      setTimeout(() => setIsCopied(false), 2000);
+      setTimeout(() => setIsCopied(null), 2000);
     }
   };
 
