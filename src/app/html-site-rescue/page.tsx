@@ -43,7 +43,8 @@ import {
   ShieldAlert,
   ArrowRightLeft,
   MousePointer2,
-  TableProperties
+  TableProperties,
+  LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -827,4 +828,3 @@ Linguistic Nodes: ${entries.filter(e => e.isHtml).length}
     </div>
   );
 }
-
