@@ -91,10 +91,8 @@ export default function SiteBackupClonerPage() {
         const absolute = new URL(attrValue, baseUrl).href;
         const u = new URL(absolute);
         
-        // Skip non-http protocols and data URIs
         if (!u.protocol.startsWith('http')) return null;
         
-        // Determine local directory mapping
         let dir = 'assets/';
         const ext = u.pathname.split('.').pop()?.toLowerCase();
         if (ext === 'css') dir = 'css/';
@@ -127,7 +125,6 @@ export default function SiteBackupClonerPage() {
       }
     };
 
-    // Deep Crawl Matrix
     doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => add(el.getAttribute('href'), 'css'));
     doc.querySelectorAll('script[src]').forEach(el => add(el.getAttribute('src'), 'js'));
     doc.querySelectorAll('img[src]').forEach(el => add(el.getAttribute('src'), 'image'));
@@ -148,7 +145,7 @@ export default function SiteBackupClonerPage() {
     }
     setIsProcessing(false);
     setStatus('idle');
-    toast({ title: "Protocol Aborted", description: "Archival process terminated by hardware." });
+    toast({ title: "Protocol Aborted", description: "Archival process terminated." });
   };
 
   const executeClone = async () => {
@@ -161,7 +158,6 @@ export default function SiteBackupClonerPage() {
     abortControllerRef.current = new AbortController();
 
     try {
-      // 1. Initial Handshake
       const response = await fetchHtmlAction(url);
       if (!response.success || !response.html) {
         throw new Error(response.error || "Uplink restricted by remote host.");
@@ -173,9 +169,8 @@ export default function SiteBackupClonerPage() {
       setStatus('downloading');
       
       const zip = new JSZip();
-      const mappingTable: Record<string, string> = {}; // URL -> LocalPath
+      const mappingTable: Record<string, string> = {}; 
 
-      // 2. Controlled Download Pool (Concurrency 5)
       const downloadAsset = async (item: AssetItem): Promise<void> => {
         if (abortControllerRef.current?.signal.aborted) return;
         
@@ -183,7 +178,6 @@ export default function SiteBackupClonerPage() {
           try {
             setAssets(prev => prev.map(a => a.id === item.id ? { ...a, status: 'downloading' } : a));
             
-            // Timeout protection
             const controller = new AbortController();
             const id = setTimeout(() => controller.abort(), 12000);
             
@@ -226,16 +220,13 @@ export default function SiteBackupClonerPage() {
         setProgress(Math.round(((i + batch.length) / initialAssets.length) * 90));
       }
 
-      // 3. Linguistic Post-Process (Link Rewriting)
-      setStatus('scanning'); // Re-using for rewrite phase
+      setStatus('scanning');
       let finalHtml = response.html;
       initialAssets.forEach(a => {
         if (mappingTable[a.url]) {
-          // Robust replacement for common attribute patterns
           const local = mappingTable[a.url];
           finalHtml = finalHtml.split(`"${a.url}"`).join(`"${local}"`);
           finalHtml = finalHtml.split(`'${a.url}'`).join(`'${local}'`);
-          // Also try to catch unquoted or relative patterns if they were normalized
           const relative = a.url.replace(base, '');
           if (relative && relative !== a.url) {
              finalHtml = finalHtml.split(`"${relative}"`).join(`"${local}"`);
@@ -246,7 +237,6 @@ export default function SiteBackupClonerPage() {
 
       zip.file("index.html", finalHtml);
 
-      // 4. Final Export
       const zipContent = await zip.generateAsync({ type: "blob" });
       const downloadLink = URL.createObjectURL(zipContent);
       const a = document.createElement('a');
@@ -256,7 +246,7 @@ export default function SiteBackupClonerPage() {
 
       setStatus('complete');
       setProgress(100);
-      toast({ title: "Archival Complete", description: "Structured project bundle generated." });
+      toast({ title: "Archival Complete", description: "Project bundle generated." });
     } catch (err: any) {
       if (err.name === 'AbortError') return;
       setStatus('error');
@@ -308,7 +298,7 @@ export default function SiteBackupClonerPage() {
               <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight leading-none overflow-wrap-anywhere">
                 Site Backup <span className="text-primary italic">Cloner Studio</span>
               </h1>
-              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed overflow-wrap-anywhere">
                 Professional linguistic asset archival. Isolate public components into a structured ZIP bundle locally in your browser.
               </p>
            </div>
@@ -377,7 +367,7 @@ export default function SiteBackupClonerPage() {
                        Browser security protocols strictly prevent the archival of files restricted by remote CORS headers. Private backend logic and server-side code cannot be retrieved.
                     </p>
                  </div>
-              </div>
+              </CardContent>
            </Card>
 
            <div className="grid grid-cols-1 gap-6">
