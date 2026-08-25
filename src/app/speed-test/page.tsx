@@ -427,10 +427,10 @@ export default function SpeedTestPage() {
                     ) : !isTesting ? (
                       <Button 
                         onClick={startTest}
-                        className="h-14 w-full max-w-[200px] bg-primary text-white font-black text-xs uppercase tracking-[0.4em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all group"
+                        className="h-11 w-full max-w-[200px] bg-primary text-white font-black text-xs uppercase tracking-[0.4em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all group"
                       >
                          <Play className="w-5 h-5 mr-3 fill-current group-hover:scale-110 transition-transform" />
-                         {step === 'complete' ? 'Re-Run Protocol' : 'Test Only'}
+                         {step === 'complete' ? 'Re-Run Protocol' : 'Test'}
                       </Button>
                     ) : (
                       <div className="space-y-4 text-center w-full">
@@ -635,3 +635,4 @@ export default function SpeedTestPage() {
     </div>
   );
 }
+
