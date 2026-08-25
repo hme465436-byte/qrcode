@@ -37,7 +37,8 @@ import {
   Smartphone,
   Tv,
   Check,
-  Copy
+  Copy,
+  Fingerprint
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -423,7 +424,7 @@ export default function SpeedTestPage() {
                     ) : !isTesting ? (
                       <Button 
                         onClick={startTest}
-                        className="h-20 w-full bg-primary text-white font-black text-xl uppercase tracking-[0.4em] rounded-[2.5rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all group"
+                        className="h-20 w-full bg-primary text-white font-black text-xl uppercase tracking-[0.4em] rounded-[2.5rem] shadow-xl shadow-primary/30 active:scale-95 transition-all group"
                       >
                          <Play className="w-6 h-6 mr-4 fill-current group-hover:scale-110 transition-transform" />
                          {step === 'complete' ? 'Re-Run Protocol' : 'Initialize Studio'}
@@ -631,4 +632,3 @@ export default function SpeedTestPage() {
     </div>
   );
 }
-
