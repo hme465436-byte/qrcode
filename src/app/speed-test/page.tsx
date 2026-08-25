@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -332,6 +331,8 @@ export default function SpeedTestPage() {
     return { val: Math.abs(diff).toFixed(1), faster: diff > 0 };
   }, [history, step, downloadMbps]);
 
+  const [chartData, setChartData] = useState<{time: string, val: number}[]>([]);
+
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full bg-[#0a0a0c] min-h-screen overflow-x-hidden">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -430,7 +431,7 @@ export default function SpeedTestPage() {
                         className="h-11 w-full max-w-[200px] bg-primary text-white font-black text-xs uppercase tracking-[0.4em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all group"
                       >
                          <Play className="w-5 h-5 mr-3 fill-current group-hover:scale-110 transition-transform" />
-                         {step === 'complete' ? 'Re-Run Protocol' : 'Test'}
+                         {step === 'complete' ? 'Re-Run' : 'Test'}
                       </Button>
                     ) : (
                       <div className="space-y-4 text-center w-full">
@@ -531,7 +532,7 @@ export default function SpeedTestPage() {
                  <div className="pt-8">
                     <Button onClick={handleCopy} disabled={!downloadMbps} className="w-full h-14 bg-white text-black font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-white/90">
                        {isCopied ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                       Copy Telemetry Report
+                       Copy Report
                     </Button>
                  </div>
               </Card>
@@ -624,15 +625,10 @@ export default function SpeedTestPage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .bg-checkered {
-          background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #111113 75%), 
-                            linear-gradient(-45deg, transparent 75%, #111113 75%);
-          background-size: 20px 20px;
-        }
+        .recharts-area-chart { filter: drop-shadow(0 0 10px hsla(var(--primary), 0.2)); }
+        .recharts-cartesian-axis-tick-value { font-family: 'Space Grotesk', sans-serif !important; }
+        .overflow-wrap-normal { overflow-wrap: normal !important; word-break: normal !important; }
       `}</style>
     </div>
   );
 }
-
