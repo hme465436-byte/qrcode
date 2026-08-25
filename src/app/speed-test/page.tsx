@@ -414,9 +414,9 @@ export default function SpeedTestPage() {
                     </div>
                  </div>
 
-                 <div className="w-full max-w-sm mt-16 space-y-6 z-20">
+                 <div className="w-full max-w-sm mt-16 space-y-6 z-20 text-center flex justify-center">
                     {step === 'blocked' || step === 'error' ? (
-                       <div className="p-8 rounded-[2rem] bg-red-500/10 border border-red-500/20 text-center space-y-4">
+                       <div className="p-8 rounded-[2rem] bg-red-500/10 border border-red-500/20 text-center space-y-4 w-full">
                           <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
                           <div className="space-y-1">
                              <h4 className="text-sm font-black uppercase text-red-600">Protocol Aborted</h4>
@@ -427,13 +427,13 @@ export default function SpeedTestPage() {
                     ) : !isTesting ? (
                       <Button 
                         onClick={startTest}
-                        className="h-20 w-full bg-primary text-white font-black text-xl uppercase tracking-[0.4em] rounded-[2.5rem] shadow-xl shadow-primary/30 active:scale-95 transition-all group"
+                        className="h-14 w-full max-w-[200px] bg-primary text-white font-black text-xs uppercase tracking-[0.4em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all group"
                       >
-                         <Play className="w-6 h-6 mr-4 fill-current group-hover:scale-110 transition-transform" />
-                         {step === 'complete' ? 'Re-Run Protocol' : 'Initialize Studio'}
+                         <Play className="w-5 h-5 mr-3 fill-current group-hover:scale-110 transition-transform" />
+                         {step === 'complete' ? 'Re-Run Protocol' : 'Test Only'}
                       </Button>
                     ) : (
-                      <div className="space-y-4 text-center">
+                      <div className="space-y-4 text-center w-full">
                          <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-primary">
                             <span className="flex items-center gap-2"><Loader2 className="w-3 animate-spin" /> {step.toUpperCase()} PHASE ACTIVE...</span>
                             <span>{progress}%</span>
