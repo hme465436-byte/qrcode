@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -39,7 +40,8 @@ import {
   Check,
   Copy,
   Fingerprint,
-  Shield
+  Shield,
+  MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -633,4 +635,3 @@ export default function SpeedTestPage() {
     </div>
   );
 }
-
