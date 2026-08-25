@@ -38,7 +38,8 @@ import {
   Tv,
   Check,
   Copy,
-  Fingerprint
+  Fingerprint,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -330,7 +331,7 @@ export default function SpeedTestPage() {
   }, [history, step, downloadMbps]);
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full overflow-hidden">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full bg-[#0a0a0c] min-h-screen overflow-x-hidden">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
@@ -632,3 +633,4 @@ export default function SpeedTestPage() {
     </div>
   );
 }
+
