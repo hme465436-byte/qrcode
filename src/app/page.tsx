@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -140,6 +139,17 @@ interface Tool {
 }
 
 const TOOLS: Tool[] = [
+  { 
+    href: '/ai-humanizer', 
+    icon: Wand2, 
+    title: 'AI Humanizer', 
+    desc: 'Transform AI-generated text into natural, human-like writing.', 
+    label: 'AI ASSIST', 
+    color: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
+    glowClass: 'bg-violet-400/10',
+    keywords: ['ai', 'humanizer', 'rewrite', 'natural', 'detection', 'editor', 'chatgpt'],
+    category: 'generators'
+  },
   { 
     href: '/single', 
     icon: QrCode, 
@@ -463,7 +473,7 @@ const TOOLS: Tool[] = [
     href: '/country', 
     icon: Globe, 
     title: 'Country Info', 
-    desc: 'Isolate clinical profiles, flags, and geographic matrices of global nations.', 
+    desc: 'Isolate clinical profiles, flags, and geographic matrices of global identities.', 
     label: 'INTEL', 
     color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
     glowClass: 'bg-emerald-500/10',
@@ -1570,7 +1580,8 @@ export default function Home() {
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
-      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site'
+      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
+      'AI Humanizer', 'Humanize AI Text', 'Detection avoidance'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

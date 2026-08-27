@@ -82,6 +82,7 @@ interface Tool {
 }
 
 const TOOLS: Tool[] = [
+  { href: '/ai-humanizer', title: 'AI Humanizer', icon: Wand2, keywords: ['ai', 'human', 'rewrite', 'natural', 'detection'], desc: 'Humanize AI text.' },
   { href: '/single', title: 'Single Studio', icon: QrCode, keywords: ['qr', 'generator', 'code', 'brand'], desc: 'Branded QR codes.' },
   { href: '/background-remove', title: 'Background Remove', icon: Eraser, keywords: ['remove bg', 'transparent', 'cutout', 'remove.bg'], desc: 'Isolate subject.' },
   { href: '/bulk', title: 'Bulk Mode', icon: Layers, keywords: ['bulk', 'batch', 'many'], desc: 'Mass QR production.' },

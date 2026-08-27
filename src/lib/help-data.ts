@@ -12,6 +12,23 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
+  'ai-humanizer': {
+    title: 'AI Humanizer Studio',
+    description: 'Advanced linguistic re-matricing tool to transform AI-generated text into natural, human-like writing. Engineered for high-fidelity communication and AI detection avoidance.',
+    steps: [
+      'Paste your AI-generated text into the Source Payload matrix.',
+      'Select a target Atmospheric Tone (Simple, Professional, or Casual).',
+      'Execute the Humanize Matrix protocol by clicking the primary action button.',
+      'Monitor the word count delta in the Linguistic Result panel.',
+      'Copy the synthesized human master to your clipboard.'
+    ],
+    tips: [
+      'Use the Casual tone for social media and creative drafting.',
+      'Professional mode maintains high vocabulary while varying sentence structures.',
+      'Short snippets under 50 words may require manual refinement for peak fidelity.'
+    ],
+    privacy: 'Your linguistic matrices are processed strictly via secure server flows. No identifying data or text history is logged or stored in our registry.'
+  },
   'site-backup-cloner': {
     title: 'Site Backup Cloner Studio',
     description: 'Professional high-fidelity web archival tool. Isolate and package public frontend assets (HTML, CSS, JS, Images) from any live URL into a structured ZIP backup.',
