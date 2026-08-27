@@ -8,14 +8,11 @@ import {
   Zap, 
   Activity, 
   Loader2, 
-  AlertCircle, 
   AlignLeft, 
-  RefreshCcw, 
   RotateCcw, 
   Sparkles, 
   ShieldCheck, 
-  Quote, 
-  Check 
+  Quote 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,102 +27,6 @@ import { aiHumanizer } from '@/ai/flows/ai-humanizer-flow';
 
 type Tone = 'simple' | 'professional' | 'casual';
 
-/**
- * Local Linguistic Synthesis Engine (High-Intensity)
- * Provides a 100% hardware-native fallback with aggressive pattern neutralization.
- */
-const localHumanize = (text: string, tone: Tone): string => {
-  let result = text;
-  
-  // 1. Robotic Connector Neutralization (Aggressive Matrix)
-  const mapping: Record<string, string[]> = {
-    'moreover': ['plus', 'also', 'on top of that', 'not just that'],
-    'furthermore': ['and another thing', 'besides', 'actually'],
-    'additionally': ['also', 'what\'s more', 'plus'],
-    'in conclusion': ['so basically', 'to wrap up', 'finally'],
-    'therefore': ['so', 'that\'s why', 'because of that'],
-    'consequently': ['so', 'it turns out'],
-    'essentially': ['pretty much', 'basically', 'really'],
-    'it is worth noting that': ['keep in mind', 'actually', 'remember'],
-    'utilize': ['use', 'employ'],
-    'commence': ['start', 'begin'],
-    'terminate': ['end', 'stop'],
-    'however': ['but', 'still', 'though', 'yet'],
-    'indeed': ['truly', 'really'],
-    'perhaps': ['maybe'],
-    'significant': ['big', 'important', 'major'],
-    'determine': ['figure out', 'find out'],
-    'objective': ['goal', 'target'],
-    'subsequently': ['later', 'afterwards', 'then'],
-    'demonstrate': ['show', 'prove'],
-    'implement': ['put in place', 'set up'],
-    'facilitate': ['help', 'make happen'],
-    'fundamental': ['basic', 'core'],
-    'comprehensive': ['full', 'complete'],
-    'firstly': ['to start with', 'first off', 'now'],
-    'secondly': ['next', 'then'],
-    'thirdly': ['after that', 'then'],
-    'finally': ['lastly', 'to finish up'],
-    'in my opinion': ['I\'d say', 'I think', 'truth be told'],
-    'with regard to': ['about', 'as for'],
-    'it appears that': ['it looks like', 'seems like'],
-    'pivotal': ['key', 'big', 'huge'],
-    'leveraging': ['using'],
-    'synergy': ['working together'],
-    'ensure': ['make sure'],
-    'provide': ['give', 'offer'],
-    'request': ['ask for']
-  };
-
-  Object.entries(mapping).forEach(([word, list]) => {
-    const regex = new RegExp(`\\b${word}\\b`, 'gi');
-    result = result.replace(regex, (match) => {
-      const pick = list[Math.floor(Math.random() * list.length)];
-      if (match[0] === match[0].toUpperCase()) {
-        return pick.charAt(0).toUpperCase() + pick.slice(1);
-      }
-      return pick;
-    });
-  });
-
-  // 2. Tone-Specific Contractions & Spoken Flow
-  if (tone !== 'professional') {
-    const contractions: Record<string, string> = {
-      'is not': "isn't",
-      'are not': "aren't",
-      'cannot': "can't",
-      'do not': "don't",
-      'does not': "doesn't",
-      'will not': "won't",
-      'it is': "it's",
-      'that is': "that's",
-      'they are': "they're",
-      'we are': "we're",
-      'you are': "you're",
-      'I am': "I'm",
-      'who is': "who's"
-    };
-    Object.entries(contractions).forEach(([raw, contra]) => {
-      const regex = new RegExp(`\\b${raw}\\b`, 'gi');
-      result = result.replace(regex, (match) => {
-        if (match[0] === match[0].toUpperCase()) return contra.charAt(0).toUpperCase() + contra.slice(1);
-        return contra;
-      });
-    });
-  }
-
-  // 3. Structural Variance (Burstiness Protocol)
-  // Break up robotic compound sentences and vary length
-  result = result.replace(/, and /g, '. And ');
-  result = result.replace(/, but /g, '. But ');
-  result = result.replace(/; /g, '. ');
-  result = result.replace(/, which /g, '. This ');
-  result = result.replace(/, allowing /g, '. This allows ');
-  result = result.replace(/\. Finally/g, '. Lastly');
-
-  return result;
-};
-
 export default function AiHumanizerPage() {
   const { toast } = useToast();
   
@@ -135,7 +36,6 @@ export default function AiHumanizerPage() {
   const [tone, setTone] = useState<Tone>('simple');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const statsBefore = useMemo(() => ({
     words: input.trim() ? input.trim().split(/\s+/).length : 0,
@@ -150,40 +50,16 @@ export default function AiHumanizerPage() {
   const handleHumanize = async () => {
     if (!input.trim()) return;
     setIsProcessing(true);
-    setError(null);
-
-    let completed = false;
-
-    // 10s Protocol Timeout Guard (WASM/Local Fallback)
-    const timeoutHandle = setTimeout(() => {
-      if (!completed) {
-        const localResult = localHumanize(input, tone);
-        setOutput(localResult);
-        setIsProcessing(false);
-        completed = true;
-        toast({ title: "Local Sync Active", description: "Cloud node too slow. Using hardware fallback." });
-      }
-    }, 10000);
 
     try {
-      // Primary Attempt: 2-Pass Cloud Synthesis
       const result = await aiHumanizer({ text: input, tone });
-      if (!completed) {
-        clearTimeout(timeoutHandle);
-        setOutput(result);
-        completed = true;
-        toast({ title: "Synthesis Complete", description: "Linguistic matrix successfully humanized." });
-      }
+      setOutput(result);
+      toast({ title: "Synthesis Complete" });
     } catch (err) {
-      if (!completed) {
-        clearTimeout(timeoutHandle);
-        const localResult = localHumanize(input, tone);
-        setOutput(localResult);
-        completed = true;
-        toast({ title: "Local Sync Active", description: "Cloud node restricted. Using hardware fallback." });
-      }
+      // Fallback is handled server-side, so we expect a string back regardless
+      console.error(err);
     } finally {
-      if (completed) setIsProcessing(false);
+      setIsProcessing(false);
     }
   };
 
@@ -199,7 +75,6 @@ export default function AiHumanizerPage() {
   const handleClear = () => {
     setInput('');
     setOutput('');
-    setError(null);
     toast({ title: "Studio Reset" });
   };
 
@@ -215,7 +90,7 @@ export default function AiHumanizerPage() {
                 AI <span className="text-primary italic">Humanizer PRO</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional linguistic re-matricing. Transform AI-generated text into natural human flows to ensure high-fidelity communication and detection avoidance.
+                Professional linguistic re-matricing. Transform AI-generated text into natural human flows via high-fidelity multi-node API protocols.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -274,17 +149,10 @@ export default function AiHumanizerPage() {
                     className="h-14 w-full bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                   >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                    Humanize Matrix
+                    {isProcessing ? 'Humanizing...' : 'Humanize Matrix'}
                   </Button>
                 </div>
               </div>
-
-              {error && (
-                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 animate-in shake duration-500">
-                  <AlertCircle className="w-4 h-4 text-destructive" />
-                  <p className="text-[10px] font-bold text-destructive uppercase tracking-widest">{error}</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
