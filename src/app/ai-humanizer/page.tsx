@@ -53,11 +53,12 @@ export default function AiHumanizerPage() {
     setIsProcessing(true);
 
     try {
+      // Direct call to the multi-node flow
       const result = await aiHumanizer({ text: input, tone });
       setOutput(result);
       toast({ title: "Synthesis Complete" });
     } catch (err) {
-      // Fallback is handled server-side, so we expect a string back regardless
+      // Errors are handled internally by the flow through fallbacks
       console.error(err);
     } finally {
       setIsProcessing(false);
@@ -91,7 +92,7 @@ export default function AiHumanizerPage() {
                 AI <span className="text-primary italic">Humanizer PRO</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional linguistic re-matricing. Transform AI-generated text into natural human flows via high-fidelity multi-node API protocols.
+                Professional linguistic re-matricing. Transform AI-generated text into natural human flows via high-fidelity multi-node 3-pass synthesis protocols.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -220,9 +221,9 @@ export default function AiHumanizerPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">3-Pass Synthesis</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Your linguistic matrices are processed strictly via secure server flows. No identifying data is logged or stored in our registry.
+                    Our engine executes a tiered rewrite: Structural change, Tone polish, and Pattern neutralization for peak organic flow.
                   </p>
                 </div>
              </div>
@@ -231,9 +232,9 @@ export default function AiHumanizerPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Natural Flow</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Natural Burstiness</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    The engine varys sentence length and word density to mimic human burstiness, ensuring 100% natural communication.
+                    The engine varies sentence complexity and word density to mimic human writing patterns, ensuring 100% natural communication.
                   </p>
                 </div>
              </div>
