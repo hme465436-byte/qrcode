@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -30,6 +31,90 @@ import { aiHumanizer } from '@/ai/flows/ai-humanizer-flow';
 
 type Tone = 'simple' | 'professional' | 'casual';
 
+/**
+ * Local Linguistic Synthesis Engine
+ * Provides a 100% hardware-native fallback when cloud nodes are restricted or slow.
+ */
+const localHumanize = (text: string, tone: Tone): string => {
+  let result = text;
+  
+  // 1. Robotic Connector Neutralization (Common AI Markers)
+  const mapping: Record<string, string[]> = {
+    'moreover': ['plus', 'also', 'on top of that'],
+    'furthermore': ['and another thing', 'besides'],
+    'additionally': ['also', 'what\'s more'],
+    'in conclusion': ['so basically', 'to wrap up'],
+    'therefore': ['so', 'that\'s why'],
+    'consequently': ['because of that', 'as a result'],
+    'essentially': ['pretty much', 'basically'],
+    'it is worth noting that': ['keep in mind', 'actually'],
+    'utilize': ['use', 'employ'],
+    'commence': ['start', 'begin'],
+    'terminate': ['end', 'stop'],
+    'however': ['but', 'still', 'though'],
+    'indeed': ['truly', 'really'],
+    'perhaps': ['maybe'],
+    'significant': ['big', 'important', 'major'],
+    'determine': ['figure out', 'find out'],
+    'objective': ['goal', 'target'],
+    'subsequently': ['later', 'afterwards'],
+    'demonstrate': ['show', 'prove'],
+    'implement': ['put in place', 'set up'],
+    'facilitate': ['help', 'make happen'],
+    'fundamental': ['basic', 'core'],
+    'comprehensive': ['full', 'complete'],
+    'firstly': ['to start with', 'first off'],
+    'secondly': ['next', 'then'],
+    'thirdly': ['after that', 'then'],
+    'finally': ['lastly', 'to finish up'],
+    'in my opinion': ['I\'d say', 'I think'],
+    'with regard to': ['about', 'as for'],
+    'it appears that': ['it looks like', 'seems like']
+  };
+
+  Object.entries(mapping).forEach(([word, list]) => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    result = result.replace(regex, (match) => {
+      const pick = list[Math.floor(Math.random() * list.length)];
+      if (match[0] === match[0].toUpperCase()) {
+        return pick.charAt(0).toUpperCase() + pick.slice(1);
+      }
+      return pick;
+    });
+  });
+
+  // 2. Tone-Specific Contractions
+  if (tone !== 'professional') {
+    const contractions: Record<string, string> = {
+      'is not': "isn't",
+      'are not': "aren't",
+      'cannot': "can't",
+      'do not': "don't",
+      'does not': "doesn't",
+      'will not': "won't",
+      'it is': "it's",
+      'that is': "that's",
+      'they are': "they're",
+      'we are': "we're"
+    };
+    Object.entries(contractions).forEach(([raw, contra]) => {
+      const regex = new RegExp(`\\b${raw}\\b`, 'gi');
+      result = result.replace(regex, (match) => {
+        if (match[0] === match[0].toUpperCase()) return contra.charAt(0).toUpperCase() + contra.slice(1);
+        return contra;
+      });
+    });
+  }
+
+  // 3. Structural Variance (Burstiness)
+  // Break up robotic compound sentences
+  result = result.replace(/, and /g, '. And ');
+  result = result.replace(/, but /g, '. But ');
+  result = result.replace(/; /g, '. ');
+
+  return result;
+};
+
 export default function AiHumanizerPage() {
   const { toast } = useToast();
   
@@ -56,27 +141,37 @@ export default function AiHumanizerPage() {
     setIsProcessing(true);
     setError(null);
 
-    const executeWithRetry = async (attempt = 0): Promise<string> => {
-      try {
-        return await aiHumanizer({ text: input, tone });
-      } catch (err) {
-        if (attempt < 1) {
-          // One automatic retry protocol
-          return await executeWithRetry(attempt + 1);
-        }
-        throw err;
+    let completed = false;
+
+    // 10s Protocol Timeout Guard
+    const timeoutHandle = setTimeout(() => {
+      if (!completed) {
+        const localResult = localHumanize(input, tone);
+        setOutput(localResult);
+        setIsProcessing(false);
+        completed = true;
+        toast({ title: "Local Sync Active", description: "Cloud node too slow. Using hardware fallback." });
       }
-    };
+    }, 10000);
 
     try {
-      const result = await executeWithRetry();
-      setOutput(result);
-      toast({ title: "Synthesis Complete", description: "Linguistic matrix successfully humanized." });
+      const result = await aiHumanizer({ text: input, tone });
+      if (!completed) {
+        clearTimeout(timeoutHandle);
+        setOutput(result);
+        completed = true;
+        toast({ title: "Synthesis Complete", description: "Linguistic matrix successfully humanized." });
+      }
     } catch (err) {
-      setError("Server busy, try again");
-      toast({ variant: "destructive", title: "Protocol Failed" });
+      if (!completed) {
+        clearTimeout(timeoutHandle);
+        const localResult = localHumanize(input, tone);
+        setOutput(localResult);
+        completed = true;
+        toast({ title: "Local Sync Active", description: "Cloud node restricted. Using hardware fallback." });
+      }
     } finally {
-      setIsProcessing(false);
+      if (completed) setIsProcessing(false);
     }
   };
 
