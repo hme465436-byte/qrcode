@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from 'react';
@@ -7,16 +6,16 @@ import {
   Copy, 
   CheckCircle2, 
   Zap, 
-  Activity,
-  Loader2,
-  AlertCircle,
-  AlignLeft,
-  RefreshCcw,
-  RotateCcw,
-  Sparkles,
-  ShieldCheck,
-  Quote,
-  Check
+  Activity, 
+  Loader2, 
+  AlertCircle, 
+  AlignLeft, 
+  RefreshCcw, 
+  RotateCcw, 
+  Sparkles, 
+  ShieldCheck, 
+  Quote, 
+  Check 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,44 +31,50 @@ import { aiHumanizer } from '@/ai/flows/ai-humanizer-flow';
 type Tone = 'simple' | 'professional' | 'casual';
 
 /**
- * Local Linguistic Synthesis Engine
- * Provides a 100% hardware-native fallback when cloud nodes are restricted or slow.
+ * Local Linguistic Synthesis Engine (High-Intensity)
+ * Provides a 100% hardware-native fallback with aggressive pattern neutralization.
  */
 const localHumanize = (text: string, tone: Tone): string => {
   let result = text;
   
-  // 1. Robotic Connector Neutralization (Common AI Markers)
+  // 1. Robotic Connector Neutralization (Aggressive Matrix)
   const mapping: Record<string, string[]> = {
-    'moreover': ['plus', 'also', 'on top of that'],
-    'furthermore': ['and another thing', 'besides'],
-    'additionally': ['also', 'what\'s more'],
-    'in conclusion': ['so basically', 'to wrap up'],
-    'therefore': ['so', 'that\'s why'],
-    'consequently': ['because of that', 'as a result'],
-    'essentially': ['pretty much', 'basically'],
-    'it is worth noting that': ['keep in mind', 'actually'],
+    'moreover': ['plus', 'also', 'on top of that', 'not just that'],
+    'furthermore': ['and another thing', 'besides', 'actually'],
+    'additionally': ['also', 'what\'s more', 'plus'],
+    'in conclusion': ['so basically', 'to wrap up', 'finally'],
+    'therefore': ['so', 'that\'s why', 'because of that'],
+    'consequently': ['so', 'it turns out'],
+    'essentially': ['pretty much', 'basically', 'really'],
+    'it is worth noting that': ['keep in mind', 'actually', 'remember'],
     'utilize': ['use', 'employ'],
     'commence': ['start', 'begin'],
     'terminate': ['end', 'stop'],
-    'however': ['but', 'still', 'though'],
+    'however': ['but', 'still', 'though', 'yet'],
     'indeed': ['truly', 'really'],
     'perhaps': ['maybe'],
     'significant': ['big', 'important', 'major'],
     'determine': ['figure out', 'find out'],
     'objective': ['goal', 'target'],
-    'subsequently': ['later', 'afterwards'],
+    'subsequently': ['later', 'afterwards', 'then'],
     'demonstrate': ['show', 'prove'],
     'implement': ['put in place', 'set up'],
     'facilitate': ['help', 'make happen'],
     'fundamental': ['basic', 'core'],
     'comprehensive': ['full', 'complete'],
-    'firstly': ['to start with', 'first off'],
+    'firstly': ['to start with', 'first off', 'now'],
     'secondly': ['next', 'then'],
     'thirdly': ['after that', 'then'],
     'finally': ['lastly', 'to finish up'],
-    'in my opinion': ['I\'d say', 'I think'],
+    'in my opinion': ['I\'d say', 'I think', 'truth be told'],
     'with regard to': ['about', 'as for'],
-    'it appears that': ['it looks like', 'seems like']
+    'it appears that': ['it looks like', 'seems like'],
+    'pivotal': ['key', 'big', 'huge'],
+    'leveraging': ['using'],
+    'synergy': ['working together'],
+    'ensure': ['make sure'],
+    'provide': ['give', 'offer'],
+    'request': ['ask for']
   };
 
   Object.entries(mapping).forEach(([word, list]) => {
@@ -83,7 +88,7 @@ const localHumanize = (text: string, tone: Tone): string => {
     });
   });
 
-  // 2. Tone-Specific Contractions
+  // 2. Tone-Specific Contractions & Spoken Flow
   if (tone !== 'professional') {
     const contractions: Record<string, string> = {
       'is not': "isn't",
@@ -95,7 +100,10 @@ const localHumanize = (text: string, tone: Tone): string => {
       'it is': "it's",
       'that is': "that's",
       'they are': "they're",
-      'we are': "we're"
+      'we are': "we're",
+      'you are': "you're",
+      'I am': "I'm",
+      'who is': "who's"
     };
     Object.entries(contractions).forEach(([raw, contra]) => {
       const regex = new RegExp(`\\b${raw}\\b`, 'gi');
@@ -106,11 +114,14 @@ const localHumanize = (text: string, tone: Tone): string => {
     });
   }
 
-  // 3. Structural Variance (Burstiness)
-  // Break up robotic compound sentences
+  // 3. Structural Variance (Burstiness Protocol)
+  // Break up robotic compound sentences and vary length
   result = result.replace(/, and /g, '. And ');
   result = result.replace(/, but /g, '. But ');
   result = result.replace(/; /g, '. ');
+  result = result.replace(/, which /g, '. This ');
+  result = result.replace(/, allowing /g, '. This allows ');
+  result = result.replace(/\. Finally/g, '. Lastly');
 
   return result;
 };
@@ -143,7 +154,7 @@ export default function AiHumanizerPage() {
 
     let completed = false;
 
-    // 10s Protocol Timeout Guard
+    // 10s Protocol Timeout Guard (WASM/Local Fallback)
     const timeoutHandle = setTimeout(() => {
       if (!completed) {
         const localResult = localHumanize(input, tone);
@@ -155,6 +166,7 @@ export default function AiHumanizerPage() {
     }, 10000);
 
     try {
+      // Primary Attempt: 2-Pass Cloud Synthesis
       const result = await aiHumanizer({ text: input, tone });
       if (!completed) {
         clearTimeout(timeoutHandle);
