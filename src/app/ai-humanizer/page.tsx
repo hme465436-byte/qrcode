@@ -3,23 +3,18 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Wand2, 
-  Trash2, 
   Copy, 
   CheckCircle2, 
   Zap, 
   Activity,
   Loader2,
   AlertCircle,
-  Type,
   AlignLeft,
   RefreshCcw,
   RotateCcw,
   Sparkles,
   ShieldCheck,
-  Smartphone,
   Quote,
-  LayoutGrid,
-  Monitor,
   Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,12 +55,25 @@ export default function AiHumanizerPage() {
     if (!input.trim()) return;
     setIsProcessing(true);
     setError(null);
+
+    const executeWithRetry = async (attempt = 0): Promise<string> => {
+      try {
+        return await aiHumanizer({ text: input, tone });
+      } catch (err) {
+        if (attempt < 1) {
+          // One automatic retry protocol
+          return await executeWithRetry(attempt + 1);
+        }
+        throw err;
+      }
+    };
+
     try {
-      const result = await aiHumanizer({ text: input, tone });
+      const result = await executeWithRetry();
       setOutput(result);
       toast({ title: "Synthesis Complete", description: "Linguistic matrix successfully humanized." });
     } catch (err) {
-      setError("Matrix Retrieval Failure: The AI node is currently restricted.");
+      setError("Server busy, try again");
       toast({ variant: "destructive", title: "Protocol Failed" });
     } finally {
       setIsProcessing(false);
@@ -134,7 +142,7 @@ export default function AiHumanizerPage() {
                   placeholder="Paste AI content here..." 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  className="min-h-[300px] bg-secondary border-border text-base rounded-[2rem] p-8 text-foreground leading-relaxed resize-none focus:ring-primary/40"
+                  className="min-h-[300px] bg-secondary/30 border-border text-base rounded-[2rem] p-8 text-foreground leading-relaxed resize-none focus:ring-primary/40"
                 />
               </div>
 
