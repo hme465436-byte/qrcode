@@ -141,17 +141,6 @@ interface Tool {
 
 const TOOLS: Tool[] = [
   { 
-    href: '/ai-humanizer', 
-    icon: Edit3, 
-    title: 'Smart Rewrite Tool', 
-    desc: 'Rewrite your text in a clear, natural style for better flow.', 
-    label: 'PRODUCTION', 
-    color: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
-    glowClass: 'bg-violet-400/10',
-    keywords: ['rewrite', 'paraphrase', 'edit', 'natural', 'copywriter', 'editor', 'text fix'],
-    category: 'generators'
-  },
-  { 
     href: '/single', 
     icon: QrCode, 
     title: 'Single Studio', 
@@ -1581,8 +1570,7 @@ export default function Home() {
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
-      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
-      'Smart Rewrite', 'Professional Rewrite', 'Draft Polishing'
+      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1750,7 +1738,7 @@ export default function Home() {
                     className={cn(
                       "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
                       selectedCategory === cat.id 
-                        ? "bg-primary text-primary-foreground border-primary shadow-xl shadow-primary/20 scale-105" 
+                        ? "bg-primary text-primary-foreground border-primary shadow-xl shadow-primary/30 scale-105" 
                         : "bg-white/5 border-white/5 text-foreground/40 hover:text-primary hover:border-primary/20 hover:bg-primary/5"
                     )}
                   >
