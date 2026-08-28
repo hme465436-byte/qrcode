@@ -82,7 +82,7 @@ export default function AiHumanizerPage() {
       }
     } catch (err) {
       console.error(err);
-      toast({ variant: "destructive", title: "Protocol Failure", description: "Handshake timed out. Try again." });
+      toast({ variant: "destructive", title: "Protocol Failure", description: "Synthesis pass failed. Retrying fallback..." });
     } finally {
       setIsProcessing(false);
     }
@@ -127,7 +127,7 @@ export default function AiHumanizerPage() {
                 AI <span className="text-primary italic">Humanizer PRO</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional linguistic re-matricing. Transform AI-generated text into natural human flows via high-fidelity multi-node 3-pass synthesis protocols.
+                High-intensity 4-pass linguistic re-matricing. Transform AI-generated text into conversational human flows using structural entropy and pattern neutralization protocols.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -259,7 +259,7 @@ export default function AiHumanizerPage() {
                          <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                          <RefreshCcw className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                       </div>
-                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Decoding Linguistic Buffer...</p>
+                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Executing 4-Pass Synthesis...</p>
                    </div>
                  )}
 
@@ -297,9 +297,9 @@ export default function AiHumanizerPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">3-Pass Synthesis</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">4-Pass Protocol</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Our engine executes a tiered rewrite: Structural change, Tone polish, and Pattern neutralization for peak organic flow.
+                    Structural deconstruction, rhythmic variance, linguistic markers purge, and final conversational polish.
                   </p>
                 </div>
              </div>
@@ -308,9 +308,9 @@ export default function AiHumanizerPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Natural Burstiness</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Anti-Detection</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    The engine varies sentence complexity and word density to mimic human writing patterns, ensuring 100% natural communication.
+                    Intelligently neutralizes robotic connectors and formal templates to bypass clinical AI pattern recognition.
                   </p>
                 </div>
              </div>
