@@ -12,22 +12,22 @@ export interface HelpContent {
 }
 
 export const HELP_REGISTRY: Record<string, HelpContent> = {
-  'ai-humanizer': {
-    title: 'AI Humanizer Studio',
-    description: 'Advanced linguistic re-matricing tool to transform AI-generated text into natural, human-like writing. Engineered for high-fidelity communication and AI detection avoidance.',
+  'smart-rewrite': {
+    title: 'Smart Rewrite Studio',
+    description: 'Professional linguistic transformation tool designed to enhance text clarity, adjust tone, and improve natural flow without losing original meaning.',
     steps: [
-      'Paste your AI-generated text into the Source Payload matrix.',
-      'Select a target Atmospheric Tone (Simple, Professional, or Casual).',
-      'Execute the Humanize Matrix protocol by clicking the primary action button.',
-      'Monitor the word count delta in the Linguistic Result panel.',
-      'Copy the synthesized human master to your clipboard.'
+      'Paste your source text into the Input matrix.',
+      'Select a Style Tone (Simple, Professional, Casual, or Story).',
+      'Choose a Rewrite Strength to control the intensity of the transformation.',
+      'Execute the Rewrite protocol by clicking the primary action button.',
+      'Review and copy the synthesized draft to your clipboard.'
     ],
     tips: [
-      'Use the Casual tone for social media and creative drafting.',
-      'Professional mode maintains high vocabulary while varying sentence structures.',
-      'Short snippets under 50 words may require manual refinement for peak fidelity.'
+      'Use "Strong" strength for a complete structural re-imagining of your text.',
+      'The "Story Style" is optimized for narrative pacing and descriptive flow.',
+      'Reading time metrics help you estimate the delivery speed of your content.'
     ],
-    privacy: 'Your linguistic matrices are processed strictly via secure server flows. No identifying data or text history is logged or stored in our registry.'
+    privacy: 'Your text is processed strictly for the rewrite operation via secure server flows. No identifying data or text history is logged or stored in our registry.'
   },
   'site-backup-cloner': {
     title: 'Site Backup Cloner Studio',

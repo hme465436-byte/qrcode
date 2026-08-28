@@ -12,14 +12,14 @@ import {
   RotateCcw, 
   RefreshCcw,
   Sparkles, 
-  ShieldCheck, 
   Quote,
   FileDown,
   Clock,
   ChevronRight,
   BadgeCheck,
   User,
-  Type
+  Type,
+  Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +36,7 @@ type Tone = 'simple' | 'professional' | 'casual' | 'story';
 type Strength = 'light' | 'medium' | 'strong';
 type OutputLength = 'shorter' | 'same' | 'longer';
 
-export default function AiHumanizerPage() {
+export default function SmartRewritePage() {
   const { toast } = useToast();
   
   // State Matrix
@@ -59,10 +59,10 @@ export default function AiHumanizerPage() {
     readingTime: Math.max(1, Math.ceil((output.trim() ? output.trim().split(/\s+/).length : 0) / 200))
   }), [output]);
 
-  const handleHumanize = async (isReHumanize = false) => {
-    const textToProcess = isReHumanize ? output : input;
+  const handleRewrite = async (isReRewrite = false) => {
+    const textToProcess = isReRewrite ? output : input;
     if (!textToProcess.trim()) {
-      toast({ variant: "destructive", title: "Input Required", description: "Please enter text to humanize." });
+      toast({ variant: "destructive", title: "Input Required", description: "Please enter text to rewrite." });
       return;
     }
     
@@ -77,13 +77,13 @@ export default function AiHumanizerPage() {
       
       if (result) {
         setOutput(result);
-        toast({ title: isReHumanize ? "Recursion Complete" : "Synthesis Complete" });
+        toast({ title: isReRewrite ? "Re-Rewrite Complete" : "Rewrite Complete" });
       } else {
         throw new Error("Empty Result");
       }
     } catch (err) {
       console.error(err);
-      toast({ variant: "destructive", title: "Protocol Failure", description: "Synthesis pass failed. Retrying fallback..." });
+      toast({ variant: "destructive", title: "Protocol Failure", description: "Internal error. Retrying with local fallback..." });
     } finally {
       setIsProcessing(false);
     }
@@ -104,7 +104,7 @@ export default function AiHumanizerPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `humanized_master_${Date.now()}.txt`;
+    a.download = `rewritten_master_${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: "Master Exported" });
@@ -120,22 +120,22 @@ export default function AiHumanizerPage() {
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-          <Sparkles className="w-3.5 h-3.5" /> Linguistic AI Suite
+          <Sparkles className="w-3.5 h-3.5" /> Linguistic Production Suite
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
            <div>
-              <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-                AI <span className="text-primary italic">Humanizer PRO</span>
+              <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+                Smart Rewrite <span className="text-primary italic">Studio</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional-grade linguistic re-matricing. Transform AI-generated text into conversational human flows using high-entropy structural deconstruction.
+                Professional linguistic transformation. Rewrite your text in a clear, natural style while maintaining original meaning and key facts.
               </p>
            </div>
            <div className="flex items-center gap-3">
-              <GetHelp toolId="ai-humanizer" />
+              <GetHelp toolId="smart-rewrite" />
               {(output || input) && (
                 <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset Matrix
+                  <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
                 </Button>
               )}
            </div>
@@ -149,20 +149,20 @@ export default function AiHumanizerPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
                <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                 <AlignLeft className="w-5 h-5 text-primary" /> Source Payload
+                 <AlignLeft className="w-5 h-5 text-primary" /> Source Buffer
                </CardTitle>
             </CardHeader>
             <CardContent className="pt-10 space-y-8">
               <div className="space-y-4">
                 <div className="flex justify-between items-center px-1">
-                   <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Input Buffer</Label>
+                   <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Input Text</Label>
                    <div className="flex gap-4">
                       <span className="text-[10px] font-mono text-primary/60">{statsBefore.words} Words</span>
                       <span className="text-[10px] font-mono text-foreground/20 flex items-center gap-1.5"><Clock className="w-3 h-3" /> {statsBefore.readingTime}m Read</span>
                    </div>
                 </div>
                 <Textarea 
-                  placeholder="Paste AI content here..." 
+                  placeholder="Paste text you wish to rewrite here..." 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   className="min-h-[300px] bg-secondary/30 border-border text-base rounded-[2rem] p-8 text-foreground leading-relaxed resize-none focus:ring-primary/40"
@@ -173,26 +173,26 @@ export default function AiHumanizerPage() {
               <div className="space-y-6 pt-6 border-t border-white/5">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                     <Label className="text-[8px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Strength</Label>
+                     <Label className="text-[8px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Rewrite Strength</Label>
                      <Select value={strength} onValueChange={(v: any) => setStrength(v)}>
                         <SelectTrigger className="h-10 bg-secondary border-border rounded-xl font-bold uppercase text-[9px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="glass-card">
-                           <SelectItem value="light" className="text-[9px] font-black uppercase">Light (Edit)</SelectItem>
-                           <SelectItem value="medium" className="text-[9px] font-black uppercase">Medium (Revise)</SelectItem>
-                           <SelectItem value="strong" className="text-[9px] font-black uppercase">Strong (Rewrite)</SelectItem>
+                           <SelectItem value="light" className="text-[9px] font-black uppercase">Light Polish</SelectItem>
+                           <SelectItem value="medium" className="text-[9px] font-black uppercase">Medium Revision</SelectItem>
+                           <SelectItem value="strong" className="text-[9px] font-black uppercase">Strong Transformation</SelectItem>
                         </SelectContent>
                      </Select>
                   </div>
                   <div className="space-y-2">
-                     <Label className="text-[8px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Atmospheric Tone</Label>
+                     <Label className="text-[8px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Style Tone</Label>
                      <Select value={tone} onValueChange={(v: any) => setTone(v)}>
                         <SelectTrigger className="h-10 bg-secondary border-border rounded-xl font-bold uppercase text-[9px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="glass-card">
-                           <SelectItem value="simple" className="text-[9px] font-black uppercase">Simple</SelectItem>
+                           <SelectItem value="simple" className="text-[9px] font-black uppercase">Simple / Clear</SelectItem>
                            <SelectItem value="professional" className="text-[9px] font-black uppercase">Professional</SelectItem>
                            <SelectItem value="casual" className="text-[9px] font-black uppercase">Casual</SelectItem>
                            <SelectItem value="story" className="text-[9px] font-black uppercase">Story Style</SelectItem>
@@ -200,7 +200,7 @@ export default function AiHumanizerPage() {
                      </Select>
                   </div>
                   <div className="space-y-2">
-                     <Label className="text-[8px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Output Vol</Label>
+                     <Label className="text-[8px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Length</Label>
                      <Select value={length} onValueChange={(v: any) => setLength(v)}>
                         <SelectTrigger className="h-10 bg-secondary border-border rounded-xl font-bold uppercase text-[9px]">
                           <SelectValue />
@@ -215,12 +215,12 @@ export default function AiHumanizerPage() {
                 </div>
                 
                 <Button 
-                  onClick={() => handleHumanize(false)} 
+                  onClick={() => handleRewrite(false)} 
                   disabled={isProcessing || !input.trim()}
                   className="h-16 w-full bg-primary text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                 >
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                  {isProcessing ? 'Humanizing...' : 'Execute Humanize Matrix'}
+                  {isProcessing ? 'Rewriting...' : 'Execute Smart Rewrite'}
                 </Button>
               </div>
             </CardContent>
@@ -228,7 +228,7 @@ export default function AiHumanizerPage() {
         </div>
 
         {/* Output Column */}
-        <div className="lg:col-span-6 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+        <div className="lg:col-span-6 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px] bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
@@ -236,7 +236,7 @@ export default function AiHumanizerPage() {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <Activity className="w-5 h-5" />
                     </div>
-                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Linguistic Result</CardTitle>
+                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Output Matrix</CardTitle>
                  </div>
                  {output && (
                     <div className="flex gap-4">
@@ -250,7 +250,7 @@ export default function AiHumanizerPage() {
                  {!output && !isProcessing && (
                    <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-20">
                       <Quote className="w-24 h-24 text-primary" />
-                      <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Discovery Signal</p>
+                      <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Data Input</p>
                    </div>
                  )}
 
@@ -260,14 +260,13 @@ export default function AiHumanizerPage() {
                          <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                          <RefreshCcw className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                       </div>
-                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Executing 4-Pass Synthesis...</p>
+                      <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Synthesizing New Draft...</p>
                    </div>
                  )}
 
                  {output && !isProcessing && (
                    <div className="w-full h-full flex flex-col gap-8 animate-in zoom-in-95 duration-500">
                       <div className="p-10 rounded-[3rem] bg-secondary/30 border border-border space-y-4 shadow-inner relative flex-1">
-                         <div className="absolute top-4 right-6 text-white/5 font-black text-[60px] pointer-events-none uppercase">PRO</div>
                          <p className="text-lg font-medium text-foreground/80 leading-relaxed selection:bg-primary/30">
                             {output}
                          </p>
@@ -279,7 +278,7 @@ export default function AiHumanizerPage() {
                             Copy Master
                          </Button>
                          <div className="grid grid-cols-2 gap-3">
-                            <Button variant="outline" onClick={() => handleHumanize(true)} className="h-16 rounded-2xl border-white/10 bg-white/5 text-white/60 font-black uppercase text-[9px] tracking-widest hover:text-primary">
+                            <Button variant="outline" onClick={() => handleRewrite(true)} className="h-16 rounded-2xl border-white/10 bg-white/5 text-white/60 font-black uppercase text-[9px] tracking-widest hover:text-primary">
                                <RefreshCcw className="w-3.5 h-3.5 mr-2" /> Remix
                             </Button>
                             <Button variant="outline" onClick={handleDownload} className="h-16 rounded-2xl border-white/10 bg-white/5 text-white/60 font-black uppercase text-[9px] tracking-widest hover:text-primary">
@@ -298,9 +297,9 @@ export default function AiHumanizerPage() {
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">4-Pass Protocol</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Safe</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Structural deconstruction, rhythmic variance, linguistic markers purge, and final conversational polish.
+                    Your text is processed strictly for the rewrite operation. No identifying data is logged or stored on our servers.
                   </p>
                 </div>
              </div>
@@ -309,9 +308,9 @@ export default function AiHumanizerPage() {
                    <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Anti-Detection</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Smart Protocol</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Intelligently neutralizes robotic connectors and formal templates to bypass clinical AI pattern recognition.
+                    Uses multi-node AI logic to ensure every rewrite is clear, professionally structured, and natural.
                   </p>
                 </div>
              </div>

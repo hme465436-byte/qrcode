@@ -114,7 +114,8 @@ import {
   Heart,
   Hammer,
   Hash as HashIcon,
-  History
+  History,
+  Edit3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -141,13 +142,13 @@ interface Tool {
 const TOOLS: Tool[] = [
   { 
     href: '/ai-humanizer', 
-    icon: Wand2, 
-    title: 'AI Humanizer', 
-    desc: 'Transform AI-generated text into natural, human-like writing.', 
-    label: 'AI ASSIST', 
+    icon: Edit3, 
+    title: 'Smart Rewrite Tool', 
+    desc: 'Rewrite your text in a clear, natural style for better flow.', 
+    label: 'PRODUCTION', 
     color: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
     glowClass: 'bg-violet-400/10',
-    keywords: ['ai', 'humanizer', 'rewrite', 'natural', 'detection', 'editor', 'chatgpt'],
+    keywords: ['rewrite', 'paraphrase', 'edit', 'natural', 'copywriter', 'editor', 'text fix'],
     category: 'generators'
   },
   { 
@@ -1399,7 +1400,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -1581,7 +1582,7 @@ export default function Home() {
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
       'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
-      'AI Humanizer', 'Humanize AI Text', 'Detection avoidance'
+      'Smart Rewrite', 'Professional Rewrite', 'Draft Polishing'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
