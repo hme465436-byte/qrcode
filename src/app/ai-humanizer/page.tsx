@@ -60,7 +60,10 @@ export default function AiHumanizerPage() {
 
   const handleHumanize = async (isReHumanize = false) => {
     const textToProcess = isReHumanize ? output : input;
-    if (!textToProcess.trim()) return;
+    if (!textToProcess.trim()) {
+      toast({ variant: "destructive", title: "Input Required", description: "Please enter text to humanize." });
+      return;
+    }
     
     setIsProcessing(true);
     try {
@@ -70,11 +73,16 @@ export default function AiHumanizerPage() {
         strength, 
         length 
       });
-      setOutput(result);
-      toast({ title: isReHumanize ? "Recursion Complete" : "Synthesis Complete" });
+      
+      if (result) {
+        setOutput(result);
+        toast({ title: isReHumanize ? "Recursion Complete" : "Synthesis Complete" });
+      } else {
+        throw new Error("Empty Result");
+      }
     } catch (err) {
       console.error(err);
-      toast({ variant: "destructive", title: "Protocol Failure", description: "Node handshake timed out." });
+      toast({ variant: "destructive", title: "Protocol Failure", description: "Handshake timed out. Try again." });
     } finally {
       setIsProcessing(false);
     }
