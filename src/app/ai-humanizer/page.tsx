@@ -18,7 +18,8 @@ import {
   Clock,
   ChevronRight,
   BadgeCheck,
-  User
+  User,
+  Type
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -127,7 +128,7 @@ export default function AiHumanizerPage() {
                 AI <span className="text-primary italic">Humanizer PRO</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                High-intensity 4-pass linguistic re-matricing. Transform AI-generated text into conversational human flows using structural entropy and pattern neutralization protocols.
+                Professional-grade linguistic re-matricing. Transform AI-generated text into conversational human flows using high-entropy structural deconstruction.
               </p>
            </div>
            <div className="flex items-center gap-3">
