@@ -13,7 +13,11 @@ import {
   RefreshCcw,
   Sparkles, 
   ShieldCheck, 
-  Quote 
+  Quote,
+  FileDown,
+  Clock,
+  ChevronRight,
+  BadgeCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +30,9 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { aiHumanizer } from '@/ai/flows/ai-humanizer-flow';
 
-type Tone = 'simple' | 'professional' | 'casual';
+type Tone = 'simple' | 'professional' | 'casual' | 'story';
+type Strength = 'light' | 'medium' | 'strong';
+type OutputLength = 'shorter' | 'same' | 'longer';
 
 export default function AiHumanizerPage() {
   const { toast } = useToast();
@@ -34,31 +40,38 @@ export default function AiHumanizerPage() {
   // State Matrix
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
-  const [tone, setTone] = useState<Tone>('simple');
+  const [tone, setTone] = useState<Tone>('professional');
+  const [strength, setStrength] = useState<Strength>('strong');
+  const [length, setLength] = useState<OutputLength>('same');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
+  // Analytics Matrix
   const statsBefore = useMemo(() => ({
     words: input.trim() ? input.trim().split(/\s+/).length : 0,
-    chars: input.length
+    readingTime: Math.max(1, Math.ceil((input.trim() ? input.trim().split(/\s+/).length : 0) / 200))
   }), [input]);
 
   const statsAfter = useMemo(() => ({
     words: output.trim() ? output.trim().split(/\s+/).length : 0,
-    chars: output.length
+    readingTime: Math.max(1, Math.ceil((output.trim() ? output.trim().split(/\s+/).length : 0) / 200))
   }), [output]);
 
-  const handleHumanize = async () => {
-    if (!input.trim()) return;
+  const handleHumanize = async (isReHumanize = false) => {
+    const textToProcess = isReHumanize ? output : input;
+    if (!textToProcess.trim()) return;
+    
     setIsProcessing(true);
-
     try {
-      // Direct call to the multi-node flow
-      const result = await aiHumanizer({ text: input, tone });
+      const result = await aiHumanizer({ 
+        text: textToProcess, 
+        tone, 
+        strength, 
+        length 
+      });
       setOutput(result);
-      toast({ title: "Synthesis Complete" });
+      toast({ title: isReHumanize ? "Recursion Complete" : "Synthesis Complete" });
     } catch (err) {
-      // Errors are handled internally by the flow through fallbacks
       console.error(err);
     } finally {
       setIsProcessing(false);
@@ -74,10 +87,27 @@ export default function AiHumanizerPage() {
     }
   };
 
+  const handleDownload = () => {
+    if (!output) return;
+    const blob = new Blob([output], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `humanized_master_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Master Exported" });
+  };
+
   const handleClear = () => {
     setInput('');
     setOutput('');
     toast({ title: "Studio Reset" });
+  };
+
+  const handleReHumanize = () => {
+    if (!output) return;
+    handleHumanize(true);
   };
 
   return (
@@ -107,7 +137,7 @@ export default function AiHumanizerPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Input Column */}
+        {/* Input & Parameters Column */}
         <div className="lg:col-span-6 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
@@ -119,8 +149,11 @@ export default function AiHumanizerPage() {
             <CardContent className="pt-10 space-y-8">
               <div className="space-y-4">
                 <div className="flex justify-between items-center px-1">
-                   <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">AI-Generated Content</Label>
-                   <span className="text-[10px] font-mono text-primary/60">{statsBefore.words} Words</span>
+                   <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Input Buffer</Label>
+                   <div className="flex gap-4">
+                      <span className="text-[10px] font-mono text-primary/60">{statsBefore.words} Words</span>
+                      <span className="text-[10px] font-mono text-foreground/20 flex items-center gap-1.5"><Clock className="w-3 h-3" /> {statsBefore.readingTime}m Read</span>
+                   </div>
                 </div>
                 <Textarea 
                   placeholder="Paste AI content here..." 
@@ -130,30 +163,59 @@ export default function AiHumanizerPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-white/5">
-                <div className="space-y-4">
-                   <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Atmospheric Tone</Label>
-                   <Select value={tone} onValueChange={(v: any) => setTone(v)}>
-                      <SelectTrigger className="h-14 bg-secondary border-border rounded-xl font-bold uppercase text-[10px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="glass-card">
-                         <SelectItem value="simple" className="text-[10px] font-black uppercase">Simple (Clear)</SelectItem>
-                         <SelectItem value="professional" className="text-[10px] font-black uppercase">Professional</SelectItem>
-                         <SelectItem value="casual" className="text-[10px] font-black uppercase">Casual (Flow)</SelectItem>
-                      </SelectContent>
-                   </Select>
+              {/* Parameter Matrix */}
+              <div className="space-y-6 pt-6 border-t border-white/5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                     <Label className="text-[8px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Strength</Label>
+                     <Select value={strength} onValueChange={(v: any) => setStrength(v)}>
+                        <SelectTrigger className="h-10 bg-secondary border-border rounded-xl font-bold uppercase text-[9px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="glass-card">
+                           <SelectItem value="light" className="text-[9px] font-black uppercase">Light (Edit)</SelectItem>
+                           <SelectItem value="medium" className="text-[9px] font-black uppercase">Medium (Revise)</SelectItem>
+                           <SelectItem value="strong" className="text-[9px] font-black uppercase">Strong (Rewrite)</SelectItem>
+                        </SelectContent>
+                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                     <Label className="text-[8px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Atmospheric Tone</Label>
+                     <Select value={tone} onValueChange={(v: any) => setTone(v)}>
+                        <SelectTrigger className="h-10 bg-secondary border-border rounded-xl font-bold uppercase text-[9px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="glass-card">
+                           <SelectItem value="simple" className="text-[9px] font-black uppercase">Simple</SelectItem>
+                           <SelectItem value="professional" className="text-[9px] font-black uppercase">Professional</SelectItem>
+                           <SelectItem value="casual" className="text-[9px] font-black uppercase">Casual</SelectItem>
+                           <SelectItem value="story" className="text-[9px] font-black uppercase">Story Style</SelectItem>
+                        </SelectContent>
+                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                     <Label className="text-[8px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Output Vol</Label>
+                     <Select value={length} onValueChange={(v: any) => setLength(v)}>
+                        <SelectTrigger className="h-10 bg-secondary border-border rounded-xl font-bold uppercase text-[9px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="glass-card">
+                           <SelectItem value="shorter" className="text-[9px] font-black uppercase">Shorter</SelectItem>
+                           <SelectItem value="same" className="text-[9px] font-black uppercase">Same Length</SelectItem>
+                           <SelectItem value="longer" className="text-[9px] font-black uppercase">Longer</SelectItem>
+                        </SelectContent>
+                     </Select>
+                  </div>
                 </div>
-                <div className="flex flex-col justify-end">
-                   <Button 
-                    onClick={handleHumanize} 
-                    disabled={isProcessing || !input.trim()}
-                    className="h-14 w-full bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
-                  >
-                    {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                    {isProcessing ? 'Humanizing...' : 'Humanize Matrix'}
-                  </Button>
-                </div>
+                
+                <Button 
+                  onClick={() => handleHumanize(false)} 
+                  disabled={isProcessing || !input.trim()}
+                  className="h-16 w-full bg-primary text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                >
+                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
+                  {isProcessing ? 'Humanizing...' : 'Execute Humanize Matrix'}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -171,9 +233,10 @@ export default function AiHumanizerPage() {
                     <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Linguistic Result</CardTitle>
                  </div>
                  {output && (
-                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">
-                       {statsAfter.words} Words Synthesized
-                    </Badge>
+                    <div className="flex gap-4">
+                       <span className="text-[10px] font-mono text-primary/60">{statsAfter.words} Words</span>
+                       <BadgeCheck className="w-4 h-4 text-emerald-500" />
+                    </div>
                  )}
               </CardHeader>
               
@@ -204,11 +267,19 @@ export default function AiHumanizerPage() {
                          </p>
                       </div>
 
-                      <div className="flex gap-4">
-                         <Button onClick={handleCopy} className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <Button onClick={handleCopy} className="h-16 w-full bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
                             {isCopied ? <CheckCircle2 className="w-5 h-5 mr-1" /> : <Copy className="w-5 h-5 mr-1" />}
-                            Copy Humanized Master
+                            Copy Master
                          </Button>
+                         <div className="grid grid-cols-2 gap-3">
+                            <Button variant="outline" onClick={handleReHumanize} className="h-16 rounded-2xl border-white/10 bg-white/5 text-white/60 font-black uppercase text-[9px] tracking-widest hover:text-primary">
+                               <RefreshCcw className="w-3.5 h-3.5 mr-2" /> Remix
+                            </Button>
+                            <Button variant="outline" onClick={handleDownload} className="h-16 rounded-2xl border-white/10 bg-white/5 text-white/60 font-black uppercase text-[9px] tracking-widest hover:text-primary">
+                               <FileDown className="w-3.5 h-3.5 mr-2" /> .TXT
+                            </Button>
+                         </div>
                       </div>
                    </div>
                  )}
