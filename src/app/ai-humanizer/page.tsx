@@ -17,7 +17,8 @@ import {
   FileDown,
   Clock,
   ChevronRight,
-  BadgeCheck
+  BadgeCheck,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,6 +74,7 @@ export default function AiHumanizerPage() {
       toast({ title: isReHumanize ? "Recursion Complete" : "Synthesis Complete" });
     } catch (err) {
       console.error(err);
+      toast({ variant: "destructive", title: "Protocol Failure", description: "Node handshake timed out." });
     } finally {
       setIsProcessing(false);
     }
@@ -103,11 +105,6 @@ export default function AiHumanizerPage() {
     setInput('');
     setOutput('');
     toast({ title: "Studio Reset" });
-  };
-
-  const handleReHumanize = () => {
-    if (!output) return;
-    handleHumanize(true);
   };
 
   return (
@@ -273,7 +270,7 @@ export default function AiHumanizerPage() {
                             Copy Master
                          </Button>
                          <div className="grid grid-cols-2 gap-3">
-                            <Button variant="outline" onClick={handleReHumanize} className="h-16 rounded-2xl border-white/10 bg-white/5 text-white/60 font-black uppercase text-[9px] tracking-widest hover:text-primary">
+                            <Button variant="outline" onClick={() => handleHumanize(true)} className="h-16 rounded-2xl border-white/10 bg-white/5 text-white/60 font-black uppercase text-[9px] tracking-widest hover:text-primary">
                                <RefreshCcw className="w-3.5 h-3.5 mr-2" /> Remix
                             </Button>
                             <Button variant="outline" onClick={handleDownload} className="h-16 rounded-2xl border-white/10 bg-white/5 text-white/60 font-black uppercase text-[9px] tracking-widest hover:text-primary">
