@@ -39,7 +39,7 @@ interface Project {
 
 const PROJECTS: Project[] = [
   { name: 'Vortex Reach', url: 'https://vortexreach.vercel.app/', desc: 'Social services and marketing panel.', icon: Zap, color: 'text-blue-500 bg-blue-500/10' },
-  { name: 'Studio', url: 'https://studio-nu-sandy.vercel.app/', desc: 'Digital creative production studio.', icon: Wand2, color: 'text-indigo-500 bg-indigo-500/10' },
+  { name: 'Trade Vission', url: 'https://studio-nu-sandy.vercel.app/', desc: 'Digital creative production studio.', icon: Wand2, color: 'text-indigo-500 bg-indigo-500/10' },
   { name: 'Hisab Flow', url: 'https://hisabflow-coral.vercel.app/login', desc: 'Efficient shop accounts and ledger manager.', icon: LayoutGrid, color: 'text-emerald-500 bg-emerald-500/10' },
   { name: 'WhatsQuality', url: 'https://whatsquality-pearl.vercel.app/', desc: 'High-fidelity WhatsApp DP optimization.', icon: Smartphone, color: 'text-cyan-500 bg-cyan-500/10' },
   { name: 'APK Vault', url: 'https://apkvault.vercel.app/', desc: 'Secure Android application library.', icon: Box, color: 'text-orange-500 bg-orange-500/10' },
