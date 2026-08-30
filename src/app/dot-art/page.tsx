@@ -15,7 +15,8 @@ import {
   Settings2,
   Image as ImageIconLucide,
   Loader2,
-  MessageSquare
+  MessageSquare,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -161,7 +162,6 @@ export default function DotArtPage() {
   const handleCopy = () => {
     if (!output || !image) return;
 
-    // specialized copy logic for mobile/chat compatibility
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src = image;
@@ -173,7 +173,7 @@ export default function DotArtPage() {
       // 2. Wrap in backticks to force monospace block in WhatsApp/Discord
       const finalPayload = "```\n" + result.trim() + "\n```";
       
-      // 3. Execute Copy
+      // 3. Execute Copy with Fallback
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(finalPayload).then(() => {
           setIsCopied(true);
@@ -183,7 +183,11 @@ export default function DotArtPage() {
       } else {
         const textArea = document.createElement("textarea");
         textArea.value = finalPayload;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
         document.body.appendChild(textArea);
+        textArea.focus();
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
@@ -254,7 +258,7 @@ export default function DotArtPage() {
                       <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4 shadow-xl">
                         <Download className="w-6 h-6" />
                       </div>
-                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors">Drop or Click to Upload</p>
+                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors text-center">Drop or Click to Upload</p>
                     </>
                   )}
                   <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
