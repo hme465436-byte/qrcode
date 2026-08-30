@@ -142,15 +142,19 @@ function PollingNode({ email, isRefreshing, onSync }: { email: string | null, is
     if (!email) return;
     const interval = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) {
-          onSync(true);
-          return REFRESH_RATE;
-        }
+        if (prev <= 1) return 0;
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [email, onSync]);
+  }, [email]);
+
+  useEffect(() => {
+    if (countdown === 0) {
+      onSync(true);
+      setCountdown(REFRESH_RATE);
+    }
+  }, [countdown, onSync]);
 
   return (
     <Button 
@@ -160,7 +164,7 @@ function PollingNode({ email, isRefreshing, onSync }: { email: string | null, is
       disabled={isRefreshing || !email} 
       className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary"
     >
-      <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isRefreshing && "animate-spin")} /> {countdown}S
+      <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isRefreshing && "animate-spin")} /> {countdown > 0 ? countdown : '...'}S
     </Button>
   );
 }
@@ -854,3 +858,4 @@ export default function TempMailPage() {
     </div>
   );
 }
+
