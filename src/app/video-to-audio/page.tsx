@@ -36,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { toBlobURL } from '@ffmpeg/util';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 const AUDIO_FORMATS = [
   { id: 'mp3', label: 'MP3 (Standard)', codec: 'libmp3lame', ext: 'mp3', supportsBitrate: true },
@@ -289,7 +289,7 @@ export default function VideoToAudioPage() {
               </CardTitle>
             </CardHeader>
             
-            <CardContent className="pt-10 space-y-8">
+            <CardContent className="pt-10 space-y-10">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Media Container</Label>
@@ -304,7 +304,7 @@ export default function VideoToAudioPage() {
                   onClick={() => !isProcessing && fileInputRef.current?.click()}
                   className={cn(
                     "relative group/upload h-48 rounded-[2rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer",
-                    file && "border-solid border-primary/40",
+                    file && "border-solid border-primary/20",
                     isProcessing && "cursor-not-allowed opacity-80"
                   )}
                 >
@@ -451,7 +451,7 @@ export default function VideoToAudioPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Generate Master
+                  Convert
                 </Button>
                 <Button 
                   variant="outline"
@@ -526,7 +526,7 @@ export default function VideoToAudioPage() {
                     >
                       <a href={audioUrl} download={`${file?.name.split('.')[0] || 'master'}_optimized.${selectedFormat.ext}`}>
                         <Download className="w-6 h-6" />
-                        Download {selectedFormat.ext.toUpperCase()}
+                        Download
                       </a>
                     </Button>
                   </div>
