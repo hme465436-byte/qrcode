@@ -1,7 +1,6 @@
-
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   ImageIcon, 
   Grid3X3, 
@@ -15,7 +14,8 @@ import {
   Sliders,
   Settings2,
   Image as ImageIconLucide,
-  Loader2
+  Loader2,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,6 +57,92 @@ export default function DotArtPage() {
     }
   };
 
+  const processBraille = (img: HTMLImageElement, targetWidthChars: number) => {
+    const charWidth = 2;
+    const charHeight = 4;
+    const outputWidth = targetWidthChars * charWidth;
+    const outputHeight = Math.round((img.height / img.width) * outputWidth);
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
+
+    const imageData = ctx.getImageData(0, 0, outputWidth, outputHeight);
+    const data = imageData.data;
+    
+    const pixels = new Uint8ClampedArray(outputWidth * outputHeight);
+    for (let i = 0; i < data.length; i += 4) {
+      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      pixels[i / 4] = avg;
+    }
+
+    let processedPixels = pixels;
+
+    if (mode === 'edges') {
+      const edgePixels = new Uint8ClampedArray(outputWidth * outputHeight);
+      const sensValue = (100 - sensitivity) * 2;
+      for (let y = 1; y < outputHeight - 1; y++) {
+        for (let x = 1; x < outputWidth - 1; x++) {
+          const idx = y * outputWidth + x;
+          const gx = -1 * pixels[idx - outputWidth - 1] + 1 * pixels[idx - outputWidth + 1] + -2 * pixels[idx - 1] + 2 * pixels[idx + 1] + -1 * pixels[idx + outputWidth - 1] + 1 * pixels[idx + outputWidth + 1];
+          const gy = -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * pixels[idx - outputWidth + 1] + 1 * pixels[idx + outputWidth - 1] + 2 * pixels[idx + outputWidth] + 1 * pixels[idx + outputWidth + 1];
+          const mag = Math.sqrt(gx * gx + gy * gy);
+          edgePixels[idx] = mag > sensValue ? 0 : 255;
+        }
+      }
+      if (thickness > 1) {
+        const thickPixels = new Uint8ClampedArray(edgePixels);
+        for (let y = 1; y < outputHeight - 1; y++) {
+          for (let x = 1; x < outputWidth - 1; x++) {
+            if (edgePixels[y * outputWidth + x] === 0) {
+              for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                  const targetY = y + dy;
+                  const targetX = x + dx;
+                  if (targetY >= 0 && targetY < outputHeight && targetX >= 0 && targetX < outputWidth) {
+                    thickPixels[targetY * outputWidth + targetX] = 0;
+                  }
+                }
+              }
+            }
+          }
+        }
+        processedPixels = thickPixels;
+      } else {
+        processedPixels = edgePixels;
+      }
+    }
+
+    let result = '';
+    for (let y = 0; y < outputHeight; y += charHeight) {
+      for (let x = 0; x < outputWidth; x += charWidth) {
+        let byte = 0;
+        const checkPixel = (dx: number, dy: number) => {
+          const px = x + dx;
+          const py = y + dy;
+          if (px >= outputWidth || py >= outputHeight) return false;
+          const val = processedPixels[py * outputWidth + px];
+          return mode === 'edges' ? val === 0 : val < darkness;
+        };
+        if (checkPixel(0, 0)) byte += 1;
+        if (checkPixel(0, 1)) byte += 2;
+        if (checkPixel(0, 2)) byte += 4;
+        if (checkPixel(1, 0)) byte += 8;
+        if (checkPixel(1, 1)) byte += 16;
+        if (checkPixel(1, 2)) byte += 32;
+        if (checkPixel(0, 3)) byte += 64;
+        if (checkPixel(1, 3)) byte += 128;
+        result += String.fromCharCode(0x2800 + byte);
+      }
+      result += '\n';
+    }
+    return result;
+  };
+
   const generateDotArt = () => {
     if (!image) return;
     setIsProcessing(true);
@@ -65,108 +151,7 @@ export default function DotArtPage() {
     img.crossOrigin = "anonymous";
     img.src = image;
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      // Braille is 2x4 dots per character
-      // We want 'detail' characters wide
-      const charWidth = 2;
-      const charHeight = 4;
-      const outputWidth = detail * charWidth;
-      const outputHeight = Math.round((img.height / img.width) * outputWidth);
-      
-      canvas.width = outputWidth;
-      canvas.height = outputHeight;
-      ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
-
-      const imageData = ctx.getImageData(0, 0, outputWidth, outputHeight);
-      const data = imageData.data;
-      
-      // Grayscale & Pre-process
-      const pixels = new Uint8ClampedArray(outputWidth * outputHeight);
-      for (let i = 0; i < data.length; i += 4) {
-        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        pixels[i / 4] = avg;
-      }
-
-      let processedPixels = pixels;
-
-      if (mode === 'edges') {
-        // Simple Sobel Edge Detection
-        const edgePixels = new Uint8ClampedArray(outputWidth * outputHeight);
-        const sensValue = (100 - sensitivity) * 2;
-        
-        for (let y = 1; y < outputHeight - 1; y++) {
-          for (let x = 1; x < outputWidth - 1; x++) {
-            const idx = y * outputWidth + x;
-            const gx = 
-              -1 * pixels[idx - outputWidth - 1] + 1 * pixels[idx - outputWidth + 1] +
-              -2 * pixels[idx - 1] + 2 * pixels[idx + 1] +
-              -1 * pixels[idx + outputWidth - 1] + 1 * pixels[idx + outputWidth + 1];
-            
-            const gy = 
-              -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * pixels[idx - outputWidth + 1] +
-              1 * pixels[idx + outputWidth - 1] + 2 * pixels[idx + outputWidth] + 1 * pixels[idx + outputWidth + 1];
-            
-            const mag = Math.sqrt(gx * gx + gy * gy);
-            edgePixels[idx] = mag > sensValue ? 0 : 255; // Inverse for thresholding later
-          }
-        }
-
-        // Apply thickness (dilation)
-        if (thickness > 1) {
-          const thickPixels = new Uint8ClampedArray(edgePixels);
-          for (let y = 1; y < outputHeight - 1; y++) {
-            for (let x = 1; x < outputWidth - 1; x++) {
-              if (edgePixels[y * outputWidth + x] === 0) {
-                for (let dy = -1; dy <= 1; dy++) {
-                  for (let dx = -1; dx <= 1; dx++) {
-                    thickPixels[(y + dy) * outputWidth + (x + dx)] = 0;
-                  }
-                }
-              }
-            }
-          }
-          processedPixels = thickPixels;
-        } else {
-          processedPixels = edgePixels;
-        }
-      }
-
-      // Convert to Braille
-      let result = '';
-      for (let y = 0; y < outputHeight; y += charHeight) {
-        for (let x = 0; x < outputWidth; x += charWidth) {
-          let byte = 0;
-          
-          // Braille Dot Map (standard encoding)
-          // 1 4
-          // 2 5
-          // 3 6
-          // 7 8
-          const checkPixel = (dx: number, dy: number) => {
-            const px = x + dx;
-            const py = y + dy;
-            if (px >= outputWidth || py >= outputHeight) return false;
-            const val = processedPixels[py * outputWidth + px];
-            return mode === 'edges' ? val === 0 : val < darkness;
-          };
-
-          if (checkPixel(0, 0)) byte += 1;   // Dot 1
-          if (checkPixel(0, 1)) byte += 2;   // Dot 2
-          if (checkPixel(0, 2)) byte += 4;   // Dot 3
-          if (checkPixel(1, 0)) byte += 8;   // Dot 4
-          if (checkPixel(1, 1)) byte += 16;  // Dot 5
-          if (checkPixel(1, 2)) byte += 32;  // Dot 6
-          if (checkPixel(0, 3)) byte += 64;  // Dot 7
-          if (checkPixel(1, 3)) byte += 128; // Dot 8
-
-          result += String.fromCharCode(0x2800 + byte);
-        }
-        result += '\n';
-      }
-
+      const result = processBraille(img, detail);
       setOutput(result);
       setIsProcessing(false);
       toast({ title: "Art Generated", description: "Image converted to Braille dots." });
@@ -174,12 +159,39 @@ export default function DotArtPage() {
   };
 
   const handleCopy = () => {
-    if (output) {
-      navigator.clipboard.writeText(output);
-      setIsCopied(true);
-      toast({ title: "Copied!", description: "Dot art saved to clipboard." });
-      setTimeout(() => setIsCopied(false), 2000);
-    }
+    if (!output || !image) return;
+
+    // specialized copy logic for mobile/chat compatibility
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = image;
+    img.onload = () => {
+      // 1. Force a chat-safe width (approx 35 chars) for the copied version
+      const chatWidth = 35;
+      const result = processBraille(img, chatWidth);
+      
+      // 2. Wrap in backticks to force monospace block in WhatsApp/Discord
+      const finalPayload = "```\n" + result.trim() + "\n```";
+      
+      // 3. Execute Copy
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(finalPayload).then(() => {
+          setIsCopied(true);
+          toast({ title: "Chat-Safe Art Copied", description: "Formatted for WhatsApp." });
+          setTimeout(() => setIsCopied(false), 2000);
+        });
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = finalPayload;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setIsCopied(true);
+        toast({ title: "Chat-Safe Art Copied", description: "Formatted for WhatsApp." });
+        setTimeout(() => setIsCopied(false), 2000);
+      }
+    };
   };
 
   const handleClear = () => {
@@ -239,7 +251,7 @@ export default function DotArtPage() {
                     </>
                   ) : (
                     <>
-                      <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4">
+                      <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4 shadow-xl">
                         <Download className="w-6 h-6" />
                       </div>
                       <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors">Drop or Click to Upload</p>
@@ -247,9 +259,6 @@ export default function DotArtPage() {
                   )}
                   <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                 </div>
-                <p className="text-[9px] text-foreground/30 font-bold uppercase tracking-widest flex items-center gap-2">
-                  <Info className="w-3 h-3" /> Tip: Flat icons or high-contrast logos yield best results.
-                </p>
               </div>
 
               {/* Advanced Settings */}
@@ -268,7 +277,7 @@ export default function DotArtPage() {
                     </Select>
                   </div>
                   <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Width (Chars)</Label>
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Preview Width</Label>
                     <div className="flex items-center gap-4">
                       <Slider value={[detail]} min={20} max={150} step={1} onValueChange={(v) => setDetail(v[0])} className="flex-1" />
                       <span className="text-[10px] font-mono font-black text-primary w-8">{detail}</span>
@@ -293,26 +302,6 @@ export default function DotArtPage() {
                     </div>
                   )}
                 </div>
-
-                {mode === 'edges' && (
-                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Line Thickness</Label>
-                    <div className="flex gap-4">
-                      {[1, 2, 3].map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setThickness(t)}
-                          className={cn(
-                            "flex-1 h-10 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all",
-                            thickness === t ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-foreground/40"
-                          )}
-                        >
-                          {t === 1 ? 'Fine' : t === 2 ? 'Medium' : 'Bold'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="flex gap-4 pt-4">
@@ -348,7 +337,7 @@ export default function DotArtPage() {
 
         {/* Output Section */}
         <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group flex flex-col">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-border bg-secondary/30">
               <div className="flex items-center justify-between">
@@ -358,7 +347,7 @@ export default function DotArtPage() {
                 </CardTitle>
                 {output && (
                   <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest shadow-sm">
-                    {output.length.toLocaleString()} Dots
+                    Preview Size: {detail} Columns
                   </div>
                 )}
               </div>
@@ -379,43 +368,43 @@ export default function DotArtPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <Button 
                   onClick={handleCopy}
                   disabled={!output}
                   className={cn(
-                    "h-16 bg-secondary border border-border hover:bg-secondary/80 text-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-xl shadow-lg transition-all active:scale-95",
-                    output ? "text-primary border-primary/20" : "opacity-50"
+                    "w-full h-16 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-xl shadow-lg transition-all active:scale-95",
+                    output ? "border-primary/20" : "opacity-50"
                   )}
                 >
-                  {isCopied ? <CheckCircle2 className="w-6 h-6 text-primary" /> : <Copy className="w-6 h-6 text-primary" />}
-                  {isCopied ? 'Copied' : 'Copy Art'}
+                  {isCopied ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                  {isCopied ? 'Copied' : 'Copy for WhatsApp'}
                 </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    const blob = new Blob([output], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'dot-art-qrcanvas.txt';
-                    a.click();
-                  }}
-                  disabled={!output}
-                  className="h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground/50 font-black uppercase tracking-widest transition-all active:scale-95"
-                >
-                  <Download className="w-5 h-5 mr-3" />
-                  Save .txt
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <p className="text-[10px] text-foreground/30 font-bold uppercase text-center flex items-center justify-center gap-2">
+                    <MessageSquare className="w-3 h-3" /> For WhatsApp: paste as-is (monospace block included)
+                  </p>
+                </div>
               </div>
 
-              <div className="p-6 rounded-2xl bg-secondary border border-border flex items-start gap-4">
-                 <Maximize className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                 <div className="space-y-1">
-                    <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Layout Warning</p>
-                    <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
-                      High detail art may wrap in standard text editors. For best viewing, use a fixed-width font with small line height.
-                    </p>
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="p-6 rounded-2xl bg-secondary border border-border flex items-start gap-4">
+                    <Maximize className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                       <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Layout Protocol</p>
+                       <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
+                         The "Copy" function automatically scales the art to 35 characters for perfect mobile chat fitting.
+                       </p>
+                    </div>
+                 </div>
+                 <div className="p-6 rounded-2xl bg-secondary border border-border flex items-start gap-4">
+                    <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                       <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Monospace Guard</h4>
+                       <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
+                         Output is wrapped in triple backticks to preserve shape in chat applications.
+                       </p>
+                    </div>
                  </div>
               </div>
             </CardContent>
