@@ -1,8 +1,8 @@
+
 "use client"
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { 
-  ImageIcon, 
   Grid3X3, 
   Copy, 
   Trash2, 
@@ -11,12 +11,13 @@ import {
   Info,
   CheckCircle2,
   Maximize,
-  Sliders,
   Settings2,
   Image as ImageIconLucide,
   Loader2,
   MessageSquare,
-  ShieldCheck
+  ShieldCheck,
+  FileImage,
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,8 +40,6 @@ export default function DotArtPage() {
   const [darkness, setDarkness] = useState(128); // Threshold
   const [sensitivity, setSensitivity] = useState(50); // Edge sensitivity
   const [thickness, setThickness] = useState(1); // Line thickness simulation
-
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -90,7 +89,7 @@ export default function DotArtPage() {
         for (let x = 1; x < outputWidth - 1; x++) {
           const idx = y * outputWidth + x;
           const gx = -1 * pixels[idx - outputWidth - 1] + 1 * pixels[idx - outputWidth + 1] + -2 * pixels[idx - 1] + 2 * pixels[idx + 1] + -1 * pixels[idx + outputWidth - 1] + 1 * pixels[idx + outputWidth + 1];
-          const gy = -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * pixels[idx - outputWidth + 1] + 1 * pixels[idx + outputWidth - 1] + 2 * pixels[idx + outputWidth] + 1 * pixels[idx + outputWidth + 1];
+          const gy = -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * pixels[idx - outputWidth + 1] + 1 * pixels[idx + ProxyDownloadInputSchema.length] + 2 * pixels[idx + outputWidth] + 1 * pixels[idx + outputWidth + 1];
           const mag = Math.sqrt(gx * gx + gy * gy);
           edgePixels[idx] = mag > sensValue ? 0 : 255;
         }
@@ -159,43 +158,61 @@ export default function DotArtPage() {
     };
   };
 
-  const handleCopy = () => {
-    if (!output || !image) return;
-
+  const handleCopyChatSafe = () => {
+    if (!image) return;
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src = image;
     img.onload = () => {
-      // 1. Force a chat-safe width (approx 35 chars) for the copied version
-      const chatWidth = 35;
+      const chatWidth = 30; // Force fit for mobile
       const result = processBraille(img, chatWidth);
-      
-      // 2. Wrap in backticks to force monospace block in WhatsApp/Discord
       const finalPayload = "```\n" + result.trim() + "\n```";
       
-      // 3. Execute Copy with Fallback
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(finalPayload).then(() => {
-          setIsCopied(true);
-          toast({ title: "Chat-Safe Art Copied", description: "Formatted for WhatsApp." });
-          setTimeout(() => setIsCopied(false), 2000);
-        });
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = finalPayload;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        textArea.style.top = "0";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        setIsCopied(true);
-        toast({ title: "Chat-Safe Art Copied", description: "Formatted for WhatsApp." });
-        setTimeout(() => setIsCopied(false), 2000);
-      }
+      navigator.clipboard.writeText(finalPayload);
+      setIsCopied(true);
+      toast({ title: "Chat Safe Art Copied", description: "Formatted for mobile chat." });
+      setTimeout(() => setIsCopied(false), 2000);
     };
+  };
+
+  const handleExportAsImage = () => {
+    if (!output) return;
+    const lines = output.split('\n');
+    const fontSize = 16;
+    const lineHeight = 18;
+    const padding = 40;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.font = `${fontSize}px monospace`;
+    const textWidth = ctx.measureText(lines[0] || '').width;
+    
+    canvas.width = textWidth + (padding * 2);
+    canvas.height = (lines.length * lineHeight) + (padding * 2);
+
+    // Background
+    ctx.fillStyle = '#0a0a0c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Render Text
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = `${fontSize}px monospace`;
+    ctx.textBaseline = 'top';
+
+    lines.forEach((line, i) => {
+      ctx.fillText(line, padding, padding + (i * lineHeight));
+    });
+
+    // Download/Share
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `mykit-dot-art-${Date.now()}.png`;
+    link.click();
+    
+    toast({ title: "Image Master Exported", description: "100% visual fidelity PNG saved." });
   };
 
   const handleClear = () => {
@@ -213,8 +230,8 @@ export default function DotArtPage() {
         <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
           Image to <span className="text-primary italic">Dot Art</span>
         </h1>
-        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl">
-          Convert photographs into intricate Braille Unicode text art. Perfect for profile READMEs, social media, and minimalist technical design.
+        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+          Convert photographs into artistic Braille Unicode text art. Optimized for profile READMEs, social media, and mobile messaging.
         </p>
       </div>
 
@@ -234,13 +251,9 @@ export default function DotArtPage() {
             </CardHeader>
             
             <CardContent className="pt-10 space-y-10">
-              {/* Image Upload */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Source Imagery</Label>
-                  <div className="px-3 py-1 rounded-lg bg-secondary border border-border text-[9px] font-black text-primary uppercase tracking-widest shadow-sm">
-                    {image ? "Ready" : "Standby"}
-                  </div>
                 </div>
                 <div className="relative group/upload h-48 rounded-[2rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden">
                   {image ? (
@@ -265,25 +278,24 @@ export default function DotArtPage() {
                 </div>
               </div>
 
-              {/* Advanced Settings */}
               <div className="space-y-8">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Processing Mode</Label>
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Mode</Label>
                     <Select value={mode} onValueChange={(val: any) => setMode(val)}>
                       <SelectTrigger className="h-12 bg-secondary border-border rounded-xl text-foreground font-bold">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="glass-card">
-                        <SelectItem value="standard" className="text-xs font-bold uppercase">Standard (Auto)</SelectItem>
-                        <SelectItem value="edges" className="text-xs font-bold uppercase">Edge Outlining</SelectItem>
+                        <SelectItem value="standard" className="text-xs font-bold uppercase">Standard</SelectItem>
+                        <SelectItem value="edges" className="text-xs font-bold uppercase">Edge Trace</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-4">
                     <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Preview Width</Label>
                     <div className="flex items-center gap-4">
-                      <Slider value={[detail]} min={20} max={150} step={1} onValueChange={(v) => setDetail(v[0])} className="flex-1" />
+                      <Slider value={[detail]} min={20} max={120} step={1} onValueChange={(v) => setDetail(v[0])} className="flex-1" />
                       <span className="text-[10px] font-mono font-black text-primary w-8">{detail}</span>
                     </div>
                   </div>
@@ -291,18 +303,13 @@ export default function DotArtPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Darkness Threshold</Label>
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Threshold</Label>
                     <Slider value={[darkness]} min={0} max={255} step={1} onValueChange={(v) => setDarkness(v[0])} />
                   </div>
-                  {mode === 'edges' ? (
+                  {mode === 'edges' && (
                     <div className="space-y-4">
                       <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Edge Sensitivity</Label>
                       <Slider value={[sensitivity]} min={1} max={100} step={1} onValueChange={(v) => setSensitivity(v[0])} />
-                    </div>
-                  ) : (
-                     <div className="space-y-4 opacity-30 pointer-events-none">
-                      <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Contrast Boost</Label>
-                      <Slider value={[50]} disabled />
                     </div>
                   )}
                 </div>
@@ -328,12 +335,12 @@ export default function DotArtPage() {
             </CardContent>
           </Card>
 
-          <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5 group-hover:bg-primary/10 transition-colors">
-            <Settings2 className="w-6 h-6 text-primary mt-1 shrink-0" />
+          <div className="p-6 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex items-start gap-5">
+            <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
-              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Braille Matrix Engine</h4>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Master Protocol</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our studio utilizes a 2x4 dot matrix mapping to generate high-fidelity Braille characters (U+2800 block) from your source imagery.
+                Our engine utilizes a 2x4 dot matrix mapping to generate Braille Unicode characters. For 100% paste accuracy in chat bubbles, we recommend exporting as an image.
               </p>
             </div>
           </div>
@@ -341,28 +348,23 @@ export default function DotArtPage() {
 
         {/* Output Section */}
         <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
-          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group flex flex-col">
+          <Card className="glass-card border-border shadow-2xl overflow-hidden relative group flex flex-col min-h-[600px]">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-border bg-secondary/30">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  Dot Art Studio
+                  Studio Output
                 </CardTitle>
-                {output && (
-                  <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest shadow-sm">
-                    Preview Size: {detail} Columns
-                  </div>
-                )}
               </div>
             </CardHeader>
-            <CardContent className="pt-10 space-y-8">
-              <div className="relative group/output">
+            <CardContent className="pt-10 space-y-8 flex-1 flex flex-col">
+              <div className="flex-1 relative group/output min-h-[350px]">
                 <textarea 
                   readOnly
                   value={output}
                   placeholder="Output will appear here..."
-                  className="w-full min-h-[400px] bg-white dark:bg-black/20 border-border text-foreground font-mono rounded-[2.5rem] p-8 text-[8px] leading-[1.1] resize-none shadow-inner custom-scrollbar transition-all overflow-auto whitespace-pre"
+                  className="w-full h-full min-h-[350px] bg-white dark:bg-black/20 border-border text-foreground font-mono rounded-[2.5rem] p-8 text-[8px] leading-[1.1] resize-none shadow-inner custom-scrollbar transition-all overflow-auto whitespace-pre"
                 />
                 {!output && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
@@ -372,41 +374,51 @@ export default function DotArtPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                <Button 
-                  onClick={handleCopy}
-                  disabled={!output}
-                  className={cn(
-                    "w-full h-16 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl flex items-center justify-center gap-4 text-xl shadow-lg transition-all active:scale-95",
-                    output ? "border-primary/20" : "opacity-50"
-                  )}
-                >
-                  {isCopied ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
-                  {isCopied ? 'Copied' : 'Copy for WhatsApp'}
-                </Button>
-                <div className="flex flex-col gap-2">
-                  <p className="text-[10px] text-foreground/30 font-bold uppercase text-center flex items-center justify-center gap-2">
-                    <MessageSquare className="w-3 h-3" /> For WhatsApp: paste as-is (monospace block included)
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Button 
+                    onClick={handleCopyChatSafe}
+                    disabled={!output}
+                    className="h-16 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                  >
+                    {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
+                    Copy Art (Chat Safe)
+                  </Button>
+                  <Button 
+                    onClick={handleExportAsImage}
+                    disabled={!output}
+                    variant="outline"
+                    className="h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-xs transition-all active:scale-95"
+                  >
+                    <FileImage className="w-5 h-5 mr-3 text-primary" />
+                    Export as Image
+                  </Button>
+                </div>
+                
+                <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-center animate-in slide-in-from-bottom-2">
+                  <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-wider flex items-center justify-center gap-3">
+                    <Zap className="w-4 h-4 text-primary animate-pulse" />
+                    For perfect results on WhatsApp, use Export as Image.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="p-6 rounded-2xl bg-secondary border border-border flex items-start gap-4">
-                    <Maximize className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                 <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
+                    <Maximize className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Layout Protocol</p>
-                       <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
-                         The "Copy" function automatically scales the art to 35 characters for perfect mobile chat fitting.
+                       <p className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Chat Protocol</p>
+                       <p className="text-[9px] text-foreground/40 font-medium leading-relaxed uppercase">
+                         Chat Safe mode forces a 30-char width and monospace wrapper for mobile app compatibility.
                        </p>
                     </div>
                  </div>
-                 <div className="p-6 rounded-2xl bg-secondary border border-border flex items-start gap-4">
-                    <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                 <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
+                    <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="space-y-1">
-                       <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Monospace Guard</h4>
-                       <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">
-                         Output is wrapped in triple backticks to preserve shape in chat applications.
+                       <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                       <p className="text-[9px] text-foreground/40 font-medium leading-relaxed uppercase">
+                         Processing occurs 100% locally. Your visual matrices are never transmitted or stored.
                        </p>
                     </div>
                  </div>
