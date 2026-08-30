@@ -635,7 +635,7 @@ export default function TempMailPage() {
                     {filteredMessages.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center py-40 opacity-10 gap-6 grayscale">
                          <Inbox className="w-24 h-24 text-primary" />
-                         <p className="text-sm font-black uppercase tracking-[0.4em]">Signal Buffer Empty</p>
+                         <p className="text-sm font-black uppercase tracking-[0.3em]">Signal Buffer Empty</p>
                       </div>
                     ) : (
                       <div className="divide-y divide-white/5">
@@ -788,17 +788,28 @@ export default function TempMailPage() {
                )}
                
                <div className="flex-1 overflow-auto custom-scrollbar p-0 bg-white">
-                  <div className="w-full min-h-full">
+                  <div className="w-full min-h-full block" style={{ writingMode: 'horizontal-tb', direction: 'ltr' }}>
                     {selectedMsg.htmlBody ? (
                       <div 
-                        className="text-slate-900 leading-relaxed text-base break-words w-full p-6 sm:p-10" 
-                        style={{ whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                        className="text-slate-900 leading-relaxed text-base w-full p-6 sm:p-10 block" 
+                        style={{ 
+                          whiteSpace: 'normal', 
+                          wordBreak: 'normal', 
+                          overflowWrap: 'anywhere',
+                          display: 'block',
+                          textAlign: 'left'
+                        }}
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }} 
                       />
                     ) : (
                       <pre 
-                        className="text-slate-800 font-mono text-sm whitespace-pre-wrap break-words p-6 sm:p-10 bg-slate-50 w-full"
-                        style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                        className="text-slate-800 font-mono text-sm whitespace-pre-wrap p-6 sm:p-10 bg-slate-50 w-full block"
+                        style={{ 
+                          wordBreak: 'normal', 
+                          overflowWrap: 'anywhere',
+                          display: 'block',
+                          textAlign: 'left'
+                        }}
                       >
                         {selectedMsg.body}
                       </pre>
