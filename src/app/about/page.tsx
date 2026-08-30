@@ -21,7 +21,8 @@ import {
   Shield,
   SmartphoneIcon,
   MessageSquare,
-  Sword
+  Sword,
+  QrCode
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,6 +47,7 @@ const PROJECTS: Project[] = [
   { name: 'LootPro', url: 'https://lootpro.vercel.app/', desc: 'Curated deals and loot project.', icon: Gamepad2, color: 'text-rose-500 bg-rose-500/10' },
   { name: 'Stylish Game Name', url: 'https://stylishgamename.vercel.app/', desc: 'Free stylish names for Free Fire, PUBG, BGMI, CODM, Roblox & Minecraft. Fonts + symbols, copy ready.', icon: Sword, color: 'text-yellow-500 bg-yellow-500/10' },
   { name: 'OMAR CHEAT CODE', url: 'https://omarcheatscode.vercel.app/', desc: 'Advanced gaming optimization and script repository.', icon: Zap, color: 'text-red-500 bg-red-500/10' },
+  { name: 'QR CANVAS', url: 'https://qrcode-amber-ten.vercel.app/', desc: 'High-performance artistic QR code generation engine.', icon: QrCode, color: 'text-blue-500 bg-blue-500/10' },
 ];
 
 export default function AboutPage() {
@@ -121,7 +123,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { label: 'Studio Units', val: '200+', icon: LayoutGrid },
-            { label: 'Other Projects', val: '8', icon: Zap },
+            { label: 'Other Projects', val: '9', icon: Zap },
             { label: 'Hardware Logic', val: '100%', icon: ShieldCheck },
             { label: 'Access', val: 'Free', icon: Heart },
           ].map((stat, i) => (
