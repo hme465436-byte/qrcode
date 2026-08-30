@@ -152,6 +152,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/all-units-converter', 
+    icon: ArrowRightLeft, 
+    title: 'All Units Converter', 
+    desc: 'Professional universal measurement matrix. Convert Length, Weight, Temp, and more.', 
+    label: 'FISCAL', 
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    glowClass: 'bg-emerald-500/10',
+    keywords: ['unit converter', 'length', 'weight', 'temperature', 'area', 'volume', 'speed', 'time', 'data', 'pressure', 'energy', 'power', 'angle'],
+    category: 'utilities'
+  },
+  { 
     href: '/site-backup-cloner', 
     icon: FileArchive, 
     title: 'Site Backup Cloner', 
@@ -1570,7 +1581,8 @@ export default function Home() {
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
-      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site'
+      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
+      'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
