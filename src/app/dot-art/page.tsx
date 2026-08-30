@@ -17,7 +17,8 @@ import {
   MessageSquare,
   ShieldCheck,
   FileImage,
-  Share2
+  Share2,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,7 +90,7 @@ export default function DotArtPage() {
         for (let x = 1; x < outputWidth - 1; x++) {
           const idx = y * outputWidth + x;
           const gx = -1 * pixels[idx - outputWidth - 1] + 1 * pixels[idx - outputWidth + 1] + -2 * pixels[idx - 1] + 2 * pixels[idx + 1] + -1 * pixels[idx + outputWidth - 1] + 1 * pixels[idx + outputWidth + 1];
-          const gy = -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * pixels[idx - outputWidth + 1] + 1 * pixels[idx + ProxyDownloadInputSchema.length] + 2 * pixels[idx + outputWidth] + 1 * pixels[idx + outputWidth + 1];
+          const gy = -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * pixels[idx - outputWidth + 1] + 1 * pixels[idx + outputWidth - 1] + 2 * pixels[idx + outputWidth] + 1 * pixels[idx + outputWidth + 1];
           const mag = Math.sqrt(gx * gx + gy * gy);
           edgePixels[idx] = mag > sensValue ? 0 : 255;
         }
@@ -164,7 +165,7 @@ export default function DotArtPage() {
     img.crossOrigin = "anonymous";
     img.src = image;
     img.onload = () => {
-      const chatWidth = 30; // Force fit for mobile
+      const chatWidth = 30; // Force fit for mobile to avoid wrapping
       const result = processBraille(img, chatWidth);
       const finalPayload = "```\n" + result.trim() + "\n```";
       
