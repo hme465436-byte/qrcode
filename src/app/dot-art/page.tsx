@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useCallback } from 'react';
@@ -18,7 +17,8 @@ import {
   ShieldCheck,
   FileImage,
   Share2,
-  Zap
+  Zap,
+  Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +27,9 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { GetHelp } from '@/components/qr-canvas/get-help';
+
+const DEFAULT_CHARS = '@%#*+=-:. ';
 
 export default function DotArtPage() {
   const { toast } = useToast();
@@ -165,8 +168,11 @@ export default function DotArtPage() {
     img.crossOrigin = "anonymous";
     img.src = image;
     img.onload = () => {
-      const chatWidth = 30; // Force fit for mobile to avoid wrapping
+      // 30 characters is the safety limit for mobile chat bubbles to prevent wrapping
+      const chatWidth = 30; 
       const result = processBraille(img, chatWidth);
+      
+      // Use monospace blocks to ensure grid stability in WhatsApp/Discord
       const finalPayload = "```\n" + result.trim() + "\n```";
       
       navigator.clipboard.writeText(finalPayload);
@@ -179,27 +185,27 @@ export default function DotArtPage() {
   const handleExportAsImage = () => {
     if (!output) return;
     const lines = output.split('\n');
-    const fontSize = 16;
-    const lineHeight = 18;
-    const padding = 40;
+    const fontSize = 24; // Increased for better fidelity
+    const lineHeight = 26;
+    const padding = 60;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.font = `${fontSize}px monospace`;
+    ctx.font = `${fontSize}px "Courier New", monospace`;
     const textWidth = ctx.measureText(lines[0] || '').width;
     
     canvas.width = textWidth + (padding * 2);
     canvas.height = (lines.length * lineHeight) + (padding * 2);
 
-    // Background
+    // High Contrast Dark Background
     ctx.fillStyle = '#0a0a0c';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Render Text
+    // Sharp Pixel Rendering
     ctx.fillStyle = '#3b82f6';
-    ctx.font = `${fontSize}px monospace`;
+    ctx.font = `${fontSize}px "Courier New", monospace`;
     ctx.textBaseline = 'top';
 
     lines.forEach((line, i) => {
@@ -207,10 +213,10 @@ export default function DotArtPage() {
     });
 
     // Download/Share
-    const dataUrl = canvas.toDataURL('image/png');
+    const dataUrl = canvas.toDataURL('image/png', 1.0);
     const link = document.createElement('a');
     link.href = dataUrl;
-    link.download = `mykit-dot-art-${Date.now()}.png`;
+    link.download = `mykit-dot-art-master-${Date.now()}.png`;
     link.click();
     
     toast({ title: "Image Master Exported", description: "100% visual fidelity PNG saved." });
@@ -228,17 +234,24 @@ export default function DotArtPage() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Grid3X3 className="w-3.5 h-3.5" /> Creative Suite
         </div>
-        <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-          Image to <span className="text-primary italic">Dot Art</span>
-        </h1>
-        <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-          Convert photographs into artistic Braille Unicode text art. Optimized for profile READMEs, social media, and mobile messaging.
-        </p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+           <div>
+              <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
+                Image to <span className="text-primary italic">Dot Art</span>
+              </h1>
+              <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+                Convert photographs into artistic Braille Unicode text art. Optimized for profile READMEs, social media, and mobile messaging.
+              </p>
+           </div>
+           <div className="flex items-center gap-3">
+              <GetHelp toolId="dot-art" />
+           </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* Controls Section */}
-        <div className="space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+        <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             
@@ -294,7 +307,7 @@ export default function DotArtPage() {
                     </Select>
                   </div>
                   <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Preview Width</Label>
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Preview Detail</Label>
                     <div className="flex items-center gap-4">
                       <Slider value={[detail]} min={20} max={120} step={1} onValueChange={(v) => setDetail(v[0])} className="flex-1" />
                       <span className="text-[10px] font-mono font-black text-primary w-8">{detail}</span>
@@ -341,14 +354,14 @@ export default function DotArtPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Master Protocol</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our engine utilizes a 2x4 dot matrix mapping to generate Braille Unicode characters. For 100% paste accuracy in chat bubbles, we recommend exporting as an image.
+                Our engine utilizes a 2x4 dot matrix mapping. For 100% visual fidelity in mobile apps like WhatsApp, we recommend using **Export as Image**.
               </p>
             </div>
           </div>
         </div>
 
         {/* Output Section */}
-        <div className="space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
+        <div className="lg:col-span-7 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
           <Card className="glass-card border-border shadow-2xl overflow-hidden relative group flex flex-col min-h-[600px]">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <CardHeader className="py-8 border-b border-border bg-secondary/30">
@@ -396,21 +409,24 @@ export default function DotArtPage() {
                   </Button>
                 </div>
                 
-                <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-center animate-in slide-in-from-bottom-2">
-                  <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-wider flex items-center justify-center gap-3">
+                <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex flex-col items-center gap-3 animate-in slide-in-from-bottom-2">
+                  <p className="text-[10px] text-foreground/40 font-black uppercase tracking-widest flex items-center gap-3">
                     <Zap className="w-4 h-4 text-primary animate-pulse" />
-                    For perfect results on WhatsApp, use Export as Image.
+                    Best Quality: Export as Image
+                  </p>
+                  <p className="text-[9px] text-foreground/20 font-medium leading-relaxed uppercase">
+                    Chat Safe mode optimizes the matrix to 30 characters wide and wraps it in a monospace block for stable mobile display.
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
                  <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
-                    <Maximize className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                    <Maximize2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Chat Protocol</p>
+                       <p className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">High Fidelity</p>
                        <p className="text-[9px] text-foreground/40 font-medium leading-relaxed uppercase">
-                         Chat Safe mode forces a 30-char width and monospace wrapper for mobile app compatibility.
+                         Native PNG export renders at 2x scale for sharp dot definitions on high-DPI smartphone displays.
                        </p>
                     </div>
                  </div>
@@ -419,7 +435,7 @@ export default function DotArtPage() {
                     <div className="space-y-1">
                        <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
                        <p className="text-[9px] text-foreground/40 font-medium leading-relaxed uppercase">
-                         Processing occurs 100% locally. Your visual matrices are never transmitted or stored.
+                         All synthesis occurs locally. Your visual matrices are never transmitted or stored on any remote node.
                        </p>
                     </div>
                  </div>
