@@ -26,7 +26,10 @@ import {
   ShieldCheck,
   RotateCcw,
   RefreshCcw,
-  Settings2
+  Settings2,
+  LayoutGrid,
+  ArrowRight,
+  FileDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import { Badge } from '@/components/ui/badge';
 
 // --- Conversion Registry ---
 
@@ -275,6 +279,19 @@ export default function AllUnitsConverterPage() {
   const handleClear = () => {
     setInputValue('');
     toast({ title: "Studio Reset" });
+  };
+
+  const handleDownload = (fmt: 'txt') => {
+    if (conversionResult === null) return;
+    const text = `${inputValue} ${fromUnit} = ${conversionResult.toFixed(precision)} ${toUnit}`;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversion_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Result Exported" });
   };
 
   return (
@@ -523,4 +540,3 @@ export default function AllUnitsConverterPage() {
     </div>
   );
 }
-
