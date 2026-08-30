@@ -130,6 +130,41 @@ interface CustomProvider {
   }
 }
 
+/**
+ * Polling Node Component
+ * Encapsulates the timer logic to prevent parent re-renders every second.
+ * This ensures stable text selection and interaction in the main studio workspace.
+ */
+function PollingNode({ email, isRefreshing, onSync }: { email: string | null, isRefreshing: boolean, onSync: (silent?: boolean) => void }) {
+  const [countdown, setCountdown] = useState(REFRESH_RATE);
+
+  useEffect(() => {
+    if (!email) return;
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          onSync(true);
+          return REFRESH_RATE;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [email, onSync]);
+
+  return (
+    <Button 
+      variant="outline" 
+      size="sm" 
+      onClick={() => { onSync(); setCountdown(REFRESH_RATE); }} 
+      disabled={isRefreshing || !email} 
+      className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary"
+    >
+      <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isRefreshing && "animate-spin")} /> {countdown}S
+    </Button>
+  );
+}
+
 export default function TempMailPage() {
   const { toast } = useToast();
   
@@ -155,7 +190,6 @@ export default function TempMailPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [pinnedIds, setPinnedIds] = useState<Set<string | number>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
-  const [countdown, setCountdown] = useState(REFRESH_RATE);
 
   // Custom Node Form
   const [showAddNode, setShowAddNode] = useState(false);
@@ -256,7 +290,6 @@ export default function TempMailPage() {
       if (res.success && res.email) {
         setEmail(res.email);
         setSessionData(res); 
-        setCountdown(REFRESH_RATE);
         addToHistory(res.email, targetProvider);
         toast({ title: "Identity Active", description: `${res.email} ready.` });
       } else {
@@ -318,22 +351,6 @@ export default function TempMailPage() {
       if (!silent) setIsRefreshing(false);
     }
   }, [provider, email, sessionData, customNodes, playNotification]);
-
-  // --- 3. Polling Lifecycle ---
-  useEffect(() => {
-    if (!email) return;
-    const interval = setInterval(() => {
-      setCountdown(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [email]);
-
-  useEffect(() => {
-    if (countdown === 0 && email) {
-      fetchMessages(true);
-      setCountdown(REFRESH_RATE);
-    }
-  }, [countdown, email, fetchMessages]);
 
   const handleProviderChange = (newVal: string) => {
     setProvider(newVal);
@@ -478,15 +495,7 @@ export default function TempMailPage() {
            >
               {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
            </button>
-           <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => fetchMessages()} 
-            disabled={isRefreshing || !email} 
-            className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-primary"
-           >
-             <RefreshCcw className={cn("w-3.5 h-3.5 mr-2", isRefreshing && "animate-spin")} /> {countdown}S
-           </Button>
+           <PollingNode email={email} isRefreshing={isRefreshing} onSync={fetchMessages} />
         </div>
       </div>
 
@@ -763,7 +772,7 @@ export default function TempMailPage() {
 
       {/* Message Modal */}
       <Dialog open={!!selectedMsg} onOpenChange={() => setSelectedMsg(null)}>
-        <DialogContent className="glass-card max-w-6xl border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
+        <DialogContent className="glass-card max-w-6xl border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh] select-text">
           {selectedMsg && (
             <>
                <DialogHeader className="px-6 py-4 border-b border-white/5 bg-secondary/30 shrink-0">
@@ -787,29 +796,35 @@ export default function TempMailPage() {
                  </div>
                )}
                
-               <div className="flex-1 overflow-auto custom-scrollbar p-0 bg-white">
-                  <div className="w-full min-h-full block" style={{ writingMode: 'horizontal-tb', direction: 'ltr' }}>
+               <div className="flex-1 overflow-auto custom-scrollbar p-0 bg-white select-text">
+                  <div className="w-full min-h-full block select-text" style={{ writingMode: 'horizontal-tb', direction: 'ltr' }}>
                     {selectedMsg.htmlBody ? (
                       <div 
-                        className="text-slate-900 leading-relaxed text-base w-full p-6 sm:p-10 block" 
+                        className="text-slate-900 leading-relaxed text-base w-full p-6 sm:p-10 block select-text" 
                         style={{ 
                           whiteSpace: 'normal', 
                           wordBreak: 'normal', 
                           overflowWrap: 'anywhere',
                           display: 'block',
-                          textAlign: 'left'
+                          textAlign: 'left',
+                          userSelect: 'text',
+                          WebkitUserSelect: 'text'
                         }}
+                        onPointerDown={(e) => e.stopPropagation()}
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }} 
                       />
                     ) : (
                       <pre 
-                        className="text-slate-800 font-mono text-sm whitespace-pre-wrap p-6 sm:p-10 bg-slate-50 w-full block"
+                        className="text-slate-800 font-mono text-sm whitespace-pre-wrap p-6 sm:p-10 bg-slate-50 w-full block select-text"
                         style={{ 
                           wordBreak: 'normal', 
                           overflowWrap: 'anywhere',
                           display: 'block',
-                          textAlign: 'left'
+                          textAlign: 'left',
+                          userSelect: 'text',
+                          WebkitUserSelect: 'text'
                         }}
+                        onPointerDown={(e) => e.stopPropagation()}
                       >
                         {selectedMsg.body}
                       </pre>
