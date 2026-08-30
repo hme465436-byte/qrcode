@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -751,7 +752,7 @@ export default function TempMailPage() {
             <DialogFooter className="p-6 border-t border-white/5 bg-secondary/30 shrink-0">
                <div className="flex gap-3 w-full">
                   <Button variant="outline" onClick={() => setShowAddNode(false)} className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase">Cancel</Button>
-                  <Button onClick={handleTestAndConnectNode} disabled={isTestingNode} className="h-12 flex-[2] bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-xl shadow-primary/20">
+                  <Button onClick={handleTestAndConnectNode} disabled={isTestingNode} className="h-12 flex-[2] bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-xl shadow-primary/30">
                      {isTestingNode ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
                      Test & Connect
                   </Button>
@@ -787,11 +788,20 @@ export default function TempMailPage() {
                )}
                
                <div className="flex-1 overflow-auto custom-scrollbar p-0 bg-white">
-                  <div className="max-w-none overflow-x-auto min-w-full">
+                  <div className="w-full min-h-full">
                     {selectedMsg.htmlBody ? (
-                      <div className="text-slate-900 leading-relaxed text-base whitespace-pre-wrap min-w-full p-6 sm:p-10" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }} />
+                      <div 
+                        className="text-slate-900 leading-relaxed text-base break-words w-full p-6 sm:p-10" 
+                        style={{ whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedMsg.htmlBody) }} 
+                      />
                     ) : (
-                      <pre className="text-slate-800 font-mono text-sm whitespace-pre-wrap p-6 sm:p-10 bg-slate-50 min-w-full">{selectedMsg.body}</pre>
+                      <pre 
+                        className="text-slate-800 font-mono text-sm whitespace-pre-wrap break-words p-6 sm:p-10 bg-slate-50 w-full"
+                        style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                      >
+                        {selectedMsg.body}
+                      </pre>
                     )}
                   </div>
                </div>
