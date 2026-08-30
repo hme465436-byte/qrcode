@@ -45,6 +45,7 @@ const PROJECTS: Project[] = [
   { name: 'APK Vault', url: 'https://apkvault.vercel.app/', desc: 'Secure Android application library.', icon: Box, color: 'text-orange-500 bg-orange-500/10' },
   { name: 'LootPro', url: 'https://lootpro.vercel.app/', desc: 'Curated deals and loot project.', icon: Gamepad2, color: 'text-rose-500 bg-rose-500/10' },
   { name: 'Stylish Game Name', url: 'https://stylishgamename.vercel.app/', desc: 'Free stylish names for Free Fire, PUBG, BGMI, CODM, Roblox & Minecraft. Fonts + symbols, copy ready.', icon: Sword, color: 'text-yellow-500 bg-yellow-500/10' },
+  { name: 'OMAR CHEAT CODE', url: 'https://omarcheatscode.vercel.app/', desc: 'Advanced gaming optimization and script repository.', icon: Zap, color: 'text-red-500 bg-red-500/10' },
 ];
 
 export default function AboutPage() {
@@ -120,7 +121,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { label: 'Studio Units', val: '200+', icon: LayoutGrid },
-            { label: 'Other Projects', val: '7', icon: Zap },
+            { label: 'Other Projects', val: '8', icon: Zap },
             { label: 'Hardware Logic', val: '100%', icon: ShieldCheck },
             { label: 'Access', val: 'Free', icon: Heart },
           ].map((stat, i) => (
@@ -233,7 +234,7 @@ export default function AboutPage() {
                </div>
                <div className="space-y-4 relative z-10">
                   <h3 className="text-4xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight leading-none">Fuel the <span className="text-primary italic">Studio</span></h3>
-                  <p className="text-xs text-foreground/40 font-medium uppercase leading-relaxed tracking-widest max-w-sm mx-auto">
+                  <p className="text-xs text-foreground/40 font-medium uppercase leading-relaxed tracking-widest max-sm mx-auto">
                     Donations directly support server costs and the production of new free tools. Strictly optional, always appreciated.
                   </p>
                </div>
