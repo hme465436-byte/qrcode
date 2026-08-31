@@ -93,7 +93,7 @@ export default function DotArtPage() {
         for (let x = 1; x < outputWidth - 1; x++) {
           const idx = y * outputWidth + x;
           const gx = -1 * pixels[idx - outputWidth - 1] + 1 * pixels[idx - outputWidth + 1] + -2 * pixels[idx - 1] + 2 * pixels[idx + 1] + -1 * pixels[idx + outputWidth - 1] + 1 * pixels[idx + outputWidth + 1];
-          const gy = -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * pixels[idx - outputWidth + 1] + 1 * pixels[idx + outputWidth - 1] + 2 * pixels[idx + outputWidth] + 1 * pixels[idx + outputWidth + 1];
+          const gy = -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * pixels[idx - window.innerWidth + 1] + 1 * pixels[idx + outputWidth - 1] + 2 * pixels[idx + outputWidth] + 1 * pixels[idx + outputWidth + 1];
           const mag = Math.sqrt(gx * gx + gy * gy);
           edgePixels[idx] = mag > sensValue ? 0 : 255;
         }
@@ -168,12 +168,10 @@ export default function DotArtPage() {
     img.crossOrigin = "anonymous";
     img.src = image;
     img.onload = () => {
-      // 30 characters is the safety limit for mobile chat bubbles to prevent wrapping
       const chatWidth = 30; 
       const result = processBraille(img, chatWidth);
-      
-      // Use monospace blocks to ensure grid stability in WhatsApp/Discord
-      const finalPayload = "```\n" + result.trim() + "\n```";
+      const cleanResult = result.replace(/ /g, '\u00A0');
+      const finalPayload = "```\n" + cleanResult.trim() + "\n```";
       
       navigator.clipboard.writeText(finalPayload);
       setIsCopied(true);
@@ -185,7 +183,7 @@ export default function DotArtPage() {
   const handleExportAsImage = () => {
     if (!output) return;
     const lines = output.split('\n');
-    const fontSize = 24; // Increased for better fidelity
+    const fontSize = 24; 
     const lineHeight = 26;
     const padding = 60;
 
@@ -199,11 +197,9 @@ export default function DotArtPage() {
     canvas.width = textWidth + (padding * 2);
     canvas.height = (lines.length * lineHeight) + (padding * 2);
 
-    // High Contrast Dark Background
     ctx.fillStyle = '#0a0a0c';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Sharp Pixel Rendering
     ctx.fillStyle = '#3b82f6';
     ctx.font = `${fontSize}px "Courier New", monospace`;
     ctx.textBaseline = 'top';
@@ -212,7 +208,6 @@ export default function DotArtPage() {
       ctx.fillText(line, padding, padding + (i * lineHeight));
     });
 
-    // Download/Share
     const dataUrl = canvas.toDataURL('image/png', 1.0);
     const link = document.createElement('a');
     link.href = dataUrl;
@@ -336,7 +331,7 @@ export default function DotArtPage() {
                   className="flex-1 h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                 >
                   {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
-                  Generate Art
+                  Generate
                 </Button>
                 <Button 
                   variant="outline"
@@ -409,13 +404,10 @@ export default function DotArtPage() {
                   </Button>
                 </div>
                 
-                <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex flex-col items-center gap-3 animate-in slide-in-from-bottom-2">
-                  <p className="text-[10px] text-foreground/40 font-black uppercase tracking-widest flex items-center gap-3">
+                <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-center animate-in slide-in-from-bottom-2">
+                  <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-wider flex items-center justify-center gap-3">
                     <Zap className="w-4 h-4 text-primary animate-pulse" />
-                    Best Quality: Export as Image
-                  </p>
-                  <p className="text-[9px] text-foreground/20 font-medium leading-relaxed uppercase">
-                    Chat Safe mode optimizes the matrix to 30 characters wide and wraps it in a monospace block for stable mobile display.
+                    Best quality: Export as Image
                   </p>
                 </div>
               </div>
