@@ -30,7 +30,8 @@ import {
   Loader2,
   Monitor,
   LayoutGrid,
-  Settings2
+  Settings2,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -111,7 +112,9 @@ export default function WhatsAppLinkGeneratorPage() {
   useEffect(() => {
     const saved = localStorage.getItem(HISTORY_KEY);
     if (saved) {
-      try { setHistory(JSON.parse(saved)); } catch (e) {}
+      try {
+        setHistory(JSON.parse(saved));
+      } catch (e) {}
     }
   }, []);
 
