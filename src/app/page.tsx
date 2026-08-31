@@ -152,6 +152,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/whatsapp-link-generator', 
+    icon: MessageSquare, 
+    title: 'WhatsApp Link', 
+    desc: 'Generate instant chat links with custom messages.', 
+    label: 'PRO TOOL', 
+    color: 'text-green-500 bg-green-500/10 border-green-500/20',
+    glowClass: 'bg-green-500/10',
+    keywords: ['whatsapp link', 'wa.me', 'chat link', 'whatsapp generator', 'send message', 'whatsapp me'],
+    category: 'generators'
+  },
+  { 
     href: '/all-units-converter', 
     icon: ArrowRightLeft, 
     title: 'All Units Converter', 
@@ -1582,7 +1593,7 @@ export default function Home() {
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
       'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
-      'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter'
+      'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
@@ -1806,7 +1817,7 @@ export default function Home() {
             </div>
 
             {visibleCount < filteredTools.length && (
-              <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex flex-col items-center gap-6 animate-in fade-in duration-700">
                  <ShadButton 
                    onClick={() => setVisibleCount(prev => prev + 6)}
                    variant="outline"
