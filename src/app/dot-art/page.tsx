@@ -391,7 +391,7 @@ export default function DotArtPage() {
                     className="h-16 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all"
                   >
                     {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
-                    Copy Art (Chat Safe)
+                    Copy
                   </Button>
                   <Button 
                     onClick={handleExportAsImage}
