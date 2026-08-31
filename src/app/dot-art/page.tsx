@@ -93,7 +93,7 @@ export default function DotArtPage() {
         for (let x = 1; x < outputWidth - 1; x++) {
           const idx = y * outputWidth + x;
           const gx = -1 * pixels[idx - outputWidth - 1] + 1 * pixels[idx - outputWidth + 1] + -2 * pixels[idx - 1] + 2 * pixels[idx + 1] + -1 * pixels[idx + outputWidth - 1] + 1 * pixels[idx + outputWidth + 1];
-          const gy = -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * pixels[idx - window.innerWidth + 1] + 1 * pixels[idx + outputWidth - 1] + 2 * pixels[idx + outputWidth] + 1 * pixels[idx + outputWidth + 1];
+          const gy = -1 * pixels[idx - outputWidth - 1] - 2 * pixels[idx - outputWidth] - 1 * (pixels[idx - outputWidth + 1] || 0) + 1 * (pixels[idx + outputWidth - 1] || 0) + 2 * (pixels[idx + outputWidth] || 0) + 1 * (pixels[idx + outputWidth + 1] || 0);
           const mag = Math.sqrt(gx * gx + gy * gy);
           edgePixels[idx] = mag > sensValue ? 0 : 255;
         }
@@ -170,6 +170,7 @@ export default function DotArtPage() {
     img.onload = () => {
       const chatWidth = 30; 
       const result = processBraille(img, chatWidth);
+      // Replace regular spaces with non-breaking spaces for better stability in some chat apps
       const cleanResult = result.replace(/ /g, '\u00A0');
       const finalPayload = "```\n" + cleanResult.trim() + "\n```";
       
@@ -349,7 +350,7 @@ export default function DotArtPage() {
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Master Protocol</h4>
               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our engine utilizes a 2x4 dot matrix mapping. For 100% visual fidelity in mobile apps like WhatsApp, we recommend using **Export as Image**.
+                Our engine utilizes a 2x4 dot matrix mapping. For 100% visual fidelity in mobile apps like WhatsApp, we recommend using **Export**.
               </p>
             </div>
           </div>
@@ -400,14 +401,14 @@ export default function DotArtPage() {
                     className="h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-xs transition-all active:scale-95"
                   >
                     <FileImage className="w-5 h-5 mr-3 text-primary" />
-                    Export as Image
+                    Export
                   </Button>
                 </div>
                 
                 <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-center animate-in slide-in-from-bottom-2">
                   <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-wider flex items-center justify-center gap-3">
                     <Zap className="w-4 h-4 text-primary animate-pulse" />
-                    Best quality: Export as Image
+                    Best quality: Export
                   </p>
                 </div>
               </div>
