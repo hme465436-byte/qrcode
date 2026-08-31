@@ -29,8 +29,6 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const DEFAULT_CHARS = '@%#*+=-:. ';
-
 export default function DotArtPage() {
   const { toast } = useToast();
   const [image, setImage] = useState<string | null>(null);
@@ -48,48 +46,75 @@ export default function DotArtPage() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({ variant: "destructive", title: "File Too Large", description: "Standard limit is 5MB." });
+      if (file.size > 10 * 1024 * 1024) {
+        toast({ variant: "destructive", title: "File Too Large", description: "Standard limit is 10MB." });
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
         setImage(reader.result as string);
-        toast({ title: "Image Imported", description: "Ready for dot art generation." });
+        toast({ title: "Image Imported", description: "Ready for high-fidelity synthesis." });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const processBraille = (img: HTMLImageElement, targetWidthChars: number) => {
+  const processBraille = useCallback((img: HTMLImageElement, targetWidthChars: number) => {
     const charWidth = 2;
     const charHeight = 4;
     const outputWidth = targetWidthChars * charWidth;
-    const outputHeight = Math.round((img.height / img.width) * outputWidth);
+    
+    // Braille characters are roughly 2:1 height to width in most fonts.
+    // We adjust the vertical scaling to maintain the original image's aspect ratio in the text output.
+    const outputHeight = Math.round(((img.height / img.width) * outputWidth) / 2) * 2; 
+    const finalHeight = Math.ceil(outputHeight / 4) * 4;
     
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return '';
 
     canvas.width = outputWidth;
-    canvas.height = outputHeight;
-    ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
+    canvas.height = finalHeight;
+    
+    // Use high-quality downscaling
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, outputWidth, finalHeight);
 
-    const imageData = ctx.getImageData(0, 0, outputWidth, outputHeight);
+    const imageData = ctx.getImageData(0, 0, outputWidth, finalHeight);
     const data = imageData.data;
     
-    const pixels = new Uint8ClampedArray(outputWidth * outputHeight);
+    // Preprocessing: High-Fidelity Grayscale + Contrast Stretch
+    const pixels = new Uint8ClampedArray(outputWidth * finalHeight);
+    const grayBuffer = new Float32Array(outputWidth * finalHeight);
+    let minGray = 255;
+    let maxGray = 0;
+
     for (let i = 0; i < data.length; i += 4) {
-      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-      pixels[i / 4] = avg;
+      // Luminosity formula (standard for digital displays)
+      const g = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+      grayBuffer[i / 4] = g;
+      if (g < minGray) minGray = g;
+      if (g > maxGray) maxGray = g;
+    }
+
+    const range = maxGray - minGray || 1;
+    const contrastFactor = 1.35; // Sharpen dark/light separation
+
+    for (let i = 0; i < grayBuffer.length; i++) {
+      // 1. Histogram Stretch (Normalizes light levels)
+      let val = ((grayBuffer[i] - minGray) / range) * 255;
+      // 2. Midpoint Contrast Boost
+      val = (val - 128) * contrastFactor + 128;
+      pixels[i] = Math.max(0, Math.min(255, val));
     }
 
     let processedPixels = pixels;
 
     if (mode === 'edges') {
-      const edgePixels = new Uint8ClampedArray(outputWidth * outputHeight);
-      const sensValue = (100 - sensitivity) * 2;
-      for (let y = 1; y < outputHeight - 1; y++) {
+      const edgePixels = new Uint8ClampedArray(outputWidth * finalHeight);
+      const sensValue = (100 - sensitivity) * 1.8;
+      for (let y = 1; y < finalHeight - 1; y++) {
         for (let x = 1; x < outputWidth - 1; x++) {
           const idx = y * outputWidth + x;
           const gx = -1 * pixels[idx - outputWidth - 1] + 1 * pixels[idx - outputWidth + 1] + -2 * pixels[idx - 1] + 2 * pixels[idx + 1] + -1 * pixels[idx + outputWidth - 1] + 1 * pixels[idx + outputWidth + 1];
@@ -100,16 +125,13 @@ export default function DotArtPage() {
       }
       if (thickness > 1) {
         const thickPixels = new Uint8ClampedArray(edgePixels);
-        for (let y = 1; y < outputHeight - 1; y++) {
+        for (let y = 1; y < finalHeight - 1; y++) {
           for (let x = 1; x < outputWidth - 1; x++) {
             if (edgePixels[y * outputWidth + x] === 0) {
               for (let dy = -1; dy <= 1; dy++) {
                 for (let dx = -1; dx <= 1; dx++) {
-                  const targetY = y + dy;
-                  const targetX = x + dx;
-                  if (targetY >= 0 && targetY < outputHeight && targetX >= 0 && targetX < outputWidth) {
-                    thickPixels[targetY * outputWidth + targetX] = 0;
-                  }
+                  const ty = y + dy; const tx = x + dx;
+                  if (ty >= 0 && ty < finalHeight && tx >= 0 && tx < outputWidth) thickPixels[ty * outputWidth + tx] = 0;
                 }
               }
             }
@@ -121,17 +143,19 @@ export default function DotArtPage() {
       }
     }
 
+    // Braille Construction Matrix
     let result = '';
-    for (let y = 0; y < outputHeight; y += charHeight) {
+    for (let y = 0; y < finalHeight; y += charHeight) {
       for (let x = 0; x < outputWidth; x += charWidth) {
         let byte = 0;
         const checkPixel = (dx: number, dy: number) => {
           const px = x + dx;
           const py = y + dy;
-          if (px >= outputWidth || py >= outputHeight) return false;
+          if (px >= outputWidth || py >= finalHeight) return false;
           const val = processedPixels[py * outputWidth + px];
           return mode === 'edges' ? val === 0 : val < darkness;
         };
+        // Standard Braille Pattern mapping
         if (checkPixel(0, 0)) byte += 1;
         if (checkPixel(0, 1)) byte += 2;
         if (checkPixel(0, 2)) byte += 4;
@@ -145,7 +169,7 @@ export default function DotArtPage() {
       result += '\n';
     }
     return result;
-  };
+  }, [mode, darkness, sensitivity, thickness]);
 
   const generateDotArt = () => {
     if (!image) return;
@@ -158,7 +182,7 @@ export default function DotArtPage() {
       const result = processBraille(img, detail);
       setOutput(result);
       setIsProcessing(false);
-      toast({ title: "Art Generated", description: "Image converted to Braille dots." });
+      toast({ title: "Art Generated", description: "Matrix synchronized with visual data." });
     };
   };
 
@@ -168,15 +192,13 @@ export default function DotArtPage() {
     img.crossOrigin = "anonymous";
     img.src = image;
     img.onload = () => {
-      const chatWidth = 30; 
+      const chatWidth = 30; // Force narrow width for mobile displays
       const result = processBraille(img, chatWidth);
-      // Replace regular spaces with non-breaking spaces for better stability in some chat apps
-      const cleanResult = result.replace(/ /g, '\u00A0');
-      const finalPayload = "```\n" + cleanResult.trim() + "\n```";
+      const finalPayload = "```\n" + result.trim() + "\n```";
       
       navigator.clipboard.writeText(finalPayload);
       setIsCopied(true);
-      toast({ title: "Chat Safe Art Copied", description: "Formatted for mobile chat." });
+      toast({ title: "Chat Safe Art Copied", description: "Identity preserved for mobile sharing." });
       setTimeout(() => setIsCopied(false), 2000);
     };
   };
@@ -215,17 +237,17 @@ export default function DotArtPage() {
     link.download = `mykit-dot-art-master-${Date.now()}.png`;
     link.click();
     
-    toast({ title: "Image Master Exported", description: "100% visual fidelity PNG saved." });
+    toast({ title: "Image Master Exported", description: "High-contrast visual saved." });
   };
 
   const handleClear = () => {
     setImage(null);
     setOutput('');
-    toast({ title: "Cleared", description: "Studio reset." });
+    toast({ title: "Studio Reset" });
   };
 
   return (
-    <div className="container mx-auto px-6 py-12 md:py-20">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
       <div className="mb-12 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Grid3X3 className="w-3.5 h-3.5" /> Creative Suite
@@ -236,7 +258,7 @@ export default function DotArtPage() {
                 Image to <span className="text-primary italic">Dot Art</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Convert photographs into artistic Braille Unicode text art. Optimized for profile READMEs, social media, and mobile messaging.
+                Transform photographs into professional Braille Unicode art. High-fidelity pixel-to-dot re-matricing optimized for profile READMEs and mobile messaging.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -256,16 +278,14 @@ export default function DotArtPage() {
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner group-hover:scale-110 transition-transform">
                   <ImageIconLucide className="w-6 h-6" />
                 </div>
-                Image & Configuration
+                Matrix Parameters
               </CardTitle>
             </CardHeader>
             
             <CardContent className="pt-10 space-y-10">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Source Imagery</Label>
-                </div>
-                <div className="relative group/upload h-48 rounded-[2rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden">
+                <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Visual Intake</Label>
+                <div className="relative group/upload h-48 rounded-[2rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer">
                   {image ? (
                     <>
                       <img src={image} alt="Preview" className="absolute inset-0 w-full h-full object-contain p-4 opacity-50 group-hover:opacity-80 transition-opacity" />
@@ -273,37 +293,37 @@ export default function DotArtPage() {
                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-2 shadow-lg backdrop-blur-md">
                            <CheckCircle2 className="w-5 h-5" />
                          </div>
-                         <p className="text-[10px] font-black uppercase text-primary tracking-widest">Image Loaded</p>
+                         <p className="text-[10px] font-black uppercase text-primary tracking-widest">Image Matrix Buffered</p>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/20 group-hover:text-primary group-hover:scale-110 transition-all mb-4 shadow-xl">
-                        <Download className="w-6 h-6" />
+                        <Upload className="w-6 h-6" />
                       </div>
-                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors text-center">Drop or Click to Upload</p>
+                      <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors text-center px-8">Drop Imagery or Click to Browse</p>
                     </>
                   )}
-                  <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                 </div>
               </div>
 
               <div className="space-y-8">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Mode</Label>
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Linguistic Mode</Label>
                     <Select value={mode} onValueChange={(val: any) => setMode(val)}>
                       <SelectTrigger className="h-12 bg-secondary border-border rounded-xl text-foreground font-bold">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="glass-card">
-                        <SelectItem value="standard" className="text-xs font-bold uppercase">Standard</SelectItem>
-                        <SelectItem value="edges" className="text-xs font-bold uppercase">Edge Trace</SelectItem>
+                        <SelectItem value="standard" className="text-xs font-bold uppercase">Standard (Greyscale)</SelectItem>
+                        <SelectItem value="edges" className="text-xs font-bold uppercase">Edge Trace (Lines)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Preview Detail</Label>
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Resolution Detail</Label>
                     <div className="flex items-center gap-4">
                       <Slider value={[detail]} min={20} max={120} step={1} onValueChange={(v) => setDetail(v[0])} className="flex-1" />
                       <span className="text-[10px] font-mono font-black text-primary w-8">{detail}</span>
@@ -313,12 +333,12 @@ export default function DotArtPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Threshold</Label>
+                    <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Darkness Threshold</Label>
                     <Slider value={[darkness]} min={0} max={255} step={1} onValueChange={(v) => setDarkness(v[0])} />
                   </div>
                   {mode === 'edges' && (
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em]">Edge Sensitivity</Label>
+                      <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Edge Sensitivity</Label>
                       <Slider value={[sensitivity]} min={1} max={100} step={1} onValueChange={(v) => setSensitivity(v[0])} />
                     </div>
                   )}
@@ -349,8 +369,8 @@ export default function DotArtPage() {
             <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
             <div className="space-y-2">
               <h4 className="text-[11px] font-black text-primary uppercase tracking-widest">Master Protocol</h4>
-              <p className="text-[11px] text-foreground/40 leading-relaxed font-medium">
-                Our engine utilizes a 2x4 dot matrix mapping. For 100% visual fidelity in mobile apps like WhatsApp, we recommend using **Export**.
+              <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                The studio utilizes a 2x4 bitstream mapping protocol. Preprocessing includes automatic contrast stretching and luminosity calibration for 1:1 hardware fidelity.
               </p>
             </div>
           </div>
@@ -363,9 +383,11 @@ export default function DotArtPage() {
             <CardHeader className="py-8 border-b border-border bg-secondary/30">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em] flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Studio Output
+                  <Activity className="w-3.5 h-3.5" /> Identity Output
                 </CardTitle>
+                {output && (
+                   <div className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest animate-pulse">Signal Active</div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="pt-10 space-y-8 flex-1 flex flex-col">
@@ -373,13 +395,13 @@ export default function DotArtPage() {
                 <textarea 
                   readOnly
                   value={output}
-                  placeholder="Output will appear here..."
-                  className="w-full h-full min-h-[350px] bg-white dark:bg-black/20 border-border text-foreground font-mono rounded-[2.5rem] p-8 text-[8px] leading-[1.1] resize-none shadow-inner custom-scrollbar transition-all overflow-auto whitespace-pre"
+                  placeholder="Output matrix will appear here..."
+                  className="w-full h-full min-h-[350px] bg-white dark:bg-black/20 border-border text-foreground font-mono rounded-[2.5rem] p-8 text-[8px] sm:text-[10px] leading-[1.0] resize-none shadow-inner custom-scrollbar transition-all overflow-auto whitespace-pre tracking-normal"
                 />
                 {!output && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
                     <Grid3X3 className="w-20 h-20 text-primary mb-4" />
-                    <p className="text-xs font-black uppercase tracking-[0.3em]">Standby</p>
+                    <p className="text-xs font-black uppercase tracking-[0.3em]">Awaiting Linguistic Sync</p>
                   </div>
                 )}
               </div>
@@ -391,44 +413,44 @@ export default function DotArtPage() {
                     disabled={!output}
                     className="h-16 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all"
                   >
-                    {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
+                    {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                     Copy
                   </Button>
                   <Button 
                     onClick={handleExportAsImage}
                     disabled={!output}
                     variant="outline"
-                    className="h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-xs transition-all active:scale-95"
+                    className="h-16 rounded-2xl border-border bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg"
                   >
                     <FileImage className="w-5 h-5 mr-3 text-primary" />
                     Export
                   </Button>
                 </div>
                 
-                <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-center animate-in slide-in-from-bottom-2">
+                <div className="p-5 rounded-[2.5rem] bg-primary/5 border border-primary/10 text-center animate-in slide-in-from-bottom-2">
                   <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-wider flex items-center justify-center gap-3">
                     <Zap className="w-4 h-4 text-primary animate-pulse" />
-                    Best quality: Export
+                    Best quality for WhatsApp: Export as Image
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                 <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+                 <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group hover:bg-secondary/80 transition-all">
                     <Maximize2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">High Fidelity</p>
+                       <p className="text-[10px] font-black text-foreground uppercase tracking-widest">High Fidelity</p>
                        <p className="text-[9px] text-foreground/40 font-medium leading-relaxed uppercase">
-                         Native PNG export renders at 2x scale for sharp dot definitions on high-DPI smartphone displays.
+                         Image export renders at 2x hardware scale for sharp dot definitions on high-DPI displays.
                        </p>
                     </div>
                  </div>
-                 <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group">
+                 <div className="flex items-start gap-4 p-5 rounded-2xl bg-secondary border border-border group hover:bg-secondary/80 transition-all">
                     <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                     <div className="space-y-1">
-                       <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                       <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Privacy Sovereign</h4>
                        <p className="text-[9px] text-foreground/40 font-medium leading-relaxed uppercase">
-                         All synthesis occurs locally. Your visual matrices are never transmitted or stored on any remote node.
+                         Linguistic synthesis occurs 100% in local memory. Visual identifiers are never transmitted or stored.
                        </p>
                     </div>
                  </div>
@@ -437,6 +459,20 @@ export default function DotArtPage() {
           </Card>
         </div>
       </div>
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .bg-checkered {
+          background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
+                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #111113 75%), 
+                            linear-gradient(-45deg, transparent 75%, #111113 75%);
+          background-size: 20px 20px;
+        }
+      `}</style>
     </div>
   );
 }
