@@ -20,7 +20,9 @@ import {
   Zap,
   Maximize2,
   RefreshCcw,
-  Upload
+  Upload,
+  Activity,
+  ArrowDownCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,8 +70,6 @@ export default function DotArtPage() {
     const charHeight = 4;
     const outputWidth = targetWidthChars * charWidth;
     
-    // Braille characters are roughly 2:1 height to width in most fonts.
-    // We adjust the vertical scaling to maintain the original image's aspect ratio in the text output.
     const outputHeight = Math.round(((img.height / img.width) * outputWidth) / 2) * 2; 
     const finalHeight = Math.ceil(outputHeight / 4) * 4;
     
@@ -80,7 +80,6 @@ export default function DotArtPage() {
     canvas.width = outputWidth;
     canvas.height = finalHeight;
     
-    // Use high-quality downscaling
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, outputWidth, finalHeight);
@@ -88,14 +87,12 @@ export default function DotArtPage() {
     const imageData = ctx.getImageData(0, 0, outputWidth, finalHeight);
     const data = imageData.data;
     
-    // Preprocessing: High-Fidelity Grayscale + Contrast Stretch
     const pixels = new Uint8ClampedArray(outputWidth * finalHeight);
     const grayBuffer = new Float32Array(outputWidth * finalHeight);
     let minGray = 255;
     let maxGray = 0;
 
     for (let i = 0; i < data.length; i += 4) {
-      // Luminosity formula (standard for digital displays)
       const g = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
       grayBuffer[i / 4] = g;
       if (g < minGray) minGray = g;
@@ -103,12 +100,10 @@ export default function DotArtPage() {
     }
 
     const range = maxGray - minGray || 1;
-    const contrastFactor = 1.35; // Sharpen dark/light separation
+    const contrastFactor = 1.35;
 
     for (let i = 0; i < grayBuffer.length; i++) {
-      // 1. Histogram Stretch (Normalizes light levels)
       let val = ((grayBuffer[i] - minGray) / range) * 255;
-      // 2. Midpoint Contrast Boost
       val = (val - 128) * contrastFactor + 128;
       pixels[i] = Math.max(0, Math.min(255, val));
     }
@@ -147,7 +142,6 @@ export default function DotArtPage() {
       }
     }
 
-    // Braille Construction Matrix
     let result = '';
     for (let y = 0; y < finalHeight; y += charHeight) {
       for (let x = 0; x < outputWidth; x += charWidth) {
@@ -159,7 +153,6 @@ export default function DotArtPage() {
           const val = processedPixels[py * outputWidth + px];
           return mode === 'edges' ? val === 0 : val < darkness;
         };
-        // Standard Braille Pattern mapping
         if (checkPixel(0, 0)) byte += 1;
         if (checkPixel(0, 1)) byte += 2;
         if (checkPixel(0, 2)) byte += 4;
@@ -196,9 +189,8 @@ export default function DotArtPage() {
     img.crossOrigin = "anonymous";
     img.src = image;
     img.onload = () => {
-      const chatWidth = 30; // Force narrow width for mobile displays
+      const chatWidth = 30; 
       const result = processBraille(img, chatWidth);
-      // Replace normal spaces with non-breaking spaces if needed for WhatsApp (optional, testing stability)
       const sanitizedResult = result.split('\n').map(line => line.replace(/ /g, ' ')).join('\n');
       const finalPayload = "```\n" + sanitizedResult.trim() + "\n```";
       
@@ -444,7 +436,7 @@ export default function DotArtPage() {
                 <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-center animate-in slide-in-from-bottom-2">
                   <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-wider flex items-center justify-center gap-3">
                     <Zap className="w-4 h-4 text-primary animate-pulse" />
-                    Best quality for WhatsApp: Export as Image
+                    For perfect results on WhatsApp, use Export as Image.
                   </p>
                 </div>
               </div>
