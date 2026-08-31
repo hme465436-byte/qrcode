@@ -115,7 +115,8 @@ import {
   Hammer,
   Hash as HashIcon,
   History,
-  Edit3
+  Edit3,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
