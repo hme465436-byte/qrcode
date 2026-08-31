@@ -11,14 +11,16 @@ import {
   CheckCircle2,
   Maximize,
   Settings2,
-  Image as ImageIconLucide,
+  Image as ImageIcon,
   Loader2,
   MessageSquare,
   ShieldCheck,
   FileImage,
   Share2,
   Zap,
-  Maximize2
+  Maximize2,
+  RefreshCcw,
+  Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +44,8 @@ export default function DotArtPage() {
   const [darkness, setDarkness] = useState(128); // Threshold
   const [sensitivity, setSensitivity] = useState(50); // Edge sensitivity
   const [thickness, setThickness] = useState(1); // Line thickness simulation
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -194,7 +198,9 @@ export default function DotArtPage() {
     img.onload = () => {
       const chatWidth = 30; // Force narrow width for mobile displays
       const result = processBraille(img, chatWidth);
-      const finalPayload = "```\n" + result.trim() + "\n```";
+      // Replace normal spaces with non-breaking spaces if needed for WhatsApp (optional, testing stability)
+      const sanitizedResult = result.split('\n').map(line => line.replace(/ /g, ' ')).join('\n');
+      const finalPayload = "```\n" + sanitizedResult.trim() + "\n```";
       
       navigator.clipboard.writeText(finalPayload);
       setIsCopied(true);
@@ -243,6 +249,7 @@ export default function DotArtPage() {
   const handleClear = () => {
     setImage(null);
     setOutput('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
     toast({ title: "Studio Reset" });
   };
 
@@ -276,7 +283,7 @@ export default function DotArtPage() {
             <CardHeader className="pb-8 border-b border-border bg-secondary/30">
               <CardTitle className="text-xl font-headline flex items-center gap-4 text-foreground">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/40 shadow-inner group-hover:scale-110 transition-transform">
-                  <ImageIconLucide className="w-6 h-6" />
+                  <ImageIcon className="w-6 h-6" />
                 </div>
                 Matrix Parameters
               </CardTitle>
@@ -285,7 +292,14 @@ export default function DotArtPage() {
             <CardContent className="pt-10 space-y-10">
               <div className="space-y-4">
                 <Label className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.2em] ml-1">Visual Intake</Label>
-                <div className="relative group/upload h-48 rounded-[2rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer">
+                <div 
+                  onClick={() => !isProcessing && fileInputRef.current?.click()}
+                  className={cn(
+                    "relative group/upload h-48 rounded-[2rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer",
+                    image && "border-solid border-primary/20",
+                    isProcessing && "opacity-50 cursor-not-allowed"
+                  )}
+                >
                   {image ? (
                     <>
                       <img src={image} alt="Preview" className="absolute inset-0 w-full h-full object-contain p-4 opacity-50 group-hover:opacity-80 transition-opacity" />
@@ -304,7 +318,7 @@ export default function DotArtPage() {
                       <p className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover:text-primary transition-colors text-center px-8">Drop Imagery or Click to Browse</p>
                     </>
                   )}
-                  <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
                 </div>
               </div>
 
@@ -427,7 +441,7 @@ export default function DotArtPage() {
                   </Button>
                 </div>
                 
-                <div className="p-5 rounded-[2.5rem] bg-primary/5 border border-primary/10 text-center animate-in slide-in-from-bottom-2">
+                <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-center animate-in slide-in-from-bottom-2">
                   <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-wider flex items-center justify-center gap-3">
                     <Zap className="w-4 h-4 text-primary animate-pulse" />
                     Best quality for WhatsApp: Export as Image
