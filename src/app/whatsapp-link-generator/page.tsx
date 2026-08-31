@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -30,7 +29,8 @@ import {
   ChevronRight,
   Loader2,
   Monitor,
-  LayoutGrid
+  LayoutGrid,
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -346,7 +346,7 @@ export default function WhatsAppLinkGeneratorPage() {
                   <div className="pt-6 border-t border-white/5">
                     {activeMode === 'single' ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                         <Button onClick={handleShare} disabled={!phone} className="h-16 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95">
+                         <Button onClick={handleShare} disabled={!phone} className="h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
                             <Share2 className="w-4 h-4 mr-2" /> Share Matrix
                          </Button>
                          <Button onClick={() => handleCopy(waLink, 'link')} disabled={!phone} variant="outline" className="h-16 border-border bg-white/5 text-foreground font-black uppercase text-[10px] tracking-widest rounded-2xl">
@@ -449,7 +449,7 @@ export default function WhatsAppLinkGeneratorPage() {
                      {history.map(item => (
                        <div key={item.id} className="p-5 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => { setPhone(item.phone); setCountryCode(item.country); setMessage(item.message); }}>
                           <div className="flex items-center gap-4 overflow-hidden">
-                             <div className="w-10 h-10 rounded-xl bg-secondary border border-white/5 flex items-center justify-center text-primary/40 group-hover:text-primary transition-colors shrink-0 shadow-inner font-mono text-[9px] font-bold">
+                             <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-colors shrink-0 shadow-inner font-mono text-[9px] font-bold">
                                 {item.country}
                              </div>
                              <div className="min-w-0">
@@ -477,4 +477,3 @@ export default function WhatsAppLinkGeneratorPage() {
     </div>
   );
 }
-
