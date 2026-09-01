@@ -1,7 +1,6 @@
-
 "use client"
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Database, 
   User, 
@@ -47,7 +46,9 @@ import {
   X,
   ChevronUp,
   ChevronDown,
-  ArrowUpDown
+  ArrowUpDown,
+  UserCircle,
+  FileDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,6 +63,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import * as XLSX from 'xlsx';
 
 // --- Linguistic Data Matrix ---
@@ -329,26 +337,31 @@ export default function FakeDataGeneratorPage() {
     handleCopy(text, `row-${record.id}`);
   };
 
+  const handleCopyAll = () => {
+    const content = JSON.stringify(results, null, 2);
+    handleCopy(content, 'all-results');
+  };
+
   const handleExport = (format: 'csv' | 'json' | 'xlsx' | 'sql') => {
     if (results.length === 0) return;
     let content = '';
-    const headers = Array.from(selectedTypes);
+    const headersList = Array.from(selectedTypes);
 
     if (format === 'json') {
       content = JSON.stringify(results, null, 2);
     } else if (format === 'sql') {
-      const rows = results.map(r => {
-        const vals = headers.map(h => {
+      const rowsList = results.map(r => {
+        const vals = headersList.map(h => {
           const val = r[h as keyof RecordData] || '';
           return typeof val === 'string' ? `'${val.replace(/'/g, "''")}'` : val;
         }).join(', ');
-        return `INSERT INTO identities (${headers.join(', ')}) VALUES (${vals});`;
+        return `INSERT INTO identities (${headersList.join(', ')}) VALUES (${vals});`;
       });
-      content = rows.join('\n');
+      content = rowsList.join('\n');
     } else if (format === 'csv') {
       const csvRows = [
-        headers.join(','),
-        ...results.map(r => headers.map(h => `"${r[h as keyof RecordData] || ''}"`).join(','))
+        headersList.join(','),
+        ...results.map(r => headersList.map(h => `"${r[h as keyof RecordData] || ''}"`).join(','))
       ];
       content = csvRows.join('\n');
     } else if (format === 'xlsx') {
@@ -393,6 +406,11 @@ export default function FakeDataGeneratorPage() {
     else saveFavorites([...favorites, record]);
   };
 
+  const handleClear = () => {
+    setResults([]);
+    toast({ title: "Studio Reset" });
+  };
+
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -403,7 +421,7 @@ export default function FakeDataGeneratorPage() {
           <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight">
             Fake Data <span className="text-primary italic">Generator</span>
           </h1>
-          <p className="text-foreground/40 text-sm md:text-base font-medium mt-2 max-w-2xl leading-relaxed">
+          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
             Advanced high-fidelity identity synthesis. Forge localized datasets with clinical accuracy for professional software staging and testing.
           </p>
         </div>
@@ -599,7 +617,7 @@ export default function FakeDataGeneratorPage() {
                              <DropdownMenuItem onClick={() => handleExport('sql')} className="text-[9px] font-black uppercase cursor-pointer"><FileCode className="w-3.5 h-3.5 mr-2 text-primary" /> SQL Inserts</DropdownMenuItem>
                              <DropdownMenuSeparator className="bg-white/5" />
                              <DropdownMenuItem onClick={handleCopyAll} className="text-[9px] font-black uppercase cursor-pointer"><Copy className="w-3.5 h-3.5 mr-2" /> Copy All</DropdownMenuItem>
-                          </DropdownContent>
+                          </DropdownMenuContent>
                        </DropdownMenu>
                     </div>
                  )}
@@ -743,24 +761,6 @@ export default function FakeDataGeneratorPage() {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-
-      {/* Export Dropdown Overlay logic handled by shadcn component */}
-      <DropdownMenu />
     </div>
   );
 }
-
-const DropdownMenu = ({ children }: { children?: React.ReactNode }) => null; // Placeholder for logic
-const DropdownMenuTrigger = ({ children, asChild }: { children: React.ReactNode, asChild?: boolean }) => <>{children}</>;
-const DropdownMenuContent = ({ children, align, className }: { children: React.ReactNode, align?: string, className?: string }) => (
-  <div className={cn("z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md", className)}>
-    {children}
-  </div>
-);
-const DropdownMenuItem = ({ children, onClick, className }: { children: React.ReactNode, onClick?: () => void, className?: string }) => (
-  <div onClick={onClick} className={cn("relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground hover:bg-secondary/80", className)}>
-    {children}
-  </div>
-);
-const DropdownMenuSeparator = ({ className }: { className?: string }) => <div className={cn("-mx-1 my-1 h-px bg-muted", className)} />;
-
