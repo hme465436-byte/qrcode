@@ -308,7 +308,7 @@ export default function GmailAliasGeneratorPage() {
                  ) : (
                     <div className="divide-y divide-white/5">
                        {history.map((item, i) => (
-                         <div key={item.id} className="p-5 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => setEmailInput(item.email)}>
+                         <div key={item.id || i} className="p-5 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => setEmailInput(item.email)}>
                             <div className="min-w-0 flex-1">
                                <p className="text-sm font-bold text-foreground truncate uppercase">{item.email}</p>
                                <div className="flex items-center gap-3 mt-1">
