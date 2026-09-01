@@ -219,6 +219,17 @@ const TOOLS: Tool[] = [
     category: 'utilities'
   },
   { 
+    href: '/gmail-alias', 
+    icon: Mail, 
+    title: 'Gmail Alias Generator', 
+    desc: 'Create unlimited Gmail aliases using Dot Trick & Plus Addressing. All emails go to your real inbox.', 
+    label: 'LINGUISTIC', 
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    glowClass: 'bg-red-500/10',
+    keywords: ['gmail alias', 'dot trick', 'plus addressing', 'email aliases', 'gmail generator'],
+    category: 'generators'
+  },
+  { 
     href: '/link-safety-checker', 
     icon: ShieldCheck, 
     title: 'Link Safety', 
@@ -1594,7 +1605,7 @@ export default function Home() {
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
       'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
-      'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me'
+      'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
