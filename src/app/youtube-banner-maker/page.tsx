@@ -56,7 +56,6 @@ import {
   Copy,
   Hash,
   Share2,
-  RefreshCcw,
   MonitorCheck,
   ShieldAlert,
   Move,
@@ -624,7 +623,9 @@ export default function YoutubeBannerStudioPage() {
                                 <div className="space-y-2">
                                    <Label className="text-[9px] font-black uppercase text-foreground/40">Typography</Label>
                                    <Select value={state.fontIndex.toString()} onValueChange={v => updateState({ fontIndex: parseInt(v), fontFamily: FONTS[parseInt(v)].val })}>
-                                      <SelectTrigger className="h-10 bg-secondary/50 rounded-xl text-[10px] font-black uppercase"><SelectValue /></SelectTrigger>
+                                      <SelectTrigger className="h-10 bg-secondary/50 rounded-xl text-[10px] font-black uppercase">
+                                         <SelectValue />
+                                      </SelectTrigger>
                                       <SelectContent className="glass-card">
                                          {FONTS.map((f, i) => <SelectItem key={i} value={i.toString()} className="text-[10px] font-black uppercase">{f.label}</SelectItem>)}
                                       </SelectContent>
@@ -641,14 +642,14 @@ export default function YoutubeBannerStudioPage() {
                                 </div>
                              </div>
                              <div className="space-y-4">
-                                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-foreground/30">
+                                <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-foreground/30">
                                    <span>Typographic Scale</span>
                                    <span className="text-primary">{state.fontSize}px</span>
                                 </div>
                                 <Slider value={[state.fontSize]} min={40} max={250} step={1} onValueChange={v => updateState({ fontSize: v[0] })} />
                              </div>
                              <div className="space-y-4">
-                                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-foreground/30">
+                                <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-foreground/30">
                                    <span>Vertical Calibration</span>
                                    <span className="text-primary">{state.yOffset}px</span>
                                 </div>
@@ -677,21 +678,21 @@ export default function YoutubeBannerStudioPage() {
                                      </div>
                                      <span className="text-primary font-mono text-[10px]">{(state.bgZoom * 100).toFixed(0)}%</span>
                                   </div>
-                                  <Slider value={[state.bgZoom * 100]} min={10} max={400} step={1} onValueChange={v => updateState({ bgZoom: v[0] / 100 })} />
+                                  <Slider value={[state.bgZoom * 100]} min={10} max={400} step={1} onValueChange={v => updateParam({ bgZoom: v[0] / 100 })} />
                                   
                                   <div className="space-y-4 pt-2">
                                      <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                            <span className="text-[8px] font-black text-foreground/20 uppercase ml-1">X OFFSET</span>
-                                           <Slider value={[state.bgPosX]} min={-2000} max={2000} step={1} onValueChange={v => updateState({ bgPosX: v[0] })} />
+                                           <Slider value={[state.bgPosX]} min={-2000} max={2000} step={1} onValueChange={v => updateParam({ bgPosX: v[0] })} />
                                         </div>
                                         <div className="space-y-2">
                                            <span className="text-[8px] font-black text-foreground/20 uppercase ml-1">Y OFFSET</span>
-                                           <Slider value={[state.bgPosY]} min={-1000} max={1000} step={1} onValueChange={v => updateState({ bgPosY: v[0] })} />
+                                           <Slider value={[state.bgPosY]} min={-1000} max={1000} step={1} onValueChange={v => updateParam({ bgPosY: v[0] })} />
                                         </div>
                                      </div>
                                      <div className="grid grid-cols-3 gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => updateState({ bgPosX: 0, bgPosY: 0, bgZoom: 1 })} className="h-8 text-[8px] font-black uppercase col-span-1">Center</Button>
+                                        <Button variant="outline" size="sm" onClick={() => updateParam({ bgPosX: 0, bgPosY: 0, bgZoom: 1 })} className="h-8 text-[8px] font-black uppercase col-span-1">Center</Button>
                                         <Button variant="outline" size="sm" onClick={() => updateState({ isLocked: !state.isLocked })} className={cn("h-8 text-[8px] font-black uppercase col-span-2", state.isLocked ? "bg-primary text-white" : "")}>
                                            {state.isLocked ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1" />} {state.isLocked ? 'Position Locked' : 'Unlock Drag'}
                                         </Button>
@@ -799,16 +800,31 @@ export default function YoutubeBannerStudioPage() {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <MonitorPlay className="w-5 h-5" />
                     </div>
-                    <div className="flex bg-black/40 p-1 rounded-2xl border border-white/5">
+                    <div className="flex bg-black/40 p-1 rounded-2xl border border-white/5 overflow-x-auto no-scrollbar max-w-[280px] sm:max-w-none">
                        {(['tv', 'desktop', 'tablet', 'mobile', 'compare'] as const).map(m => (
-                         <button key={m} onClick={() => setDeviceMode(m)} className={cn("px-4 py-2 rounded-xl text-[8px] font-black uppercase transition-all", deviceMode === m ? "bg-primary text-white shadow-lg" : "text-white/20 hover:text-white")}>{m}</button>
+                         <button 
+                            key={m} 
+                            onClick={() => setDeviceMode(m)} 
+                            style={{ writingMode: 'horizontal-tb', textOrientation: 'mixed' }}
+                            className={cn(
+                              "px-4 py-2 rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all whitespace-nowrap break-normal", 
+                              deviceMode === m ? "bg-primary text-white shadow-lg" : "text-white/20 hover:text-white"
+                            )}
+                         >
+                            {m}
+                         </button>
                        ))}
                     </div>
                  </div>
 
                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-background/50 px-3 py-1 rounded-full border border-border">
-                       <span className="text-[8px] font-black uppercase text-foreground/40">Safe Zone Guide</span>
+                    <div className="flex items-center gap-2 bg-background/50 px-3 py-1 rounded-full border border-border whitespace-nowrap">
+                       <span 
+                         style={{ writingMode: 'horizontal-tb', textOrientation: 'mixed' }}
+                         className="text-[8px] font-black uppercase text-foreground/40 whitespace-nowrap break-normal"
+                       >
+                         Safe Zone Guide
+                       </span>
                        <Switch checked={showSafeZone} onCheckedChange={setShowSafeZone} className="scale-75" />
                     </div>
                  </div>
@@ -856,7 +872,7 @@ export default function YoutubeBannerStudioPage() {
                           <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
                              <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 opacity-0 group-hover/workspace:opacity-100 transition-opacity">
                                 <Move className="w-3.5 h-3.5 text-primary" />
-                                <span className="text-[8px] font-black uppercase text-white tracking-widest">DRAG IMAGE TO POSITION</span>
+                                <span className="text-[8px] font-black uppercase text-white tracking-widest whitespace-nowrap">DRAG IMAGE TO POSITION</span>
                              </div>
                           </div>
                        )}
@@ -864,7 +880,7 @@ export default function YoutubeBannerStudioPage() {
 
                     <div className="mt-10 flex items-center gap-6 p-1.5 bg-black/60 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl">
                        <button onClick={() => setZoomLevel(z => Math.max(0.1, z - 0.05))} className="p-2 text-white/20 hover:text-white"><Minimize2 className="w-4 h-4" /></button>
-                       <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-widest">{Math.round(zoomLevel * 400)}% Matrix View</span>
+                       <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-widest whitespace-nowrap">{Math.round(zoomLevel * 400)}% Matrix View</span>
                        <button onClick={() => setZoomLevel(z => Math.min(0.5, z + 0.05))} className="p-2 text-white/20 hover:text-white"><Maximize2 className="w-4 h-4" /></button>
                     </div>
                  </div>
@@ -891,7 +907,7 @@ export default function YoutubeBannerStudioPage() {
                       <History className="w-5 h-5 text-primary" />
                       <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/40">Archival Log</h3>
                 </div>
-                <button onClick={() => { setHistory([]); localStorage.removeItem('mykit_yt_banners_v3'); }} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive">Purge Matrix</button>
+                <button onClick={() => { setHistory([]); localStorage.removeItem('mykit_yt_banners_v3'); }} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors">Purge Matrix</button>
              </div>
              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {history.map((h) => (
