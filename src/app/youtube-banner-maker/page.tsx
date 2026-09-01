@@ -75,6 +75,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -220,7 +221,6 @@ export default function YoutubeBannerStudioPage() {
   // Drag State
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
-  const draggingPart = useRef<'bg' | 'name' | 'tagline' | 'extra' | 'schedule' | 'social' | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -417,14 +417,6 @@ export default function YoutubeBannerStudioPage() {
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     lastMousePos.current = { x: clientX, y: clientY };
     isDragging.current = true;
-
-    if (state.unlockTextLayers) {
-      // Logic for selecting text parts would go here based on bounding boxes
-      // For MVP, we allow dragging bg if not locked
-      if (state.isLocked) isDragging.current = false;
-    } else {
-      if (state.isLocked) isDragging.current = false;
-    }
   };
 
   const handleDragMove = (e: any) => {
@@ -437,20 +429,11 @@ export default function YoutubeBannerStudioPage() {
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = CANVAS_W / rect.width;
     
-    if (state.unlockTextLayers) {
-      // Simple fallback for background drag
-      setState(prev => ({ 
-        ...prev, 
-        bgPosX: prev.bgPosX + dx * scale, 
-        bgPosY: prev.bgPosY + dy * scale 
-      }));
-    } else {
-      setState(prev => ({ 
-        ...prev, 
-        bgPosX: prev.bgPosX + dx * scale, 
-        bgPosY: prev.bgPosY + dy * scale 
-      }));
-    }
+    setState(prev => ({ 
+      ...prev, 
+      bgPosX: prev.bgPosX + dx * scale, 
+      bgPosY: prev.bgPosY + dy * scale 
+    }));
     
     lastMousePos.current = { x: clientX, y: clientY };
   };
@@ -549,6 +532,17 @@ export default function YoutubeBannerStudioPage() {
     toast({ title: "Master Exported" });
   };
 
+  const handleImportBanner = async () => {
+    if (!importQuery.trim()) return;
+    setIsProcessing(true);
+    // Clinical fallback: In a production environment, this would call a scraper node.
+    // For this studio unit, we simulate the fetch logic.
+    setTimeout(() => {
+       setIsProcessing(false);
+       toast({ variant: "destructive", title: "Identity Restricted", description: "Remote channel data requires pro uplink." });
+    }, 1500);
+  };
+
   const isOutsideSafeZone = Math.abs(state.xOffset) > (SAFE_W / 2) || Math.abs(state.yOffset) > (SAFE_H / 2);
 
   const viewportStyles = {
@@ -602,7 +596,6 @@ export default function YoutubeBannerStudioPage() {
 
                     <div className="p-8 space-y-8">
                        <TabsContent value="identity" className="m-0 space-y-10 animate-in fade-in">
-                          {/* 1. BRANDING INPUTS */}
                           <div className="space-y-6">
                              <div className="space-y-2">
                                 <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Channel Name</Label>
@@ -620,7 +613,6 @@ export default function YoutubeBannerStudioPage() {
                              </div>
                           </div>
 
-                          {/* 2. POSITIONING SYSTEM */}
                           <div className="space-y-6 pt-6 border-t border-white/5">
                              <div className="flex items-center justify-between">
                                 <Label className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Positioning Matrix</Label>
@@ -632,7 +624,6 @@ export default function YoutubeBannerStudioPage() {
 
                              {state.unlockTextLayers ? (
                                <div className="space-y-6 animate-in slide-in-from-top-2">
-                                  {/* Individual Layer Controls */}
                                   {[
                                     { id: 'nameOffset', label: 'NAME', color: 'text-primary' },
                                     { id: 'taglineOffset', label: 'TAGLINE', color: 'text-primary/60' },
@@ -672,16 +663,10 @@ export default function YoutubeBannerStudioPage() {
                                      </div>
                                      <Slider value={[state.yOffset]} min={-500} max={500} step={1} onValueChange={v => updateState({ yOffset: v[0] })} />
                                   </div>
-                                  <div className="grid grid-cols-3 gap-2">
-                                     {[-100, 0, 100].map(val => (
-                                       <button key={val} onClick={() => updateState({ xOffset: val })} className="h-8 rounded-xl bg-background border border-border text-[8px] font-black uppercase text-foreground/30 hover:text-primary transition-all">X: {val}</button>
-                                     ))}
-                                  </div>
                                </div>
                              )}
                           </div>
 
-                          {/* 3. STYLE & TYPOGRAPHY */}
                           <div className="space-y-6 pt-6 border-t border-white/5">
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -735,26 +720,7 @@ export default function YoutubeBannerStudioPage() {
                                      </div>
                                      <span className="text-primary font-mono text-[10px]">{(state.bgZoom * 100).toFixed(0)}%</span>
                                   </div>
-                                  <Slider value={[state.bgZoom * 100]} min={10} max={400} step={1} onValueChange={v => updateState({ bgZoom: v[0] / 100 }, false)} />
-                                  
-                                  <div className="space-y-4 pt-2">
-                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                           <span className="text-[8px] font-black text-foreground/20 uppercase ml-1">X OFFSET</span>
-                                           <Slider value={[state.bgPosX]} min={-2000} max={2000} step={1} onValueChange={v => updateState({ bgPosX: v[0] }, false)} />
-                                        </div>
-                                        <div className="space-y-2">
-                                           <span className="text-[8px] font-black text-foreground/20 uppercase ml-1">Y OFFSET</span>
-                                           <Slider value={[state.bgPosY]} min={-1000} max={1000} step={1} onValueChange={v => updateState({ bgPosY: v[0] }, false)} />
-                                        </div>
-                                     </div>
-                                     <div className="grid grid-cols-3 gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => updateState({ bgPosX: 0, bgPosY: 0, bgZoom: 1 })} className="h-8 text-[8px] font-black uppercase col-span-1">Center</Button>
-                                        <Button variant="outline" size="sm" onClick={() => updateState({ isLocked: !state.isLocked })} className={cn("h-8 text-[8px] font-black uppercase col-span-2", state.isLocked ? "bg-primary text-white" : "")}>
-                                           {state.isLocked ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1" />} {state.isLocked ? 'Position Locked' : 'Unlock Drag'}
-                                        </Button>
-                                     </div>
-                                  </div>
+                                  <Slider value={[state.bgZoom * 100]} min={10} max={400} step={1} onValueChange={v => updateParam({ bgZoom: v[0] / 100 }, false)} />
                                </div>
 
                                <div className="grid grid-cols-2 gap-4">
@@ -948,7 +914,7 @@ export default function YoutubeBannerStudioPage() {
                     <div className="flex items-center gap-3">
                        <MonitorCheck className="w-5 h-5 text-primary/40" />
                        <div className="space-y-0.5">
-                          <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest leading-none">Output Matrix</p>
+                          <p className="text-[8px] font-black uppercase text-foreground/20 tracking-widest leading-none">Output Matrix</p>
                           <p className="text-sm font-bold text-foreground">2560 x 1440 PX</p>
                        </div>
                     </div>
