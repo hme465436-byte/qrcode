@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -50,7 +49,8 @@ import {
   List,
   Check,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -148,18 +148,11 @@ export default function YoutubeBannerStudioPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- Persistence Matrix ---
-  useEffect(() => {
-    const saved = localStorage.getItem('mykit_yt_banners_v1');
-    if (saved) try { setHistory(JSON.parse(saved)); } catch(e) {}
-  }, []);
-
-  const saveToArchive = () => {
-    const entry = { ...state, id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() };
-    const next = [entry, ...history.filter(h => h.name !== state.name)].slice(0, 10);
-    setHistory(next);
-    localStorage.setItem('mykit_yt_banners_v1', JSON.stringify(next));
-    toast({ title: "Banner Archived", description: "Design saved to local registry." });
+  const formatSize = (bytes: number) => {
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   // --- Synthesis Engine ---
@@ -301,7 +294,6 @@ export default function YoutubeBannerStudioPage() {
     if (!canvasRef.current) return;
     setIsProcessing(true);
     
-    // Clean render for export (no guides)
     const exportCanvas = document.createElement('canvas');
     await renderCanvas(exportCanvas);
     
@@ -309,7 +301,6 @@ export default function YoutubeBannerStudioPage() {
     let quality = 0.92;
     let dataUrl = exportCanvas.toDataURL(mime, quality);
 
-    // Auto-compression loop (YouTube max is 6MB)
     while (dataUrl.length * 0.75 > 6 * 1024 * 1024 && quality > 0.1) {
       quality -= 0.1;
       dataUrl = exportCanvas.toDataURL(mime, quality);
@@ -325,13 +316,21 @@ export default function YoutubeBannerStudioPage() {
 
   const viewportStyles = {
     tv: { width: '100%', height: '100%' },
-    desktop: { width: '100%', height: '29.3%' }, // 423 / 1440
-    tablet: { width: '72.4%', height: '29.3%' }, // 1855 / 2560
-    mobile: { width: '60.3%', height: '29.3%' }  // 1546 / 2560
+    desktop: { width: '100%', height: '29.3%' }, 
+    tablet: { width: '72.4%', height: '29.3%' }, 
+    mobile: { width: '60.3%', height: '29.3%' }  
+  };
+
+  const saveToArchive = () => {
+    const entry = { ...state, id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() };
+    const next = [entry, ...history.filter(h => h.name !== state.name)].slice(0, 10);
+    setHistory(next);
+    localStorage.setItem('mykit_yt_banners_v1', JSON.stringify(next));
+    toast({ title: "Banner Archived", description: "Design saved to local registry." });
   };
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         
         {/* SIDEBAR CONTROLS */}
@@ -461,14 +460,14 @@ export default function YoutubeBannerStudioPage() {
                           </div>
                        </TabsContent>
                     </div>
-                 </Tabs>
+                 </tabs>
               </CardContent>
               <div className="p-6 border-t border-white/5 bg-[#0a0a0c] space-y-4">
                  <div className="grid grid-cols-2 gap-3">
                     <Button onClick={() => handleExport('png')} className="h-14 rounded-2xl bg-primary text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/30 active:scale-95 transition-all">
                        <Save className="w-4 h-4 mr-2" /> PNG MASTER
                     </Button>
-                    <Button variant="outline" onClick={() => handleExport('jpg')} className="h-14 rounded-2xl border-white/10 bg-white/5 text-white/40 font-black uppercase text-[10px] tracking-widest">
+                    <Button variant="outline" onClick={() => handleExport('jpg')} className="h-14 rounded-2xl border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest">
                        JPG (Efficient)
                     </Button>
                  </div>
@@ -578,7 +577,7 @@ export default function YoutubeBannerStudioPage() {
                    <div className="flex items-center gap-3">
                       <History className="w-5 h-5 text-primary" />
                       <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/40">Studio Archive</h3>
-                   </div>
+                </div>
                    <button onClick={() => { setHistory([]); localStorage.removeItem('mykit_yt_banners_v1'); }} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive">Purge Log</button>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -586,7 +585,7 @@ export default function YoutubeBannerStudioPage() {
                      <button 
                       key={h.id} 
                       onClick={() => setState(h)}
-                      className="group p-2 rounded-2xl bg-secondary/50 border border-white/5 hover:border-primary/40 transition-all text-left"
+                      className="group p-2 rounded-2xl bg-secondary/50 border border-border hover:border-primary/40 transition-all text-left"
                      >
                         <div className="aspect-video rounded-xl bg-black overflow-hidden mb-3">
                            <div className="w-full h-full opacity-40 group-hover:opacity-100 transition-opacity" style={{ background: h.bgType === 'gradient' ? `linear-gradient(${h.gradAngle}deg, ${h.bgColor}, ${h.bgColor2})` : h.bgColor }} />
