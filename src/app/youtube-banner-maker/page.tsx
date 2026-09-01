@@ -64,7 +64,8 @@ import {
   X,
   AlignLeft,
   AlignRight,
-  ArrowRightLeft
+  ArrowRightLeft,
+  AtSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -225,6 +226,8 @@ export default function YoutubeBannerStudioPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
+  const activeAsset = useMemo(() => state, [state]);
+
   // --- Persistence ---
   useEffect(() => {
     const saved = localStorage.getItem('mykit_yt_banners_v3');
@@ -275,7 +278,7 @@ export default function YoutubeBannerStudioPage() {
 
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     
-    // 1. Background Pass
+    // 1. Background Layer
     if (state.bgType === 'color') {
       ctx.fillStyle = state.bgColor;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
@@ -343,13 +346,21 @@ export default function YoutubeBannerStudioPage() {
     ctx.font = `900 ${state.fontSize}px ${state.fontFamily}`;
     ctx.letterSpacing = `${state.letterSpacing}px`;
     const nameX = getFinalX(state.nameOffset.x);
-    const nameY = getFinalY(state.nameOffset.y, -20);
+    const nameY = getFinalY(state.nameOffset.y, -40);
     if (state.outlineWidth > 0) {
       ctx.strokeStyle = state.outlineColor;
       ctx.lineWidth = state.outlineWidth;
       ctx.strokeText(state.name.toUpperCase(), nameX, nameY);
     }
     ctx.fillText(state.name.toUpperCase(), nameX, nameY);
+
+    // Social Handle
+    if (state.socialHandle) {
+      ctx.font = `700 ${state.fontSize * 0.25}px ${state.fontFamily}`;
+      ctx.globalAlpha = 0.9;
+      ctx.letterSpacing = `${state.letterSpacing}px`;
+      ctx.fillText(state.socialHandle.toUpperCase(), getFinalX(state.socialOffset.x), getFinalY(state.socialOffset.y, -state.fontSize * 0.4));
+    }
 
     // Tagline
     ctx.font = `600 ${state.fontSize * 0.35}px ${state.fontFamily}`;
@@ -369,13 +380,6 @@ export default function YoutubeBannerStudioPage() {
       ctx.font = `500 ${state.fontSize * 0.18}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.4;
       ctx.fillText(state.schedule.toUpperCase(), getFinalX(state.scheduleOffset.x), getFinalY(state.scheduleOffset.y, state.fontSize * 1.15));
-    }
-    
-    // Social
-    if (state.socialHandle) {
-      ctx.font = `700 ${state.fontSize * 0.22}px ${state.fontFamily}`;
-      ctx.globalAlpha = 0.7;
-      ctx.fillText(state.socialHandle.toUpperCase(), getFinalX(state.socialOffset.x), getFinalY(state.socialOffset.y, state.fontSize * 1.45));
     }
     ctx.restore();
 
@@ -406,7 +410,7 @@ export default function YoutubeBannerStudioPage() {
     return () => cancelAnimationFrame(handle);
   }, [renderCanvas]);
 
-  // --- History and Interaction Handlers ---
+  // --- Handlers ---
   const commitChange = (s: BannerState) => {
     setUndoStack(prev => [...prev.slice(-19), s]);
     setRedoStack([]);
@@ -535,8 +539,6 @@ export default function YoutubeBannerStudioPage() {
   const handleImportBanner = async () => {
     if (!importQuery.trim()) return;
     setIsProcessing(true);
-    // Clinical fallback: In a production environment, this would call a scraper node.
-    // For this studio unit, we simulate the fetch logic.
     setTimeout(() => {
        setIsProcessing(false);
        toast({ variant: "destructive", title: "Identity Restricted", description: "Remote channel data requires pro uplink." });
@@ -601,6 +603,13 @@ export default function YoutubeBannerStudioPage() {
                                 <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Channel Name</Label>
                                 <Input value={state.name} onChange={e => updateState({ name: e.target.value })} className="h-12 bg-secondary/50 border-border rounded-xl font-black uppercase" />
                              </div>
+                             <div className="space-y-2">
+                                <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Username / Handle</Label>
+                                <div className="relative group/user">
+                                   <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                                   <Input value={state.socialHandle} onChange={e => updateState({ socialHandle: e.target.value })} placeholder="@username" className="h-11 pl-10 bg-secondary/50 border-border rounded-xl text-xs font-bold uppercase" />
+                                </div>
+                             </div>
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                    <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Tagline</Label>
@@ -626,6 +635,7 @@ export default function YoutubeBannerStudioPage() {
                                <div className="space-y-6 animate-in slide-in-from-top-2">
                                   {[
                                     { id: 'nameOffset', label: 'NAME', color: 'text-primary' },
+                                    { id: 'socialOffset', label: 'USERNAME', color: 'text-primary/80' },
                                     { id: 'taglineOffset', label: 'TAGLINE', color: 'text-primary/60' },
                                     { id: 'scheduleOffset', label: 'SCHEDULE', color: 'text-primary/40' },
                                   ].map(layer => (
@@ -670,7 +680,7 @@ export default function YoutubeBannerStudioPage() {
                           <div className="space-y-6 pt-6 border-t border-white/5">
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                   <Label className="text-[9px] font-black uppercase text-foreground/40">Typography</Label>
+                                   <Label className="text-[9px] font-black text-foreground/40 uppercase">Typography</Label>
                                    <Select value={state.fontIndex.toString()} onValueChange={v => updateState({ fontIndex: parseInt(v), fontFamily: FONTS[parseInt(v)].val })}>
                                       <SelectTrigger className="h-10 bg-secondary/50 rounded-xl text-[10px] font-black uppercase">
                                          <SelectValue />
@@ -681,7 +691,7 @@ export default function YoutubeBannerStudioPage() {
                                    </Select>
                                 </div>
                                 <div className="space-y-2">
-                                   <Label className="text-[9px] font-black uppercase text-foreground/40">Chromatic Value</Label>
+                                   <Label className="text-[9px] font-black text-foreground/40 uppercase">Chromatic Value</Label>
                                    <div className="flex items-center gap-3 p-2 bg-secondary/50 border border-border rounded-xl">
                                       <div className="w-6 h-6 rounded-lg relative overflow-hidden ring-1 ring-white/10" style={{ backgroundColor: state.textColor }}>
                                          <input type="color" value={state.textColor} onChange={e => updateState({ textColor: e.target.value })} className="absolute inset-0 opacity-0 cursor-pointer scale-150" />
@@ -720,7 +730,7 @@ export default function YoutubeBannerStudioPage() {
                                      </div>
                                      <span className="text-primary font-mono text-[10px]">{(state.bgZoom * 100).toFixed(0)}%</span>
                                   </div>
-                                  <Slider value={[state.bgZoom * 100]} min={10} max={400} step={1} onValueChange={v => updateParam({ bgZoom: v[0] / 100 }, false)} />
+                                  <Slider value={[state.bgZoom * 100]} min={10} max={400} step={1} onValueChange={v => updateState({ bgZoom: v[0] / 100 }, false)} />
                                </div>
 
                                <div className="grid grid-cols-2 gap-4">
