@@ -30,7 +30,9 @@ import {
   AlertCircle,
   Calendar,
   Hash,
-  ChevronRight
+  ChevronRight,
+  Maximize2,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +45,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import { validatePhoneNumber } from './actions';
 
 // --- Linguistic Data Matrix ---
 
