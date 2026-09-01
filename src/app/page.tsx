@@ -116,7 +116,8 @@ import {
   Hash as HashIcon,
   History,
   Edit3,
-  MessageSquare
+  MessageSquare,
+  Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -173,6 +174,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-emerald-500/10',
     keywords: ['unit converter', 'length', 'weight', 'temperature', 'area', 'volume', 'speed', 'time', 'data', 'pressure', 'energy', 'power', 'angle'],
     category: 'utilities'
+  },
+  { 
+    href: '/fake-data', 
+    icon: Database, 
+    title: 'Fake Data Generator', 
+    desc: 'Generate realistic fake names, emails, addresses, phone numbers and more for testing.', 
+    label: 'GENERATORS', 
+    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
+    glowClass: 'bg-indigo-500/10',
+    keywords: ['fake data', 'dummy data', 'test data', 'names generator', 'identity maker', 'mock data'],
+    category: 'generators'
   },
   { 
     href: '/site-backup-cloner', 
@@ -1605,7 +1617,8 @@ export default function Home() {
       'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
       'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
-      'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick'
+      'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
+      'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
