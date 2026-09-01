@@ -460,7 +460,7 @@ export default function YoutubeBannerStudioPage() {
                           </div>
                        </TabsContent>
                     </div>
-                 </tabs>
+                 </Tabs>
               </CardContent>
               <div className="p-6 border-t border-white/5 bg-[#0a0a0c] space-y-4">
                  <div className="grid grid-cols-2 gap-3">
