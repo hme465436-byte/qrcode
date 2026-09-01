@@ -189,6 +189,10 @@ export default function YoutubeBannerStudioPage() {
   const [undoStack, setUndoStack] = useState<BannerState[]>([]);
   const [redoStack, setRedoStack] = useState<BannerState[]>([]);
   
+  // Image Cache State (Crucial to fix blinking)
+  const [cachedBgImage, setCachedBgImage] = useState<HTMLImageElement | null>(null);
+  const [cachedLogo, setCachedLogo] = useState<HTMLImageElement | null>(null);
+
   // UI State
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [showSafeZone, setShowSafeZone] = useState(true);
@@ -236,6 +240,23 @@ export default function YoutubeBannerStudioPage() {
     });
   };
 
+  // --- Image Pre-loading Protocols (Fixes Blinking) ---
+  useEffect(() => {
+    if (state.bgType === 'image' && state.bgImage) {
+      loadImage(state.bgImage).then(setCachedBgImage).catch(() => setCachedBgImage(null));
+    } else {
+      setCachedBgImage(null);
+    }
+  }, [state.bgImage, state.bgType]);
+
+  useEffect(() => {
+    if (state.logo) {
+      loadImage(state.logo).then(setCachedLogo).catch(() => setCachedLogo(null));
+    } else {
+      setCachedLogo(null);
+    }
+  }, [state.logo]);
+
   // --- Synthesis Engine ---
   const renderCanvas = useCallback(async (targetCanvas?: HTMLCanvasElement) => {
     const canvas = targetCanvas || canvasRef.current;
@@ -259,25 +280,23 @@ export default function YoutubeBannerStudioPage() {
       grad.addColorStop(1, state.bgColor3);
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    } else if (state.bgType === 'image' && state.bgImage) {
-      try {
-        const img = await loadImage(state.bgImage!);
-        const scale = Math.max(CANVAS_W / img.width, CANVAS_H / img.height);
-        
-        ctx.save();
-        if (state.bgBlur > 0) ctx.filter = `blur(${state.bgBlur}px)`;
-        
-        const finalW = img.width * scale * state.bgZoom;
-        const finalH = img.height * scale * state.bgZoom;
-        
-        const dx = (CANVAS_W - finalW) / 2 + state.bgPosX;
-        const dy = (CANVAS_H - finalH) / 2 + state.bgPosY;
-        
-        ctx.drawImage(img, dx, dy, finalW, finalH);
-        ctx.restore();
-      } catch (e) {
-        console.warn("Background render failed", e);
-      }
+    } else if (state.bgType === 'image' && cachedBgImage) {
+      const img = cachedBgImage;
+      const scale = Math.max(CANVAS_W / img.width, CANVAS_H / img.height);
+      
+      ctx.save();
+      if (state.bgBlur > 0) ctx.filter = `blur(${state.bgBlur}px)`;
+      
+      const finalW = img.width * scale * state.bgZoom;
+      const finalH = img.height * scale * state.bgZoom;
+      
+      const dx = (CANVAS_W - finalW) / 2 + state.bgPosX;
+      const dy = (CANVAS_H - finalH) / 2 + state.bgPosY;
+      
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, dx, dy, finalW, finalH);
+      ctx.restore();
     }
 
     // 2. Contrast Overlay
@@ -350,12 +369,10 @@ export default function YoutubeBannerStudioPage() {
     ctx.restore();
 
     // 4. Logo Pass
-    if (state.logo) {
-      try {
-        const logoImg = await loadImage(state.logo!);
-        const lSize = 220;
-        ctx.drawImage(logoImg, centerX - lSize/2, centerY - state.fontSize - 160, lSize, lSize);
-      } catch (e) {}
+    if (cachedLogo) {
+      const logoImg = cachedLogo;
+      const lSize = 220;
+      ctx.drawImage(logoImg, centerX - lSize/2, centerY - state.fontSize - 160, lSize, lSize);
     }
 
     // 5. Guides
@@ -371,10 +388,12 @@ export default function YoutubeBannerStudioPage() {
       ctx.strokeRect(0, (CANVAS_H - DESKTOP_H) / 2, CANVAS_W, DESKTOP_H);
       ctx.restore();
     }
-  }, [state, showSafeZone]);
+  }, [state, showSafeZone, cachedBgImage, cachedLogo]);
 
   useEffect(() => {
-    renderCanvas();
+    // Standard requestAnimationFrame loop for smooth visual sync
+    const handle = requestAnimationFrame(() => renderCanvas());
+    return () => cancelAnimationFrame(handle);
   }, [renderCanvas]);
 
   // --- Interaction Handlers ---
@@ -397,10 +416,12 @@ export default function YoutubeBannerStudioPage() {
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = CANVAS_W / rect.width;
     
-    updateState({ 
-      bgPosX: state.bgPosX + dx * scale, 
-      bgPosY: state.bgPosY + dy * scale 
-    }, false);
+    // High-frequency state update for smooth drag
+    setState(prev => ({ 
+      ...prev, 
+      bgPosX: prev.bgPosX + dx * scale, 
+      bgPosY: prev.bgPosY + dy * scale 
+    }));
     
     lastMousePos.current = { x: clientX, y: clientY };
   };
@@ -508,14 +529,6 @@ export default function YoutubeBannerStudioPage() {
     toast({ title: "Master Exported", description: `Size: ${formatSize(dataUrl.length * 0.75)}` });
   };
 
-  const handleArchive = () => {
-    const entry = { ...state, id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() };
-    const next = [entry, ...history].slice(0, 15);
-    setHistory(next);
-    localStorage.setItem('mykit_yt_banners_v3', JSON.stringify(next));
-    toast({ title: "Archived", description: "Design saved to local log." });
-  };
-
   const isOutsideSafeZone = Math.abs(state.xOffset) > (SAFE_W / 2) || Math.abs(state.yOffset) > (SAFE_H / 2);
 
   const viewportStyles = {
@@ -606,16 +619,16 @@ export default function YoutubeBannerStudioPage() {
                           <div className="space-y-6 pt-4 border-t border-white/5">
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                   <Label className="text-[9px] font-black uppercase text-foreground/40">Font Family</Label>
+                                   <Label className="text-[9px] font-black uppercase text-foreground/40">Typography</Label>
                                    <Select value={state.fontIndex.toString()} onValueChange={v => updateState({ fontIndex: parseInt(v), fontFamily: FONTS[parseInt(v)].val })}>
-                                      <SelectTrigger className="h-10 bg-secondary/50 rounded-xl text-[9px] font-black uppercase"><SelectValue /></SelectTrigger>
+                                      <SelectTrigger className="h-10 bg-secondary/50 rounded-xl text-[10px] font-black uppercase"><SelectValue /></SelectTrigger>
                                       <SelectContent className="glass-card">
                                          {FONTS.map((f, i) => <SelectItem key={i} value={i.toString()} className="text-[10px] font-black uppercase">{f.label}</SelectItem>)}
                                       </SelectContent>
                                    </Select>
                                 </div>
                                 <div className="space-y-2">
-                                   <Label className="text-[9px] font-black uppercase text-foreground/40">Text Color</Label>
+                                   <Label className="text-[9px] font-black uppercase text-foreground/40">Chromatic Value</Label>
                                    <div className="flex items-center gap-3 p-2 bg-secondary/50 border border-border rounded-xl">
                                       <div className="w-6 h-6 rounded-lg relative overflow-hidden ring-1 ring-white/10" style={{ backgroundColor: state.textColor }}>
                                          <input type="color" value={state.textColor} onChange={e => updateState({ textColor: e.target.value })} className="absolute inset-0 opacity-0 cursor-pointer scale-150" />
@@ -630,6 +643,13 @@ export default function YoutubeBannerStudioPage() {
                                    <span className="text-primary">{state.fontSize}px</span>
                                 </div>
                                 <Slider value={[state.fontSize]} min={40} max={250} step={1} onValueChange={v => updateState({ fontSize: v[0] })} />
+                             </div>
+                             <div className="space-y-4">
+                                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-foreground/30">
+                                   <span>Vertical Calibration</span>
+                                   <span className="text-primary">{state.yOffset}px</span>
+                                </div>
+                                <Slider value={[state.yOffset]} min={-500} max={500} step={1} onValueChange={v => updateState({ yOffset: v[0] })} />
                              </div>
                           </div>
                        </TabsContent>
@@ -714,7 +734,7 @@ export default function YoutubeBannerStudioPage() {
                        <TabsContent value="stock" className="m-0 space-y-8 animate-in fade-in">
                           <div className="space-y-6">
                              <div className="space-y-2">
-                                <Label className="text-[10px] font-black text-foreground/40 uppercase">Stock Matrix</Label>
+                                <Label className="text-[10px] font-black uppercase text-foreground/40">Stock Matrix</Label>
                                 <div className="flex gap-2">
                                    <Input placeholder="Search high-res visuals..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-12 bg-secondary/50 rounded-2xl border-border text-sm font-bold" />
                                    <Button onClick={fetchStock} disabled={isStockLoading} className="h-12 w-12 rounded-2xl bg-primary text-white shrink-0"><Search className="w-5 h-5" /></Button>
@@ -753,23 +773,18 @@ export default function YoutubeBannerStudioPage() {
               </div>
            </Card>
 
-           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-             <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <ShieldCheck className="w-6 h-6" />
-             </div>
-             <div className="space-y-2">
-               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Safe-Zone Validation</h4>
-               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                 Our studio monitors the 1546x423 mobile-safe area. If your brand drift exceeds these parameters, an integrity alert will be issued.
-               </p>
-               <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                  <span className="text-[11px] font-black uppercase text-foreground">Status</span>
-                  <Badge variant="outline" className={cn("text-[8px] font-black uppercase", isOutsideSafeZone ? "text-red-500 border-red-500/20" : "text-emerald-500 border-emerald-500/20")}>
-                     {isOutsideSafeZone ? 'Outside' : 'Safe'}
-                  </Badge>
-               </div>
-             </div>
-          </div>
+           <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:border-primary/20 transition-all">
+              <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                 <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                 <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Safe-Zone Validation</p>
+                 <Badge variant="outline" className={cn("text-[8px] font-black uppercase", isOutsideSafeZone ? "text-red-500 border-red-500/20" : "text-emerald-500 border-emerald-500/20")}>
+                    {isOutsideSafeZone ? 'Outside' : 'Safe'}
+                 </Badge>
+                 <p className="text-[10px] text-foreground/40 leading-relaxed font-medium mt-1">Identities must reside within the 1546x423 matrix for mobile visibility.</p>
+              </div>
+           </div>
         </aside>
 
         {/* WORKSPACE PREVIEW */}
@@ -834,7 +849,6 @@ export default function YoutubeBannerStudioPage() {
                         onTouchEnd={handleDragEnd}
                        />
                        
-                       {/* Floating Focus Indicator during drag */}
                        {!state.isLocked && state.bgImage && (
                           <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
                              <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 opacity-0 group-hover/workspace:opacity-100 transition-opacity">
@@ -845,7 +859,6 @@ export default function YoutubeBannerStudioPage() {
                        )}
                     </div>
 
-                    {/* Scale Controls */}
                     <div className="mt-10 flex items-center gap-6 p-1.5 bg-black/60 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl">
                        <button onClick={() => setZoomLevel(z => Math.max(0.1, z - 0.05))} className="p-2 text-white/20 hover:text-white"><Minimize2 className="w-4 h-4" /></button>
                        <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-widest">{Math.round(zoomLevel * 400)}% Matrix View</span>
@@ -854,7 +867,6 @@ export default function YoutubeBannerStudioPage() {
                  </div>
               </CardContent>
 
-              {/* Status Footer */}
               <div className="p-6 border-t border-white/5 bg-[#0a0a0c] flex flex-col md:flex-row items-center justify-between gap-6 shrink-0">
                  <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
@@ -864,26 +876,6 @@ export default function YoutubeBannerStudioPage() {
                           <p className="text-sm font-bold text-foreground">2560 x 1440 PX</p>
                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                       <ShieldCheck className="w-5 h-5 text-emerald-500/40" />
-                       <div className="space-y-0.5">
-                          <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest leading-none">Integrity</p>
-                          <p className="text-sm font-bold text-emerald-500">DPI CALIBRATED</p>
-                       </div>
-                    </div>
-                 </div>
-                 
-                 <div className="flex bg-white/5 p-1.5 rounded-2xl gap-2">
-                    {PRESETS.map(p => (
-                      <button 
-                        key={p.id} 
-                        onClick={() => updateState(p.theme)}
-                        className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/30 hover:text-primary transition-all border border-transparent hover:border-primary/20"
-                        title={p.label}
-                      >
-                         <p.icon className="w-5 h-5" />
-                      </button>
-                    ))}
                  </div>
               </div>
            </Card>
@@ -895,48 +887,48 @@ export default function YoutubeBannerStudioPage() {
                    <div className="flex items-center gap-3">
                       <History className="w-5 h-5 text-primary" />
                       <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/40">Archival Log</h3>
-                   </div>
-                   <button onClick={() => { setHistory([]); localStorage.removeItem('mykit_yt_banners_v2'); }} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive">Purge Matrix</button>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                   {history.map((h) => (
-                     <button 
-                      key={h.id} 
-                      onClick={() => setState(h)}
-                      className="group p-2 rounded-2xl bg-secondary/50 border border-border hover:border-primary/40 transition-all text-left relative overflow-hidden"
-                     >
-                        <div className="aspect-video rounded-xl bg-black overflow-hidden mb-3">
-                           <div className="w-full h-full opacity-40 group-hover:opacity-100 transition-opacity" style={{ background: h.bgType === 'gradient' ? `linear-gradient(${h.gradAngle}deg, ${h.bgColor}, ${h.bgColor2})` : h.bgColor }} />
-                        </div>
-                        <p className="text-[10px] font-black uppercase truncate text-foreground/60">{h.name}</p>
-                        <p className="text-[8px] font-bold text-foreground/20 uppercase">{new Date(h.timestamp).toLocaleDateString()}</p>
-                        <button onClick={(e) => { e.stopPropagation(); setHistory(prev => prev.filter(p => p.id !== h.id)); }} className="absolute top-1 right-1 p-1 text-white/0 group-hover:text-red-500 transition-all"><X className="w-3.5 h-3.5" /></button>
-                     </button>
-                   ))}
-                </div>
+                <button onClick={() => { setHistory([]); localStorage.removeItem('mykit_yt_banners_v3'); }} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive">Purge Matrix</button>
              </div>
-           )}
-        </main>
-      </div>
+             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {history.map((h) => (
+                  <button 
+                   key={h.id} 
+                   onClick={() => setState(h)}
+                   className="group p-2 rounded-2xl bg-secondary/50 border border-border hover:border-primary/40 transition-all text-left relative overflow-hidden"
+                  >
+                     <div className="aspect-video rounded-xl bg-black overflow-hidden mb-3">
+                        <div className="w-full h-full opacity-40 group-hover:opacity-100 transition-opacity" style={{ background: h.bgType === 'gradient' ? `linear-gradient(${h.gradAngle}deg, ${h.bgColor}, ${h.bgColor2})` : h.bgColor }} />
+                     </div>
+                     <p className="text-[10px] font-black uppercase truncate text-foreground/60">{h.name}</p>
+                     <p className="text-[8px] font-bold text-foreground/20 uppercase">{new Date(h.timestamp).toLocaleDateString()}</p>
+                     <button onClick={(e) => { e.stopPropagation(); setHistory(prev => prev.filter(p => p.id !== h.id)); }} className="absolute top-1 right-1 p-1 text-white/0 group-hover:text-red-500 transition-all"><X className="w-3.5 h-3.5" /></button>
+                  </button>
+                ))}
+             </div>
+          </div>
+        )}
+     </main>
+   </div>
 
-      {/* Hidden Handshake Nodes */}
-      <input type="file" ref={fileInputRef} accept="image/*" onChange={e => handleFileUpload(e, 'bg')} className="hidden" />
-      <input type="file" ref={logoInputRef} accept="image/*" onChange={e => handleFileUpload(e, 'logo')} className="hidden" />
+   {/* Hidden Handshake Nodes */}
+   <input type="file" ref={fileInputRef} accept="image/*" onChange={e => handleFileUpload(e, 'bg')} className="hidden" />
+   <input type="file" ref={logoInputRef} accept="image/*" onChange={e => handleFileUpload(e, 'logo')} className="hidden" />
 
-      <style jsx global>{`
-        .bg-checkered {
-          background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #111113 75%), 
-                            linear-gradient(-45deg, transparent 75%, #111113 75%);
-          background-size: 20px 20px;
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-    </div>
-  );
+   <style jsx global>{`
+     .bg-checkered {
+       background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
+                         linear-gradient(-45deg, #111113 25%, transparent 25%), 
+                         linear-gradient(45deg, transparent 75%, #111113 75%), 
+                         linear-gradient(-45deg, transparent 75%, #111113 75%);
+       background-size: 20px 20px;
+     }
+     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+     .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+     .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+     .no-scrollbar::-webkit-scrollbar { display: none; }
+     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+   `}</style>
+ </div>
+);
 }
