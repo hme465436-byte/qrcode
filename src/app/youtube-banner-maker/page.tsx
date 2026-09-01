@@ -61,7 +61,10 @@ import {
   Move,
   Lock,
   Unlock,
-  X
+  X,
+  AlignLeft,
+  AlignRight,
+  ArrowRightLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -121,6 +124,12 @@ interface BannerState {
   shapeBgColor: string;
   shapeBgOpacity: number;
   isLocked: boolean;
+  unlockTextLayers: boolean;
+  nameOffset: { x: number, y: number };
+  taglineOffset: { x: number, y: number };
+  extraOffset: { x: number, y: number };
+  scheduleOffset: { x: number, y: number };
+  socialOffset: { x: number, y: number };
   timestamp: number;
 }
 
@@ -166,6 +175,12 @@ const INITIAL_STATE: BannerState = {
   shapeBgColor: '#000000',
   shapeBgOpacity: 0.5,
   isLocked: false,
+  unlockTextLayers: false,
+  nameOffset: { x: 0, y: 0 },
+  taglineOffset: { x: 0, y: 0 },
+  extraOffset: { x: 0, y: 0 },
+  scheduleOffset: { x: 0, y: 0 },
+  socialOffset: { x: 0, y: 0 },
   timestamp: Date.now()
 };
 
@@ -205,6 +220,7 @@ export default function YoutubeBannerStudioPage() {
   // Drag State
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
+  const draggingPart = useRef<'bg' | 'name' | 'tagline' | 'extra' | 'schedule' | 'social' | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -294,8 +310,11 @@ export default function YoutubeBannerStudioPage() {
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     // 3. Identity Text Pass
-    const centerX = CANVAS_W / 2 + state.xOffset;
-    const centerY = CANVAS_H / 2 + state.yOffset;
+    const getBaseX = () => CANVAS_W / 2 + state.xOffset;
+    const getBaseY = () => CANVAS_H / 2 + state.yOffset;
+
+    const getFinalX = (localX: number) => state.unlockTextLayers ? CANVAS_W / 2 + localX : getBaseX() + localX;
+    const getFinalY = (localY: number, baseOffset: number) => state.unlockTextLayers ? CANVAS_H / 2 + localY : getBaseY() + localY + baseOffset;
 
     // Shape Background
     if (state.useShapeBg) {
@@ -304,7 +323,7 @@ export default function YoutubeBannerStudioPage() {
       ctx.globalAlpha = state.shapeBgOpacity;
       const bgW = SAFE_W * 0.9;
       const bgH = state.fontSize * 2.5;
-      ctx.roundRect(centerX - bgW/2, centerY - bgH/2, bgW, bgH, 40);
+      ctx.roundRect(getBaseX() - bgW/2, getBaseY() - bgH/2, bgW, bgH, 40);
       ctx.fill();
       ctx.restore();
     }
@@ -323,38 +342,40 @@ export default function YoutubeBannerStudioPage() {
     // Main Name
     ctx.font = `900 ${state.fontSize}px ${state.fontFamily}`;
     ctx.letterSpacing = `${state.letterSpacing}px`;
+    const nameX = getFinalX(state.nameOffset.x);
+    const nameY = getFinalY(state.nameOffset.y, -20);
     if (state.outlineWidth > 0) {
       ctx.strokeStyle = state.outlineColor;
       ctx.lineWidth = state.outlineWidth;
-      ctx.strokeText(state.name.toUpperCase(), centerX, centerY - 20);
+      ctx.strokeText(state.name.toUpperCase(), nameX, nameY);
     }
-    ctx.fillText(state.name.toUpperCase(), centerX, centerY - 20);
+    ctx.fillText(state.name.toUpperCase(), nameX, nameY);
 
     // Tagline
     ctx.font = `600 ${state.fontSize * 0.35}px ${state.fontFamily}`;
     ctx.globalAlpha = 0.8;
     ctx.letterSpacing = `${state.letterSpacing * 2}px`;
-    ctx.fillText(state.tagline.toUpperCase(), centerX, centerY + state.fontSize * 0.5);
+    ctx.fillText(state.tagline.toUpperCase(), getFinalX(state.taglineOffset.x), getFinalY(state.taglineOffset.y, state.fontSize * 0.5));
 
     // Extra line
     if (state.extraLine) {
       ctx.font = `500 ${state.fontSize * 0.25}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.6;
-      ctx.fillText(state.extraLine.toUpperCase(), centerX, centerY + state.fontSize * 0.85);
+      ctx.fillText(state.extraLine.toUpperCase(), getFinalX(state.extraOffset.x), getFinalY(state.extraOffset.y, state.fontSize * 0.85));
     }
 
     // Schedule
     if (state.schedule) {
       ctx.font = `500 ${state.fontSize * 0.18}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.4;
-      ctx.fillText(state.schedule.toUpperCase(), centerX, centerY + state.fontSize * 1.15);
+      ctx.fillText(state.schedule.toUpperCase(), getFinalX(state.scheduleOffset.x), getFinalY(state.scheduleOffset.y, state.fontSize * 1.15));
     }
     
     // Social
     if (state.socialHandle) {
       ctx.font = `700 ${state.fontSize * 0.22}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.7;
-      ctx.fillText(state.socialHandle.toUpperCase(), centerX, centerY + state.fontSize * 1.45);
+      ctx.fillText(state.socialHandle.toUpperCase(), getFinalX(state.socialOffset.x), getFinalY(state.socialOffset.y, state.fontSize * 1.45));
     }
     ctx.restore();
 
@@ -362,7 +383,7 @@ export default function YoutubeBannerStudioPage() {
     if (cachedLogo) {
       const logoImg = cachedLogo;
       const lSize = 220;
-      ctx.drawImage(logoImg, centerX - lSize/2, centerY - state.fontSize - 160, lSize, lSize);
+      ctx.drawImage(logoImg, getBaseX() - lSize/2, getBaseY() - state.fontSize - 160, lSize, lSize);
     }
 
     // 5. Guides
@@ -392,11 +413,18 @@ export default function YoutubeBannerStudioPage() {
   };
 
   const handleDragStart = (e: any) => {
-    if (state.isLocked || !state.bgImage) return;
-    isDragging.current = true;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     lastMousePos.current = { x: clientX, y: clientY };
+    isDragging.current = true;
+
+    if (state.unlockTextLayers) {
+      // Logic for selecting text parts would go here based on bounding boxes
+      // For MVP, we allow dragging bg if not locked
+      if (state.isLocked) isDragging.current = false;
+    } else {
+      if (state.isLocked) isDragging.current = false;
+    }
   };
 
   const handleDragMove = (e: any) => {
@@ -409,11 +437,20 @@ export default function YoutubeBannerStudioPage() {
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = CANVAS_W / rect.width;
     
-    setState(prev => ({ 
-      ...prev, 
-      bgPosX: prev.bgPosX + dx * scale, 
-      bgPosY: prev.bgPosY + dy * scale 
-    }));
+    if (state.unlockTextLayers) {
+      // Simple fallback for background drag
+      setState(prev => ({ 
+        ...prev, 
+        bgPosX: prev.bgPosX + dx * scale, 
+        bgPosY: prev.bgPosY + dy * scale 
+      }));
+    } else {
+      setState(prev => ({ 
+        ...prev, 
+        bgPosX: prev.bgPosX + dx * scale, 
+        bgPosY: prev.bgPosY + dy * scale 
+      }));
+    }
     
     lastMousePos.current = { x: clientX, y: clientY };
   };
@@ -476,21 +513,6 @@ export default function YoutubeBannerStudioPage() {
     }
   };
 
-  const handleImportBanner = async () => {
-    if (!importQuery) return;
-    setIsProcessing(true);
-    try {
-      const cleanHandle = importQuery.replace('@', '').trim();
-      const bannerUrl = `https://banner.yt/${cleanHandle}/tv`;
-      updateState({ bgType: 'image', bgImage: bannerUrl, bgZoom: 1, bgPosX: 0, bgPosY: 0 });
-      toast({ title: "Banner Isolated", description: "Identity registry synchronized." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Lookup Failed" });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const handleArchive = () => {
     const newEntry = {
       ...state,
@@ -524,11 +546,7 @@ export default function YoutubeBannerStudioPage() {
     link.href = dataUrl;
     link.click();
     setIsProcessing(false);
-    const sizeInBytes = dataUrl.length * 0.75;
-    const sizes = ['B', 'KB', 'MB'];
-    const i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
-    const sizeStr = parseFloat((sizeInBytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
-    toast({ title: "Master Exported", description: `Size: ${sizeStr}` });
+    toast({ title: "Master Exported" });
   };
 
   const isOutsideSafeZone = Math.abs(state.xOffset) > (SAFE_W / 2) || Math.abs(state.yOffset) > (SAFE_H / 2);
@@ -564,19 +582,6 @@ export default function YoutubeBannerStudioPage() {
         </div>
       </div>
 
-      {/* Presets Bar */}
-      <div className="mb-10 p-2 rounded-3xl bg-secondary/50 border border-border flex items-center gap-2 overflow-x-auto no-scrollbar">
-         {PRESETS.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => updateState(p.theme)}
-              className="px-6 py-3 rounded-2xl bg-background border border-border text-[9px] font-black uppercase tracking-widest hover:border-primary/40 hover:text-primary transition-all whitespace-nowrap flex items-center gap-2"
-            >
-               <p.icon className="w-3.5 h-3.5 text-primary" /> {p.label} Profile
-            </button>
-         ))}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
         
         {/* EDITOR CONTROLS */}
@@ -596,8 +601,9 @@ export default function YoutubeBannerStudioPage() {
                     </TabsList>
 
                     <div className="p-8 space-y-8">
-                       <TabsContent value="identity" className="m-0 space-y-8 animate-in fade-in">
-                          <div className="space-y-4">
+                       <TabsContent value="identity" className="m-0 space-y-10 animate-in fade-in">
+                          {/* 1. BRANDING INPUTS */}
+                          <div className="space-y-6">
                              <div className="space-y-2">
                                 <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Channel Name</Label>
                                 <Input value={state.name} onChange={e => updateState({ name: e.target.value })} className="h-12 bg-secondary/50 border-border rounded-xl font-black uppercase" />
@@ -612,13 +618,71 @@ export default function YoutubeBannerStudioPage() {
                                    <Input value={state.schedule} onChange={e => updateState({ schedule: e.target.value })} className="h-11 bg-secondary/50 border-border rounded-xl text-xs font-bold uppercase" />
                                 </div>
                              </div>
-                             <div className="space-y-2">
-                                <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Social Handle</Label>
-                                <Input value={state.socialHandle} onChange={e => updateState({ socialHandle: e.target.value })} className="h-11 bg-secondary/50 border-border rounded-xl text-xs font-mono" />
-                             </div>
                           </div>
 
-                          <div className="space-y-6 pt-4 border-t border-white/5">
+                          {/* 2. POSITIONING SYSTEM */}
+                          <div className="space-y-6 pt-6 border-t border-white/5">
+                             <div className="flex items-center justify-between">
+                                <Label className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Positioning Matrix</Label>
+                                <div className="flex items-center gap-2 bg-secondary/50 px-3 py-1 rounded-full border border-border">
+                                   <span className="text-[8px] font-black uppercase text-foreground/40">Unlock Layers</span>
+                                   <Switch checked={state.unlockTextLayers} onCheckedChange={v => updateState({ unlockTextLayers: v })} className="scale-75" />
+                                </div>
+                             </div>
+
+                             {state.unlockTextLayers ? (
+                               <div className="space-y-6 animate-in slide-in-from-top-2">
+                                  {/* Individual Layer Controls */}
+                                  {[
+                                    { id: 'nameOffset', label: 'NAME', color: 'text-primary' },
+                                    { id: 'taglineOffset', label: 'TAGLINE', color: 'text-primary/60' },
+                                    { id: 'scheduleOffset', label: 'SCHEDULE', color: 'text-primary/40' },
+                                  ].map(layer => (
+                                    <div key={layer.id} className="space-y-3 p-4 rounded-2xl bg-secondary/30 border border-border">
+                                       <div className="flex justify-between items-center">
+                                          <span className={cn("text-[9px] font-black uppercase tracking-widest", layer.color)}>{layer.label}</span>
+                                          <button onClick={() => updateState({ [layer.id]: { x: 0, y: 0 } })} className="text-[8px] font-black text-foreground/20 hover:text-primary transition-all">RESET</button>
+                                       </div>
+                                       <div className="grid grid-cols-2 gap-6">
+                                          <div className="space-y-2">
+                                             <div className="flex justify-between text-[7px] font-black text-foreground/30 uppercase"><span>Horizontal</span><span>{state[layer.id as keyof BannerState].x}px</span></div>
+                                             <Slider value={[state[layer.id as keyof BannerState].x]} min={-1000} max={1000} step={1} onValueChange={v => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], x: v[0] } })} />
+                                          </div>
+                                          <div className="space-y-2">
+                                             <div className="flex justify-between text-[7px] font-black text-foreground/30 uppercase"><span>Vertical</span><span>{state[layer.id as keyof BannerState].y}px</span></div>
+                                             <Slider value={[state[layer.id as keyof BannerState].y]} min={-700} max={700} step={1} onValueChange={v => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], y: v[0] } })} />
+                                          </div>
+                                       </div>
+                                    </div>
+                                  ))}
+                               </div>
+                             ) : (
+                               <div className="space-y-8 animate-in slide-in-from-top-2">
+                                  <div className="space-y-4">
+                                     <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-foreground/30">
+                                        <span className="flex items-center gap-2"><ArrowRightLeft className="w-3 h-3" /> Global X Offset</span>
+                                        <span className="text-primary">{state.xOffset}px</span>
+                                     </div>
+                                     <Slider value={[state.xOffset]} min={-1000} max={1000} step={1} onValueChange={v => updateState({ xOffset: v[0] })} />
+                                  </div>
+                                  <div className="space-y-4">
+                                     <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-foreground/30">
+                                        <span className="flex items-center gap-2"><Move className="w-3 h-3" /> Global Y Offset</span>
+                                        <span className="text-primary">{state.yOffset}px</span>
+                                     </div>
+                                     <Slider value={[state.yOffset]} min={-500} max={500} step={1} onValueChange={v => updateState({ yOffset: v[0] })} />
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2">
+                                     {[-100, 0, 100].map(val => (
+                                       <button key={val} onClick={() => updateState({ xOffset: val })} className="h-8 rounded-xl bg-background border border-border text-[8px] font-black uppercase text-foreground/30 hover:text-primary transition-all">X: {val}</button>
+                                     ))}
+                                  </div>
+                               </div>
+                             )}
+                          </div>
+
+                          {/* 3. STYLE & TYPOGRAPHY */}
+                          <div className="space-y-6 pt-6 border-t border-white/5">
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                    <Label className="text-[9px] font-black uppercase text-foreground/40">Typography</Label>
@@ -648,13 +712,6 @@ export default function YoutubeBannerStudioPage() {
                                 </div>
                                 <Slider value={[state.fontSize]} min={40} max={250} step={1} onValueChange={v => updateState({ fontSize: v[0] })} />
                              </div>
-                             <div className="space-y-4">
-                                <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-foreground/30">
-                                   <span>Vertical Calibration</span>
-                                   <span className="text-primary">{state.yOffset}px</span>
-                                </div>
-                                <Slider value={[state.yOffset]} min={-500} max={500} step={1} onValueChange={v => updateState({ yOffset: v[0] })} />
-                             </div>
                           </div>
                        </TabsContent>
 
@@ -678,21 +735,21 @@ export default function YoutubeBannerStudioPage() {
                                      </div>
                                      <span className="text-primary font-mono text-[10px]">{(state.bgZoom * 100).toFixed(0)}%</span>
                                   </div>
-                                  <Slider value={[state.bgZoom * 100]} min={10} max={400} step={1} onValueChange={v => updateParam({ bgZoom: v[0] / 100 })} />
+                                  <Slider value={[state.bgZoom * 100]} min={10} max={400} step={1} onValueChange={v => updateState({ bgZoom: v[0] / 100 }, false)} />
                                   
                                   <div className="space-y-4 pt-2">
                                      <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                            <span className="text-[8px] font-black text-foreground/20 uppercase ml-1">X OFFSET</span>
-                                           <Slider value={[state.bgPosX]} min={-2000} max={2000} step={1} onValueChange={v => updateParam({ bgPosX: v[0] })} />
+                                           <Slider value={[state.bgPosX]} min={-2000} max={2000} step={1} onValueChange={v => updateState({ bgPosX: v[0] }, false)} />
                                         </div>
                                         <div className="space-y-2">
                                            <span className="text-[8px] font-black text-foreground/20 uppercase ml-1">Y OFFSET</span>
-                                           <Slider value={[state.bgPosY]} min={-1000} max={1000} step={1} onValueChange={v => updateParam({ bgPosY: v[0] })} />
+                                           <Slider value={[state.bgPosY]} min={-1000} max={1000} step={1} onValueChange={v => updateState({ bgPosY: v[0] }, false)} />
                                         </div>
                                      </div>
                                      <div className="grid grid-cols-3 gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => updateParam({ bgPosX: 0, bgPosY: 0, bgZoom: 1 })} className="h-8 text-[8px] font-black uppercase col-span-1">Center</Button>
+                                        <Button variant="outline" size="sm" onClick={() => updateState({ bgPosX: 0, bgPosY: 0, bgZoom: 1 })} className="h-8 text-[8px] font-black uppercase col-span-1">Center</Button>
                                         <Button variant="outline" size="sm" onClick={() => updateState({ isLocked: !state.isLocked })} className={cn("h-8 text-[8px] font-black uppercase col-span-2", state.isLocked ? "bg-primary text-white" : "")}>
                                            {state.isLocked ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1" />} {state.isLocked ? 'Position Locked' : 'Unlock Drag'}
                                         </Button>
@@ -795,7 +852,7 @@ export default function YoutubeBannerStudioPage() {
         <main className="lg:col-span-7 xl:col-span-8 space-y-10 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px] bg-black">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
+              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex flex-col sm:flex-row sm:items-center justify-between shrink-0 px-6 sm:px-10 gap-6">
                  <div className="flex items-center gap-6">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <MonitorPlay className="w-5 h-5" />
@@ -805,11 +862,11 @@ export default function YoutubeBannerStudioPage() {
                          <button 
                             key={m} 
                             onClick={() => setDeviceMode(m)} 
-                            style={{ writingMode: 'horizontal-tb', textOrientation: 'mixed' }}
                             className={cn(
                               "px-4 py-2 rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all whitespace-nowrap break-normal", 
                               deviceMode === m ? "bg-primary text-white shadow-lg" : "text-white/20 hover:text-white"
                             )}
+                            style={{ writingMode: 'horizontal-tb', textOrientation: 'mixed' }}
                          >
                             {m}
                          </button>
@@ -820,8 +877,8 @@ export default function YoutubeBannerStudioPage() {
                  <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 bg-background/50 px-3 py-1 rounded-full border border-border whitespace-nowrap">
                        <span 
-                         style={{ writingMode: 'horizontal-tb', textOrientation: 'mixed' }}
                          className="text-[8px] font-black uppercase text-foreground/40 whitespace-nowrap break-normal"
+                         style={{ writingMode: 'horizontal-tb', textOrientation: 'mixed' }}
                        >
                          Safe Zone Guide
                        </span>
@@ -868,7 +925,7 @@ export default function YoutubeBannerStudioPage() {
                         onTouchEnd={handleDragEnd}
                        />
                        
-                       {!state.isLocked && state.bgImage && (
+                       {!state.isLocked && state.bgType === 'image' && state.bgImage && (
                           <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
                              <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 opacity-0 group-hover/workspace:opacity-100 transition-opacity">
                                 <Move className="w-3.5 h-3.5 text-primary" />
@@ -906,48 +963,49 @@ export default function YoutubeBannerStudioPage() {
                    <div className="flex items-center gap-3">
                       <History className="w-5 h-5 text-primary" />
                       <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/40">Archival Log</h3>
+                   </div>
+                   <button onClick={() => { setHistory([]); localStorage.removeItem('mykit_yt_banners_v3'); }} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors">Purge Matrix</button>
                 </div>
-                <button onClick={() => { setHistory([]); localStorage.removeItem('mykit_yt_banners_v3'); }} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors">Purge Matrix</button>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                   {history.map((h) => (
+                     <button 
+                      key={h.id} 
+                      onClick={() => setState(h)}
+                      className="group p-2 rounded-2xl bg-secondary/50 border border-border hover:border-primary/40 transition-all text-left relative overflow-hidden"
+                     >
+                        <div className="aspect-video rounded-xl bg-black overflow-hidden mb-3">
+                           <div className="w-full h-full opacity-40 group-hover:opacity-100 transition-opacity" style={{ background: h.bgType === 'gradient' ? `linear-gradient(${h.gradAngle}deg, ${h.bgColor}, ${h.bgColor2})` : h.bgColor }} />
+                        </div>
+                        <p className="text-[10px] font-black uppercase truncate text-foreground/60">{h.name}</p>
+                        <p className="text-[8px] font-bold text-foreground/20 uppercase">{new Date(h.timestamp).toLocaleDateString()}</p>
+                        <button onClick={(e) => { e.stopPropagation(); setHistory(prev => prev.filter(p => p.id !== h.id)); }} className="absolute top-1 right-1 p-1 text-white/0 group-hover:text-red-500 transition-all"><X className="w-3.5 h-3.5" /></button>
+                     </button>
+                   ))}
+                </div>
              </div>
-             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                {history.map((h) => (
-                  <button 
-                   key={h.id} 
-                   onClick={() => setState(h)}
-                   className="group p-2 rounded-2xl bg-secondary/50 border border-border hover:border-primary/40 transition-all text-left relative overflow-hidden"
-                  >
-                     <div className="aspect-video rounded-xl bg-black overflow-hidden mb-3">
-                        <div className="w-full h-full opacity-40 group-hover:opacity-100 transition-opacity" style={{ background: h.bgType === 'gradient' ? `linear-gradient(${h.gradAngle}deg, ${h.bgColor}, ${h.bgColor2})` : h.bgColor }} />
-                     </div>
-                     <p className="text-[10px] font-black uppercase truncate text-foreground/60">{h.name}</p>
-                     <p className="text-[8px] font-bold text-foreground/20 uppercase">{new Date(h.timestamp).toLocaleDateString()}</p>
-                     <button onClick={(e) => { e.stopPropagation(); setHistory(prev => prev.filter(p => p.id !== h.id)); }} className="absolute top-1 right-1 p-1 text-white/0 group-hover:text-red-500 transition-all"><X className="w-3.5 h-3.5" /></button>
-                  </button>
-                ))}
-             </div>
-          </div>
-        )}
-     </main>
-   </div>
+           )}
+        </main>
+      </div>
 
-   {/* Hidden Handshake Nodes */}
-   <input type="file" ref={fileInputRef} accept="image/*" onChange={e => handleFileUpload(e, 'bg')} className="hidden" />
-   <input type="file" ref={logoInputRef} accept="image/*" onChange={e => handleFileUpload(e, 'logo')} className="hidden" />
+      {/* Hidden Handshake Nodes */}
+      <input type="file" ref={fileInputRef} accept="image/*" onChange={e => handleFileUpload(e, 'bg')} className="hidden" />
+      <input type="file" ref={logoInputRef} accept="image/*" onChange={e => handleFileUpload(e, 'logo')} className="hidden" />
 
-   <style jsx global>{`
-     .bg-checkered {
-       background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
-                         linear-gradient(-45deg, #111113 25%, transparent 25%), 
-                         linear-gradient(45deg, transparent 75%, #111113 75%), 
-                         linear-gradient(-45deg, transparent 75%, #111113 75%);
-       background-size: 20px 20px;
-     }
-     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-     .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-     .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-     .no-scrollbar::-webkit-scrollbar { display: none; }
-     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-   `}</style>
- </div>
-);
+      <style jsx global>{`
+        .bg-checkered {
+          background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
+                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #111113 75%), 
+                            linear-gradient(-45deg, transparent 75%, #111113 75%);
+          background-size: 20px 20px;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+    </div>
+  );
 }
+
