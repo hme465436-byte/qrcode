@@ -206,7 +206,7 @@ export default function YoutubeBannerStudioPage() {
   const [undoStack, setUndoStack] = useState<BannerState[]>([]);
   const [redoStack, setRedoStack] = useState<BannerState[]>([]);
   
-  // Image Cache State
+  // Image Cache State (Persistent objects in memory to prevent drag-flicker)
   const [cachedBgImage, setCachedBgImage] = useState<HTMLImageElement | null>(null);
   const [cachedLogo, setCachedLogo] = useState<HTMLImageElement | null>(null);
 
@@ -221,7 +221,7 @@ export default function YoutubeBannerStudioPage() {
   const [importQuery, setImportQuery] = useState('');
   const [zoomLevel, setZoomLevel] = useState(0.15);
 
-  // Drag State
+  // Drag Refs
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -249,7 +249,7 @@ export default function YoutubeBannerStudioPage() {
     });
   };
 
-  // --- Image Pre-loading Protocols ---
+  // --- Memory Persistence Protocols ---
   useEffect(() => {
     if (state.bgType === 'image' && state.bgImage) {
       loadImage(state.bgImage).then(setCachedBgImage).catch(() => setCachedBgImage(null));
@@ -266,7 +266,7 @@ export default function YoutubeBannerStudioPage() {
     }
   }, [state.logo]);
 
-  // --- Synthesis Engine ---
+  // --- Clinical Rendering Engine ---
   const renderCanvas = useCallback(async (targetCanvas?: HTMLCanvasElement) => {
     const canvas = targetCanvas || canvasRef.current;
     if (!canvas) return;
@@ -278,12 +278,15 @@ export default function YoutubeBannerStudioPage() {
 
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     
-    // 1. Background Layer
+    // 1. Background Pass
     if (state.bgType === 'color') {
       ctx.fillStyle = state.bgColor;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     } else if (state.bgType === 'gradient') {
-      const grad = ctx.createLinearGradient(0, 0, Math.cos(state.gradAngle * Math.PI / 180) * CANVAS_W, Math.sin(state.gradAngle * Math.PI / 180) * CANVAS_H);
+      const rad = (state.gradAngle * Math.PI) / 180;
+      const x2 = Math.cos(rad) * CANVAS_W;
+      const y2 = Math.sin(rad) * CANVAS_H;
+      const grad = ctx.createLinearGradient(0, 0, x2, y2);
       grad.addColorStop(0, state.bgColor);
       grad.addColorStop(0.5, state.bgColor2);
       grad.addColorStop(1, state.bgColor3);
@@ -308,24 +311,23 @@ export default function YoutubeBannerStudioPage() {
       ctx.restore();
     }
 
-    // 2. Contrast Overlay
+    // 2. Dim Overlay
     ctx.fillStyle = `rgba(0,0,0,${state.overlayOpacity})`;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // 3. Identity Text Pass
+    // 3. Identity Synthesis (Centered Stack)
     const getBaseX = () => CANVAS_W / 2 + state.xOffset;
     const getBaseY = () => CANVAS_H / 2 + state.yOffset;
 
     const getFinalX = (localX: number) => state.unlockTextLayers ? CANVAS_W / 2 + localX : getBaseX() + localX;
     const getFinalY = (localY: number, baseOffset: number) => state.unlockTextLayers ? CANVAS_H / 2 + localY : getBaseY() + localY + baseOffset;
 
-    // Shape Background
     if (state.useShapeBg) {
       ctx.save();
       ctx.fillStyle = state.shapeBgColor;
       ctx.globalAlpha = state.shapeBgOpacity;
       const bgW = SAFE_W * 0.9;
-      const bgH = state.fontSize * 2.8;
+      const bgH = state.fontSize * 3;
       ctx.roundRect(getBaseX() - bgW/2, getBaseY() - bgH/2, bgW, bgH, 40);
       ctx.fill();
       ctx.restore();
@@ -342,11 +344,11 @@ export default function YoutubeBannerStudioPage() {
       ctx.shadowOffsetY = 10;
     }
 
-    // Main Name
+    // A. Main Name
     ctx.font = `900 ${state.fontSize}px ${state.fontFamily}`;
     ctx.letterSpacing = `${state.letterSpacing}px`;
     const nameX = getFinalX(state.nameOffset.x);
-    const nameY = getFinalY(state.nameOffset.y, -40);
+    const nameY = getFinalY(state.nameOffset.y, -50);
     if (state.outlineWidth > 0) {
       ctx.strokeStyle = state.outlineColor;
       ctx.lineWidth = state.outlineWidth;
@@ -354,48 +356,47 @@ export default function YoutubeBannerStudioPage() {
     }
     ctx.fillText(state.name.toUpperCase(), nameX, nameY);
 
-    // Social Handle (Username)
+    // B. Social Handle
     if (state.socialHandle) {
       ctx.font = `700 ${state.fontSize * 0.25}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.9;
       ctx.letterSpacing = `${state.letterSpacing}px`;
-      // Positioned below the main name
       const socialX = getFinalX(state.socialOffset.x);
-      const socialY = getFinalY(state.socialOffset.y, 45); 
+      const socialY = getFinalY(state.socialOffset.y, 40); 
       ctx.fillText(state.socialHandle.toUpperCase(), socialX, socialY);
     }
 
-    // Tagline
+    // C. Tagline
     ctx.font = `600 ${state.fontSize * 0.35}px ${state.fontFamily}`;
     ctx.globalAlpha = 0.8;
     ctx.letterSpacing = `${state.letterSpacing * 2}px`;
     const taglineX = getFinalX(state.taglineOffset.x);
-    const taglineY = getFinalY(state.taglineOffset.y, 110);
+    const taglineY = getFinalY(state.taglineOffset.y, 100);
     ctx.fillText(state.tagline.toUpperCase(), taglineX, taglineY);
 
-    // Extra line
+    // D. Extra Line
     if (state.extraLine) {
       ctx.font = `500 ${state.fontSize * 0.25}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.6;
-      ctx.fillText(state.extraLine.toUpperCase(), getFinalX(state.extraOffset.x), getFinalY(state.extraOffset.y, 170));
+      ctx.fillText(state.extraLine.toUpperCase(), getFinalX(state.extraOffset.x), getFinalY(state.extraOffset.y, 150));
     }
 
-    // Schedule
+    // E. Schedule
     if (state.schedule) {
       ctx.font = `500 ${state.fontSize * 0.18}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.4;
-      ctx.fillText(state.schedule.toUpperCase(), getFinalX(state.scheduleOffset.x), getFinalY(state.scheduleOffset.y, 220));
+      ctx.fillText(state.schedule.toUpperCase(), getFinalX(state.scheduleOffset.x), getFinalY(state.scheduleOffset.y, 200));
     }
     ctx.restore();
 
-    // 4. Logo Pass
+    // 4. Brand Icon (Logo)
     if (cachedLogo) {
       const logoImg = cachedLogo;
       const lSize = 220;
-      ctx.drawImage(logoImg, getBaseX() - lSize/2, getBaseY() - state.fontSize - 160, lSize, lSize);
+      ctx.drawImage(logoImg, getBaseX() - lSize/2, getBaseY() - state.fontSize - 180, lSize, lSize);
     }
 
-    // 5. Guides
+    // 5. Technical Guides
     if (!targetCanvas && showSafeZone) {
       ctx.save();
       ctx.strokeStyle = '#3b82f6';
@@ -403,7 +404,6 @@ export default function YoutubeBannerStudioPage() {
       ctx.setLineDash([20, 20]);
       ctx.strokeRect((CANVAS_W - SAFE_W) / 2, (CANVAS_H - SAFE_H) / 2, SAFE_W, SAFE_H);
       
-      // Secondary Guide
       ctx.strokeStyle = 'rgba(255,255,255,0.05)';
       ctx.strokeRect(0, (CANVAS_H - DESKTOP_H) / 2, CANVAS_W, DESKTOP_H);
       ctx.restore();
@@ -411,7 +411,7 @@ export default function YoutubeBannerStudioPage() {
   }, [state, showSafeZone, cachedBgImage, cachedLogo]);
 
   const commitChange = (s: BannerState) => {
-    setUndoStack(prev => [...prev.slice(-19), s]);
+    setUndoStack(prev => [...prev.slice(-19), state]);
     setRedoStack([]);
   };
 
@@ -491,20 +491,6 @@ export default function YoutubeBannerStudioPage() {
     }
   };
 
-  const fetchStock = async () => {
-    setIsStockLoading(true);
-    try {
-      const res = await fetch(`https://picsum.photos/v2/list?page=${Math.floor(Math.random() * 20)}&limit=12`);
-      const data = await res.json();
-      setStockResults(data.map((item: any) => `https://picsum.photos/id/${item.id}/2560/1440`));
-      toast({ title: "Stock Pulse Active" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Discovery node restricted." });
-    } finally {
-      setIsStockLoading(false);
-    }
-  };
-
   const handleArchive = () => {
     const newEntry = {
       ...state,
@@ -514,7 +500,7 @@ export default function YoutubeBannerStudioPage() {
     const newHistory = [newEntry, ...history].slice(0, 15);
     setHistory(newHistory);
     localStorage.setItem('mykit_yt_banners_v3', JSON.stringify(newHistory));
-    toast({ title: "Archived", description: "Design saved to local registry." });
+    toast({ title: "Session Archived", description: "Design saved to local registry." });
   };
 
   const handleExport = async (fmt: 'png' | 'jpg') => {
@@ -528,6 +514,7 @@ export default function YoutubeBannerStudioPage() {
     let quality = 0.95;
     let dataUrl = exportCanvas.toDataURL(mime, quality);
 
+    // Iterative 6MB Protection Protocol
     while (dataUrl.length * 0.75 > 6 * 1024 * 1024 && quality > 0.1) {
       quality -= 0.05;
       dataUrl = exportCanvas.toDataURL(mime, quality);
@@ -538,7 +525,7 @@ export default function YoutubeBannerStudioPage() {
     link.href = dataUrl;
     link.click();
     setIsProcessing(false);
-    toast({ title: "Master Exported" });
+    toast({ title: "Master Exported", description: `Production ${fmt.toUpperCase()} saved.` });
   };
 
   const handleImportBanner = async () => {
@@ -546,8 +533,22 @@ export default function YoutubeBannerStudioPage() {
     setIsProcessing(true);
     setTimeout(() => {
        setIsProcessing(false);
-       toast({ variant: "destructive", title: "Identity Restricted", description: "Remote channel data requires pro uplink." });
+       toast({ variant: "destructive", title: "Node Restricted", description: "Remote channel data requires pro uplink." });
     }, 1500);
+  };
+
+  const fetchStock = async () => {
+    setIsStockLoading(true);
+    try {
+      const res = await fetch(`https://picsum.photos/v2/list?page=${Math.floor(Math.random() * 20)}&limit=12`);
+      const data = await res.json();
+      setStockResults(data.map((item: any) => `https://picsum.photos/id/${item.id}/2560/1440`));
+      toast({ title: "Stock Pulse Active" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Discovery node restricted." });
+    } finally {
+      setIsStockLoading(false);
+    }
   };
 
   const isOutsideSafeZone = Math.abs(state.xOffset) > (SAFE_W / 2) || Math.abs(state.yOffset) > (SAFE_H / 2);
@@ -581,19 +582,6 @@ export default function YoutubeBannerStudioPage() {
               <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
            </Button>
         </div>
-      </div>
-
-      {/* Presets Bar */}
-      <div className="mb-10 p-2 rounded-3xl bg-secondary/50 border border-border flex items-center gap-2 overflow-x-auto no-scrollbar">
-         {PRESETS.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => updateState(p.theme as any)}
-              className="px-6 py-3 rounded-2xl bg-background border border-border text-[9px] font-black uppercase tracking-widest hover:border-primary/40 hover:text-primary transition-all whitespace-nowrap"
-            >
-               {p.label} Profile
-            </button>
-         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
@@ -807,7 +795,7 @@ export default function YoutubeBannerStudioPage() {
                              <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase text-foreground/40">Stock Matrix</Label>
                                 <div className="flex gap-2">
-                                   <Input placeholder="Search high-res visuals..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-12 bg-secondary/50 rounded-2xl border-border text-sm font-bold" />
+                                   <Input placeholder="Search visuals..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-12 bg-secondary/50 rounded-2xl border-border text-sm font-bold" />
                                    <Button onClick={fetchStock} disabled={isStockLoading} className="h-12 w-12 rounded-2xl bg-primary text-white shrink-0"><Search className="w-5 h-5" /></Button>
                                 </div>
                              </div>
