@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -56,7 +55,9 @@ import {
   Hash,
   Share2,
   RefreshCcw,
-  MonitorCheck
+  MonitorCheck,
+  ShieldAlert,
+  Minimize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,7 +67,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -197,6 +198,24 @@ export default function YoutubeBannerStudioPage() {
     if (saved) try { setHistory(JSON.parse(saved)); } catch (e) {}
   }, []);
 
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const loadImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const i = new Image();
+      i.crossOrigin = 'anonymous';
+      i.onload = () => resolve(i);
+      i.onerror = (e) => reject(e);
+      i.src = src;
+    });
+  };
+
   // --- Synthesis Engine ---
   const renderCanvas = useCallback(async (targetCanvas?: HTMLCanvasElement) => {
     const canvas = targetCanvas || canvasRef.current;
@@ -207,6 +226,8 @@ export default function YoutubeBannerStudioPage() {
     canvas.width = CANVAS_W;
     canvas.height = CANVAS_H;
 
+    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    
     // 1. Background Pass
     if (state.bgType === 'color') {
       ctx.fillStyle = state.bgColor;
@@ -321,16 +342,6 @@ export default function YoutubeBannerStudioPage() {
     }
   }, [state, showSafeZone]);
 
-  const loadImage = (src: string): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
-      const i = new Image();
-      i.crossOrigin = 'anonymous';
-      i.onload = () => resolve(i);
-      i.onerror = (e) => reject(e);
-      i.src = src;
-    });
-  };
-
   useEffect(() => {
     renderCanvas();
   }, [renderCanvas]);
@@ -389,14 +400,7 @@ export default function YoutubeBannerStudioPage() {
 
   const fetchStock = async () => {
     setIsStockLoading(true);
-    const q = searchQuery.trim() || 'landscape';
-    const apis = [
-      `https://api.unsplash.com/photos/random?query=${q}&count=12&client_id=YOUR_CLIENT_ID`, // Placeholder for real key
-      `https://picsum.photos/v2/list?page=${Math.floor(Math.random() * 10)}&limit=12`
-    ];
-
     try {
-      // For this studio MVP we provide a high-fidelity randomization from Picsum
       const res = await fetch(`https://picsum.photos/v2/list?page=${Math.floor(Math.random() * 20)}&limit=12`);
       const data = await res.json();
       setStockResults(data.map((item: any) => `https://picsum.photos/id/${item.id}/2560/1440`));
@@ -412,7 +416,6 @@ export default function YoutubeBannerStudioPage() {
     if (!importQuery) return;
     setIsProcessing(true);
     try {
-      // Using banner.yt proxy protocol
       const cleanHandle = importQuery.replace('@', '').trim();
       const bannerUrl = `https://banner.yt/${cleanHandle}/tv`;
       updateState({ bgType: 'image', bgImage: bannerUrl });
@@ -435,7 +438,6 @@ export default function YoutubeBannerStudioPage() {
     let quality = 0.95;
     let dataUrl = exportCanvas.toDataURL(mime, quality);
 
-    // Iterative bitstream compression protocol
     while (dataUrl.length * 0.75 > 6 * 1024 * 1024 && quality > 0.1) {
       quality -= 0.05;
       dataUrl = exportCanvas.toDataURL(mime, quality);
@@ -471,6 +473,8 @@ export default function YoutubeBannerStudioPage() {
     lastMousePos.current = { x: clientX, y: clientY };
   };
 
+  const handleDragEnd = () => { isDragging.current = false; };
+
   const handleArchive = () => {
     const entry = { ...state, id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() };
     const next = [entry, ...history].slice(0, 15);
@@ -480,6 +484,14 @@ export default function YoutubeBannerStudioPage() {
   };
 
   const isOutsideSafeZone = Math.abs(state.xOffset) > (SAFE_W / 2) || Math.abs(state.yOffset) > (SAFE_H / 2);
+
+  const viewportStyles = {
+    tv: { width: '100%', height: '100%' },
+    desktop: { width: '100%', height: '29.375%' }, 
+    tablet: { width: '72.46%', height: '29.375%' }, 
+    mobile: { width: '60.39%', height: '29.375%' }, 
+    compare: { width: '100%', height: '100%' }
+  };
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
@@ -498,7 +510,7 @@ export default function YoutubeBannerStudioPage() {
               <Button variant="ghost" size="icon" onClick={undo} disabled={undoStack.length === 0} className="text-foreground/40 hover:text-primary"><Undo2 className="w-4 h-4" /></Button>
               <Button variant="ghost" size="icon" onClick={redo} disabled={redoStack.length === 0} className="text-foreground/40 hover:text-primary"><Redo2 className="w-4 h-4" /></Button>
            </div>
-           <Button variant="outline" size="sm" onClick={() => setState(INITIAL_STATE)} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+           <Button variant="outline" size="sm" onClick={() => updateState(INITIAL_STATE)} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
               <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
            </Button>
         </div>
@@ -523,7 +535,6 @@ export default function YoutubeBannerStudioPage() {
                     </TabsList>
 
                     <div className="p-8 space-y-8">
-                       {/* Tab: Identity */}
                        <TabsContent value="identity" className="m-0 space-y-8 animate-in fade-in">
                           <div className="space-y-4">
                              <div className="space-y-2">
@@ -574,10 +585,16 @@ export default function YoutubeBannerStudioPage() {
                                 </div>
                                 <Slider value={[state.fontSize]} min={40} max={250} step={1} onValueChange={v => updateState({ fontSize: v[0] })} />
                              </div>
+                             <div className="space-y-4">
+                                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-foreground/30">
+                                   <span>Vertical Calibration</span>
+                                   <span className="text-primary">{state.yOffset}px</span>
+                                </div>
+                                <Slider value={[state.yOffset]} min={-500} max={500} step={1} onValueChange={v => updateState({ yOffset: v[0] })} />
+                             </div>
                           </div>
                        </TabsContent>
 
-                       {/* Tab: Canvas */}
                        <TabsContent value="canvas" className="m-0 space-y-8 animate-in fade-in">
                           <div className="space-y-4">
                              <Label className="text-[10px] font-black text-foreground/40 uppercase">Background Protocol</Label>
@@ -622,7 +639,6 @@ export default function YoutubeBannerStudioPage() {
                           </div>
                        </TabsContent>
 
-                       {/* Tab: Discovery */}
                        <TabsContent value="stock" className="m-0 space-y-8 animate-in fade-in">
                           <div className="space-y-6">
                              <div className="space-y-2">
@@ -665,33 +681,30 @@ export default function YoutubeBannerStudioPage() {
               </div>
            </Card>
 
-           {/* Safety Node */}
-           <Card className="glass-card border-border shadow-xl">
-              <CardContent className="p-8 space-y-6">
-                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                       <ShieldCheck className="w-5 h-5 text-primary" />
-                       <span className="text-[11px] font-black uppercase text-foreground">Safety Audit</span>
-                    </div>
-                    <Badge variant="outline" className={cn("text-[8px] font-black uppercase", isOutsideSafeZone ? "text-red-500 border-red-500/20" : "text-emerald-500 border-emerald-500/20")}>
-                       {isOutsideSafeZone ? 'Outside' : 'Safe'}
-                    </Badge>
-                 </div>
-                 {isOutsideSafeZone && (
-                   <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-4 animate-in shake duration-500">
-                      <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-                      <p className="text-[9px] text-red-500/70 font-bold uppercase leading-relaxed">Linguistic Warning: Identity elements have drifted outside the 1546px mobile safe area.</p>
-                   </div>
-                 )}
-              </CardContent>
-           </Card>
+           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+             <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-6 h-6" />
+             </div>
+             <div className="space-y-2">
+               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Safe-Zone Validation</h4>
+               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                 Our studio monitors the 1546x423 mobile-safe area in real-time. If your brand drift exceeds these parameters, an integrity alert will be issued.
+               </p>
+               <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                  <span className="text-[11px] font-black uppercase text-foreground">Status</span>
+                  <Badge variant="outline" className={cn("text-[8px] font-black uppercase", isOutsideSafeZone ? "text-red-500 border-red-500/20" : "text-emerald-500 border-emerald-500/20")}>
+                     {isOutsideSafeZone ? 'Outside Safe Area' : 'Verified Safe'}
+                  </Badge>
+               </div>
+             </div>
+          </div>
         </aside>
 
         {/* WORKSPACE PREVIEW */}
         <main className="lg:col-span-7 xl:col-span-8 space-y-10 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px] bg-black">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
+              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
                  <div className="flex items-center gap-6">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <MonitorPlay className="w-5 h-5" />
@@ -704,7 +717,7 @@ export default function YoutubeBannerStudioPage() {
                  </div>
 
                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-background/50 px-3 py-1.5 rounded-full border border-border">
+                    <div className="flex items-center gap-2 bg-background/50 px-3 py-1 rounded-full border border-border">
                        <span className="text-[8px] font-black uppercase text-foreground/40">Safe Zone Guide</span>
                        <Switch checked={showSafeZone} onCheckedChange={setShowSafeZone} className="scale-75" />
                     </div>
@@ -717,10 +730,6 @@ export default function YoutubeBannerStudioPage() {
                     {/* Viewport Frame */}
                     <div 
                       className="relative shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] ring-1 ring-white/10 overflow-hidden transition-all duration-700 ease-in-out bg-black"
-                      onMouseDown={handleDragStart}
-                      onMouseMove={handleDragMove}
-                      onMouseUp={handleDragEnd}
-                      onMouseLeave={handleDragEnd}
                       style={{ 
                         width: '100%', 
                         aspectRatio: '2560/1440',
@@ -834,19 +843,8 @@ export default function YoutubeBannerStudioPage() {
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .animate-spin-slow { animation: spin 8s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
 }
-
-const viewportStyles = {
-    tv: { width: '100%', height: '100%' },
-    desktop: { width: '100%', height: '29.375%' }, // 423 / 1440
-    tablet: { width: '72.46%', height: '29.375%' }, // 1855 / 2560
-    mobile: { width: '60.39%', height: '29.375%' }, // 1546 / 2560
-    compare: { width: '100%', height: '100%' }
-};
-
-    
