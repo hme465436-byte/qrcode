@@ -48,7 +48,9 @@ import {
   AlertTriangle,
   AlignCenter,
   List,
-  Check
+  Check,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,6 +60,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -89,9 +92,18 @@ interface BannerState {
   textColor: string;
   fontSize: number;
   fontFamily: string;
+  fontIndex: number;
   yOffset: number;
   timestamp: number;
 }
+
+const FONTS = [
+  { label: 'Modern Sans', val: 'Inter, sans-serif' },
+  { label: 'Brutalist', val: 'Impact, sans-serif' },
+  { label: 'Technical', val: 'monospace' },
+  { label: 'Serif', val: 'serif' },
+  { label: 'Display', val: 'system-ui' },
+];
 
 const INITIAL_STATE: BannerState = {
   id: 'current',
@@ -107,25 +119,18 @@ const INITIAL_STATE: BannerState = {
   overlayOpacity: 0.3,
   textColor: '#ffffff',
   fontSize: 120,
-  fontFamily: 'Inter',
+  fontFamily: FONTS[0].val,
+  fontIndex: 0,
   yOffset: 0,
   timestamp: Date.now()
 };
 
-const FONTS = [
-  { label: 'Modern Sans', val: 'Inter, sans-serif' },
-  { label: 'Brutalist', val: 'Impact, sans-serif' },
-  { label: 'Technical', val: 'monospace' },
-  { label: 'Serif', val: 'serif' },
-  { label: 'Display', val: 'system-ui' },
-];
-
 const PRESETS = [
-  { id: 'gaming', label: 'Gaming', icon: Gamepad2, theme: { bgColor: '#111827', bgColor2: '#7c3aed', name: 'APEX PRO', tagline: 'Competitive Play Daily', fontSize: 140 } },
-  { id: 'vlog', label: 'Vlog', icon: CameraIcon, theme: { bgColor: '#ffffff', bgColor2: '#f3f4f6', textColor: '#000000', name: 'DAILY LIFE', tagline: 'Travel • Food • tech', fontSize: 110 } },
-  { id: 'tech', label: 'Tech', icon: Zap, theme: { bgType: 'image', bgImage: 'https://picsum.photos/seed/tech/2560/1440', name: 'TECH CORE', tagline: 'Future Logic & Review', textColor: '#3b82f6' } },
-  { id: 'business', label: 'Business', icon: Briefcase, theme: { bgColor: '#0f172a', bgColor2: '#1e293b', name: 'STRATEGY HQ', tagline: 'Corporate Advisory Matrix', fontSize: 100 } },
-  { id: 'minimal', label: 'Minimal', icon: LayoutGrid, theme: { bgColor: '#000000', name: 'SILENCE', tagline: 'Less is more.', fontSize: 80, gradAngle: 0 } },
+  { id: 'gaming', label: 'Gaming', icon: Gamepad2, theme: { bgColor: '#111827', bgColor2: '#7c3aed', name: 'APEX PRO', tagline: 'Competitive Play Daily', fontSize: 140, fontIndex: 1, fontFamily: FONTS[1].val } },
+  { id: 'vlog', label: 'Vlog', icon: CameraIcon, theme: { bgColor: '#ffffff', bgColor2: '#f3f4f6', textColor: '#000000', name: 'DAILY LIFE', tagline: 'Travel • Food • tech', fontSize: 110, fontIndex: 0, fontFamily: FONTS[0].val } },
+  { id: 'tech', label: 'Tech', icon: Zap, theme: { bgType: 'image', bgImage: 'https://picsum.photos/seed/tech/2560/1440', name: 'TECH CORE', tagline: 'Future Logic & Review', textColor: '#3b82f6', fontIndex: 2, fontFamily: FONTS[2].val } },
+  { id: 'business', label: 'Business', icon: Briefcase, theme: { bgColor: '#0f172a', bgColor2: '#1e293b', name: 'STRATEGY HQ', tagline: 'Corporate Advisory Matrix', fontSize: 100, fontIndex: 3, fontFamily: FONTS[3].val } },
+  { id: 'minimal', label: 'Minimal', icon: LayoutGrid, theme: { bgColor: '#000000', name: 'SILENCE', tagline: 'Less is more.', fontSize: 80, gradAngle: 0, fontIndex: 4, fontFamily: FONTS[4].val } },
 ];
 
 export default function YoutubeBannerStudioPage() {
@@ -142,7 +147,6 @@ export default function YoutubeBannerStudioPage() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // --- Persistence Matrix ---
   useEffect(() => {
@@ -319,9 +323,6 @@ export default function YoutubeBannerStudioPage() {
     toast({ title: "Master Exported", description: `File size: ${formatSize(dataUrl.length * 0.75)}` });
   };
 
-  const formatSize = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-
-  // --- Viewport Logic ---
   const viewportStyles = {
     tv: { width: '100%', height: '100%' },
     desktop: { width: '100%', height: '29.3%' }, // 423 / 1440
@@ -338,7 +339,7 @@ export default function YoutubeBannerStudioPage() {
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 text-foreground">
-                    <Settings2 className="w-4 h-4 text-primary" /> Matrix Config
+                    <Settings2 className="w-5 h-5 text-primary" /> Matrix Config
                  </CardTitle>
                  <Button variant="ghost" size="icon" onClick={() => setState(INITIAL_STATE)} className="text-foreground/20 hover:text-destructive"><RotateCcw className="w-4 h-4" /></Button>
               </CardHeader>
@@ -363,7 +364,7 @@ export default function YoutubeBannerStudioPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              <div className="space-y-4">
                                 <Label className="text-[10px] font-black text-foreground/40 uppercase">Typography</Label>
-                                <Select value={fontIndex.toString()} onValueChange={v => setFontIndex(parseInt(v))}>
+                                <Select value={state.fontIndex.toString()} onValueChange={v => updateState({ fontIndex: parseInt(v), fontFamily: FONTS[parseInt(v)].val })}>
                                    <SelectTrigger className="h-11 bg-secondary/50 rounded-xl text-[10px] font-black uppercase">
                                       <SelectValue />
                                    </SelectTrigger>
@@ -452,7 +453,7 @@ export default function YoutubeBannerStudioPage() {
                                 className="p-5 rounded-[2rem] bg-secondary/50 border border-border flex flex-col items-center gap-4 group hover:border-primary/40 transition-all hover:bg-primary/5"
                                >
                                   <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
-                                     <p.icon className="w-5 h-5" />
+                                     {React.createElement(p.icon, { className: "w-5 h-5" })}
                                   </div>
                                   <span className="text-[9px] font-black uppercase tracking-widest text-foreground/40 group-hover:text-primary">{p.label} Matrix</span>
                                </button>
@@ -468,7 +469,7 @@ export default function YoutubeBannerStudioPage() {
                        <Save className="w-4 h-4 mr-2" /> PNG MASTER
                     </Button>
                     <Button variant="outline" onClick={() => handleExport('jpg')} className="h-14 rounded-2xl border-white/10 bg-white/5 text-white/40 font-black uppercase text-[10px] tracking-widest">
-                       JPG (高效)
+                       JPG (Efficient)
                     </Button>
                  </div>
                  <button onClick={saveToArchive} className="w-full py-2 text-[9px] font-black uppercase text-foreground/20 hover:text-primary transition-colors flex items-center justify-center gap-2 group">
@@ -482,7 +483,7 @@ export default function YoutubeBannerStudioPage() {
         <main className="lg:col-span-7 xl:col-span-8 space-y-10 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-2">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[500px] bg-black">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
+              <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
                  <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <MonitorPlay className="w-5 h-5" />
@@ -559,8 +560,8 @@ export default function YoutubeBannerStudioPage() {
               <div className="p-8 border-t border-white/5 bg-[#0a0a0c] flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-4">
                     <div className="flex bg-secondary p-1 rounded-xl">
-                       <button onClick={() => updateParam({ yOffset: state.yOffset - 10 })} className="p-2 text-white/20 hover:text-white"><ChevronUp className="w-4 h-4" /></button>
-                       <button onClick={() => updateParam({ yOffset: state.yOffset + 10 })} className="p-2 text-white/20 hover:text-white"><ChevronDown className="w-4 h-4" /></button>
+                       <button onClick={() => updateState({ yOffset: state.yOffset - 10 })} className="p-2 text-white/20 hover:text-white"><ChevronUp className="w-4 h-4" /></button>
+                       <button onClick={() => updateState({ yOffset: state.yOffset + 10 })} className="p-2 text-white/20 hover:text-white"><ChevronDown className="w-4 h-4" /></button>
                     </div>
                     <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Vertical Calibration</span>
                  </div>
@@ -617,4 +618,3 @@ export default function YoutubeBannerStudioPage() {
     </div>
   );
 }
-
