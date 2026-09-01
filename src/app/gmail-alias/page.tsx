@@ -34,17 +34,20 @@ import {
   Tag,
   Hammer,
   HelpCircle,
-  ArrowRight
+  ArrowRight,
+  Hash
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
-import { Badge } from '@/components/ui/badge';
+import { Badge as UIByBadge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 
 // --- Types ---
 type GenerationMode = 'dots' | 'plus' | 'random' | 'timestamp' | 'combined' | 'googlemail';
@@ -57,7 +60,7 @@ interface HistoryItem {
   count: number;
 }
 
-const HISTORY_KEY = 'mykit_gmail_history_v2';
+const HISTORY_KEY = 'mykit_tempmail_history_v1';
 const FAVS_KEY = 'mykit_gmail_favs_v2';
 
 const ADJECTIVES = ['happy', 'fast', 'blue', 'silver', 'silent', 'brave', 'cool', 'smart', 'wild', 'pure', 'elite', 'pro', 'neon', 'dark', 'light'];
@@ -573,4 +576,3 @@ export default function GmailAliasGeneratorPage() {
     </div>
   );
 }
-
