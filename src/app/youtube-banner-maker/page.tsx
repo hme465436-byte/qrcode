@@ -65,7 +65,9 @@ import {
   AlignLeft,
   AlignRight,
   ArrowRightLeft,
-  AtSign
+  AtSign,
+  Minus,
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -225,8 +227,6 @@ export default function YoutubeBannerStudioPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
-
-  const activeAsset = useMemo(() => state, [state]);
 
   // --- Persistence ---
   useEffect(() => {
@@ -647,11 +647,19 @@ export default function YoutubeBannerStudioPage() {
                                        <div className="grid grid-cols-2 gap-6">
                                           <div className="space-y-2">
                                              <div className="flex justify-between text-[7px] font-black text-foreground/30 uppercase"><span>Horizontal</span><span>{state[layer.id as keyof BannerState].x}px</span></div>
-                                             <Slider value={[state[layer.id as keyof BannerState].x]} min={-1000} max={1000} step={1} onValueChange={v => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], x: v[0] } })} />
+                                             <div className="flex items-center gap-2">
+                                                <button onClick={() => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], x: state[layer.id as keyof BannerState].x - 1 } })} className="p-1 hover:text-primary"><Minus className="w-3 h-3" /></button>
+                                                <Slider className="flex-1" value={[state[layer.id as keyof BannerState].x]} min={-1000} max={1000} step={1} onValueChange={v => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], x: v[0] } })} />
+                                                <button onClick={() => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], x: state[layer.id as keyof BannerState].x + 1 } })} className="p-1 hover:text-primary"><Plus className="w-3 h-3" /></button>
+                                             </div>
                                           </div>
                                           <div className="space-y-2">
                                              <div className="flex justify-between text-[7px] font-black text-foreground/30 uppercase"><span>Vertical</span><span>{state[layer.id as keyof BannerState].y}px</span></div>
-                                             <Slider value={[state[layer.id as keyof BannerState].y]} min={-700} max={700} step={1} onValueChange={v => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], y: v[0] } })} />
+                                             <div className="flex items-center gap-2">
+                                                <button onClick={() => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], y: state[layer.id as keyof BannerState].y - 1 } })} className="p-1 hover:text-primary"><Minus className="w-3 h-3" /></button>
+                                                <Slider className="flex-1" value={[state[layer.id as keyof BannerState].y]} min={-700} max={700} step={1} onValueChange={v => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], y: v[0] } })} />
+                                                <button onClick={() => updateState({ [layer.id]: { ...state[layer.id as keyof BannerState], y: state[layer.id as keyof BannerState].y + 1 } })} className="p-1 hover:text-primary"><Plus className="w-3 h-3" /></button>
+                                             </div>
                                           </div>
                                        </div>
                                     </div>
@@ -664,14 +672,22 @@ export default function YoutubeBannerStudioPage() {
                                         <span className="flex items-center gap-2"><ArrowRightLeft className="w-3 h-3" /> Global X Offset</span>
                                         <span className="text-primary">{state.xOffset}px</span>
                                      </div>
-                                     <Slider value={[state.xOffset]} min={-1000} max={1000} step={1} onValueChange={v => updateState({ xOffset: v[0] })} />
+                                     <div className="flex items-center gap-3">
+                                        <button onClick={() => updateState({ xOffset: state.xOffset - 1 })} className="p-1 hover:text-primary"><Minus className="w-3.5 h-3.5" /></button>
+                                        <Slider className="flex-1" value={[state.xOffset]} min={-1000} max={1000} step={1} onValueChange={v => updateState({ xOffset: v[0] })} />
+                                        <button onClick={() => updateState({ xOffset: state.xOffset + 1 })} className="p-1 hover:text-primary"><Plus className="w-3.5 h-3.5" /></button>
+                                     </div>
                                   </div>
                                   <div className="space-y-4">
                                      <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-foreground/30">
                                         <span className="flex items-center gap-2"><Move className="w-3 h-3" /> Global Y Offset</span>
                                         <span className="text-primary">{state.yOffset}px</span>
                                      </div>
-                                     <Slider value={[state.yOffset]} min={-500} max={500} step={1} onValueChange={v => updateState({ yOffset: v[0] })} />
+                                     <div className="flex items-center gap-3">
+                                        <button onClick={() => updateState({ yOffset: state.yOffset - 1 })} className="p-1 hover:text-primary"><Minus className="w-3.5 h-3.5" /></button>
+                                        <Slider className="flex-1" value={[state.yOffset]} min={-500} max={500} step={1} onValueChange={v => updateState({ yOffset: v[0] })} />
+                                        <button onClick={() => updateState({ yOffset: state.yOffset + 1 })} className="p-1 hover:text-primary"><Plus className="w-3.5 h-3.5" /></button>
+                                     </div>
                                   </div>
                                </div>
                              )}
@@ -975,7 +991,7 @@ export default function YoutubeBannerStudioPage() {
                             linear-gradient(-45deg, transparent 75%, #111113 75%);
           background-size: 20px 20px;
         }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
