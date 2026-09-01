@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -82,6 +81,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import JSZip from 'jszip';
 
 // --- Official YouTube Spec Matrix ---
 const CANVAS_W = 2560;
@@ -405,17 +405,17 @@ export default function YoutubeBannerStudioPage() {
     }
   }, [state, showSafeZone, cachedBgImage, cachedLogo]);
 
+  const commitChange = (s: BannerState) => {
+    setUndoStack(prev => [...prev.slice(-19), s]);
+    setRedoStack([]);
+  };
+
   useEffect(() => {
     const handle = requestAnimationFrame(() => renderCanvas());
     return () => cancelAnimationFrame(handle);
   }, [renderCanvas]);
 
   // --- Handlers ---
-  const commitChange = (s: BannerState) => {
-    setUndoStack(prev => [...prev.slice(-19), s]);
-    setRedoStack([]);
-  };
-
   const handleDragStart = (e: any) => {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -960,10 +960,10 @@ export default function YoutubeBannerStudioPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                    {history.map((h) => (
-                     <button 
+                     <div 
                       key={h.id} 
                       onClick={() => setState(h)}
-                      className="group p-2 rounded-2xl bg-secondary/50 border border-border hover:border-primary/40 transition-all text-left relative overflow-hidden"
+                      className="group p-2 rounded-2xl bg-secondary/50 border border-border hover:border-primary/40 transition-all text-left relative overflow-hidden cursor-pointer"
                      >
                         <div className="aspect-video rounded-xl bg-black overflow-hidden mb-3">
                            <div className="w-full h-full opacity-40 group-hover:opacity-100 transition-opacity" style={{ background: h.bgType === 'gradient' ? `linear-gradient(${h.gradAngle}deg, ${h.bgColor}, ${h.bgColor2})` : h.bgColor }} />
@@ -971,7 +971,7 @@ export default function YoutubeBannerStudioPage() {
                         <p className="text-[10px] font-black uppercase truncate text-foreground/60">{h.name}</p>
                         <p className="text-[8px] font-bold text-foreground/20 uppercase">{new Date(h.timestamp).toLocaleDateString()}</p>
                         <button onClick={(e) => { e.stopPropagation(); setHistory(prev => prev.filter(p => p.id !== h.id)); }} className="absolute top-1 right-1 p-1 text-white/0 group-hover:text-red-500 transition-all"><X className="w-3.5 h-3.5" /></button>
-                     </button>
+                     </div>
                    ))}
                 </div>
              </div>
@@ -1000,4 +1000,3 @@ export default function YoutubeBannerStudioPage() {
     </div>
   );
 }
-
