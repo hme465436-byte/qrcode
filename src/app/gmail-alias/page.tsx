@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Mail, 
   RefreshCcw, 
+  RotateCcw,
   Copy, 
   Trash2, 
   Zap, 
@@ -47,7 +48,7 @@ interface HistoryItem {
   count: number;
 }
 
-const HISTORY_KEY = 'mykit_gmail_history_v1';
+const HISTORY_KEY = 'mykit_tempmail_history_v1';
 
 export default function GmailAliasGeneratorPage() {
   const { toast } = useToast();
@@ -202,7 +203,7 @@ export default function GmailAliasGeneratorPage() {
         {/* Left Column: Config */}
         <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
                     <Settings2 className="w-5 h-5 text-primary" /> Matrix Parameters
@@ -306,7 +307,7 @@ export default function GmailAliasGeneratorPage() {
                     </div>
                  ) : (
                     <div className="divide-y divide-white/5">
-                       {history.map(item => (
+                       {history.map((item, i) => (
                          <div key={item.id} className="p-5 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => setEmailInput(item.email)}>
                             <div className="min-w-0 flex-1">
                                <p className="text-sm font-bold text-foreground truncate uppercase">{item.email}</p>
