@@ -22,7 +22,10 @@ import {
   Download,
   ShieldCheck,
   AlertCircle,
-  History
+  History,
+  Database,
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -403,7 +406,7 @@ export default function GmailAliasGeneratorPage() {
                 <div className="space-y-2">
                   <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All generation occurs 100% locally in browser memory. Email strings are never transmitted or stored on remote servers.
+                    All generation occurs 100% locally in your browser memory. Email strings are never transmitted or stored on remote servers.
                   </p>
                 </div>
              </div>
