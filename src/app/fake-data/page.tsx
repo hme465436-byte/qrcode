@@ -43,6 +43,7 @@ import {
   FileCode,
   FileSpreadsheet,
   FileJson,
+  FileText,
   Star,
   X,
   ChevronUp,
@@ -614,11 +615,11 @@ export default function FakeDataGeneratorPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="glass-card border-white/10 w-40">
                              <DropdownMenuItem onClick={() => handleExport('csv')} className="text-[9px] font-black uppercase cursor-pointer"><FileText className="w-3.5 h-3.5 mr-2 text-primary" /> CSV Matrix</DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => handleExport('json')} className="text-[9px] font-black uppercase cursor-pointer"><FileJson className="text-[9px] font-black uppercase cursor-pointer h-10" /> JSON Object</DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => handleExport('xlsx')} className="text-[9px] font-black uppercase cursor-pointer h-10"><FileSpreadsheet className="w-3.5 h-3.5 mr-2 text-primary" /> Excel Sheet</DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => handleExport('sql')} className="text-[9px] font-black uppercase cursor-pointer h-10"><FileCode className="w-3.5 h-3.5 mr-2 text-primary" /> SQL Inserts</DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => handleExport('json')} className="text-[9px] font-black uppercase cursor-pointer"><FileJson className="w-3.5 h-3.5 mr-2 text-primary" /> JSON Object</DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => handleExport('xlsx')} className="text-[9px] font-black uppercase cursor-pointer"><FileSpreadsheet className="w-3.5 h-3.5 mr-2 text-primary" /> Excel Sheet</DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => handleExport('sql')} className="text-[9px] font-black uppercase cursor-pointer"><FileCode className="w-3.5 h-3.5 mr-2 text-primary" /> SQL Inserts</DropdownMenuItem>
                              <DropdownMenuSeparator className="bg-white/5" />
-                             <DropdownMenuItem onClick={handleCopyAll} className="text-[9px] font-black uppercase cursor-pointer h-10"><Copy className="w-3.5 h-3.5 mr-2" /> Copy All</DropdownMenuItem>
+                             <DropdownMenuItem onClick={handleCopyAll} className="text-[9px] font-black uppercase cursor-pointer"><Copy className="w-3.5 h-3.5 mr-2" /> Copy All</DropdownMenuItem>
                           </DropdownMenuContent>
                        </DropdownMenu>
                     </div>
