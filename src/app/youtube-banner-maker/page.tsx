@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -63,7 +62,8 @@ import {
   Lock,
   Unlock,
   Scaling as ScalingIcon,
-  Scaling as ScaleIcon
+  Scaling as ScaleIcon,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -189,7 +189,7 @@ export default function YoutubeBannerStudioPage() {
   const [undoStack, setUndoStack] = useState<BannerState[]>([]);
   const [redoStack, setRedoStack] = useState<BannerState[]>([]);
   
-  // Image Cache State (Crucial to fix blinking)
+  // Image Cache State
   const [cachedBgImage, setCachedBgImage] = useState<HTMLImageElement | null>(null);
   const [cachedLogo, setCachedLogo] = useState<HTMLImageElement | null>(null);
 
@@ -240,7 +240,7 @@ export default function YoutubeBannerStudioPage() {
     });
   };
 
-  // --- Image Pre-loading Protocols (Fixes Blinking) ---
+  // --- Image Pre-loading Protocols ---
   useEffect(() => {
     if (state.bgType === 'image' && state.bgImage) {
       loadImage(state.bgImage).then(setCachedBgImage).catch(() => setCachedBgImage(null));
@@ -391,7 +391,6 @@ export default function YoutubeBannerStudioPage() {
   }, [state, showSafeZone, cachedBgImage, cachedLogo]);
 
   useEffect(() => {
-    // Standard requestAnimationFrame loop for smooth visual sync
     const handle = requestAnimationFrame(() => renderCanvas());
     return () => cancelAnimationFrame(handle);
   }, [renderCanvas]);
@@ -412,11 +411,9 @@ export default function YoutubeBannerStudioPage() {
     const dx = clientX - lastMousePos.current.x;
     const dy = clientY - lastMousePos.current.y;
     
-    // Scale delta to internal canvas resolution
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = CANVAS_W / rect.width;
     
-    // High-frequency state update for smooth drag
     setState(prev => ({ 
       ...prev, 
       bgPosX: prev.bgPosX + dx * scale, 
@@ -439,11 +436,6 @@ export default function YoutubeBannerStudioPage() {
       setRedoStack([]);
     }
     setState(prev => ({ ...prev, ...upd }));
-  };
-
-  const commitChange = (s: BannerState) => {
-    setUndoStack(prev => [...prev.slice(-19), s]);
-    setRedoStack([]);
   };
 
   const undo = () => {
@@ -504,6 +496,18 @@ export default function YoutubeBannerStudioPage() {
     }
   };
 
+  const handleArchive = () => {
+    const newEntry = {
+      ...state,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now()
+    };
+    const newHistory = [newEntry, ...history].slice(0, 15);
+    setHistory(newHistory);
+    localStorage.setItem('mykit_yt_banners_v3', JSON.stringify(newHistory));
+    toast({ title: "Archived", description: "Design saved to local registry." });
+  };
+
   const handleExport = async (fmt: 'png' | 'jpg') => {
     if (!canvasRef.current) return;
     setIsProcessing(true);
@@ -515,7 +519,6 @@ export default function YoutubeBannerStudioPage() {
     let quality = 0.95;
     let dataUrl = exportCanvas.toDataURL(mime, quality);
 
-    // Iterative compression to meet official 6MB limit
     while (dataUrl.length * 0.75 > 6 * 1024 * 1024 && quality > 0.1) {
       quality -= 0.05;
       dataUrl = exportCanvas.toDataURL(mime, quality);
@@ -556,7 +559,7 @@ export default function YoutubeBannerStudioPage() {
               <Button variant="ghost" size="icon" onClick={undo} disabled={undoStack.length === 0} className="text-white/40 hover:text-primary"><Undo2 className="w-4 h-4" /></Button>
               <Button variant="ghost" size="icon" onClick={redo} disabled={redoStack.length === 0} className="text-white/40 hover:text-primary"><Redo2 className="w-4 h-4" /></Button>
            </div>
-           <Button variant="outline" size="sm" onClick={() => updateState(INITIAL_STATE)} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+           <Button variant="outline" size="sm" onClick={() => setState(INITIAL_STATE)} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
               <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
            </Button>
         </div>
