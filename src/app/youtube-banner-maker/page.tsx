@@ -325,7 +325,7 @@ export default function YoutubeBannerStudioPage() {
       ctx.fillStyle = state.shapeBgColor;
       ctx.globalAlpha = state.shapeBgOpacity;
       const bgW = SAFE_W * 0.9;
-      const bgH = state.fontSize * 2.5;
+      const bgH = state.fontSize * 2.8;
       ctx.roundRect(getBaseX() - bgW/2, getBaseY() - bgH/2, bgW, bgH, 40);
       ctx.fill();
       ctx.restore();
@@ -354,32 +354,37 @@ export default function YoutubeBannerStudioPage() {
     }
     ctx.fillText(state.name.toUpperCase(), nameX, nameY);
 
-    // Social Handle
+    // Social Handle (Username)
     if (state.socialHandle) {
       ctx.font = `700 ${state.fontSize * 0.25}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.9;
       ctx.letterSpacing = `${state.letterSpacing}px`;
-      ctx.fillText(state.socialHandle.toUpperCase(), getFinalX(state.socialOffset.x), getFinalY(state.socialOffset.y, -state.fontSize * 0.4));
+      // Positioned below the main name
+      const socialX = getFinalX(state.socialOffset.x);
+      const socialY = getFinalY(state.socialOffset.y, 45); 
+      ctx.fillText(state.socialHandle.toUpperCase(), socialX, socialY);
     }
 
     // Tagline
     ctx.font = `600 ${state.fontSize * 0.35}px ${state.fontFamily}`;
     ctx.globalAlpha = 0.8;
     ctx.letterSpacing = `${state.letterSpacing * 2}px`;
-    ctx.fillText(state.tagline.toUpperCase(), getFinalX(state.taglineOffset.x), getFinalY(state.taglineOffset.y, state.fontSize * 0.5));
+    const taglineX = getFinalX(state.taglineOffset.x);
+    const taglineY = getFinalY(state.taglineOffset.y, 110);
+    ctx.fillText(state.tagline.toUpperCase(), taglineX, taglineY);
 
     // Extra line
     if (state.extraLine) {
       ctx.font = `500 ${state.fontSize * 0.25}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.6;
-      ctx.fillText(state.extraLine.toUpperCase(), getFinalX(state.extraOffset.x), getFinalY(state.extraOffset.y, state.fontSize * 0.85));
+      ctx.fillText(state.extraLine.toUpperCase(), getFinalX(state.extraOffset.x), getFinalY(state.extraOffset.y, 170));
     }
 
     // Schedule
     if (state.schedule) {
       ctx.font = `500 ${state.fontSize * 0.18}px ${state.fontFamily}`;
       ctx.globalAlpha = 0.4;
-      ctx.fillText(state.schedule.toUpperCase(), getFinalX(state.scheduleOffset.x), getFinalY(state.scheduleOffset.y, state.fontSize * 1.15));
+      ctx.fillText(state.schedule.toUpperCase(), getFinalX(state.scheduleOffset.x), getFinalY(state.scheduleOffset.y, 220));
     }
     ctx.restore();
 
@@ -576,6 +581,19 @@ export default function YoutubeBannerStudioPage() {
               <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
            </Button>
         </div>
+      </div>
+
+      {/* Presets Bar */}
+      <div className="mb-10 p-2 rounded-3xl bg-secondary/50 border border-border flex items-center gap-2 overflow-x-auto no-scrollbar">
+         {PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => updateState(p.theme as any)}
+              className="px-6 py-3 rounded-2xl bg-background border border-border text-[9px] font-black uppercase tracking-widest hover:border-primary/40 hover:text-primary transition-all whitespace-nowrap"
+            >
+               {p.label} Profile
+            </button>
+         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
@@ -831,11 +849,13 @@ export default function YoutubeBannerStudioPage() {
                  <ShieldCheck className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                 <p className="text-[9px] font-black uppercase text-foreground/30 tracking-widest">Safe-Zone Validation</p>
-                 <Badge variant="outline" className={cn("text-[8px] font-black uppercase", isOutsideSafeZone ? "text-red-500 border-red-500/20" : "text-emerald-500 border-emerald-500/20")}>
-                    {isOutsideSafeZone ? 'Outside' : 'Safe'}
-                 </Badge>
-                 <p className="text-[10px] text-foreground/40 leading-relaxed font-medium mt-1">Identities must reside within the 1546x423 matrix for mobile visibility.</p>
+                 <div className="flex items-center justify-between mb-1">
+                    <span className="text-[9px] font-black uppercase text-foreground/30 tracking-widest leading-none">Safety Audit</span>
+                    <Badge variant="outline" className={cn("text-[8px] font-black uppercase", isOutsideSafeZone ? "text-red-500 border-red-500/20" : "text-emerald-500 border-emerald-500/20")}>
+                        {isOutsideSafeZone ? 'Outside' : 'Safe'}
+                    </Badge>
+                 </div>
+                 <p className="text-[10px] text-foreground/40 leading-relaxed font-medium">Identities must reside within the 1546x423 matrix for mobile visibility.</p>
               </div>
            </div>
         </aside>
@@ -889,7 +909,7 @@ export default function YoutubeBannerStudioPage() {
                         width: '100%', 
                         aspectRatio: '2560/1440',
                         maxWidth: '850px',
-                        transform: `scale(${zoomLevel / 0.25})`
+                        transform: `scale(${zoomLevel / 0.15})`
                       }}
                     >
                        <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center">
@@ -928,8 +948,8 @@ export default function YoutubeBannerStudioPage() {
                     </div>
 
                     <div className="mt-10 flex items-center gap-6 p-1.5 bg-black/60 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl">
-                       <button onClick={() => setZoomLevel(z => Math.max(0.1, z - 0.05))} className="p-2 text-white/20 hover:text-white"><Minimize2 className="w-4 h-4" /></button>
-                       <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-widest whitespace-nowrap">{Math.round(zoomLevel * 400)}% Matrix View</span>
+                       <button onClick={() => setZoomLevel(z => Math.max(0.05, z - 0.05))} className="p-2 text-white/20 hover:text-white"><Minimize2 className="w-4 h-4" /></button>
+                       <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-widest whitespace-nowrap">{Math.round(zoomLevel * 666)}% Matrix View</span>
                        <button onClick={() => setZoomLevel(z => Math.min(0.5, z + 0.05))} className="p-2 text-white/20 hover:text-white"><Maximize2 className="w-4 h-4" /></button>
                     </div>
                  </div>
@@ -962,8 +982,8 @@ export default function YoutubeBannerStudioPage() {
                    {history.map((h) => (
                      <div 
                       key={h.id} 
-                      onClick={() => setState(h)}
                       className="group p-2 rounded-2xl bg-secondary/50 border border-border hover:border-primary/40 transition-all text-left relative overflow-hidden cursor-pointer"
+                      onClick={() => setState(h)}
                      >
                         <div className="aspect-video rounded-xl bg-black overflow-hidden mb-3">
                            <div className="w-full h-full opacity-40 group-hover:opacity-100 transition-opacity" style={{ background: h.bgType === 'gradient' ? `linear-gradient(${h.gradAngle}deg, ${h.bgColor}, ${h.bgColor2})` : h.bgColor }} />
