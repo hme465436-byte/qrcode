@@ -198,6 +198,7 @@ export default function YoutubeBannerStudioPage() {
   const [isStockLoading, setIsStockLoading] = useState(false);
   const [activeTab, setActiveEditorTab] = useState('identity');
   const [importQuery, setImportQuery] = useState('');
+  const [zoomLevel, setZoomLevel] = useState(0.15);
 
   // Drag State
   const isDragging = useRef(false);
@@ -909,7 +910,7 @@ export default function YoutubeBannerStudioPage() {
                         </div>
                         <p className="text-[10px] font-black uppercase truncate text-foreground/60">{h.name}</p>
                         <p className="text-[8px] font-bold text-foreground/20 uppercase">{new Date(h.timestamp).toLocaleDateString()}</p>
-                        <button onClick={(e) => { e.stopPropagation(); setHistory(prev => prev.filter(p => p.id !== h.id)); }} className="absolute top-1 right-1 p-1 text-white/0 group-hover:text-red-500 transition-all"><X className="w-3 h-3" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); setHistory(prev => prev.filter(p => p.id !== h.id)); }} className="absolute top-1 right-1 p-1 text-white/0 group-hover:text-red-500 transition-all"><X className="w-3.5 h-3.5" /></button>
                      </button>
                    ))}
                 </div>
