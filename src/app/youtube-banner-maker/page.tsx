@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -10,6 +11,7 @@ import {
   Info,
   CheckCircle2,
   Maximize2,
+  Minimize2,
   ImageIcon,
   Zap,
   LayoutGrid,
@@ -57,12 +59,9 @@ import {
   RefreshCcw,
   MonitorCheck,
   ShieldAlert,
-  Minimize2,
   Move,
   Lock,
   Unlock,
-  Scaling as ScalingIcon,
-  Scaling as ScaleIcon,
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -221,14 +220,6 @@ export default function YoutubeBannerStudioPage() {
       } catch (e) {}
     }
   }, []);
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
 
   const loadImage = (src: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
@@ -395,7 +386,12 @@ export default function YoutubeBannerStudioPage() {
     return () => cancelAnimationFrame(handle);
   }, [renderCanvas]);
 
-  // --- Interaction Handlers ---
+  // --- History and Interaction Handlers ---
+  const commitChange = (s: BannerState) => {
+    setUndoStack(prev => [...prev.slice(-19), s]);
+    setRedoStack([]);
+  };
+
   const handleDragStart = (e: any) => {
     if (state.isLocked || !state.bgImage) return;
     isDragging.current = true;
@@ -529,7 +525,11 @@ export default function YoutubeBannerStudioPage() {
     link.href = dataUrl;
     link.click();
     setIsProcessing(false);
-    toast({ title: "Master Exported", description: `Size: ${formatSize(dataUrl.length * 0.75)}` });
+    const sizeInBytes = dataUrl.length * 0.75;
+    const sizes = ['B', 'KB', 'MB'];
+    const i = Math.floor(Math.log(sizeInBytes) / Math.log(1024));
+    const sizeStr = parseFloat((sizeInBytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+    toast({ title: "Master Exported", description: `Size: ${sizeStr}` });
   };
 
   const isOutsideSafeZone = Math.abs(state.xOffset) > (SAFE_W / 2) || Math.abs(state.yOffset) > (SAFE_H / 2);
@@ -672,7 +672,7 @@ export default function YoutubeBannerStudioPage() {
                                <div className="p-4 rounded-[2rem] bg-secondary border border-border space-y-8">
                                   <div className="flex items-center justify-between">
                                      <div className="flex items-center gap-2">
-                                        <ScaleIcon className="w-3.5 h-3.5 text-primary" />
+                                        <Scaling className="w-3.5 h-3.5 text-primary" />
                                         <span className="text-[10px] font-black uppercase text-foreground/40">Visual Scale</span>
                                      </div>
                                      <span className="text-primary font-mono text-[10px]">{(state.bgZoom * 100).toFixed(0)}%</span>
