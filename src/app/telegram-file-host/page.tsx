@@ -44,7 +44,8 @@ import {
   Trash2,
   Link as LinkIcon,
   Download,
-  Globe
+  Globe,
+  Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -154,6 +155,25 @@ export default function FILEHOSTPage() {
     if (!user) return;
     setHistory(next);
     localStorage.setItem(`mykit_host_history_v2_${user.uid}`, JSON.stringify(next));
+  };
+
+  const saveToHistory = (item: HistoryItem) => {
+    if (!user) return;
+    setHistory(prev => {
+      const next = [item, ...prev.filter(h => h.data.directUrl !== item.data.directUrl)].slice(0, 10);
+      localStorage.setItem(`mykit_host_history_v2_${user.uid}`, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const removeFromHistory = (id: string) => {
+    if (!user) return;
+    setHistory(prev => {
+      const next = prev.filter(h => h.id !== id);
+      localStorage.setItem(`mykit_host_history_v2_${user.uid}`, JSON.stringify(next));
+      return next;
+    });
+    toast({ title: "Identity Purged" });
   };
 
   const getFileIcon = (mime: string) => {
@@ -386,10 +406,20 @@ export default function FILEHOSTPage() {
           <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/10 relative z-10">
              <Lock className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Authentication Required</h2>
-          <Button asChild className="h-16 w-full max-w-md bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 relative z-10">
-             <Link href="/login?redirect=/telegram-file-host">Initialize Session</Link>
-          </Button>
+          <div className="space-y-4 relative z-10">
+             <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Authentication Required</h2>
+             <p className="text-[10px] sm:text-xs text-foreground/30 font-black uppercase tracking-[0.4em] leading-relaxed max-w-md mx-auto">
+                To maintain protocol integrity and ensure high-bandwidth uplinks, you must be logged into the professional studio.
+             </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md relative z-10">
+            <Button asChild className="h-16 flex-1 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+               <Link href="/login?redirect=/telegram-file-host">Initialize Session</Link>
+            </Button>
+            <Button asChild variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
+               <Link href="/">Explore Suite</Link>
+            </Button>
+          </div>
         </Card>
       ) : authLoading ? (
         <div className="flex flex-col items-center justify-center py-40 gap-6">
@@ -575,7 +605,12 @@ export default function FILEHOSTPage() {
                       <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight">Identity Archive</h3>
                    </div>
                    {history.length > 0 && (
-                      <button onClick={() => saveHistoryToDisk([])} className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors">Purge Registry</button>
+                      <button 
+                        onClick={() => { setHistory([]); localStorage.removeItem(`mykit_host_history_v2_${user?.uid}`); }} 
+                        className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors"
+                      >
+                        Purge Registry
+                      </button>
                    )}
                 </div>
 
@@ -588,7 +623,10 @@ export default function FILEHOSTPage() {
                   <div className="grid grid-cols-1 gap-4">
                      {processedHistory.map((item) => (
                        <Card key={item.id} className={cn("glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300", item.isFavorite && "border-primary/10")}>
-                          <div onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all">
+                          <div 
+                            onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} 
+                            className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
+                          >
                              <div className="flex items-center gap-5 min-w-0">
                                 <div className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative group/thumb">
                                    <div className="w-full h-full flex items-center justify-center">
@@ -615,7 +653,10 @@ export default function FILEHOSTPage() {
                                 </div>
                              </div>
                              <div className="flex items-center gap-4 shrink-0">
-                                <button onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }} className={cn("p-2 rounded-lg transition-all", item.isFavorite ? "text-primary bg-primary/10" : "text-foreground/10 hover:text-primary")}>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }} 
+                                  className={cn("p-2 rounded-lg transition-all", item.isFavorite ? "text-primary bg-primary/10" : "text-foreground/10 hover:text-primary")}
+                                >
                                    <Star className={cn("w-4 h-4", item.isFavorite && "fill-current")} />
                                 </button>
                                 <button onClick={(e) => { e.stopPropagation(); startRename(item); }} className="p-2 text-foreground/10 hover:text-primary transition-all"><Edit3 className="w-4 h-4" /></button>
