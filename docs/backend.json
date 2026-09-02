@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "SignalingRoom": {
@@ -149,6 +148,52 @@
         "name",
         "timestamp"
       ]
+    },
+    "ImageToUrlHistory": {
+      "title": "Image to URL History",
+      "description": "Metadata for images hosted on external providers like ImgBB.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "thumb": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        },
+        "mime": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "isFavorite": {
+          "type": "boolean"
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "direct": { "type": "string" },
+            "view": { "type": "string" },
+            "markdown": { "type": "string" },
+            "html": { "type": "string" },
+            "bbcode": { "type": "string" }
+          }
+        }
+      },
+      "required": [
+        "uid",
+        "url",
+        "timestamp"
+      ]
     }
   },
   "auth": {
@@ -181,6 +226,10 @@
     "/file_host_history/{docId}": {
       "schema": "#/entities/FileHostHistory",
       "description": "Secure archive of hosted file metadata."
+    },
+    "/image_to_url_history/{docId}": {
+      "schema": "#/entities/ImageToUrlHistory",
+      "description": "Secure archive of hosted image metadata."
     }
   }
 }

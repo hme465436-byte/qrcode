@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Link as LinkIcon, 
   Upload, 
@@ -34,17 +34,17 @@ import {
   FileCode,
   Code2,
   MessageSquare,
-  ExternalLink
+  ExternalLink,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useCollection } from '@/firebase';
 import Link from 'next/link';
 import { uploadToImgBB, testImgBBKey } from './actions';
 import {
@@ -57,6 +57,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { collection, query, where, doc, setDoc, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface LinkMatrix {
   direct: string;
@@ -68,14 +71,17 @@ interface LinkMatrix {
 
 interface HistoryItem {
   id: string;
+  uid: string;
   name: string;
   thumb: string;
   timestamp: number;
+  isFavorite?: boolean;
   links: LinkMatrix;
 }
 
 export default function ImageToLinkPage() {
   const { toast } = useToast();
+  const db = useFirestore();
   const { user, loading: authLoading } = useUser();
   const [image, setImage] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -83,7 +89,6 @@ export default function ImageToLinkPage() {
   const [links, setLinks] = useState<LinkMatrix | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Custom Node State
@@ -96,18 +101,25 @@ export default function ImageToLinkPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- Persistence Matrix ---
+  // --- Firestore Sync Matrix ---
+  const historyQuery = useMemo(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, 'image_to_url_history'),
+      where('uid', '==', user.uid)
+    );
+  }, [db, user]);
+
+  const { data: historyData, loading: historyLoading } = useCollection<HistoryItem>(historyQuery);
+
+  const history = useMemo(() => {
+    if (!historyData) return [];
+    return [...historyData].sort((a, b) => b.timestamp - a.timestamp);
+  }, [historyData]);
+
+  // --- Persistence Matrix (Custom Nodes) ---
   useEffect(() => {
     if (user) {
-      const saved = localStorage.getItem(`mykit_img_history_v3_${user.uid}`);
-      if (saved) {
-        try {
-          setHistory(JSON.parse(saved));
-        } catch (e) {
-          console.error("Archive sync error.");
-        }
-      }
-
       const savedNode = localStorage.getItem(`mykit_image_host_node_${user.uid}`);
       if (savedNode) {
         try {
@@ -117,29 +129,72 @@ export default function ImageToLinkPage() {
     }
   }, [user]);
 
-  const saveHistoryToDisk = (next: HistoryItem[]) => {
-    if (!user) return;
-    setHistory(next);
-    localStorage.setItem(`mykit_img_history_v3_${user.uid}`, JSON.stringify(next));
-  };
+  const saveToHistoryFirestore = (itemData: any) => {
+    if (!db || !user) return;
+    
+    const docRef = doc(collection(db, 'image_to_url_history'));
+    const payload = {
+      ...itemData,
+      id: docRef.id,
+      uid: user.uid,
+      isFavorite: false
+    };
 
-  const saveToHistory = (item: HistoryItem) => {
-    if (!user) return;
-    setHistory(prev => {
-      const next = [item, ...prev.filter(h => h.links.direct !== item.links.direct)].slice(0, 10);
-      localStorage.setItem(`mykit_img_history_v3_${user.uid}`, JSON.stringify(next));
-      return next;
-    });
+    setDoc(docRef, payload)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'create',
+          requestResourceData: payload,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   const removeFromHistory = (id: string) => {
-    if (!user) return;
-    setHistory(prev => {
-      const next = prev.filter(h => h.id !== id);
-      localStorage.setItem(`mykit_img_history_v3_${user.uid}`, JSON.stringify(next));
-      return next;
-    });
+    if (!db || !user) return;
+    const docRef = doc(db, 'image_to_url_history', id);
+    deleteDoc(docRef)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
     toast({ title: "Identity Purged" });
+  };
+
+  const clearAllHistory = async () => {
+    if (!db || !user || history.length === 0) return;
+    const batch = writeBatch(db);
+    history.forEach(item => {
+      batch.delete(doc(db, 'image_to_url_history', item.id));
+    });
+    
+    try {
+      await batch.commit();
+      toast({ title: "Archive Purged" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Purge Failed" });
+    }
+  };
+
+  const toggleFavorite = (id: string) => {
+    if (!db) return;
+    const item = history.find(h => h.id === id);
+    if (!item) return;
+    
+    const docRef = doc(db, 'image_to_url_history', id);
+    updateDoc(docRef, { isFavorite: !item.isFavorite })
+      .catch(async () => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: { isFavorite: !item.isFavorite },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,8 +239,7 @@ export default function ImageToLinkPage() {
         };
         setLinks(matrix);
         
-        saveToHistory({
-          id: Math.random().toString(36).substr(2, 9),
+        saveToHistoryFirestore({
           name: file?.name || 'Untitled Identity',
           thumb: d.thumb?.url || d.url,
           timestamp: Date.now(),
@@ -305,9 +359,9 @@ export default function ImageToLinkPage() {
                  <Lock className="w-8 h-8" />
               </div>
               <div className="space-y-4 relative z-10">
-                 <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Identity Authentication Required</h2>
+                 <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Authentication Required</h2>
                  <p className="text-[10px] sm:text-xs text-foreground/30 font-black uppercase tracking-[0.4em] leading-relaxed max-w-md mx-auto">
-                    To maintain protocol integrity and ensure high-bandwidth uplinks, you must be logged into the professional studio.
+                    Login to save history permanently across all devices.
                  </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md relative z-10">
@@ -431,15 +485,10 @@ export default function ImageToLinkPage() {
                   Execute Transmission
                 </Button>
 
-                {error && (
-                  <div className="p-6 rounded-[2rem] bg-destructive/5 border border-destructive/20 space-y-3 animate-in shake duration-500">
-                    <div className="flex items-center gap-3 text-destructive">
-                       <AlertTriangle className="w-4 h-4" />
-                       <h4 className="text-[10px] font-black uppercase tracking-widest">Handshake Failed</h4>
-                    </div>
-                    <p className="text-[10px] font-bold text-destructive/80 leading-relaxed uppercase tracking-tighter">{error}</p>
-                  </div>
-                )}
+                <div className="flex items-center gap-3 px-2">
+                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                   <span className="text-[8px] font-black uppercase tracking-[0.3em] text-foreground/30">History synced to cloud</span>
+                </div>
               </CardContent>
             </Card>
 
@@ -449,7 +498,7 @@ export default function ImageToLinkPage() {
                        <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Security Matrix</h4>
+                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Matrix</h4>
                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
                         1:1 binary preservation ensures your visual assets retain original resolution and metadata during the cloud sync.
                       </p>
@@ -538,7 +587,7 @@ export default function ImageToLinkPage() {
                    </div>
                    {history.length > 0 && (
                       <button 
-                        onClick={() => { setHistory([]); localStorage.removeItem(`mykit_img_history_v3_${user?.uid}`); }} 
+                        onClick={clearAllHistory} 
                         className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors"
                       >
                         Purge Registry
@@ -546,7 +595,12 @@ export default function ImageToLinkPage() {
                    )}
                 </div>
 
-                {history.length === 0 ? (
+                {historyLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-40">
+                     <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                     <p className="text-[10px] font-black uppercase tracking-widest">Synchronizing Registry...</p>
+                  </div>
+                ) : history.length === 0 ? (
                   <div className="p-20 text-center flex flex-col items-center gap-6 opacity-10 grayscale border-2 border-dashed border-white/5 rounded-[3rem]">
                      <Activity className="w-12 h-12 text-primary" />
                      <p className="text-[11px] font-black uppercase tracking-[0.4em]">Awaiting Discovery Signal</p>
@@ -554,10 +608,7 @@ export default function ImageToLinkPage() {
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                      {history.map((item) => (
-                       <Card key={item.id} className={cn(
-                         "glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300",
-                         item.isFavorite && "border-primary/10"
-                       )}>
+                       <Card key={item.id} className="glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300">
                           <div 
                             onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                             className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
@@ -574,11 +625,17 @@ export default function ImageToLinkPage() {
                                    <div className="flex items-center gap-3 mt-1">
                                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
                                       <div className="w-1 h-1 rounded-full bg-primary/20" />
-                                      <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Node Verified</p>
+                                      <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Uplink Active</p>
                                    </div>
                                 </div>
                              </div>
                              <div className="flex items-center gap-4 shrink-0">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }} 
+                                  className={cn("p-2 rounded-lg transition-all", item.isFavorite ? "text-yellow-500 bg-yellow-500/10" : "text-foreground/10 hover:text-yellow-500")}
+                                >
+                                   <Star className={cn("w-4 h-4", item.isFavorite && "fill-current")} />
+                                </button>
                                 <button 
                                   onClick={(e) => { e.stopPropagation(); removeFromHistory(item.id); }} 
                                   className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/10 hover:text-red-500 hover:bg-red-500/10 transition-all"
@@ -616,7 +673,7 @@ export default function ImageToLinkPage() {
                                              isCopied === `hist-${item.id}-${sub.label}` ? "text-emerald-500" : "text-primary/60 hover:text-primary"
                                            )}
                                           >
-                                             {isCopied === `hist-${item.id}-${sub.label}` ? 'Identity Isolated' : 'Copy'}
+                                             {isCopied === `hist-${item.id}-${sub.label}` ? 'Isolated' : 'Copy'}
                                           </button>
                                        </div>
                                        <div className="h-10 bg-black/40 border border-white/5 rounded-xl flex items-center px-4 font-mono text-[9px] font-bold text-foreground/40 overflow-hidden shadow-inner group-hover/sub:border-primary/20 transition-all">
@@ -627,7 +684,7 @@ export default function ImageToLinkPage() {
                                </div>
                                <div className="mt-6 flex justify-center">
                                   <Button asChild variant="ghost" className="h-8 text-[8px] font-black uppercase text-primary/40 hover:text-primary">
-                                     <a href={item.links.view} target="_blank" rel="noopener noreferrer">Launch Official Registry View <ArrowRight className="ml-2 w-3 h-3" /></a>
+                                     <a href={item.links.view} target="_blank" rel="noopener noreferrer">Launch Viewer Node <ArrowRight className="ml-2 w-3 h-3" /></a>
                                   </Button>
                                </div>
                             </div>
@@ -652,16 +709,13 @@ export default function ImageToLinkPage() {
                Disconnect Host
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
-              Are you sure you want to disconnect your private host node? This action is specific to your current identity session.
+              Are you sure you want to disconnect your private ImgBB node?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => {
-                disconnectNode();
-                setShowDisconnectConfirm(false);
-              }}
+              onClick={disconnectNode}
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
               Disconnect
