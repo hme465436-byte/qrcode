@@ -9,43 +9,38 @@ import {
   AlertCircle,
   Zap,
   Activity,
-  ShieldCheck,
-  ShieldAlert,
+  ImageIcon,
+  RefreshCcw,
   RotateCcw,
+  Lock,
+  User,
+  AlertTriangle,
   History,
-  FileUp,
+  Maximize2,
   X,
   ChevronDown,
   ChevronUp,
-  Database,
-  MessageCircle,
-  Paperclip,
-  Lock,
-  Cloud,
-  Trash2,
+  FileUp,
+  Eye,
+  Settings2,
+  ArrowRight,
+  KeyRound,
+  Unplug,
+  ShieldCheck,
+  FileCode,
+  Code2,
+  MessageSquare,
+  ExternalLink,
   FileImage,
-  FileAudio,
   FileVideo,
+  FileAudio,
   FileArchive,
   FileText,
-  ExternalLink,
-  Settings2,
-  Check,
-  Download,
-  Link as LinkIcon,
-  Search,
+  File as FileIcon,
   Star,
   Edit3,
-  Share2,
-  BarChart3,
-  CheckSquare,
-  Square,
-  Clock,
-  KeyRound,
-  Shield,
-  Unplug,
-  AlertTriangle,
-  RefreshCcw
+  Check,
+  Paperclip
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,13 +48,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -76,6 +64,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const formatSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes';
@@ -129,14 +124,12 @@ export default function FILEHOSTPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   
   // UI Meta
   const [isCopied, setIsCopied] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
   const [generatedUrls, setGeneratedUrls] = useState<Record<string, string>>({});
 
@@ -159,6 +152,16 @@ export default function FILEHOSTPage() {
     if (!user) return;
     setHistory(next);
     localStorage.setItem(`mykit_host_history_v2_${user.uid}`, JSON.stringify(next));
+  };
+
+  const getFileIcon = (mime: string) => {
+    if (!mime) return <FileIcon className="w-5 h-5 text-primary/40" />;
+    if (mime.startsWith('image/')) return <FileImage className="w-5 h-5 text-emerald-500" />;
+    if (mime.startsWith('video/')) return <FileVideo className="w-5 h-5 text-rose-500" />;
+    if (mime.startsWith('audio/')) return <FileAudio className="w-5 h-5 text-amber-500" />;
+    if (mime.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
+    if (mime.includes('zip') || mime.includes('archive')) return <FileArchive className="w-5 h-5 text-blue-500" />;
+    return <FileIcon className="w-5 h-5 text-primary/40" />;
   };
 
   const processedHistory = useMemo(() => {
@@ -184,7 +187,7 @@ export default function FILEHOSTPage() {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       if (selectedFile.size > 100 * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Heavy Payload", description: "Max limit is 100MB for Catbox fallback." });
+        toast({ variant: "destructive", title: "Heavy Payload", description: "Max limit is 100MB for global fallback." });
         return;
       }
       setFile(selectedFile);
@@ -207,19 +210,13 @@ export default function FILEHOSTPage() {
     formData.append('document', file);
 
     try {
-      // 1. Try Primary Node: Telegram
       let response = await uploadToTelegram(formData, activeNode?.token, activeNode?.chatId);
 
-      // 2. Failover logic if Telegram restricted
       if (!response.success) {
-        console.warn("Telegram Node restricted:", response.message);
         setStatusLabel('Failing over to Catbox node...');
         setUploadProgress(40);
-        
-        // Try Node 2: Catbox (Anonymous support up to 200MB)
         response = await uploadToCatbox(formData);
         
-        // 3. Optional Node 3: ImgBB (Visuals only)
         if (!response.success && file.type.startsWith('image/')) {
           setStatusLabel('Attempting ImgBB fallback...');
           setUploadProgress(70);
@@ -229,14 +226,15 @@ export default function FILEHOSTPage() {
 
       if (response.success && response.data) {
         setUploadProgress(100);
-        setResult(response.data as FileLinkMatrix);
+        const data = response.data as FileLinkMatrix;
+        setResult(data);
         
         const newItem: HistoryItem = {
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
           timestamp: Date.now(),
           provider: response.provider || 'Cloud',
-          data: response.data as FileLinkMatrix
+          data: data
         };
         
         saveHistoryToDisk([newItem, ...history].slice(0, 50));
@@ -308,6 +306,25 @@ export default function FILEHOSTPage() {
     toast({ title: "Default Protocol Restored" });
   };
 
+  const toggleFavorite = (id: string) => {
+    const next = history.map(h => h.id === id ? { ...h, isFavorite: !h.isFavorite } : h);
+    saveHistoryToDisk(next);
+  };
+
+  const startRename = (item: HistoryItem) => {
+    setEditingId(item.id);
+    setEditValue(item.customName || item.name);
+  };
+
+  const saveRename = () => {
+    if (!editingId) return;
+    const next = history.map(h => h.id === editingId ? { ...h, customName: editValue } : h);
+    saveHistoryToDisk(next);
+    setEditingId(null);
+    setEditValue('');
+    toast({ title: "Identity Updated" });
+  };
+
   const handleCopyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(label);
@@ -369,7 +386,7 @@ export default function FILEHOSTPage() {
                         <KeyRound className="w-4 h-4 text-primary" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-primary">Private Bot Protocol</span>
                      </div>
-                     <button onClick={() => setShowCustomNode(false)} className="text-primary/40 hover:text-primary"><X className="w-4 h-4" /></button>
+                     <button onClick={() => setShowAddNode(false)} className="text-primary/40 hover:text-primary"><X className="w-4 h-4" /></button>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">
                      <div className="space-y-4">
@@ -436,7 +453,7 @@ export default function FILEHOSTPage() {
                     </div>
                   ) : (
                     <div className="text-center space-y-6">
-                      <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover:text-primary transition-all mx-auto shadow-xl">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary transition-all mx-auto shadow-xl">
                         <FileUp className="w-8 h-8" />
                       </div>
                       <span className="text-[10px] font-black uppercase text-foreground/30 tracking-widest">Select Binary Asset</span>
@@ -521,9 +538,22 @@ export default function FILEHOSTPage() {
                                    {getFileIcon(item.data.mime)}
                                 </div>
                                 <div className="min-w-0">
-                                   <p className="text-xs font-black text-foreground truncate uppercase tracking-tight">
-                                      {item.customName || item.name}
-                                   </p>
+                                   {editingId === item.id ? (
+                                      <div className="flex items-center gap-2">
+                                         <Input 
+                                          value={editValue} 
+                                          onChange={e => setEditValue(e.target.value)} 
+                                          className="h-8 w-48 bg-background border-primary/40 text-[10px] uppercase font-bold"
+                                          autoFocus
+                                          onKeyDown={e => e.key === 'Enter' && saveRename()}
+                                         />
+                                         <button onClick={saveRename} className="text-primary hover:scale-110 transition-transform"><Check className="w-4 h-4" /></button>
+                                      </div>
+                                   ) : (
+                                      <p className="text-xs font-black text-foreground truncate uppercase tracking-tight">
+                                         {item.customName || item.name}
+                                      </p>
+                                   )}
                                    <div className="flex items-center gap-3 mt-1">
                                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
                                       <div className="w-1 h-1 rounded-full bg-primary/20" />
@@ -599,7 +629,7 @@ export default function FILEHOSTPage() {
                Disconnect Host
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
-              Are you sure you want to disconnect your private host node?
+              Are you sure you want to disconnect your private host node? This action is specific to your current identity session.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
