@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -608,9 +609,9 @@ export default function ImageToLinkPage() {
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                      {history.map((item) => (
-                       <Card key={item.id} className="glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300">
+                       <Card key={item.id} className={cn("glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300", item.isFavorite && "border-primary/10")}>
                           <div 
-                            onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                            onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} 
                             className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
                           >
                              <div className="flex items-center gap-5 min-w-0">
@@ -625,7 +626,7 @@ export default function ImageToLinkPage() {
                                    <div className="flex items-center gap-3 mt-1">
                                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
                                       <div className="w-1 h-1 rounded-full bg-primary/20" />
-                                      <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Uplink Active</p>
+                                      <p className="text-[8px] font-bold text-primary uppercase tracking-widest">Uplink Active</p>
                                    </div>
                                 </div>
                              </div>
@@ -747,3 +748,4 @@ export default function ImageToLinkPage() {
     </div>
   );
 }
+
