@@ -103,6 +103,7 @@ export default function FILEHOSTPage() {
   
   // Intake State
   const [file, setFile] = useState<File | null>(null);
+  const [image, setImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [statusLabel, setStatusLabel] = useState('Standby');
@@ -192,7 +193,13 @@ export default function FILEHOSTPage() {
       setFile(selectedFile);
       setResult(null);
       setError(null);
-      toast({ title: "Asset Buffered" });
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+        toast({ title: "Asset Buffered", description: "Identity matrix ready for transmission." });
+      };
+      reader.readAsDataURL(selectedFile);
     }
   };
 
@@ -244,6 +251,7 @@ export default function FILEHOSTPage() {
 
         toast({ title: "Uplink Success", description: `Uploaded via ${response.provider}.` });
         setFile(null); 
+        setImage(null);
       } else {
         throw new Error(response.message || "All production nodes are restricted.");
       }
@@ -287,7 +295,7 @@ export default function FILEHOSTPage() {
         const node = { token: customToken.trim(), chatId: customChatId.trim(), name: res.botName || 'Custom Node', username: res.username };
         setActiveNode(node);
         localStorage.setItem(`mykit_custom_node_${user?.uid}`, JSON.stringify(node));
-        setShowCustomNode(false);
+        setShowAddNode(false);
         toast({ title: "Node Active" });
       } else {
         toast({ variant: "destructive", title: "Handshake Failed", description: res.error });
@@ -299,7 +307,7 @@ export default function FILEHOSTPage() {
     }
   };
 
-  const disconnectNode = (id: string) => {
+  const disconnectNode = () => {
     setActiveNode(null);
     localStorage.removeItem(`mykit_custom_node_${user?.uid}`);
     toast({ title: "Node Decoupled" });
@@ -329,6 +337,15 @@ export default function FILEHOSTPage() {
     setIsCopied(label);
     toast({ title: "Copied" });
     setTimeout(() => setIsCopied(null), 2000);
+  };
+
+  const handleClear = () => {
+    setImage(null);
+    setFile(null);
+    setResult(null);
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    toast({ title: "Studio Reset" });
   };
 
   return (
@@ -437,14 +454,14 @@ export default function FILEHOSTPage() {
                   onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files[0]) handleFileUpload({ target: { files: e.dataTransfer.files } } as any); }}
                   className={cn(
                     "relative h-64 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer group/upload",
-                    image && "border-solid border-primary/20 bg-background/50",
+                    file && "border-solid border-primary/20 bg-background/50",
                     isProcessing && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   {file ? (
                     <div className="text-center p-8 space-y-4">
                        <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-inner">
-                          <Paperclip className="w-8 h-8" />
+                          {getFileIcon(file.type)}
                        </div>
                        <div className="space-y-1">
                           <p className="text-xs font-black uppercase text-foreground truncate max-w-[240px]">{file.name}</p>
@@ -500,6 +517,60 @@ export default function FILEHOSTPage() {
           </div>
 
           <div className="lg:col-span-7 xl:col-span-8 space-y-10">
+             {/* Current Results Section */}
+             {result && (
+               <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl overflow-hidden relative flex flex-col animate-in zoom-in-95 duration-500">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+                  <CardHeader className="py-6 border-b border-emerald-500/10 bg-emerald-500/5 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
+                     <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-inner">
+                           <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        <CardTitle className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.5em]">Active Master Result</CardTitle>
+                     </div>
+                     <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
+                        Uplink Verified
+                     </Badge>
+                  </CardHeader>
+                  <CardContent className="p-8 sm:p-12">
+                      <div className="grid grid-cols-1 gap-12">
+                        {/* Codes Matrix */}
+                        <div className="space-y-6">
+                          <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] ml-1">Protocol Matrix</Label>
+                          <div className="space-y-4">
+                            {[
+                              { label: 'Direct Link', val: result.directUrl || `https://mykittool.app/api/telegram-proxy?fileId=${result.fileId}`, icon: LinkIcon },
+                              { label: 'File Identity', val: result.name, icon: FileCode },
+                              { label: 'Payload Volume', val: formatSize(result.size), icon: Maximize2 },
+                            ].map((item) => (
+                              <div key={item.label} className="space-y-2 group/row">
+                                 <div className="flex items-center justify-between px-1">
+                                    <div className="flex items-center gap-2">
+                                       <item.icon className="w-3 h-3 text-emerald-600/40" />
+                                       <span className="text-[9px] font-black uppercase text-foreground/50 tracking-widest">{item.label}</span>
+                                    </div>
+                                    <button 
+                                      onClick={() => handleCopyText(item.val, item.label)}
+                                      className={cn(
+                                        "text-[8px] font-black uppercase transition-all",
+                                        isCopied === item.label ? "text-emerald-500" : "text-primary/60 hover:text-primary"
+                                      )}
+                                    >
+                                       {isCopied === item.label ? 'Identity Isolated' : 'Copy Snippet'}
+                                    </button>
+                                 </div>
+                                 <div className="h-11 bg-white/40 dark:bg-black/40 border border-emerald-500/5 rounded-xl flex items-center px-4 font-mono text-[10px] font-bold text-foreground/80 overflow-hidden shadow-inner group-hover/row:border-emerald-500/20 transition-colors">
+                                    <span className="truncate">{item.val}</span>
+                                 </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                  </CardContent>
+               </Card>
+             )}
+
              {/* Archives Section */}
              <div className="space-y-6">
                 <div className="flex items-center justify-between px-2">
@@ -512,7 +583,12 @@ export default function FILEHOSTPage() {
                          <p className="text-[10px] font-black text-foreground/40 uppercase leading-none">{storageStats.count} Units</p>
                       </div>
                       {history.length > 0 && (
-                        <button onClick={() => saveHistoryToDisk([])} className="text-[9px] font-black uppercase text-foreground/20 hover:text-red-500 transition-colors">Purge Registry</button>
+                        <button 
+                          onClick={() => saveHistoryToDisk([])} 
+                          className="text-[9px] font-black uppercase text-foreground/20 hover:text-red-500 transition-colors"
+                        >
+                          Purge Registry
+                        </button>
                       )}
                    </div>
                 </div>
@@ -637,7 +713,7 @@ export default function FILEHOSTPage() {
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => {
-                disconnectNode(activeNode!.token);
+                disconnectNode();
                 setShowDisconnectConfirm(false);
               }}
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
