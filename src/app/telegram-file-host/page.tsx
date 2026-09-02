@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -45,7 +44,9 @@ import {
   Paperclip,
   Cloud,
   Trash2,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Download,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -318,9 +319,9 @@ export default function FILEHOSTPage() {
     }
   };
 
-  const disconnectNode = () => {
-    setActiveNode(null);
-    localStorage.removeItem(`mykit_custom_node_${user?.uid}`);
+  const disconnectNode = (id: string) => {
+    setCustomNodes(prev => prev.filter(n => n.id !== id));
+    if (provider === id) setProvider(DEFAULT_PROVIDERS[0].id);
     toast({ title: "Node Decoupled" });
   };
 
@@ -480,11 +481,14 @@ export default function FILEHOSTPage() {
                        </div>
                     </div>
                   ) : (
-                    <div className="text-center space-y-6">
-                      <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary transition-all mx-auto shadow-xl">
+                    <div className="text-center space-y-6 p-8">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary group-hover/upload:scale-110 transition-all mx-auto shadow-xl">
                         <FileUp className="w-8 h-8" />
                       </div>
-                      <span className="text-[10px] font-black uppercase text-foreground/30 tracking-widest">Select Binary Asset</span>
+                      <div className="space-y-2">
+                         <span className="text-xs font-black uppercase text-foreground/40 tracking-[0.2em] group-hover/upload:text-primary transition-colors">Select Visual Payload</span>
+                         <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">JPEG, PNG, GIF, WebP (Max 10MB)</p>
+                      </div>
                     </div>
                   )}
                   <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
@@ -599,7 +603,7 @@ export default function FILEHOSTPage() {
                       {history.length > 0 && (
                         <button 
                           onClick={() => saveHistoryToDisk([])} 
-                          className="text-[9px] font-black uppercase text-foreground/20 hover:text-red-500 transition-colors"
+                          className="text-[9px] font-black uppercase text-foreground/20 hover:text-destructive transition-colors"
                         >
                           Purge Registry
                         </button>
