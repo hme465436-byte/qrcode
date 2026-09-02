@@ -1,10 +1,20 @@
-
 'use server';
 
 /**
  * @fileOverview Advanced Server Actions for File Host.
  * Implements a multi-node redundancy protocol (Telegram -> Catbox -> ImgBB).
+ * Increased duration to handle large binary payloads.
  */
+
+export const maxDuration = 60; // Increase server action timeout to 60s
+
+export interface FileLinkMatrix {
+  fileId?: string;
+  directUrl?: string;
+  name: string;
+  size: number;
+  mime: string;
+}
 
 /**
  * Node 1: Telegram Cloud Protocol
@@ -26,7 +36,6 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
     telegramForm.append('document', file);
     telegramForm.append('caption', `📁 File: ${file.name}\n⚖️ Size: ${(file.size / 1024).toFixed(1)} KB\n🚀 My Kit Tool Uplink`);
 
-    // Use strictly valid HTTPS endpoint
     const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
       method: 'POST',
       body: telegramForm,
@@ -68,7 +77,7 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
 }
 
 /**
- * Node 2: Catbox Anonymous Protocol (General Files)
+ * Node 2: Catbox Anonymous Protocol
  */
 export async function uploadToCatbox(formData: FormData) {
   try {
