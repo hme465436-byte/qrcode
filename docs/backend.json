@@ -98,6 +98,57 @@
         "html",
         "createdAt"
       ]
+    },
+    "FileHostHistory": {
+      "title": "File Host History",
+      "description": "Metadata for files hosted on external providers like Telegram.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user ID of the file owner."
+        },
+        "name": {
+          "type": "string",
+          "description": "Original filename."
+        },
+        "customName": {
+          "type": "string",
+          "description": "User-assigned label."
+        },
+        "size": {
+          "type": "number",
+          "description": "File size in bytes."
+        },
+        "mime": {
+          "type": "string",
+          "description": "MIME type of the file."
+        },
+        "fileId": {
+          "type": "string",
+          "description": "Provider-specific file identifier (e.g. Telegram file_id)."
+        },
+        "directUrl": {
+          "type": "string",
+          "description": "Direct download URL if available."
+        },
+        "isFavorite": {
+          "type": "boolean"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Creation epoch."
+        },
+        "provider": {
+          "type": "string",
+          "description": "The hosting provider used (e.g. Telegram)."
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "timestamp"
+      ]
     }
   },
   "auth": {
@@ -126,6 +177,10 @@
     "/pages/{id}": {
       "schema": "#/entities/HostedPage",
       "description": "User generated static HTML pages and code blocks."
+    },
+    "/file_host_history/{docId}": {
+      "schema": "#/entities/FileHostHistory",
+      "description": "Secure archive of hosted file metadata."
     }
   }
 }
