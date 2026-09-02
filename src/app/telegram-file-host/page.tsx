@@ -117,7 +117,7 @@ export default function FILEHOSTPage() {
   const [error, setError] = useState<string | null>(null);
   
   // Custom Node State
-  const [showAddNode, setShowAddNode] = useState(false);
+  const [showCustomNode, setShowCustomNode] = useState(false);
   const [customToken, setCustomToken] = useState('');
   const [customChatId, setCustomChatId] = useState('');
   const [isTestingNode, setIsTestingNode] = useState(false);
