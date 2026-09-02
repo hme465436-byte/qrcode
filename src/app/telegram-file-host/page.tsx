@@ -58,7 +58,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
-import { uploadToTelegram, uploadToCatbox, uploadToImgBB, getDownloadProtocol, testConnection } from './actions';
+import { uploadToTelegram, getDownloadProtocol, testConnection } from './actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -157,15 +157,6 @@ export default function FILEHOSTPage() {
     localStorage.setItem(`mykit_host_history_v2_${user.uid}`, JSON.stringify(next));
   };
 
-  const saveToHistory = (item: HistoryItem) => {
-    if (!user) return;
-    setHistory(prev => {
-      const next = [item, ...prev.filter(h => h.data.directUrl !== item.data.directUrl)].slice(0, 10);
-      localStorage.setItem(`mykit_host_history_v2_${user.uid}`, JSON.stringify(next));
-      return next;
-    });
-  };
-
   const removeFromHistory = (id: string) => {
     if (!user) return;
     setHistory(prev => {
@@ -227,30 +218,17 @@ export default function FILEHOSTPage() {
     if (!file || !user) return;
     
     setIsProcessing(true);
-    setUploadProgress(10);
+    setUploadProgress(20);
     setError(null);
     setResult(null);
-    setStatusLabel('Connecting to primary node...');
+    setStatusLabel('Connecting to Telegram node...');
 
     const formData = new FormData();
     formData.append('document', file);
 
     try {
-      // 1. Primary Attempt (Telegram)
-      let response = await uploadToTelegram(formData, activeNode?.token, activeNode?.chatId);
-
-      // 2. Fallback Sequence
-      if (!response.success) {
-        setStatusLabel('Primary node restricted. Failing over...');
-        setUploadProgress(40);
-        response = await uploadToCatbox(formData);
-        
-        if (!response.success && file.type.startsWith('image/')) {
-          setStatusLabel('Attempting visual registry fallback...');
-          setUploadProgress(70);
-          response = await uploadToImgBB(formData);
-        }
-      }
+      // 1. Primary & Singular Attempt (Telegram)
+      const response = await uploadToTelegram(formData, activeNode?.token, activeNode?.chatId);
 
       if (response.success && response.data) {
         setUploadProgress(100);
@@ -261,22 +239,18 @@ export default function FILEHOSTPage() {
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
           timestamp: Date.now(),
-          provider: response.provider || 'Cloud',
+          provider: 'Telegram',
           data: data
         };
         
         const nextHistory = [newItem, ...history].slice(0, 50);
         saveHistoryToDisk(nextHistory);
         
-        if (newItem.data.directUrl) {
-          setGeneratedUrls(prev => ({ ...prev, [newItem.id]: newItem.data.directUrl! }));
-        }
-
-        toast({ title: "Uplink Success", description: `Uploaded via ${response.provider}.` });
+        toast({ title: "Uplink Success", description: "File successfully hosted on Telegram." });
         setFile(null); 
         setImage(null);
       } else {
-        throw new Error(response.message || "All production nodes are restricted.");
+        throw new Error(response.message || "Telegram node restricted or rejected payload.");
       }
     } catch (err: any) {
       setError(err.message || "Handshake failed.");
@@ -377,7 +351,7 @@ export default function FILEHOSTPage() {
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <Cloud className="w-3.5 h-3.5" /> High-Uptime Cloud Node
+            <Cloud className="w-3.5 h-3.5" /> Telegram Cloud Storage
           </div>
           <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tighter leading-none">
             FILE <span className="text-primary italic">HOST PRO</span>
@@ -547,9 +521,9 @@ export default function FILEHOSTPage() {
                        <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Security Matrix</h4>
+                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Telegram Integration</h4>
                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
-                        High-fidelity bitstream copies ensure 1:1 binary preservation across all global hosting nodes.
+                        Every file is uploaded exclusively to your designated Telegram bot node, providing private and permanent cloud storage.
                       </p>
                     </div>
                 </div>
@@ -573,7 +547,7 @@ export default function FILEHOSTPage() {
                   <CardContent className="p-8 sm:p-12">
                     <div className="space-y-6">
                       {[
-                        { label: 'Direct Link', val: result.directUrl || `https://mykittool.app/api/telegram-proxy?fileId=${result.fileId}`, icon: LinkIcon },
+                        { label: 'Proxy Protocol Link', val: `https://mykittool.app/api/telegram-proxy?fileId=${result.fileId}`, icon: LinkIcon },
                         { label: 'File Identity', val: result.name, icon: FileCode },
                         { label: 'Payload Volume', val: formatSize(result.size), icon: Maximize2 },
                       ].map((item) => (
@@ -602,8 +576,8 @@ export default function FILEHOSTPage() {
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
                       <History className="w-4 h-4 text-primary" />
-                      <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight">Identity Archive</h3>
-                   </div>
+                      <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight text-foreground/60 tracking-tight">Identity Archive</h3>
+                </div>
                    {history.length > 0 && (
                       <button 
                         onClick={() => { setHistory([]); localStorage.removeItem(`mykit_host_history_v2_${user?.uid}`); }} 
@@ -648,7 +622,7 @@ export default function FILEHOSTPage() {
                                    <div className="flex items-center gap-3 mt-1">
                                       <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
                                       <div className="w-1 h-1 rounded-full bg-primary/20" />
-                                      <p className="text-[8px] font-bold text-primary uppercase tracking-widest">{formatSize(item.data.size)} • {item.provider}</p>
+                                      <p className="text-[8px] font-bold text-primary uppercase tracking-widest">{formatSize(item.data.size)} • Telegram</p>
                                    </div>
                                 </div>
                              </div>
@@ -671,8 +645,8 @@ export default function FILEHOSTPage() {
                             <div className="px-5 pb-8 pt-2 border-t border-white/5 bg-black/20 animate-in slide-in-from-top-2 duration-500">
                                <div className="space-y-6 pt-6">
                                   {[
-                                    { label: 'Direct', val: generatedUrls[item.id] || item.data.directUrl || `https://mykittool.app/api/telegram-proxy?fileId=${item.data.fileId}`, icon: LinkIcon },
-                                    { label: 'File Name', val: item.name, icon: FileCode },
+                                    { label: 'Proxy Link', val: generatedUrls[item.id] || `https://mykittool.app/api/telegram-proxy?fileId=${item.data.fileId}`, icon: LinkIcon },
+                                    { label: 'Native File Name', val: item.name, icon: FileCode },
                                   ].map((sub) => (
                                     <div key={sub.label} className="space-y-2 group/sub">
                                        <div className="flex items-center justify-between px-1">
@@ -712,22 +686,6 @@ export default function FILEHOSTPage() {
           </div>
         </div>
       )}
-
-      <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
-        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
-          <AlertDialogHeader className="space-y-4">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
-               <Unplug className="w-8 h-8" />
-            </div>
-            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Disconnect Host</AlertDialogTitle>
-            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">Are you sure you want to disconnect your private host node?</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
-            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
-            <AlertDialogAction onClick={disconnectNode} className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Disconnect</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
