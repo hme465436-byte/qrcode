@@ -142,10 +142,10 @@ export default function FILEHOSTPage() {
   // --- Firestore Sync Matrix ---
   const historyQuery = useMemo(() => {
     if (!db || !user) return null;
+    // Removing orderBy to avoid index requirement; sorting happens client-side in processedHistory
     return query(
       collection(db, 'file_host_history'),
-      where('uid', '==', user.uid),
-      orderBy('timestamp', 'desc')
+      where('uid', '==', user.uid)
     );
   }, [db, user]);
 
@@ -235,6 +235,7 @@ export default function FILEHOSTPage() {
       .sort((a, b) => {
         if (a.isFavorite && !b.isFavorite) return -1;
         if (!a.isFavorite && b.isFavorite) return 1;
+        // Client-side sort by timestamp descending
         return b.timestamp - a.timestamp;
       });
   }, [history, searchQuery, filterType]);
@@ -367,22 +368,23 @@ export default function FILEHOSTPage() {
   };
 
   const handleTestAndConnectNode = async () => {
+    if (!customToken || !customChatId) return;
     setIsTestingNode(true);
     try {
-      const res = await fetchFromProvider('custom', { action: 'genRandomMailbox' }, newNode);
-      if (res.success && res.email) {
-        const inboxRes = await fetchFromProvider('custom', { action: 'getMessages', email: res.email }, newNode);
-        if (inboxRes.success) {
-          const finalNode = { ...newNode, id: `custom_${Date.now()}`, label: newNode.label || 'Custom Server' };
-          setActiveNode(finalNode);
-          localStorage.setItem(`mykit_custom_node_${user?.uid}`, JSON.stringify(finalNode));
-          setShowAddNode(false);
-          toast({ title: "Node Integrated", description: "Hardware handshake successful." });
-        } else {
-          throw new Error("Inbox node unreachable.");
-        }
+      const res = await testConnection(customToken, customChatId);
+      if (res.success) {
+        const node = { 
+          token: customToken, 
+          chatId: customChatId, 
+          name: res.botName || 'Custom Bot',
+          username: res.username
+        };
+        setActiveNode(node);
+        localStorage.setItem(`mykit_custom_node_${user?.uid}`, JSON.stringify(node));
+        setShowCustomNode(false);
+        toast({ title: "Node Integrated", description: "Hardware handshake successful." });
       } else {
-        throw new Error("Identity provisioning node failed.");
+        throw new Error(res.error || "Uplink refused.");
       }
     } catch (err: any) {
       toast({ variant: "destructive", title: "Handshake Failed", description: err.message });
@@ -413,11 +415,6 @@ export default function FILEHOSTPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
     toast({ title: "Studio Reset" });
   };
-
-  // Mock fetchFromProvider locally for compatibility with renamed functions if they were in the original
-  const fetchFromProvider = async (provider: string, payload: any, config: any) => ({ success: true, email: 'test@example.com' });
-  const [newNode, setNewNode] = useState<any>({});
-  const [showAddNode, setShowAddNode] = useState(false);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -649,7 +646,7 @@ export default function FILEHOSTPage() {
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
                       <History className="w-4 h-4 text-primary" />
-                      <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight text-foreground/60 tracking-tight">Identity Archive</h3>
+                      <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60 tracking-tight">Identity Archive</h3>
                    </div>
                    {history.length > 0 && (
                       <button 
