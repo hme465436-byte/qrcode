@@ -24,7 +24,10 @@ import {
   Bell,
   MoreVertical,
   Plus,
-  Unplug
+  Unplug,
+  ShieldAlert,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +35,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
@@ -39,7 +43,9 @@ import { collection, query, where, doc, setDoc, deleteDoc, updateDoc, writeBatch
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import * as actions from './actions';
-import { differenceInDays, format, isAfter, isBefore, addDays } from 'date-fns';
+import { differenceInDays, format, isBefore } from 'date-fns';
+import Link from 'next/link';
+import { GetHelp } from '@/components/qr-canvas/get-help';
 
 type ProviderId = 'r2' | 'imgbb' | 'gofile' | 'pixeldrain' | 'custom';
 
@@ -105,6 +111,11 @@ export default function TempUploadPage() {
   const [lastUploadUrl, setLastUploadUrl] = useState<string | null>(null);
 
   // History State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const historyQuery = useMemo(() => {
     if (!db || !user) return null;
     return query(collection(db, 'temp_upload_history'), where('uid', '==', user.uid));
@@ -113,8 +124,12 @@ export default function TempUploadPage() {
   const { data: historyData, loading: historyLoading } = useCollection<UploadRecord>(historyQuery);
 
   const history = useMemo(() => {
-    return (historyData || []).sort((a, b) => b.timestamp - a.timestamp);
-  }, [historyData]);
+    const list = historyData || [];
+    const filtered = list.filter(item => 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    return filtered.sort((a, b) => b.timestamp - a.timestamp);
+  }, [historyData, searchQuery]);
 
   // --- Persistence & Handshake ---
   useEffect(() => {
@@ -142,9 +157,17 @@ export default function TempUploadPage() {
   };
 
   // --- Upload Engine ---
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) setFile(f);
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const executeUpload = async () => {
@@ -194,7 +217,7 @@ export default function TempUploadPage() {
           toast({ title: "Uplink Success", description: "Matrix synchronized with storage node." });
           setFile(null);
         } else {
-          throw new Error(result.error);
+          throw new Error(result.error || 'Upload failed');
         }
       } catch (err: any) {
         toast({ variant: "destructive", title: "Protocol Failure", description: err.message });
@@ -362,7 +385,7 @@ export default function TempUploadPage() {
                    className="w-full h-16 bg-primary text-white font-black text-sm uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                  >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                    Upload to {activeProvider.toUpperCase()}
+                    Upload
                  </Button>
 
                  {lastUploadUrl && (
@@ -377,7 +400,7 @@ export default function TempUploadPage() {
                       <div className="p-4 bg-black/40 rounded-xl border border-emerald-500/10 font-mono text-[10px] text-foreground/60 break-all shadow-inner">
                          {lastUploadUrl}
                       </div>
-                      <Button onClick={() => { navigator.clipboard.writeText(lastUploadUrl); toast({ title: "Identity Isolated" }); }} className="w-full h-12 bg-emerald-500 text-white font-black uppercase text-[10px] rounded-xl shadow-lg">
+                      <Button onClick={() => { navigator.clipboard.writeText(lastUploadUrl || ''); toast({ title: "Identity Isolated" }); }} className="w-full h-12 bg-emerald-500 text-white font-black uppercase text-[10px] rounded-xl shadow-lg">
                          <Copy className="w-4 h-4 mr-2" /> Copy Link
                       </Button>
                    </div>
@@ -390,7 +413,7 @@ export default function TempUploadPage() {
                 <ShieldAlert className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                    <h4 className="text-[11px] font-black uppercase text-amber-700 tracking-widest leading-none">Authentication Offline</h4>
-                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Login to synchronize your upload matrix across the studio network permanently.</p>
+                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Login to save history permanently across all devices.</p>
                 </div>
              </div>
            )}
@@ -429,7 +452,7 @@ export default function TempUploadPage() {
                  </div>
               ) : history.length === 0 ? (
                  <div className="p-32 text-center flex flex-col items-center gap-8 opacity-10 grayscale border-2 border-dashed border-white/5 rounded-[4rem]">
-                    <Activity className="w-20 h-20 text-primary" />
+                    <Activity className="w-12 h-12 text-primary" />
                     <p className="text-xl font-headline font-black uppercase tracking-[0.4em]">Zero Matrix Detected</p>
                  </div>
               ) : (
@@ -457,11 +480,9 @@ export default function TempUploadPage() {
                            </div>
 
                            <div className="flex items-center gap-3 shrink-0">
-                              <Button variant="ghost" size="icon" onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Isolated" }); }} className="h-10 w-10 text-foreground/20 hover:text-primary rounded-xl"><Copy className="w-4 h-4" /></Button>
-                              <Button asChild variant="ghost" size="icon" className="h-10 w-10 text-foreground/20 hover:text-primary rounded-xl">
-                                 <a href={item.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4" /></a>
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => deleteRecord(item.id)} className="h-10 w-10 text-foreground/20 hover:text-red-500 rounded-xl"><Trash2 className="w-4 h-4" /></Button>
+                              <button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Copied" }); }} className="p-2 text-foreground/10 hover:text-primary"><Copy className="w-4 h-4" /></button>
+                              <a href={item.url} target="_blank" rel="noopener noreferrer" className="p-2 text-foreground/10 hover:text-primary"><ExternalLink className="w-4 h-4" /></a>
+                              <button onClick={() => deleteRecord(item.id)} className="p-2 text-foreground/10 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                               <button onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} className="p-2 text-foreground/10 hover:text-primary">
                                  {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               </button>
@@ -522,7 +543,7 @@ export default function TempUploadPage() {
            {/* Stats Matrix */}
            {history.length > 0 && (
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10">
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                    <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                       <ShieldCheck className="w-6 h-6" />
                    </div>
@@ -531,7 +552,7 @@ export default function TempUploadPage() {
                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Metadata is held strictly within your sovereign identity node. No analytics are performed on your file content.</p>
                    </div>
                 </div>
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                    <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                       <Clock className="w-6 h-6" />
                    </div>
@@ -540,7 +561,7 @@ export default function TempUploadPage() {
                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Manage TTL (Time-To-Live) for your assets with precision alerts to prevent broken external links.</p>
                    </div>
                 </div>
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                    <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                       <Globe className="w-6 h-6" />
                    </div>
