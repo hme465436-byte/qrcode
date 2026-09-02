@@ -40,11 +40,11 @@ import {
   Star,
   Edit3,
   Check,
-  Paperclip
+  Paperclip,
+  Cloud
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -64,13 +64,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 
 const formatSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes';
@@ -167,7 +160,8 @@ export default function FILEHOSTPage() {
   const processedHistory = useMemo(() => {
     return history
       .filter(item => {
-        const matchesSearch = (item.customName || item.name).toLowerCase().includes(searchQuery.toLowerCase());
+        const nameToSearch = (item.customName || item.name).toLowerCase();
+        const matchesSearch = nameToSearch.includes(searchQuery.toLowerCase());
         const matchesFilter = filterType === 'all' || item.data.mime.toLowerCase().includes(filterType);
         return matchesSearch && matchesFilter;
       })
@@ -386,7 +380,7 @@ export default function FILEHOSTPage() {
                         <KeyRound className="w-4 h-4 text-primary" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-primary">Private Bot Protocol</span>
                      </div>
-                     <button onClick={() => setShowAddNode(false)} className="text-primary/40 hover:text-primary"><X className="w-4 h-4" /></button>
+                     <button onClick={() => setShowCustomNode(false)} className="text-primary/40 hover:text-primary"><X className="w-4 h-4" /></button>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">
                      <div className="space-y-4">
@@ -504,7 +498,7 @@ export default function FILEHOSTPage() {
              <div className="space-y-6">
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
-                      <History className="w-5 h-5 text-primary" />
+                      <History className="w-4 h-4 text-primary" />
                       <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60 tracking-tight">Identity Archive</h3>
                    </div>
                    <div className="flex items-center gap-4">
@@ -534,7 +528,7 @@ export default function FILEHOSTPage() {
                             className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
                           >
                              <div className="flex items-center gap-5 min-w-0">
-                                <div className="w-12 h-12 rounded-2xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative group/thumb">
+                                <div className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative group/thumb">
                                    {getFileIcon(item.data.mime)}
                                 </div>
                                 <div className="min-w-0">
