@@ -6,6 +6,7 @@ import {
   CheckCircle2, 
   Copy, 
   Loader2, 
+  Info, 
   AlertCircle,
   Zap,
   Activity,
@@ -34,14 +35,16 @@ import {
   FileImage,
   FileVideo,
   FileAudio,
-  FileArchive,
   FileText,
+  FileArchive,
   File as FileIcon,
   Star,
   Edit3,
   Check,
   Paperclip,
-  Cloud
+  Cloud,
+  Trash2,
+  Link as LinkIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -355,8 +358,9 @@ export default function FILEHOSTPage() {
       </div>
 
       {!user && !authLoading ? (
-        <Card className="glass-card border-border shadow-2xl p-12 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
-          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl relative z-10">
+        <Card className="glass-card border-border shadow-2xl p-12 sm:p-24 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/10 relative z-10">
              <Lock className="w-8 h-8" />
           </div>
           <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Authentication Required</h2>
@@ -612,28 +616,6 @@ export default function FILEHOSTPage() {
           </div>
         </div>
       )}
-
-      <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
-        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
-          <AlertDialogHeader className="space-y-4">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
-               <Unplug className="w-8 h-8" />
-            </div>
-            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
-               Disconnect Host
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
-              Are you sure you want to disconnect your private host node? This action is specific to your current identity session.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
-            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { disconnectNode(); setShowDisconnectConfirm(false); }} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">
-              Disconnect
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
