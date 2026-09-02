@@ -6,17 +6,19 @@ service cloud.firestore {
       allow read, write: if true;
     }
     match /pages/{id} {
-      // Pages are publicly readable and writable by anyone for instant hosting
       allow read, write: if true;
     }
     match /file_host_history/{id} {
-      // Users can only manage their own history records
       allow read, delete: if request.auth != null && request.auth.uid == resource.data.uid;
       allow update: if request.auth != null && request.auth.uid == resource.data.uid && request.resource.data.uid == request.auth.uid;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
     }
     match /image_to_url_history/{id} {
-      // Users can only manage their own history records
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow update: if request.auth != null && request.auth.uid == resource.data.uid && request.resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+    match /temp_upload_history/{id} {
       allow read, delete: if request.auth != null && request.auth.uid == resource.data.uid;
       allow update: if request.auth != null && request.auth.uid == resource.data.uid && request.resource.data.uid == request.auth.uid;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;

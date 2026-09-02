@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -117,7 +118,8 @@ import {
   History,
   Edit3,
   MessageSquare,
-  Database
+  Database,
+  CloudUpload
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -152,6 +154,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
     category: 'generators'
+  },
+  { 
+    href: '/temp-upload', 
+    icon: CloudUpload, 
+    title: 'Temp Upload', 
+    desc: 'Connect ImgBB, GoFile, Pixeldrain or Cloudflare R2 and upload files with expiry reminders.', 
+    label: 'STORAGE', 
+    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
+    glowClass: 'bg-indigo-500/10',
+    keywords: ['temp upload', 'cloudflare r2', 'imgbb', 'gofile', 'pixeldrain', 'storage', 'file host', 'reminders'],
+    category: 'utilities'
   },
   { 
     href: '/whatsapp-link-generator', 
@@ -1381,7 +1394,7 @@ const TOOLS: Tool[] = [
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
     color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
-    glowClass: 'bg-teal-500/10',
+    glowClass: 'bg-blue-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
   },
@@ -1435,7 +1448,7 @@ const TOOLS: Tool[] = [
     title: 'AOB Converter', 
     desc: 'Professional AOB pattern conversion utility.', 
     label: 'DEV', 
-    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-600/20',
+    color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20',
     glowClass: 'bg-cyan-500/10',
     keywords: ['aob', 'code', 'binary', 'convert', 'pattern', 'trainer', 'hex', 'c#', 'c++', 'python', 'array of bytes'],
     category: 'utilities'
@@ -1618,7 +1631,7 @@ export default function Home() {
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
       'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
       'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
-      'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data'
+      'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain'
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);

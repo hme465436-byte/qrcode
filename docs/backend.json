@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "SignalingRoom": {
@@ -5,28 +6,15 @@
       "description": "A temporary room for WebRTC signaling exchange.",
       "type": "object",
       "properties": {
-        "offer": {
-          "type": "string"
-        },
-        "answer": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
+        "offer": { "type": "string" },
+        "answer": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
         "fileMeta": {
           "type": "object",
           "properties": {
-            "name": {
-              "type": "string"
-            },
-            "size": {
-              "type": "number"
-            },
-            "type": {
-              "type": "string"
-            }
+            "name": { "type": "string" },
+            "size": { "type": "number" },
+            "type": { "type": "string" }
           }
         }
       }
@@ -36,15 +24,9 @@
       "description": "An ICE candidate for WebRTC connection.",
       "type": "object",
       "properties": {
-        "candidate": {
-          "type": "string"
-        },
-        "sdpMLineIndex": {
-          "type": "number"
-        },
-        "sdpMid": {
-          "type": "string"
-        }
+        "candidate": { "type": "string" },
+        "sdpMLineIndex": { "type": "number" },
+        "sdpMid": { "type": "string" }
       }
     },
     "TempRoom": {
@@ -52,19 +34,9 @@
       "description": "A temporary room for live text synchronization.",
       "type": "object",
       "properties": {
-        "peerId": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "waiting",
-            "connected"
-          ]
-        },
-        "createdAt": {
-          "type": "number"
-        }
+        "peerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["waiting", "connected"] },
+        "createdAt": { "type": "number" }
       }
     },
     "HostedPage": {
@@ -72,112 +44,45 @@
       "description": "A static HTML page or code block hosted via URL.",
       "type": "object",
       "properties": {
-        "html": {
-          "type": "string",
-          "description": "The code content of the page."
-        },
-        "title": {
-          "type": "string",
-          "description": "Title for the page."
-        },
-        "language": {
-          "type": "string",
-          "description": "The language protocol (html, python, etc)."
-        },
-        "uid": {
-          "type": "string",
-          "description": "The owner's unique identity token (optional for anonymous)."
-        },
-        "createdAt": {
-          "type": "object",
-          "description": "Firestore server timestamp."
-        }
+        "html": { "type": "string", "description": "The code content of the page." },
+        "title": { "type": "string", "description": "Title for the page." },
+        "language": { "type": "string", "description": "The language protocol (html, python, etc)." },
+        "uid": { "type": "string", "description": "The owner's unique identity token (optional for anonymous)." },
+        "createdAt": { "type": "object", "description": "Firestore server timestamp." }
       },
-      "required": [
-        "html",
-        "createdAt"
-      ]
+      "required": ["html", "createdAt"]
     },
     "FileHostHistory": {
       "title": "File Host History",
       "description": "Metadata for files hosted on external providers like Telegram.",
       "type": "object",
       "properties": {
-        "uid": {
-          "type": "string",
-          "description": "The user ID of the file owner."
-        },
-        "name": {
-          "type": "string",
-          "description": "Original filename."
-        },
-        "customName": {
-          "type": "string",
-          "description": "User-assigned label."
-        },
-        "size": {
-          "type": "number",
-          "description": "File size in bytes."
-        },
-        "mime": {
-          "type": "string",
-          "description": "MIME type of the file."
-        },
-        "fileId": {
-          "type": "string",
-          "description": "Provider-specific file identifier (e.g. Telegram file_id)."
-        },
-        "directUrl": {
-          "type": "string",
-          "description": "Direct download URL if available."
-        },
-        "isFavorite": {
-          "type": "boolean"
-        },
-        "timestamp": {
-          "type": "number",
-          "description": "Creation epoch."
-        },
-        "provider": {
-          "type": "string",
-          "description": "The hosting provider used (e.g. Telegram)."
-        }
+        "uid": { "type": "string", "description": "The user ID of the file owner." },
+        "name": { "type": "string", "description": "Original filename." },
+        "customName": { "type": "string", "description": "User-assigned label." },
+        "size": { "type": "number", "description": "File size in bytes." },
+        "mime": { "type": "string", "description": "MIME type of the file." },
+        "fileId": { "type": "string", "description": "Provider-specific file identifier (e.g. Telegram file_id)." },
+        "directUrl": { "type": "string", "description": "Direct download URL if available." },
+        "isFavorite": { "type": "boolean" },
+        "timestamp": { "type": "number", "description": "Creation epoch." },
+        "provider": { "type": "string", "description": "The hosting provider used (e.g. Telegram)." }
       },
-      "required": [
-        "uid",
-        "name",
-        "timestamp"
-      ]
+      "required": ["uid", "name", "timestamp"]
     },
     "ImageToUrlHistory": {
       "title": "Image to URL History",
       "description": "Metadata for images hosted on external providers like ImgBB.",
       "type": "object",
       "properties": {
-        "uid": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "thumb": {
-          "type": "string"
-        },
-        "size": {
-          "type": "number"
-        },
-        "mime": {
-          "type": "string"
-        },
-        "timestamp": {
-          "type": "number"
-        },
-        "isFavorite": {
-          "type": "boolean"
-        },
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "thumb": { "type": "string" },
+        "size": { "type": "number" },
+        "mime": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "isFavorite": { "type": "boolean" },
         "links": {
           "type": "object",
           "properties": {
@@ -189,18 +94,30 @@
           }
         }
       },
-      "required": [
-        "uid",
-        "url",
-        "timestamp"
-      ]
+      "required": ["uid", "url", "timestamp"]
+    },
+    "TempUploadHistory": {
+      "title": "Temp Upload History",
+      "description": "Metadata for files uploaded via connected storage providers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "size": { "type": "number" },
+        "provider": { "type": "string" },
+        "url": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "reminderDate": { "type": "string", "format": "date-time" },
+        "reminderNote": { "type": "string" }
+      },
+      "required": ["uid", "name", "url", "timestamp"]
     }
   },
   "auth": {
-    "providers": [
-      "anonymous",
-      "email"
-    ]
+    "providers": ["anonymous", "email"]
   },
   "firestore": {
     "/p2p_signaling/{roomId}": {
@@ -230,6 +147,10 @@
     "/image_to_url_history/{docId}": {
       "schema": "#/entities/ImageToUrlHistory",
       "description": "Secure archive of hosted image metadata."
+    },
+    "/temp_upload_history/{docId}": {
+      "schema": "#/entities/TempUploadHistory",
+      "description": "Secure archive of temporary file metadata."
     }
   }
 }
