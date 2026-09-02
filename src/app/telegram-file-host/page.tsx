@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -118,7 +117,7 @@ export default function FILEHOSTPage() {
   const [error, setError] = useState<string | null>(null);
   
   // Custom Node State
-  const [showCustomNode, setShowCustomNode] = useState(false);
+  const [showAddNode, setShowAddNode] = useState(false);
   const [customToken, setCustomToken] = useState('');
   const [customChatId, setCustomChatId] = useState('');
   const [isTestingNode, setIsTestingNode] = useState(false);
@@ -142,7 +141,6 @@ export default function FILEHOSTPage() {
   // --- Firestore Sync Matrix ---
   const historyQuery = useMemo(() => {
     if (!db || !user) return null;
-    // Removing orderBy to avoid index requirement; sorting happens client-side in processedHistory
     return query(
       collection(db, 'file_host_history'),
       where('uid', '==', user.uid)
@@ -235,7 +233,6 @@ export default function FILEHOSTPage() {
       .sort((a, b) => {
         if (a.isFavorite && !b.isFavorite) return -1;
         if (!a.isFavorite && b.isFavorite) return 1;
-        // Client-side sort by timestamp descending
         return b.timestamp - a.timestamp;
       });
   }, [history, searchQuery, filterType]);
@@ -576,7 +573,7 @@ export default function FILEHOSTPage() {
                     className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                   >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                    Execute Transmission
+                    Upload
                   </Button>
                   {(file || result) && (
                     <button onClick={handleClearWorkspace} className="w-full text-[9px] font-black uppercase text-foreground/20 hover:text-primary transition-all">Clear Workspace</button>
@@ -779,10 +776,7 @@ export default function FILEHOSTPage() {
           <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => {
-                disconnectNode();
-                setShowDisconnectConfirm(false);
-              }}
+              onClick={disconnectNode}
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
               Disconnect
