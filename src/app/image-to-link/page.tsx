@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Link as LinkIcon, 
-  Upload, 
+  Upload as UploadIcon, 
   Trash2, 
   Globe, 
   CheckCircle2, 
@@ -348,7 +348,6 @@ export default function ImageToLinkPage() {
                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
                 </Button>
               )}
-           </div>
         </div>
       </div>
 
@@ -483,7 +482,7 @@ export default function ImageToLinkPage() {
                   className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
                 >
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                  Execute Transmission
+                  Upload
                 </Button>
 
                 <div className="flex items-center gap-3 px-2">
@@ -515,7 +514,7 @@ export default function ImageToLinkPage() {
              {links && (
                <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl overflow-hidden relative flex flex-col animate-in zoom-in-95 duration-500">
                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
-                  <CardHeader className="py-6 border-b border-emerald-500/10 bg-emerald-500/5 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
+                  <CardHeader className="py-8 border-b border-emerald-500/10 bg-emerald-500/5 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
                      <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-inner">
                            <CheckCircle2 className="w-5 h-5" />
@@ -748,4 +747,3 @@ export default function ImageToLinkPage() {
     </div>
   );
 }
-
