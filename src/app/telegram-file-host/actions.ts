@@ -3,10 +3,7 @@
 /**
  * @fileOverview Advanced Server Actions for File Host.
  * Implements a multi-node redundancy protocol (Telegram -> Catbox -> ImgBB).
- * Increased duration to handle large binary payloads.
  */
-
-export const maxDuration = 60; // Increase server action timeout to 60s
 
 export interface FileLinkMatrix {
   fileId?: string;

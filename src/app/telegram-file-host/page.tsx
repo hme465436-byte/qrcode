@@ -17,7 +17,6 @@ import {
   User,
   AlertTriangle,
   History,
-  Maximize2,
   X,
   ChevronDown,
   ChevronUp,
@@ -41,7 +40,6 @@ import {
   Star,
   Edit3,
   Check,
-  Paperclip,
   Cloud,
   Trash2,
   Link as LinkIcon,
@@ -140,8 +138,11 @@ export default function FILEHOSTPage() {
     if (user) {
       const saved = localStorage.getItem(`mykit_host_history_v2_${user.uid}`);
       if (saved) {
-        try { setHistory(JSON.parse(saved)); } catch (e) {}
+        try { setHistory(JSON.parse(saved)); } catch (e) {
+          console.error("Archive sync error.");
+        }
       }
+
       const savedNode = localStorage.getItem(`mykit_custom_node_${user.uid}`);
       if (savedNode) {
         try { setActiveNode(JSON.parse(savedNode)); } catch (e) {}
@@ -181,11 +182,6 @@ export default function FILEHOSTPage() {
       });
   }, [history, searchQuery, filterType]);
 
-  const storageStats = useMemo(() => ({
-    count: history.length,
-    size: history.reduce((acc, curr) => acc + curr.data.size, 0)
-  }), [history]);
-
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -201,7 +197,7 @@ export default function FILEHOSTPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImage(reader.result as string);
-        toast({ title: "Asset Buffered", description: "Identity ready for transmission." });
+        toast({ title: "Asset Buffered", description: "Visual identity ready for transmission." });
       };
       reader.readAsDataURL(selectedFile);
     }
@@ -249,7 +245,8 @@ export default function FILEHOSTPage() {
           data: data
         };
         
-        saveHistoryToDisk([newItem, ...history].slice(0, 50));
+        const nextHistory = [newItem, ...history].slice(0, 50);
+        saveHistoryToDisk(nextHistory);
         
         if (newItem.data.directUrl) {
           setGeneratedUrls(prev => ({ ...prev, [newItem.id]: newItem.data.directUrl! }));
@@ -268,6 +265,25 @@ export default function FILEHOSTPage() {
       setIsProcessing(false);
       setStatusLabel('Standby');
     }
+  };
+
+  const toggleFavorite = (id: string) => {
+    const next = history.map(h => h.id === id ? { ...h, isFavorite: !h.isFavorite } : h);
+    saveHistoryToDisk(next);
+  };
+
+  const startRename = (item: HistoryItem) => {
+    setEditingId(item.id);
+    setEditValue(item.customName || item.name);
+  };
+
+  const saveRename = () => {
+    if (!editingId) return;
+    const next = history.map(h => h.id === editingId ? { ...h, customName: editValue } : h);
+    saveHistoryToDisk(next);
+    setEditingId(null);
+    setEditValue('');
+    toast({ title: "Identity Updated" });
   };
 
   const handleGenerateLink = async (item: HistoryItem) => {
@@ -313,23 +329,11 @@ export default function FILEHOSTPage() {
     }
   };
 
-  const toggleFavorite = (id: string) => {
-    const next = history.map(h => h.id === id ? { ...h, isFavorite: !h.isFavorite } : h);
-    saveHistoryToDisk(next);
-  };
-
-  const startRename = (item: HistoryItem) => {
-    setEditingId(item.id);
-    setEditValue(item.customName || item.name);
-  };
-
-  const saveRename = () => {
-    if (!editingId) return;
-    const next = history.map(h => h.id === editingId ? { ...h, customName: editValue } : h);
-    saveHistoryToDisk(next);
-    setEditingId(null);
-    setEditValue('');
-    toast({ title: "Identity Updated" });
+  const disconnectNode = () => {
+    setActiveNode(null);
+    localStorage.removeItem(`mykit_custom_node_${user?.uid}`);
+    toast({ title: "Node Decoupled" });
+    setShowDisconnectConfirm(false);
   };
 
   const handleCopyText = (text: string, label: string) => {
@@ -408,7 +412,7 @@ export default function FILEHOSTPage() {
                   <CardContent className="p-6 space-y-6">
                      <div className="space-y-4">
                         <div className="space-y-2">
-                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Bot API Token</Label>
+                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Bot Token</Label>
                            <Input 
                             value={customToken}
                             onChange={e => setCustomToken(e.target.value)}
@@ -522,6 +526,7 @@ export default function FILEHOSTPage() {
             </div>
           </div>
 
+          {/* Right Column: Output & Archive */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-10">
              {result && (
                <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-500">
@@ -562,6 +567,7 @@ export default function FILEHOSTPage() {
                </Card>
              )}
 
+             {/* Archives Section */}
              <div className="space-y-6 pt-4">
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
@@ -584,8 +590,13 @@ export default function FILEHOSTPage() {
                        <Card key={item.id} className={cn("glass-card border-border shadow-xl overflow-hidden group/row transition-all duration-300", item.isFavorite && "border-primary/10")}>
                           <div onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all">
                              <div className="flex items-center gap-5 min-w-0">
-                                <div className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
-                                   {getFileIcon(item.data.mime)}
+                                <div className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative group/thumb">
+                                   <div className="w-full h-full flex items-center justify-center">
+                                      {getFileIcon(item.data.mime)}
+                                   </div>
+                                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity">
+                                      <Eye className="w-4 h-4 text-white/60" />
+                                   </div>
                                 </div>
                                 <div className="min-w-0">
                                    {editingId === item.id ? (
@@ -671,8 +682,8 @@ export default function FILEHOSTPage() {
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">Are you sure you want to disconnect your private host node?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
-            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Abort</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setActiveNode(null); localStorage.removeItem(`mykit_custom_node_${user?.uid}`); setShowDisconnectConfirm(false); }} className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Disconnect</AlertDialogAction>
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
+            <AlertDialogAction onClick={disconnectNode} className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Disconnect</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -685,4 +696,3 @@ export default function FILEHOSTPage() {
     </div>
   );
 }
-
