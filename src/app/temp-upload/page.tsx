@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -27,7 +26,8 @@ import {
   Unplug,
   ShieldAlert,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -225,7 +225,7 @@ export default function TempUploadPage() {
         setIsProcessing(false);
       }
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(base64);
   };
 
   // --- History & Reminder Management ---
@@ -301,7 +301,7 @@ export default function TempUploadPage() {
                        <h3 className="text-sm font-bold text-foreground uppercase tracking-tight">{PROVIDERS.find(p => p.id === activeProvider)?.label} Setup</h3>
                        {connectedIds.has(activeProvider) && (
                          <Button variant="ghost" size="sm" onClick={() => disconnectProvider(activeProvider)} className="text-red-500/60 hover:text-red-500 hover:bg-red-500/10 text-[8px] font-black uppercase">
-                            <Unplug className="w-3 h-3 mr-1.5" /> Decouple
+                            <Unplug className="w-3.5 h-3.5 mr-1.5" /> Decouple
                          </Button>
                        )}
                     </div>
@@ -548,7 +548,7 @@ export default function TempUploadPage() {
                       <ShieldCheck className="w-6 h-6" />
                    </div>
                    <div className="space-y-1">
-                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest">Zero Tracking</h4>
+                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Zero Tracking</h4>
                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Metadata is held strictly within your sovereign identity node. No analytics are performed on your file content.</p>
                    </div>
                 </div>
@@ -575,29 +575,12 @@ export default function TempUploadPage() {
         </main>
       </div>
 
-      <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
-        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
-          <AlertDialogHeader className="space-y-4">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
-               <X className="w-8 h-8" />
-            </div>
-            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Terminate Link</AlertDialogTitle>
-            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
-              This will decouple the active storage node from your local studio session. Configuration data will be purged.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-8 flex gap-3">
-            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Abort</AlertDialogCancel>
-            <AlertDialogAction onClick={() => disconnectProvider(activeProvider)} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Disconnect</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
