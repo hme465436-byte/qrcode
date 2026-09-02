@@ -315,7 +315,6 @@ export default function ImageToLinkPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
-      {/* Header Matrix */}
       <div className="mb-16 animate-reveal">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
           <Globe className="w-3.5 h-3.5" /> Web Hosting Suite
@@ -348,6 +347,7 @@ export default function ImageToLinkPage() {
                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
                 </Button>
               )}
+           </div>
         </div>
       </div>
 
@@ -381,7 +381,6 @@ export default function ImageToLinkPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start animate-in fade-in duration-1000">
-          {/* Left Column: Intake & Configuration */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8">
             {showCustomNode && (
                <Card className="glass-card border-primary/40 bg-primary/[0.03] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
@@ -507,10 +506,7 @@ export default function ImageToLinkPage() {
             </div>
           </div>
 
-          {/* Right Column: Output & Archive */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-10">
-             
-             {/* Current Results Section */}
              {links && (
                <Card className="glass-card border-emerald-500/20 bg-emerald-500/[0.02] shadow-2xl overflow-hidden relative flex flex-col animate-in zoom-in-95 duration-500">
                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
@@ -527,7 +523,6 @@ export default function ImageToLinkPage() {
                   </CardHeader>
                   <CardContent className="p-8 sm:p-12">
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
-                        {/* Preview Sub-card */}
                         <div className="space-y-6">
                            <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] ml-1">Visual Master Preview</Label>
                            <div className="aspect-square w-full rounded-[2.5rem] bg-white dark:bg-black/40 border border-emerald-500/10 shadow-2xl p-4 flex items-center justify-center relative group/preview">
@@ -540,7 +535,6 @@ export default function ImageToLinkPage() {
                            </div>
                         </div>
 
-                        {/* Codes Matrix */}
                         <div className="space-y-6">
                           <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] ml-1">Protocol Matrix</Label>
                           <div className="space-y-4">
@@ -578,7 +572,6 @@ export default function ImageToLinkPage() {
                </Card>
              )}
 
-             {/* Archives Section */}
              <div className="space-y-6 pt-4">
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
@@ -730,19 +723,6 @@ export default function ImageToLinkPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .bg-checkered {
-          background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
-                            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
-                            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
-          background-size: 20px 20px;
-        }
-        .dark .bg-checkered {
-           background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(-45deg, #111113 25%, transparent 25%), 
-                            linear-gradient(45deg, transparent 75%, #111113 75%), 
-                            linear-gradient(-45deg, transparent 75%, #111113 75%);
-        }
       `}</style>
     </div>
   );
