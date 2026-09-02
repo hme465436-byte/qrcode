@@ -187,6 +187,7 @@ export default function FILEHOSTPage() {
         toast({ variant: "destructive", title: "Heavy Payload", description: "Max limit is 100MB for global fallback." });
         return;
       }
+      
       setFile(selectedFile);
       setResult(null);
       setError(null);
@@ -276,7 +277,7 @@ export default function FILEHOSTPage() {
     }
   };
 
-  const handleTestAndConnect = async () => {
+  const handleTestAndConnectNode = async () => {
     if (!customToken.trim() || !customChatId.trim()) return;
     setIsTestingNode(true);
     try {
@@ -297,10 +298,10 @@ export default function FILEHOSTPage() {
     }
   };
 
-  const disconnectNode = () => {
+  const disconnectNode = (id: string) => {
     setActiveNode(null);
     localStorage.removeItem(`mykit_custom_node_${user?.uid}`);
-    toast({ title: "Default Protocol Restored" });
+    toast({ title: "Node Decoupled" });
   };
 
   const toggleFavorite = (id: string) => {
@@ -409,7 +410,7 @@ export default function FILEHOSTPage() {
                         </div>
                      </div>
                      <div className="flex flex-col gap-3">
-                        <Button onClick={handleTestAndConnect} disabled={isTestingNode || !customToken || !customChatId} className="h-12 w-full bg-primary text-white font-black uppercase text-[10px] rounded-xl shadow-lg">
+                        <Button onClick={handleTestAndConnectNode} disabled={isTestingNode || !customToken || !customChatId} className="h-12 w-full bg-primary text-white font-black uppercase text-[10px] rounded-xl shadow-lg">
                            {isTestingNode ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />} Validate & Connect
                         </Button>
                         {activeNode && (
@@ -503,7 +504,7 @@ export default function FILEHOSTPage() {
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
                       <History className="w-4 h-4 text-primary" />
-                      <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60 tracking-tight">Identity Archive</h3>
+                      <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight">Identity Archive</h3>
                    </div>
                    <div className="flex items-center gap-4">
                       <div className="px-4 py-2 rounded-2xl bg-secondary/50 border border-border text-center min-w-[100px]">
@@ -616,6 +617,35 @@ export default function FILEHOSTPage() {
           </div>
         </div>
       )}
+
+      {/* Disconnect Alert */}
+      <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <Unplug className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               Disconnect Host
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+              Are you sure you want to disconnect your private host node? This action is specific to your current identity session.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                disconnectNode(activeNode!.token);
+                setShowDisconnectConfirm(false);
+              }}
+              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
