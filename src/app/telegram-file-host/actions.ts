@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -25,22 +26,30 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
     telegramForm.append('document', file);
     telegramForm.append('caption', `📁 File: ${file.name}\n⚖️ Size: ${(file.size / 1024).toFixed(1)} KB\n🚀 My Kit Tool Uplink`);
 
+    // Use strictly valid HTTPS endpoint
     const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
       method: 'POST',
       body: telegramForm,
-      cache: 'no-store'
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json',
+      }
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      return { success: false, error: "TELEGRAM_REJECTED", message: result.description || `Node Error: ${response.status}` };
+      return { 
+        success: false, 
+        error: "TELEGRAM_REJECTED", 
+        message: `Telegram Node: ${result.description || 'Access Denied'} (HTTP ${response.status})` 
+      };
     }
 
     const message = result.result;
     const fileData = message.document || message.audio || message.video || message.voice || (message.photo ? message.photo[message.photo.length - 1] : null);
 
-    if (!fileData?.file_id) throw new Error("Identity token retrieval failure.");
+    if (!fileData?.file_id) throw new Error("Identity token retrieval failure from remote host.");
 
     return { 
       success: true, 
@@ -53,7 +62,8 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
       }
     };
   } catch (error: any) {
-    return { success: false, error: "UPLINK_FAILURE", message: error.message };
+    console.error('Telegram Uplink Error:', error);
+    return { success: false, error: "UPLINK_FAILURE", message: `Protocol Error: ${error.message || 'Connection timed out'}` };
   }
 }
 
@@ -78,7 +88,7 @@ export async function uploadToCatbox(formData: FormData) {
     if (!response.ok) throw new Error(`Catbox Node Error: ${response.status}`);
 
     const url = await response.text();
-    if (!url.startsWith('http')) throw new Error("Invalid response from Catbox.");
+    if (!url.startsWith('http')) throw new Error("Invalid response from Catbox matrix.");
 
     return {
       success: true,
@@ -91,7 +101,7 @@ export async function uploadToCatbox(formData: FormData) {
       }
     };
   } catch (error: any) {
-    return { success: false, error: "CATBOX_FAILURE", message: error.message };
+    return { success: false, error: "CATBOX_FAILURE", message: `Catbox Node: ${error.message}` };
   }
 }
 
@@ -130,7 +140,7 @@ export async function uploadToImgBB(formData: FormData) {
       }
     };
   } catch (error: any) {
-    return { success: false, error: "IMGBB_FAILURE", message: error.message };
+    return { success: false, error: "IMGBB_FAILURE", message: `ImgBB Node: ${error.message}` };
   }
 }
 
@@ -169,7 +179,7 @@ export async function testConnection(token: string, chatId: string) {
     });
     
     const msgData = await testMsg.json();
-    if (!msgData.ok) throw new Error("Chat ID restricted or restricted node access.");
+    if (!msgData.ok) throw new Error("Chat ID restricted or node access denied.");
 
     return { success: true, botName: data.result.first_name, username: data.result.username };
   } catch (error: any) {

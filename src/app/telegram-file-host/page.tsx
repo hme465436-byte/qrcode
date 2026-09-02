@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -195,9 +196,9 @@ export default function FILEHOSTPage() {
       setError(null);
       
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onload = (event) => {
         setImage(reader.result as string);
-        toast({ title: "Asset Buffered", description: "Identity matrix ready for transmission." });
+        toast({ title: "Asset Buffered", description: "Visual identity ready for transmission." });
       };
       reader.readAsDataURL(selectedFile);
     }
@@ -210,26 +211,31 @@ export default function FILEHOSTPage() {
     setUploadProgress(10);
     setError(null);
     setResult(null);
-    setStatusLabel('Connecting Telegram Node...');
+    setStatusLabel('Connecting to primary node...');
 
     const formData = new FormData();
     formData.append('document', file);
 
     try {
+      // 1. Primary Attempt (Telegram - Custom or Default)
       let response = await uploadToTelegram(formData, activeNode?.token, activeNode?.chatId);
 
+      // 2. Fallback Sequence
       if (!response.success) {
-        setStatusLabel('Failing over to Catbox node...');
+        console.warn("Primary node restricted:", response.message);
+        setStatusLabel('Primary node restricted. Failing over...');
         setUploadProgress(40);
+        
         response = await uploadToCatbox(formData);
         
         if (!response.success && file.type.startsWith('image/')) {
-          setStatusLabel('Attempting ImgBB fallback...');
+          setStatusLabel('Attempting visual registry fallback...');
           setUploadProgress(70);
           response = await uploadToImgBB(formData);
         }
       }
 
+      // 3. Evaluation
       if (response.success && response.data) {
         setUploadProgress(100);
         const data = response.data as FileLinkMatrix;
@@ -253,11 +259,16 @@ export default function FILEHOSTPage() {
         setFile(null); 
         setImage(null);
       } else {
-        throw new Error(response.message || "All production nodes are restricted.");
+        throw new Error(response.message || "Protocol Failure: All production nodes are restricted.");
       }
     } catch (err: any) {
-      setError(err.message || "Protocol Failure.");
-      toast({ variant: "destructive", title: "Handshake Failed" });
+      console.error('Studio Upload Error:', err);
+      let msg = err.message || "Handshake failed.";
+      if (msg.toLowerCase().includes('fetch')) {
+        msg = "Network Protocol Error: The server node rejected the large file payload or timed out.";
+      }
+      setError(msg);
+      toast({ variant: "destructive", title: "Handshake Failed", description: msg });
     } finally {
       setIsProcessing(false);
       setStatusLabel('Standby');
@@ -295,7 +306,7 @@ export default function FILEHOSTPage() {
         const node = { token: customToken.trim(), chatId: customChatId.trim(), name: res.botName || 'Custom Node', username: res.username };
         setActiveNode(node);
         localStorage.setItem(`mykit_custom_node_${user?.uid}`, JSON.stringify(node));
-        setShowAddNode(false);
+        setShowCustomNode(false);
         toast({ title: "Node Active" });
       } else {
         toast({ variant: "destructive", title: "Handshake Failed", description: res.error });
@@ -339,7 +350,7 @@ export default function FILEHOSTPage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
-  const handleClear = () => {
+  const handleClearWorkspace = () => {
     setImage(null);
     setFile(null);
     setResult(null);
@@ -362,7 +373,7 @@ export default function FILEHOSTPage() {
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="file-host" />
            <Button 
-            onClick={() => setShowCustomNode(true)}
+            onClick={() => { setError(null); setCustomToken(''); setCustomChatId(''); setShowCustomNode(true); }}
             variant="outline" 
             size="sm" 
             className={cn(
@@ -408,7 +419,7 @@ export default function FILEHOSTPage() {
                   <CardContent className="p-6 space-y-6">
                      <div className="space-y-4">
                         <div className="space-y-2">
-                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Bot Token</Label>
+                           <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Bot API Token (from @BotFather)</Label>
                            <Input 
                             value={customToken}
                             onChange={e => setCustomToken(e.target.value)}
@@ -454,7 +465,7 @@ export default function FILEHOSTPage() {
                   onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files[0]) handleFileUpload({ target: { files: e.dataTransfer.files } } as any); }}
                   className={cn(
                     "relative h-64 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-secondary/30 overflow-hidden cursor-pointer group/upload",
-                    file && "border-solid border-primary/20 bg-background/50",
+                    image && "border-solid border-primary/20 bg-background/50",
                     isProcessing && "opacity-50 cursor-not-allowed"
                   )}
                 >
@@ -497,6 +508,9 @@ export default function FILEHOSTPage() {
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
                     Execute Transmission
                   </Button>
+                  {(file || result) && (
+                    <button onClick={handleClearWorkspace} className="w-full text-[9px] font-black uppercase text-foreground/20 hover:text-primary transition-all">Clear Workspace</button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -507,9 +521,9 @@ export default function FILEHOSTPage() {
                        <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Safe Failover Protocol</h4>
+                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Resilient Failover</h4>
                       <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
-                        Our studio uses a redundant multi-node stack. If Telegram is restricted, we automatically synchronize with the Catbox and ImgBB global registries.
+                        The studio automatically switches between multiple global hosting nodes to ensure high availability and protocol stability.
                       </p>
                     </div>
                 </div>
@@ -576,8 +590,8 @@ export default function FILEHOSTPage() {
                 <div className="flex items-center justify-between px-2">
                    <div className="flex items-center gap-3">
                       <History className="w-4 h-4 text-primary" />
-                      <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight">Identity Archive</h3>
-                   </div>
+                      <h3 className="text-xl font-headline font-black uppercase tracking-tight text-foreground/60 tracking-tight">Identity Archive</h3>
+                </div>
                    <div className="flex items-center gap-4">
                       <div className="px-4 py-2 rounded-2xl bg-secondary/50 border border-border text-center min-w-[100px]">
                          <p className="text-[10px] font-black text-foreground/40 uppercase leading-none">{storageStats.count} Units</p>
