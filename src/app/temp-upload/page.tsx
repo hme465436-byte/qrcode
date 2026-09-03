@@ -28,7 +28,7 @@ import {
   Server,
   Globe,
   Download,
-  FileText,
+  FileImage,
   FileVideo,
   FileAudio,
   FileArchive,
@@ -37,9 +37,12 @@ import {
   Clock,
   RotateCcw,
   Check,
-  FileImage,
   TrendingDown,
-  Maximize2
+  Maximize2,
+  Lock,
+  Eye,
+  EyeOff,
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,29 +88,29 @@ type ProviderId = 'r2' | 'imgbb' | 'gofile' | 'pixeldrain' | 'custom';
 interface ProviderConfig {
   id: ProviderId;
   label: string;
-  fields: { key: string; label: string; placeholder: string; type?: string }[];
+  fields: { key: string; label: string; placeholder: string; type?: string; isSecret?: boolean }[];
 }
 
 const PROVIDERS: ProviderConfig[] = [
   { id: 'imgbb', label: 'ImgBB', fields: [
-    { key: 'apiKey', label: 'API Key', placeholder: 'Enter ImgBB API Key' },
+    { key: 'apiKey', label: 'API Key', placeholder: 'Enter ImgBB API Key', isSecret: true },
   ]},
   { id: 'gofile', label: 'GoFile', fields: [
-    { key: 'token', label: 'API Token (Optional)', placeholder: 'Enter Account Token' },
+    { key: 'token', label: 'API Token (Optional)', placeholder: 'Enter Account Token', isSecret: true },
   ]},
   { id: 'pixeldrain', label: 'Pixeldrain', fields: [
-    { key: 'apiKey', label: 'API Key', placeholder: 'Enter API Key' },
+    { key: 'apiKey', label: 'API Key', placeholder: 'Enter API Key', isSecret: true },
   ]},
   { id: 'r2', label: 'Cloudflare R2', fields: [
     { key: 'accountId', label: 'Account ID', placeholder: 'Enter Account ID' },
-    { key: 'accessKey', label: 'Access Key', placeholder: 'Enter Access Key' },
-    { key: 'secretKey', label: 'Secret Key', placeholder: 'Enter Secret Key', type: 'password' },
+    { key: 'accessKey', label: 'Access Key', placeholder: 'Enter Access Key', isSecret: true },
+    { key: 'secretKey', label: 'Secret Key', placeholder: 'Enter Secret Key', type: 'password', isSecret: true },
     { key: 'bucket', label: 'Bucket Name', placeholder: 'e.g. static-assets' },
     { key: 'publicUrl', label: 'Public URL / Endpoint', placeholder: 'https://pub-xxx.r2.dev' },
   ]},
   { id: 'custom', label: 'Custom API', fields: [
     { key: 'url', label: 'API URL', placeholder: 'https://api.site.com/upload' },
-    { key: 'apiKey', label: 'API Key / Token', placeholder: 'Enter Token' },
+    { key: 'apiKey', label: 'API Key / Token', placeholder: 'Enter Token', isSecret: true },
     { key: 'headerKey', label: 'Header Key', placeholder: 'Authorization' },
     { key: 'responsePath', label: 'Response Link Path', placeholder: 'data.url' },
   ]},
@@ -138,6 +141,7 @@ export default function TempUploadPage() {
   const [activeProvider, setActiveProvider] = useState<ProviderId>('imgbb');
   const [configs, setConfigs] = useState<Record<string, any>>({});
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   
   // Upload State
   const [file, setFile] = useState<File | null>(null);
@@ -167,7 +171,8 @@ export default function TempUploadPage() {
 
     return list
       .filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const nameToSearch = item.name.toLowerCase();
+        const matchesSearch = nameToSearch.includes(searchQuery.toLowerCase());
         const matchesProvider = providerFilter === 'all' || item.provider === providerFilter;
         
         let matchesStatus = true;
@@ -367,13 +372,23 @@ export default function TempUploadPage() {
     toast({ title: "Studio Reset" });
   };
 
+  const toggleSecret = (fieldKey: string) => {
+    setShowSecrets(prev => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
+  };
+
+  const currentProviderConfig = useMemo(() => 
+    PROVIDERS.find(p => p.id === activeProvider), 
+  [activeProvider]);
+
+  const isCurrentConnected = connectedIds.has(activeProvider);
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-12 md:py-24 max-w-7xl">
+    <div className="container mx-auto px-4 sm:px-6 py-12 md:py-24 max-w-7xl bg-[#0a0a0c] min-h-screen">
       <div className="mb-20 animate-reveal text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
           <Cloud className="w-3.5 h-3.5" /> High-Entropy Storage Matrix
         </div>
-        <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tighter leading-none mb-4">
+        <h1 className="text-4xl md:text-7xl font-headline font-black text-white uppercase tracking-tighter leading-none mb-4">
           Temp <span className="text-primary italic">Upload Studio</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-lg font-medium max-w-2xl mx-auto leading-relaxed uppercase tracking-widest">
@@ -381,82 +396,105 @@ export default function TempUploadPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
         
-        {/* LEFT: Provider & Upload */}
-        <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
-           <Card className="glass-card border-border shadow-2xl overflow-visible relative group">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-              <CardHeader className="py-8 border-b border-border bg-secondary/30">
-                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Server className="w-5 h-5 text-primary" /> Node Calibration
-                 </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-10 space-y-8">
-                 <div className="space-y-4">
-                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Select Storage Protocol</Label>
-                    <Select value={activeProvider} onValueChange={(v: ProviderId) => setActiveProvider(v)}>
-                      <SelectTrigger className="h-14 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest shadow-inner">
-                        <SelectValue placeholder="Choose Provider" />
-                      </SelectTrigger>
-                      <SelectContent className="glass-card">
-                        {PROVIDERS.map(p => (
-                          <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase">
-                             <div className="flex items-center gap-2">
-                                {p.label}
-                                {connectedIds.has(p.id) && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                             </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                 </div>
+        {/* LEFT: Calibration & Intake */}
+        <div className="lg:col-span-5 space-y-12 animate-in fade-in slide-in-from-left-6 duration-700">
+           
+           {/* 1. Protocol Selection */}
+           <div className="space-y-6">
+              <div className="space-y-1.5 px-1">
+                 <Label className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Protocol</Label>
+                 <h2 className="text-2xl font-headline font-black text-white uppercase tracking-tight">Select Storage Node</h2>
+                 <p className="text-[10px] text-foreground/30 font-bold uppercase tracking-widest">Establish a secure uplink to your private storage node.</p>
+              </div>
 
-                 <div className="space-y-6 animate-in fade-in duration-300">
-                    <div className="flex items-center justify-between px-1">
-                       <h3 className="text-sm font-black text-foreground uppercase tracking-tight">{PROVIDERS.find(p => p.id === activeProvider)?.label} Config</h3>
-                       {connectedIds.has(activeProvider) && (
-                         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black text-emerald-500 uppercase tracking-widest">
-                            <ShieldCheck className="w-3.5 h-3.5" /> Connected
+              <div className="space-y-6">
+                <Select value={activeProvider} onValueChange={(v: ProviderId) => setActiveProvider(v)}>
+                  <SelectTrigger className="h-16 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-sm tracking-widest shadow-2xl focus:ring-primary/40">
+                    <SelectValue placeholder="Choose Provider" />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card border-white/10">
+                    {PROVIDERS.map(p => (
+                      <SelectItem key={p.id} value={p.id} className="text-[11px] font-black uppercase tracking-widest py-3">
+                         <div className="flex items-center gap-3">
+                            {p.label}
+                            {connectedIds.has(p.id) && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                          </div>
-                       )}
-                    </div>
-                    
-                    <div className="grid gap-5">
-                       {PROVIDERS.find(p => p.id === activeProvider)?.fields.map(f => (
-                         <div key={f.key} className="space-y-1.5">
-                            <Label className="text-[9px] font-black uppercase text-foreground/30 ml-1">{f.label}</Label>
-                            <Input 
-                              type={f.type || 'text'}
-                              value={configs[activeProvider]?.[f.key] || ''}
-                              onChange={e => setConfigs({ ...configs, [activeProvider]: { ...(configs[activeProvider] || {}), [f.key]: e.target.value } })}
-                              placeholder={f.placeholder}
-                              className="h-11 bg-secondary/50 border-border text-xs font-bold"
-                            />
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Configuration Card */}
+                {currentProviderConfig && (
+                   <Card className="glass-card border-border shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden animate-in zoom-in-95 duration-300">
+                      <CardHeader className="py-6 px-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
+                         <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
+                               <Settings2 className="w-5 h-5" />
+                            </div>
+                            <span className="text-[11px] font-black uppercase tracking-widest text-foreground">{currentProviderConfig.label} Matrix</span>
                          </div>
-                       ))}
-                    </div>
+                         <Badge variant="outline" className={cn(
+                           "text-[8px] font-black uppercase px-3 py-1 rounded-full tracking-widest transition-all",
+                           isCurrentConnected ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-white/5 text-white/20 border-white/5"
+                         )}>
+                            {isCurrentConnected ? 'CONNECTED' : 'NOT CONNECTED'}
+                         </Badge>
+                      </CardHeader>
+                      <CardContent className="p-8 space-y-8">
+                         <div className="grid gap-6">
+                            {currentProviderConfig.fields.map(f => (
+                              <div key={f.key} className="space-y-2 group/field">
+                                 <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1 tracking-widest">{f.label}</Label>
+                                 <div className="relative">
+                                    <Input 
+                                      type={f.isSecret && !showSecrets[f.key] ? 'password' : 'text'}
+                                      value={configs[activeProvider]?.[f.key] || ''}
+                                      onChange={e => setConfigs({ ...configs, [activeProvider]: { ...(configs[activeProvider] || {}), [f.key]: e.target.value } })}
+                                      placeholder={f.placeholder}
+                                      className="h-12 bg-black/40 border-border rounded-xl text-xs font-bold px-5 focus:ring-primary/20"
+                                    />
+                                    {f.isSecret && (
+                                       <button 
+                                        onClick={() => toggleSecret(f.key)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/20 hover:text-primary transition-colors"
+                                       >
+                                          {showSecrets[f.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                       </button>
+                                    )}
+                                 </div>
+                              </div>
+                            ))}
+                         </div>
 
-                    <div className="flex gap-3 pt-2">
-                       <Button onClick={saveConfig} className="flex-1 h-14 bg-primary text-white font-black uppercase text-[10px] rounded-2xl shadow-xl shadow-primary/30">
-                          <Zap className="w-4 h-4 mr-2" /> Connect Node
-                       </Button>
-                       {connectedIds.has(activeProvider) && (
-                         <Button variant="outline" onClick={() => setShowDisconnectConfirm(true)} className="h-14 w-14 rounded-2xl border-border bg-secondary hover:text-destructive">
-                            <Unplug className="w-5 h-5" />
-                         </Button>
-                       )}
-                    </div>
-                 </div>
-              </CardContent>
-           </Card>
+                         <div className="flex gap-3 pt-4">
+                            <Button 
+                              onClick={saveConfig} 
+                              className="flex-1 h-14 bg-primary text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                            >
+                               <Zap className="w-4 h-4 mr-2" /> Initialize Handshake
+                            </Button>
+                            {isCurrentConnected && (
+                              <Button variant="outline" onClick={() => setShowDisconnectConfirm(true)} className="h-14 w-14 rounded-2xl border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all">
+                                 <Unplug className="w-5 h-5" />
+                              </Button>
+                            )}
+                         </div>
+                      </CardContent>
+                   </Card>
+                )}
+              </div>
+           </div>
 
+           {/* 2. Transmission Intake */}
            <Card className={cn(
-             "glass-card border-border shadow-2xl transition-all duration-700 overflow-hidden",
-             !connectedIds.has(activeProvider) && "opacity-30 pointer-events-none grayscale"
+             "glass-card border-border shadow-2xl transition-all duration-700 overflow-hidden bg-[#060608]",
+             !isCurrentConnected && "opacity-20 pointer-events-none grayscale blur-[2px]"
            )}>
-              <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
+              <CardHeader className="py-6 border-b border-white/5 bg-secondary/30">
+                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-4 text-foreground">
                     <FileUp className="w-5 h-5 text-primary" /> Transmission Intake
                  </CardTitle>
               </CardHeader>
@@ -466,27 +504,29 @@ export default function TempUploadPage() {
                   onDragOver={e => e.preventDefault()}
                   onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) setFile(f); }}
                   className={cn(
-                    "relative h-48 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 flex flex-col items-center justify-center bg-secondary/30 cursor-pointer group/upload transition-all",
-                    file && "border-solid border-primary/20 bg-background/50"
+                    "relative h-56 rounded-[3rem] border-2 border-dashed border-white/5 hover:border-primary/40 flex flex-col items-center justify-center bg-black/40 cursor-pointer group/upload transition-all",
+                    file && "border-solid border-primary/20 bg-primary/[0.02]"
                   )}
                  >
                     {file ? (
-                      <div className="text-center p-6 space-y-2">
-                         <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-inner">
+                      <div className="text-center p-8 space-y-4 animate-in zoom-in">
+                         <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-inner">
                             {getFileIcon(file.type)}
                          </div>
-                         <p className="text-xs font-bold text-foreground truncate max-w-[240px] uppercase">{file.name}</p>
-                         <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">{formatSize(file.size)} detected</p>
+                         <div className="space-y-1 min-w-0">
+                            <p className="text-sm font-bold text-white truncate max-w-[280px] uppercase tracking-tight">{file.name}</p>
+                            <p className="text-[10px] font-black text-foreground/20 uppercase tracking-widest">{formatSize(file.size)} Payload</p>
+                         </div>
                       </div>
                     ) : (
-                      <div className="text-center space-y-4">
-                         <div className="w-16 h-16 rounded-2xl bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary transition-all mx-auto shadow-xl">
-                            <Upload className="w-8 h-8" />
-                         </div>
-                         <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover/upload:text-primary transition-colors">Select Payload</span>
-                            <p className="text-[8px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">Max 100MB Recommended</p>
-                         </div>
+                      <div className="text-center space-y-6 p-8">
+                        <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary group-hover/upload:scale-110 transition-all mx-auto shadow-xl">
+                          <Upload className="w-8 h-8" />
+                        </div>
+                        <div className="space-y-2">
+                           <span className="text-xs font-black uppercase text-foreground/40 tracking-[0.2em] group-hover/upload:text-primary transition-colors">Select Visual or Binary Payload</span>
+                           <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">ALL FORMATS SUPPORTED (Max 100MB)</p>
+                        </div>
                       </div>
                     )}
                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
@@ -494,45 +534,46 @@ export default function TempUploadPage() {
 
                  <div className="space-y-6">
                   {isProcessing && (
-                    <div className="space-y-2 animate-in slide-in-from-top-2">
-                       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
-                          <span className="animate-pulse flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Synthesizing Link...</span>
+                    <div className="space-y-3 animate-in slide-in-from-top-2">
+                       <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-primary">
+                          <span className="animate-pulse">Synthesizing Link...</span>
                           <span>{uploadProgress}%</span>
                        </div>
-                       <Progress value={uploadProgress} className="h-1.5" />
+                       <Progress value={uploadProgress} className="h-1.5 rounded-full" />
                     </div>
                   )}
                   <Button 
                     onClick={executeUpload} 
-                    disabled={isProcessing || !file || !connectedIds.has(activeProvider)}
-                    className="w-full h-16 bg-primary text-white font-black text-sm uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                    disabled={isProcessing || !file || !isCurrentConnected}
+                    className="w-full h-20 bg-primary text-white font-black text-lg uppercase tracking-[0.3em] rounded-[2.5rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all"
                   >
-                    {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Upload className="w-5 h-5 mr-3" />}
+                    {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Upload className="w-8 h-8 mr-4" />}
                     Upload
                   </Button>
                   {(file || lastUploadUrl) && (
-                    <button onClick={handleClearWorkspace} className="w-full text-[9px] font-black uppercase text-foreground/20 hover:text-primary transition-all">Clear Workspace</button>
+                    <button onClick={handleClearWorkspace} className="w-full text-[10px] font-black uppercase text-foreground/20 hover:text-primary transition-all tracking-widest">Clear Buffer</button>
                   )}
                 </div>
 
                 {lastUploadUrl && (
-                   <div className="p-8 rounded-[3rem] bg-emerald-500/10 border border-emerald-500/20 space-y-6 animate-in zoom-in-95 duration-500 shadow-2xl">
-                      <div className="flex items-center justify-between">
+                   <div className="p-8 rounded-[3rem] bg-emerald-500/10 border border-emerald-500/20 space-y-6 animate-in zoom-in-95 duration-500 shadow-2xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                      <div className="flex items-center justify-between relative z-10">
                          <div className="flex items-center gap-3">
-                            <Globe className="w-4 h-4 text-emerald-500" />
-                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Public Matrix URL</span>
+                            <Globe className="w-5 h-5 text-emerald-500" />
+                            <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest">Master URL Node</span>
                          </div>
-                         <button onClick={() => setLastUploadUrl(null)} className="text-emerald-500/40 hover:text-emerald-500"><X className="w-4 h-4" /></button>
+                         <button onClick={() => setLastUploadUrl(null)} className="text-emerald-500/40 hover:text-emerald-500"><X className="w-5 h-5" /></button>
                       </div>
-                      <div className="p-4 bg-black/40 rounded-xl border border-emerald-500/10 font-mono text-[10px] text-foreground/60 break-all shadow-inner">
+                      <div className="p-5 bg-black/60 rounded-2xl border border-emerald-500/20 font-mono text-xs font-bold text-foreground/60 break-all shadow-inner relative z-10">
                          {lastUploadUrl}
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button onClick={() => { navigator.clipboard.writeText(lastUploadUrl || ''); toast({ title: "Signal Isolated" }); }} className="h-12 bg-emerald-500 text-white font-black uppercase text-[10px] rounded-xl shadow-lg">
+                      <div className="grid grid-cols-2 gap-4 relative z-10">
+                        <Button onClick={() => { navigator.clipboard.writeText(lastUploadUrl || ''); toast({ title: "Protocol Isolated" }); }} className="h-14 bg-emerald-500 text-white font-black uppercase text-[10px] rounded-2xl shadow-xl shadow-emerald-500/20">
                            <Copy className="w-4 h-4 mr-2" /> Copy Link
                         </Button>
-                        <Button asChild variant="outline" className="h-12 border-emerald-500/20 text-emerald-500 font-black uppercase text-[10px]">
-                           <a href={lastUploadUrl} target="_blank" rel="noopener noreferrer"><Download className="w-4 h-4 mr-2" /> Download</a>
+                        <Button asChild variant="outline" className="h-14 border-emerald-500/30 text-emerald-500 font-black uppercase text-[10px] bg-white/5">
+                           <a href={lastUploadUrl} target="_blank" rel="noopener noreferrer"><Download className="w-4 h-4 mr-2" /> Save</a>
                         </Button>
                       </div>
                    </div>
@@ -541,114 +582,133 @@ export default function TempUploadPage() {
            </Card>
         </div>
 
-        {/* RIGHT: History & Registry */}
-        <main className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-2">
-              <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-primary shadow-inner border border-border">
-                    <History className="w-6 h-6" />
+        {/* RIGHT: Registry & History */}
+        <main className="lg:col-span-7 xl:col-span-8 space-y-12 animate-in fade-in slide-in-from-right-6 duration-1000">
+           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 px-2">
+              <div className="flex items-center gap-6">
+                 <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary shadow-inner border border-border">
+                    <History className="w-8 h-8" />
                  </div>
-                 <div>
-                    <h3 className="text-xl font-headline font-black uppercase text-foreground/60 tracking-tight leading-none">Identity Archive</h3>
-                    <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest mt-1">Registry of public file nodes</p>
+                 <div className="space-y-1">
+                    <h3 className="text-3xl font-headline font-black uppercase text-foreground/60 tracking-tighter leading-none">Identity Archive</h3>
+                    <p className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.4em]">Registry of active storage nodes</p>
                  </div>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
+              
+              <div className="flex flex-wrap items-center gap-4">
                  <div className="relative group/search">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
                     <Input 
                       placeholder="Filter registry..." 
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      className="h-10 pl-9 w-40 sm:w-64 bg-secondary/50 border-white/5 rounded-xl text-[9px] font-black uppercase"
+                      className="h-12 pl-12 w-full sm:w-80 bg-secondary/50 border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest"
                     />
                  </div>
-                 <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
-                    <SelectTrigger className="h-10 w-32 bg-secondary/50 border-white/5 text-[8px] font-black uppercase rounded-xl">
-                       <Filter className="w-3 h-3 mr-2 text-primary/40" />
-                       <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="glass-card">
-                       <SelectItem value="all" className="text-[9px] font-black uppercase">All Status</SelectItem>
-                       <SelectItem value="active" className="text-[9px] font-black uppercase">Active</SelectItem>
-                       <SelectItem value="expiring" className="text-[9px] font-black uppercase">Expiring</SelectItem>
-                       <SelectItem value="expired" className="text-[9px] font-black uppercase">Expired</SelectItem>
-                       <SelectItem value="reminder" className="text-[9px] font-black uppercase">Reminder</SelectItem>
-                    </SelectContent>
-                 </Select>
-                 {history.length > 0 && (
-                    <button onClick={clearAllHistory} className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500/60 hover:text-red-500 transition-all border border-red-500/10"><Trash2 className="w-4 h-4" /></button>
-                 )}
+                 
+                 <div className="flex items-center gap-3">
+                   <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+                      <SelectTrigger className="h-12 w-36 bg-secondary/50 border-white/5 text-[9px] font-black uppercase tracking-widest rounded-2xl">
+                         <Filter className="w-3.5 h-3.5 mr-2 text-primary/40" />
+                         <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="glass-card border-white/10">
+                         <SelectItem value="all" className="text-[10px] font-black uppercase">All Status</SelectItem>
+                         <SelectItem value="active" className="text-[10px] font-black uppercase">Active</SelectItem>
+                         <SelectItem value="expiring" className="text-[10px] font-black uppercase">Expiring</SelectItem>
+                         <SelectItem value="expired" className="text-[10px] font-black uppercase">Expired</SelectItem>
+                         <SelectItem value="reminder" className="text-[10px] font-black uppercase">Reminder</SelectItem>
+                      </SelectContent>
+                   </Select>
+                   
+                   {history.length > 0 && (
+                      <button onClick={clearAllHistory} className="h-12 w-12 flex items-center justify-center rounded-2xl bg-red-500/10 text-red-500/60 hover:text-red-500 transition-all border border-red-500/10 shadow-lg">
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                   )}
+                 </div>
               </div>
            </div>
 
+           {/* Results Matrix */}
            <div className="space-y-4 min-h-[600px]">
               {historyLoading ? (
                  <div className="grid grid-cols-1 gap-4">
                     {Array.from({ length: 4 }).map((_, i) => (
-                       <Card key={i} className="glass-card p-6 border-border">
-                          <div className="flex gap-6">
-                             <Skeleton className="w-14 h-14 rounded-2xl" />
-                             <div className="flex-1 space-y-3">
-                                <Skeleton className="h-4 w-1/2" />
-                                <Skeleton className="h-3 w-1/3" />
+                       <Card key={i} className="glass-card p-8 border-border">
+                          <div className="flex gap-8">
+                             <Skeleton className="w-16 h-16 rounded-2xl" />
+                             <div className="flex-1 space-y-4">
+                                <Skeleton className="h-5 w-1/2" />
+                                <Skeleton className="h-4 w-1/3" />
                              </div>
                           </div>
                        </Card>
                     ))}
                  </div>
               ) : history.length === 0 ? (
-                 <div className="p-32 text-center flex flex-col items-center gap-8 opacity-10 grayscale border-2 border-dashed border-white/5 rounded-[4rem]">
-                    <Activity className="w-12 h-12 text-primary" />
-                    <p className="text-xl font-headline font-black uppercase tracking-[0.4em]">Zero Matrix Entries</p>
-                    {!user && <p className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Login to save history permanently</p>}
+                 <div className="p-32 text-center flex flex-col items-center gap-10 opacity-10 grayscale border-2 border-dashed border-white/5 rounded-[4rem]">
+                    <Activity className="w-16 h-16 text-primary" />
+                    <div className="space-y-2">
+                       <p className="text-2xl font-headline font-black uppercase tracking-[0.4em]">Zero Matrix Entries</p>
+                       {!user && <p className="text-xs font-black uppercase tracking-[0.3em] text-primary/60">Initialize Identity Sync to persist archives</p>}
+                    </div>
                  </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
                    {history.map(item => (
-                     <Card key={item.id} className={cn("glass-card border-border hover:border-primary/20 transition-all group overflow-hidden")}>
-                        <div className="p-5 sm:p-6 flex items-center justify-between gap-8">
-                           <div className="flex items-center gap-6 min-w-0">
-                              <div className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center text-primary/40 shrink-0 shadow-inner group-hover:text-primary transition-colors">
+                     <Card key={item.id} className={cn("glass-card border-border hover:border-primary/20 transition-all group overflow-hidden bg-black/20")}>
+                        <div className="p-6 sm:p-8 flex items-center justify-between gap-10">
+                           <div className="flex items-center gap-8 min-w-0">
+                              <div className="w-16 h-16 rounded-[1.5rem] bg-secondary border border-border flex items-center justify-center text-primary/40 shrink-0 shadow-inner group-hover:text-primary transition-colors">
                                  {getFileIcon(item.type)}
                               </div>
                               <div className="min-w-0">
-                                 <div className="flex items-center gap-3">
-                                    <h4 className="text-sm font-bold text-foreground truncate uppercase tracking-tight">{item.name}</h4>
+                                 <div className="flex items-center gap-4">
+                                    <h4 className="text-lg font-bold text-foreground truncate uppercase tracking-tight">{item.name}</h4>
                                     {getAlertBadge(item)}
                                  </div>
-                                 <div className="flex flex-wrap items-center gap-3 mt-1">
-                                    <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">
+                                 <div className="flex flex-wrap items-center gap-4 mt-2">
+                                    <div className="flex items-center gap-1.5 text-[9px] font-black text-foreground/20 uppercase tracking-widest">
+                                       <Clock className="w-3 h-3" />
                                        {format(item.timestamp, 'MMM d, HH:mm')}
-                                    </p>
+                                    </div>
                                     <span className="text-white/5">•</span>
-                                    <p className="text-[9px] font-bold text-primary/60 uppercase tracking-widest">{item.provider}</p>
+                                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-primary/60 uppercase tracking-widest">
+                                       <Globe className="w-3 h-3" />
+                                       {item.provider}
+                                    </div>
                                     <span className="text-white/5">•</span>
-                                    <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">{formatSize(item.size)}</p>
+                                    <div className="flex items-center gap-1.5 text-[9px] font-black text-foreground/20 uppercase tracking-widest">
+                                       <Layers className="w-3 h-3" />
+                                       {formatSize(item.size)}
+                                    </div>
                                  </div>
                               </div>
                            </div>
 
-                           <div className="flex items-center gap-2 shrink-0">
-                              <button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Link Copied" }); }} className="p-2.5 rounded-xl bg-background border border-border text-foreground/20 hover:text-primary transition-all shadow-sm"><Copy className="w-4 h-4" /></button>
-                              <Button onClick={() => handleDownload(item.url, item.name)} variant="outline" size="sm" className="h-10 px-4 rounded-xl border-border bg-background text-[8px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
-                                 <Download className="w-3.5 h-3.5 mr-2" /> Download
+                           <div className="flex items-center gap-3 shrink-0">
+                              <button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Protocol Isolated" }); }} className="p-3 rounded-2xl bg-background border border-border text-foreground/20 hover:text-primary transition-all shadow-lg active:scale-95"><Copy className="w-4.5 h-4.5" /></button>
+                              <Button onClick={() => handleDownload(item.url, item.name)} variant="outline" className="h-12 px-6 rounded-2xl border-border bg-background text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-xl">
+                                 <Download className="w-4 h-4 mr-2" /> Save Master
                               </Button>
                               <button onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} className="p-2 text-foreground/10 hover:text-primary transition-all">
-                                 {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                 {expandedId === item.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                               </button>
-                              <button onClick={() => deleteRecord(item.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => deleteRecord(item.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-all"><Trash2 className="w-5 h-5" /></button>
                            </div>
                         </div>
 
                         {expandedId === item.id && (
-                           <div className="px-6 pb-8 animate-in slide-in-from-top-2 duration-300">
-                              <div className="p-8 rounded-[3rem] bg-black/40 border border-white/5 space-y-8 shadow-inner">
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                           <div className="px-8 pb-10 animate-in slide-in-from-top-4 duration-500">
+                              <div className="p-10 rounded-[3.5rem] bg-black/40 border border-white/5 space-y-10 shadow-inner relative overflow-hidden">
+                                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+                                 
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
                                     <div className="space-y-4">
                                        <div className="flex items-center gap-3 text-primary/60">
-                                          <Calendar className="w-4 h-4" />
-                                          <span className="text-[10px] font-black uppercase tracking-widest">Temporal Bounds (Expiry)</span>
+                                          <Clock className="w-4 h-4" />
+                                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Temporal Expiry</span>
                                        </div>
                                        <Input 
                                           type="datetime-local"
@@ -657,37 +717,37 @@ export default function TempUploadPage() {
                                              updateDoc(doc(db!, 'temp_upload_history', item.id), { expiryDate: e.target.value });
                                              toast({ title: "Expiry Updated" });
                                           }}
-                                          className="h-12 bg-secondary/30 border-white/5 text-[11px] font-bold uppercase"
+                                          className="h-14 bg-secondary/30 border-white/10 rounded-2xl text-[12px] font-bold uppercase tracking-widest"
                                        />
                                     </div>
                                     <div className="space-y-4">
                                        <div className="flex items-center gap-3 text-primary/60">
                                           <Bell className="w-4 h-4" />
-                                          <span className="text-[10px] font-black uppercase tracking-widest">Protocol Alert (Reminder)</span>
+                                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Alert Notification</span>
                                        </div>
                                        <Input 
                                           type="datetime-local"
                                           value={item.reminderDate ? format(new Date(item.reminderDate), "yyyy-MM-dd'T'HH:mm") : ''}
                                           onChange={e => updateReminder(item.id, e.target.value, item.reminderNote)}
-                                          className="h-12 bg-secondary/30 border-white/5 text-[11px] font-bold uppercase"
+                                          className="h-14 bg-secondary/30 border-white/10 rounded-2xl text-[12px] font-bold uppercase tracking-widest"
                                        />
                                     </div>
                                  </div>
                                  
-                                 <div className="space-y-3">
-                                    <Label className="text-[9px] font-black text-foreground/30 uppercase tracking-widest ml-1">Linguistic Reminder Note</Label>
+                                 <div className="space-y-4 relative z-10">
+                                    <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] ml-1">Contextual Reminder Node (Note)</Label>
                                     <Input 
-                                       placeholder="e.g. Identity expires after client demo..."
+                                       placeholder="e.g. For client production review session..."
                                        value={item.reminderNote || ''}
                                        onChange={e => updateDoc(doc(db!, 'temp_upload_history', item.id), { reminderNote: e.target.value })}
-                                       className="h-12 bg-secondary/20 border-white/5 text-xs italic font-medium"
+                                       className="h-14 bg-secondary/20 border-white/10 rounded-2xl text-sm italic font-medium"
                                     />
                                  </div>
-                                 <div className="pt-4 flex justify-end gap-3">
-                                    <Button asChild variant="outline" className="h-10 px-6 border-white/10 bg-white/5 text-[9px] font-black uppercase">
-                                       <a href={item.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-3.5 h-3.5 mr-2" /> Open Node</a>
+                                 <div className="pt-6 flex flex-col sm:flex-row justify-end gap-4 relative z-10">
+                                    <Button asChild variant="outline" className="h-12 px-8 border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest rounded-xl">
+                                       <a href={item.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4 mr-2" /> Open Remote Node</a>
                                     </Button>
-                                    <Button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Copied" }); }} className="h-10 px-6 bg-primary text-white text-[9px] font-black uppercase">Copy URL</Button>
+                                    <Button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Protocol Isolated" }); }} className="h-12 px-10 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-xl shadow-primary/20">Copy URL</Button>
                                  </div>
                               </div>
                            </div>
@@ -701,25 +761,27 @@ export default function TempUploadPage() {
       </div>
 
       <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
-        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
-          <AlertDialogHeader className="space-y-4">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
-               <Unplug className="w-8 h-8" />
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-10 max-w-sm">
+          <AlertDialogHeader className="space-y-6">
+            <div className="w-20 h-20 rounded-[2rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto shadow-2xl">
+               <Unplug className="w-10 h-10" />
             </div>
-            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
-               Disconnect Host
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
-              Are you sure you want to disconnect your private node? This action is specific to your current identity session.
-            </AlertDialogDescription>
+            <div className="space-y-2">
+               <AlertDialogTitle className="text-2xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+                  Node Decouple
+               </AlertDialogTitle>
+               <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center px-4">
+                 Are you sure you want to decouple this storage protocol? This action is specific to your current hardware session.
+               </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
-          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
-            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
+          <AlertDialogFooter className="mt-10 flex flex-col sm:flex-row gap-4">
+            <AlertDialogCancel className="h-14 flex-1 rounded-2xl border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-widest m-0 active:scale-95 transition-all">Abort</AlertDialogCancel>
             <AlertDialogAction 
               onClick={disconnectProvider}
-              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+              className="h-14 flex-1 rounded-2xl bg-destructive text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-destructive/20 active:scale-95 transition-all"
             >
-              Disconnect
+              Confirm
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
