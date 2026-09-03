@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -57,6 +56,16 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import * as actions from './actions';
 import { differenceInDays, format, isBefore, isAfter } from 'date-fns';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type ProviderId = 'r2' | 'imgbb' | 'gofile' | 'pixeldrain' | 'custom';
 
@@ -125,6 +134,7 @@ export default function TempUploadPage() {
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -195,25 +205,18 @@ export default function TempUploadPage() {
     toast({ title: "Node Connected", description: `${activeProvider.toUpperCase()} protocol active.` });
   };
 
-  const disconnectProvider = (id: string) => {
+  const disconnectProvider = () => {
     const nextConnected = new Set(connectedIds);
-    nextConnected.delete(id);
+    nextConnected.delete(activeProvider);
     setConnectedIds(nextConnected);
     localStorage.setItem('mykit_temp_upload_connected', JSON.stringify(Array.from(nextConnected)));
+    setShowDisconnectConfirm(false);
     toast({ title: "Node Decoupled" });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) setFile(f);
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const executeUpload = async () => {
@@ -424,7 +427,7 @@ export default function TempUploadPage() {
                           <Zap className="w-4 h-4 mr-2" /> Connect Node
                        </Button>
                        {connectedIds.has(activeProvider) && (
-                         <Button variant="outline" onClick={() => disconnectProvider(activeProvider)} className="h-14 w-14 rounded-2xl border-border bg-secondary hover:text-destructive">
+                         <Button variant="outline" onClick={() => setShowDisconnectConfirm(true)} className="h-14 w-14 rounded-2xl border-border bg-secondary hover:text-destructive">
                             <Unplug className="w-5 h-5" />
                          </Button>
                        )}
@@ -698,7 +701,7 @@ export default function TempUploadPage() {
           <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={disconnectNode}
+              onClick={disconnectProvider}
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
               Disconnect
