@@ -326,7 +326,7 @@ export default function TempUploadPage() {
     });
   };
 
-  const handleDownload = async (url: string, name: string) => {
+  const handleDownloadFile = async (url: string, name: string) => {
     try {
       const res = await fetch(url);
       const blob = await res.blob();
@@ -348,29 +348,22 @@ export default function TempUploadPage() {
     if (item.expiryDate) {
       const expiry = new Date(item.expiryDate);
       if (isBefore(expiry, now)) return <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-[7px] uppercase font-black px-2 py-0.5">EXPIRED</Badge>;
-      if (differenceInDays(expiry, now) <= 3) return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[7px] uppercase font-black px-2 py-0.5">EXPIRING SOON</Badge>;
+      if (differenceInDays(expiry, now) <= 3) return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[7px] uppercase font-black px-2 py-0.5">EXPIRING</Badge>;
     }
     if (item.reminderDate) {
       const reminder = new Date(item.reminderDate);
       if (isBefore(reminder, now)) return <Badge className="bg-primary/10 text-primary border-primary/20 text-[7px] uppercase font-black px-2 py-0.5">REMINDER DUE</Badge>;
     }
-    return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[7px] uppercase font-black px-2 py-0.5">ACTIVE</Badge>;
+    return null;
   };
 
   const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <FileImage className="w-5 h-5 text-emerald-500" />;
-    if (type.startsWith('video/')) return <FileVideo className="w-5 h-5 text-rose-500" />;
-    if (type.startsWith('audio/')) return <FileAudio className="w-5 h-5 text-blue-500" />;
-    if (type.includes('zip') || type.includes('archive')) return <FileArchive className="w-5 h-5 text-amber-500" />;
-    if (type.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
-    return <FileIcon className="w-5 h-5 text-foreground/40" />;
-  };
-
-  const handleClearWorkspace = () => {
-    setFile(null);
-    setLastUploadUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    toast({ title: "Studio Reset" });
+    if (type.startsWith('image/')) return <FileImage className="w-4 h-4 text-emerald-500" />;
+    if (type.startsWith('video/')) return <FileVideo className="w-4 h-4 text-rose-500" />;
+    if (type.startsWith('audio/')) return <FileAudio className="w-4 h-4 text-blue-500" />;
+    if (type.includes('zip') || type.includes('archive')) return <FileArchive className="w-4 h-4 text-amber-500" />;
+    if (type.includes('pdf')) return <FileText className="w-4 h-4 text-red-500" />;
+    return <FileIcon className="w-4 h-4 text-foreground/40" />;
   };
 
   const toggleSecret = (fieldKey: string) => {
@@ -455,7 +448,7 @@ export default function TempUploadPage() {
                                       value={configs[activeProvider]?.[f.key] || ''}
                                       onChange={e => setConfigs({ ...configs, [activeProvider]: { ...(configs[activeProvider] || {}), [f.key]: e.target.value } })}
                                       placeholder={f.placeholder}
-                                      className="h-12 bg-black/40 border-border rounded-xl text-xs font-bold px-5 focus:ring-primary/20"
+                                      className="h-12 bg-black/40 border-border rounded-xl text-xs font-bold px-5 focus:ring-primary/40"
                                     />
                                     {f.isSecret && (
                                        <button 
@@ -535,12 +528,12 @@ export default function TempUploadPage() {
 
                  <div className="space-y-6">
                   {isProcessing && (
-                    <div className="space-y-3 animate-in slide-in-from-top-2">
+                    <div className="space-y-2 animate-in slide-in-from-top-2">
                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
                           <span className="animate-pulse">Synthesizing Link...</span>
                           <span>{uploadProgress}%</span>
                        </div>
-                       <Progress value={uploadProgress} className="h-1.5 rounded-full" />
+                       <Progress value={uploadProgress} className="h-1" />
                     </div>
                   )}
                   <Button 
@@ -632,16 +625,16 @@ export default function TempUploadPage() {
            </div>
 
            {/* Results Matrix */}
-           <div className="space-y-4 min-h-[600px]">
+           <div className="space-y-3 min-h-[600px]">
               {historyLoading ? (
                  <div className="grid grid-cols-1 gap-4">
                     {Array.from({ length: 4 }).map((_, i) => (
-                       <Card key={i} className="glass-card p-8 border-border">
-                          <div className="flex gap-8">
-                             <Skeleton className="w-16 h-16 rounded-2xl" />
-                             <div className="flex-1 space-y-4">
-                                <Skeleton className="h-5 w-1/2" />
-                                <Skeleton className="h-4 w-1/3" />
+                       <Card key={i} className="glass-card p-6 border-border">
+                          <div className="flex gap-6">
+                             <Skeleton className="w-12 h-12 rounded-xl" />
+                             <div className="flex-1 space-y-3">
+                                <Skeleton className="h-4 w-1/2" />
+                                <Skeleton className="h-3 w-1/4" />
                              </div>
                           </div>
                        </Card>
@@ -656,60 +649,61 @@ export default function TempUploadPage() {
                     </div>
                  </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-3">
                    {history.map(item => (
                      <Card key={item.id} className={cn("glass-card border-border hover:border-primary/20 transition-all group overflow-hidden bg-black/20")}>
-                        <div className="p-6 sm:p-8 flex items-center justify-between gap-10">
-                           <div className="flex items-center gap-8 min-w-0">
-                              <div className="w-16 h-16 rounded-[1.5rem] bg-secondary border border-border flex items-center justify-center text-primary/40 shrink-0 shadow-inner group-hover:text-primary transition-colors">
+                        <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                           <div className="flex items-center gap-5 min-w-0 flex-1">
+                              <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-primary/40 shrink-0 shadow-inner group-hover:text-primary transition-colors">
                                  {getFileIcon(item.type)}
                               </div>
-                              <div className="min-w-0">
-                                 <div className="flex items-center gap-4">
-                                    <h4 className="text-lg font-bold text-foreground truncate uppercase tracking-tight">{item.name}</h4>
+                              <div className="min-w-0 flex-1">
+                                 <div className="flex flex-wrap items-center gap-3">
+                                    <h4 className="text-xs font-bold text-foreground break-words uppercase tracking-tight leading-tight">{item.name}</h4>
                                     {getAlertBadge(item)}
                                  </div>
-                                 <div className="flex flex-wrap items-center gap-4 mt-2">
-                                    <div className="flex items-center gap-1.5 text-[9px] font-black text-foreground/20 uppercase tracking-widest">
-                                       <Clock className="w-3 h-3" />
+                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                                    <div className="flex items-center gap-1 text-[8px] font-black text-foreground/20 uppercase tracking-widest">
+                                       <Clock className="w-2.5 h-2.5" />
                                        {format(item.timestamp, 'MMM d, HH:mm')}
                                     </div>
                                     <span className="text-white/5">•</span>
-                                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-primary/60 uppercase tracking-widest">
-                                       <Globe className="w-3 h-3" />
+                                    <div className="flex items-center gap-1 text-[8px] font-bold text-primary/60 uppercase tracking-widest">
+                                       <Globe className="w-2.5 h-2.5" />
                                        {item.provider}
                                     </div>
                                     <span className="text-white/5">•</span>
-                                    <div className="flex items-center gap-1.5 text-[9px] font-black text-foreground/20 uppercase tracking-widest">
-                                       <Layers className="w-3 h-3" />
+                                    <div className="flex items-center gap-1 text-[8px] font-black text-foreground/20 uppercase tracking-widest">
+                                       <Layers className="w-2.5 h-2.5" />
                                        {formatSize(item.size)}
                                     </div>
                                  </div>
                               </div>
                            </div>
 
-                           <div className="flex items-center gap-3 shrink-0">
-                              <button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Protocol Isolated" }); }} className="p-3 rounded-2xl bg-background border border-border text-foreground/20 hover:text-primary transition-all shadow-lg active:scale-95"><Copy className="w-4.5 h-4.5" /></button>
-                              <Button onClick={() => handleDownload(item.url, item.name)} variant="outline" className="h-12 px-6 rounded-2xl border-border bg-background text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-xl">
-                                 <Download className="w-4 h-4 mr-2" /> Save Master
+                           <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                              <button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Isolated" }); }} className="p-2 rounded-lg bg-background border border-border text-foreground/20 hover:text-primary transition-all shadow-sm" title="Copy Link"><Copy className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => window.open(item.url, '_blank')} className="p-2 rounded-lg bg-background border border-border text-foreground/20 hover:text-primary transition-all shadow-sm" title="Open Link"><ExternalLink className="w-3.5 h-3.5" /></button>
+                              <Button onClick={() => handleDownloadFile(item.url, item.name)} variant="outline" className="h-9 px-3 rounded-lg border-border bg-background text-[8px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm">
+                                 <Download className="w-3 h-3 mr-1.5" /> Save
                               </Button>
                               <button onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} className="p-2 text-foreground/10 hover:text-primary transition-all">
-                                 {expandedId === item.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                                 {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               </button>
-                              <button onClick={() => deleteRecord(item.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-all"><Trash2 className="w-5 h-5" /></button>
+                              <button onClick={() => deleteRecord(item.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4" /></button>
                            </div>
                         </div>
 
                         {expandedId === item.id && (
-                           <div className="px-8 pb-10 animate-in slide-in-from-top-4 duration-500">
-                              <div className="p-10 rounded-[3.5rem] bg-black/40 border border-white/5 space-y-10 shadow-inner relative overflow-hidden">
-                                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+                           <div className="px-6 pb-6 animate-in slide-in-from-top-2 duration-300">
+                              <div className="p-6 rounded-[2rem] bg-black/40 border border-white/5 space-y-8 shadow-inner relative overflow-hidden">
+                                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
                                  
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
-                                    <div className="space-y-4">
-                                       <div className="flex items-center gap-3 text-primary/60">
-                                          <Clock className="w-4 h-4" />
-                                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Temporal Expiry</span>
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                                    <div className="space-y-3">
+                                       <div className="flex items-center gap-2 text-primary/60">
+                                          <Clock className="w-3.5 h-3.5" />
+                                          <span className="text-[9px] font-black uppercase tracking-widest">Temporal Expiry</span>
                                        </div>
                                        <Input 
                                           type="datetime-local"
@@ -718,37 +712,31 @@ export default function TempUploadPage() {
                                              updateDoc(doc(db!, 'temp_upload_history', item.id), { expiryDate: e.target.value });
                                              toast({ title: "Expiry Updated" });
                                           }}
-                                          className="h-14 bg-secondary/30 border-white/10 rounded-2xl text-[12px] font-bold uppercase tracking-widest"
+                                          className="h-11 bg-secondary/30 border-white/10 rounded-xl text-[11px] font-bold uppercase"
                                        />
                                     </div>
-                                    <div className="space-y-4">
-                                       <div className="flex items-center gap-3 text-primary/60">
-                                          <Bell className="w-4 h-4" />
-                                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Alert Notification</span>
+                                    <div className="space-y-3">
+                                       <div className="flex items-center gap-2 text-primary/60">
+                                          <Bell className="w-3.5 h-3.5" />
+                                          <span className="text-[9px] font-black uppercase tracking-widest">Alert Reminder</span>
                                        </div>
                                        <Input 
                                           type="datetime-local"
                                           value={item.reminderDate ? format(new Date(item.reminderDate), "yyyy-MM-dd'T'HH:mm") : ''}
                                           onChange={e => updateReminder(item.id, e.target.value, item.reminderNote)}
-                                          className="h-14 bg-secondary/30 border-white/10 rounded-2xl text-[12px] font-bold uppercase tracking-widest"
+                                          className="h-11 bg-secondary/30 border-white/10 rounded-xl text-[11px] font-bold uppercase"
                                        />
                                     </div>
                                  </div>
                                  
-                                 <div className="space-y-4 relative z-10">
-                                    <Label className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] ml-1">Contextual Reminder Node (Note)</Label>
+                                 <div className="space-y-3 relative z-10">
+                                    <Label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] ml-1">Contextual Reminder Note</Label>
                                     <Input 
                                        placeholder="e.g. For client production review session..."
                                        value={item.reminderNote || ''}
                                        onChange={e => updateDoc(doc(db!, 'temp_upload_history', item.id), { reminderNote: e.target.value })}
-                                       className="h-14 bg-secondary/20 border-white/10 rounded-2xl text-sm italic font-medium"
+                                       className="h-11 bg-secondary/20 border-white/10 rounded-xl text-[11px] italic"
                                     />
-                                 </div>
-                                 <div className="pt-6 flex flex-col sm:flex-row justify-end gap-4 relative z-10">
-                                    <Button asChild variant="outline" className="h-12 px-8 border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest rounded-xl">
-                                       <a href={item.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4 mr-2" /> Open Remote Node</a>
-                                    </Button>
-                                    <Button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Protocol Isolated" }); }} className="h-12 px-10 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30">Copy URL</Button>
                                  </div>
                               </div>
                            </div>
@@ -760,6 +748,32 @@ export default function TempUploadPage() {
            </div>
         </main>
       </div>
+
+      {/* Disconnect Alert */}
+      <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <Unplug className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               Disconnect Host
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+              Are you sure you want to disconnect your private storage node? This action is specific to your current identity session.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={disconnectProvider}
+              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
