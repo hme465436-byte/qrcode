@@ -54,15 +54,6 @@ import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, query, where, doc, setDoc, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
-import * as actions from './actions';
-import { differenceInDays, format, isBefore, isAfter } from 'date-fns';
-import { GetHelp } from '@/components/qr-canvas/get-help';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,6 +64,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { useUser, useFirestore, useCollection } from '@/firebase';
+import { collection, query, where, doc, setDoc, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+import * as actions from './actions';
+import { differenceInDays, format, isBefore, isAfter } from 'date-fns';
+import { GetHelp } from '@/components/qr-canvas/get-help';
+import Link from 'next/link';
 import JSZip from 'jszip';
 
 // --- Global Utilities ---
@@ -396,220 +397,221 @@ export default function TempUploadPage() {
   if (authLoading) return null;
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 max-w-7xl">
-      {/* 1. HERO SECTION */}
-      <div className="mb-20 animate-reveal text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
-          <Cloud className="w-3.5 h-3.5" /> High-Entropy Storage Matrix
+    <>
+      <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 max-w-7xl">
+        {/* 1. HERO SECTION */}
+        <div className="mb-20 animate-reveal text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
+            <Cloud className="w-3.5 h-3.5" /> High-Entropy Storage Matrix
+          </div>
+          <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tighter leading-none mb-4">
+            Temp <span className="text-primary italic">Upload Studio</span>
+          </h1>
+          <p className="text-foreground/40 text-sm md:text-lg font-medium max-w-2xl mx-auto leading-relaxed uppercase tracking-widest">
+            Connect storage, upload files, and keep history with expiry reminders.
+          </p>
         </div>
-        <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tighter leading-none mb-4">
-          Temp <span className="text-primary italic">Upload Studio</span>
-        </h1>
-        <p className="text-foreground/40 text-sm md:text-lg font-medium max-w-2xl mx-auto leading-relaxed uppercase tracking-widest">
-          Connect storage, upload files, and keep history with expiry reminders.
-        </p>
-      </div>
 
-      {!user ? (
-        <Card className="glass-card border-border shadow-2xl p-12 sm:p-24 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/10 relative z-10">
-             <Lock className="w-8 h-8" />
-          </div>
-          <div className="space-y-4 relative z-10">
-             <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Authentication Required</h2>
-             <p className="text-[10px] sm:text-xs text-foreground/30 font-black uppercase tracking-[0.4em] leading-relaxed max-w-md mx-auto">
-                To maintain protocol integrity and ensure high-bandwidth uplinks, you must be logged into the professional studio.
-             </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md relative z-10">
-            <Button asChild className="h-16 flex-1 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
-               <Link href="/login?redirect=/temp-upload">Initialize Session</Link>
-            </Button>
-            <Button asChild variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
-               <Link href="/">Explore Suite</Link>
-            </Button>
-          </div>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start animate-in fade-in duration-1000">
-          
-          {/* LEFT: Calibration & Intake */}
-          <div className="lg:col-span-5 space-y-12">
-            
-            {/* Protocol Selection UI */}
-            <div className="space-y-8">
-               <div className="space-y-2 px-1">
-                  <Label className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Calibration</Label>
-                  <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">Select Storage Protocol</h3>
-                  <p className="text-[10px] text-foreground/20 font-bold uppercase tracking-widest">Connect to your private storage node.</p>
-               </div>
-
-               <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <div className="flex-1 w-full">
-                    <Select value={activeProvider} onValueChange={(v: ProviderId) => { setActiveProvider(v); setIsConfigOpen(false); }}>
-                      <SelectTrigger className="h-14 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest focus:ring-primary/40">
-                        <SelectValue placeholder="Choose Provider" />
-                      </SelectTrigger>
-                      <SelectContent className="glass-card">
-                        {PROVIDERS.map(p => (
-                          <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase tracking-widest">
-                            <div className="flex items-center gap-3">
-                                {p.label}
-                                {connectedIds.has(p.id) && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    onClick={toggleConfig}
-                    className={cn(
-                      "h-14 px-6 rounded-2xl border-white/10 text-[9px] font-black uppercase tracking-widest transition-all w-full sm:w-auto",
-                      isConfigOpen ? "bg-primary text-white border-primary" : "bg-secondary"
-                    )}
-                  >
-                    {isConfigOpen ? <ChevronUp className="w-4 h-4 mr-2" /> : <Settings2 className="w-4 h-4 mr-2" />}
-                    {isConfigOpen ? 'Close Matrix' : 'Configure Node'}
-                  </Button>
-               </div>
-
-               {/* Collapsible Config Card */}
-               {isConfigOpen && currentProviderConfig && (
-                 <div ref={configRef} className="animate-in slide-in-from-top-4 duration-500">
-                    <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden">
-                       <CardHeader className="py-6 px-8 border-b border-primary/10 flex flex-row items-center justify-between">
-                          <div className="flex items-center gap-4">
-                             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                                <Settings className="w-5 h-5" />
-                             </div>
-                             <span className="text-[11px] font-black uppercase tracking-widest text-foreground">{currentProviderConfig.label} Matrix</span>
-                          </div>
-                          <Badge variant="outline" className={cn(
-                            "text-[8px] font-black uppercase px-3 py-1 rounded-full",
-                            isCurrentConnected ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-white/5 text-white/20 border-white/5"
-                          )}>
-                             {isCurrentConnected ? 'ACTIVE' : 'STANDBY'}
-                          </Badge>
-                       </CardHeader>
-                       <CardContent className="p-8 space-y-8">
-                          <div className="grid gap-6">
-                             {currentProviderConfig.fields.map(f => (
-                               <div key={f.key} className="space-y-2">
-                                  <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">{f.label}</Label>
-                                  <div className="relative">
-                                     <Input 
-                                       type={f.isSecret && !showSecrets[f.key] ? 'password' : 'text'}
-                                       value={configs[activeProvider]?.[f.key] || ''}
-                                       onChange={e => setConfigs({ ...configs, [activeProvider]: { ...(configs[activeProvider] || {}), [f.key]: e.target.value } })}
-                                       placeholder={f.placeholder}
-                                       className="h-12 bg-black/40 border-border rounded-xl text-xs font-bold px-5"
-                                     />
-                                     {f.isSecret && (
-                                        <button 
-                                          onClick={() => toggleSecret(f.key)}
-                                          className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/20 hover:text-primary transition-colors"
-                                        >
-                                           {showSecrets[f.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                        </button>
-                                     )}
-                                  </div>
-                               </div>
-                             ))}
-                          </div>
-
-                          <div className="flex gap-3 pt-2">
-                             <Button onClick={saveConfig} className="flex-1 h-14 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30">
-                                <Zap className="w-4 h-4 mr-2" /> Initialize Handshake
-                             </Button>
-                             {isCurrentConnected && (
-                               <Button variant="outline" onClick={disconnectProvider} className="h-14 w-14 rounded-2xl border-destructive/20 bg-destructive/5 text-destructive hover:bg-red-500 hover:text-white transition-all">
-                                  <Unplug className="w-5 h-5" />
-                               </Button>
-                             )}
-                          </div>
-                       </CardContent>
-                    </Card>
-                 </div>
-               )}
+        {!user ? (
+          <Card className="glass-card border-border shadow-2xl p-12 sm:p-24 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/10 relative z-10">
+               <Lock className="w-8 h-8" />
             </div>
+            <div className="space-y-4 relative z-10">
+               <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Authentication Required</h2>
+               <p className="text-[10px] sm:text-xs text-foreground/30 font-black uppercase tracking-[0.4em] leading-relaxed max-w-md mx-auto">
+                  To maintain protocol integrity and ensure high-bandwidth uplinks, you must be logged into the professional studio.
+               </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md relative z-10">
+              <Button asChild className="h-16 flex-1 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                 <Link href="/login?redirect=/temp-upload">Initialize Session</Link>
+              </Button>
+              <Button asChild variant="outline" className="h-16 px-10 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                 <Link href="/">Explore Suite</Link>
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start animate-in fade-in duration-1000">
+            
+            {/* LEFT: Calibration & Intake */}
+            <div className="lg:col-span-5 space-y-12">
+              
+              {/* Protocol Selection UI */}
+              <div className="space-y-8">
+                 <div className="space-y-2 px-1">
+                    <Label className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Calibration</Label>
+                    <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">Select Storage Protocol</h3>
+                    <p className="text-[10px] text-foreground/20 font-bold uppercase tracking-widest">Connect to your private storage node.</p>
+                 </div>
 
-            {/* 2. Transmission Intake */}
-            <Card className={cn(
-               "glass-card border-border shadow-2xl transition-all duration-700 overflow-hidden bg-[#060608]",
-               !isCurrentConnected && "opacity-20 pointer-events-none grayscale blur-[1px]"
-            )}>
-               <CardHeader className="py-6 border-b border-white/5 bg-secondary/30">
-                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-4 text-foreground">
-                     <FileUp className="w-5 h-5 text-primary" /> Transmission Intake
-                  </CardTitle>
-               </CardHeader>
-               <CardContent className="pt-10 space-y-10">
-                  <div 
-                   onClick={() => !isProcessing && fileInputRef.current?.click()}
-                   onDragOver={e => e.preventDefault()}
-                   onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) setFile(f); }}
-                   className={cn(
-                     "relative h-56 rounded-[3rem] border-2 border-dashed border-white/5 hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-black/40 cursor-pointer group/upload",
-                     file && "border-solid border-primary/20 bg-primary/[0.02]"
-                   )}
-                  >
-                     {file ? (
-                       <div className="text-center p-8 space-y-4 animate-in zoom-in">
-                          <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-inner">
-                             {getFileIcon(file.type)}
-                          </div>
-                          <div className="space-y-1 min-w-0">
-                             <p className="text-sm font-bold text-white truncate max-w-[280px] uppercase tracking-tight">{file.name}</p>
-                             <p className="text-[10px] font-black text-foreground/20 uppercase tracking-widest">{formatSize(file.size)} Payload</p>
-                          </div>
-                       </div>
-                     ) : (
-                       <div className="text-center space-y-6 p-8">
-                         <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary group-hover/upload:scale-110 transition-all mx-auto shadow-xl">
-                           <FileUp className="w-8 h-8" />
+                 <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <div className="flex-1 w-full">
+                      <Select value={activeProvider} onValueChange={(v: ProviderId) => { setActiveProvider(v); setIsConfigOpen(false); }}>
+                        <SelectTrigger className="h-14 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest focus:ring-primary/40">
+                          <SelectValue placeholder="Choose Provider" />
+                        </SelectTrigger>
+                        <SelectContent className="glass-card">
+                          {PROVIDERS.map(p => (
+                            <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase tracking-widest">
+                              <div className="flex items-center gap-3">
+                                  {p.label}
+                                  {connectedIds.has(p.id) && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={toggleConfig}
+                      className={cn(
+                        "h-14 px-6 rounded-2xl border-white/10 text-[9px] font-black uppercase tracking-widest transition-all w-full sm:w-auto",
+                        isConfigOpen ? "bg-primary text-white border-primary" : "bg-secondary"
+                      )}
+                    >
+                      {isConfigOpen ? <ChevronUp className="w-4 h-4 mr-2" /> : <Settings2 className="w-4 h-4 mr-2" />}
+                      {isConfigOpen ? 'Close Matrix' : 'Configure Node'}
+                    </Button>
+                 </div>
+
+                 {/* Collapsible Config Card */}
+                 {isConfigOpen && currentProviderConfig && (
+                   <div ref={configRef} className="animate-in slide-in-from-top-4 duration-500">
+                      <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden">
+                         <CardHeader className="py-6 px-8 border-b border-primary/10 flex flex-row items-center justify-between">
+                            <div className="flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                                  <Settings className="w-5 h-5" />
+                               </div>
+                               <span className="text-[11px] font-black uppercase tracking-widest text-foreground">{currentProviderConfig.label} Matrix</span>
+                            </div>
+                            <Badge variant="outline" className={cn(
+                              "text-[8px] font-black uppercase px-3 py-1 rounded-full",
+                              isCurrentConnected ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-white/5 text-white/20 border-white/5"
+                            )}>
+                               {isCurrentConnected ? 'ACTIVE' : 'STANDBY'}
+                            </Badge>
+                         </CardHeader>
+                         <CardContent className="p-8 space-y-8">
+                            <div className="grid gap-6">
+                               {currentProviderConfig.fields.map(f => (
+                                 <div key={f.key} className="space-y-2">
+                                    <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">{f.label}</Label>
+                                    <div className="relative">
+                                       <Input 
+                                         type={f.isSecret && !showSecrets[f.key] ? 'password' : 'text'}
+                                         value={configs[activeProvider]?.[f.key] || ''}
+                                         onChange={e => setConfigs({ ...configs, [activeProvider]: { ...(configs[activeProvider] || {}), [f.key]: e.target.value } })}
+                                         placeholder={f.placeholder}
+                                         className="h-12 bg-black/40 border-border rounded-xl text-xs font-bold px-5"
+                                       />
+                                       {f.isSecret && (
+                                          <button 
+                                            onClick={() => toggleSecret(f.key)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/20 hover:text-primary transition-colors"
+                                          >
+                                             {showSecrets[f.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                          </button>
+                                       )}
+                                    </div>
+                                 </div>
+                               ))}
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                               <Button onClick={saveConfig} className="flex-1 h-14 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30">
+                                  <Zap className="w-4 h-4 mr-2" /> Initialize Handshake
+                               </Button>
+                               {isCurrentConnected && (
+                                 <Button variant="outline" onClick={disconnectProvider} className="h-14 w-14 rounded-2xl border-destructive/20 bg-destructive/5 text-destructive hover:bg-red-500 hover:text-white transition-all">
+                                    <Unplug className="w-5 h-5" />
+                                 </Button>
+                               )}
+                            </div>
+                         </CardContent>
+                      </Card>
+                   </div>
+                 )}
+              </div>
+
+              {/* 2. Transmission Intake */}
+              <Card className={cn(
+                 "glass-card border-border shadow-2xl transition-all duration-700 overflow-hidden bg-[#060608]",
+                 !isCurrentConnected && "opacity-20 pointer-events-none grayscale blur-[1px]"
+              )}>
+                 <CardHeader className="py-6 border-b border-white/5 bg-secondary/30">
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-4 text-foreground">
+                       <FileUp className="w-5 h-5 text-primary" /> Transmission Intake
+                    </CardTitle>
+                 </CardHeader>
+                 <CardContent className="pt-10 space-y-10">
+                    <div 
+                     onClick={() => !isProcessing && fileInputRef.current?.click()}
+                     onDragOver={e => e.preventDefault()}
+                     onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) setFile(f); }}
+                     className={cn(
+                       "relative h-56 rounded-[3rem] border-2 border-dashed border-white/5 hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-black/40 cursor-pointer group/upload",
+                       file && "border-solid border-primary/20 bg-primary/[0.02]"
+                     )}
+                    >
+                       {file ? (
+                         <div className="text-center p-8 space-y-4 animate-in zoom-in">
+                            <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-inner">
+                               {getFileIcon(file.type)}
+                            </div>
+                            <div className="space-y-1 min-w-0">
+                               <p className="text-sm font-bold text-white truncate max-w-[280px] uppercase tracking-tight">{file.name}</p>
+                               <p className="text-[10px] font-black text-foreground/20 uppercase tracking-widest">{formatSize(file.size)} Payload</p>
+                            </div>
                          </div>
-                         <div className="space-y-2">
-                            <span className="text-xs font-black uppercase text-foreground/40 tracking-[0.2em] group-hover/upload:text-primary transition-colors">Select Payload</span>
-                            <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">ALL FORMATS (Max 100MB)</p>
+                       ) : (
+                         <div className="text-center space-y-6 p-8">
+                           <div className="w-16 h-16 rounded-[1.5rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary group-hover/upload:scale-110 transition-all mx-auto shadow-xl">
+                             <FileUp className="w-8 h-8" />
+                           </div>
+                           <div className="space-y-2">
+                              <span className="text-xs font-black uppercase text-foreground/40 tracking-[0.2em] group-hover/upload:text-primary transition-colors">Select Payload</span>
+                              <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">ALL FORMATS (Max 100MB)</p>
+                           </div>
                          </div>
+                       )}
+                       <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+                    </div>
+
+                    <div className="space-y-6">
+                     {isProcessing && (
+                       <div className="space-y-2 animate-in slide-in-from-top-2">
+                          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
+                             <span className="animate-pulse">Synthesizing Link...</span>
+                             <span>{uploadProgress}%</span>
+                          </div>
+                          <Progress value={uploadProgress} className="h-1" />
                        </div>
                      )}
-                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-                  </div>
+                     <Button 
+                       onClick={executeUpload} 
+                       disabled={isProcessing || !file || !isCurrentConnected}
+                       className="w-full h-20 bg-primary text-white font-black text-lg uppercase tracking-[0.3em] rounded-[2.5rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all"
+                     >
+                       {isProcessing ? <Loader2 className="w-8 h-8 animate-spin mr-3" /> : <Upload className="w-8 h-8 mr-4" />}
+                       Upload
+                     </Button>
+                     {(file || lastUploadUrl) && (
+                       <button onClick={() => { setFile(null); setLastUploadUrl(null); setUploadProgress(0); }} className="w-full text-[10px] font-black uppercase text-foreground/20 hover:text-primary transition-all tracking-widest">Clear Buffer</button>
+                     )}
+                   </div>
 
-                  <div className="space-y-6">
-                   {isProcessing && (
-                     <div className="space-y-2 animate-in slide-in-from-top-2">
-                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
-                           <span className="animate-pulse">Synthesizing Link...</span>
-                           <span>{uploadProgress}%</span>
-                        </div>
-                        <Progress value={uploadProgress} className="h-1" />
-                     </div>
-                   )}
-                   <Button 
-                     onClick={executeUpload} 
-                     disabled={isProcessing || !file || !isCurrentConnected}
-                     className="w-full h-20 bg-primary text-white font-black text-lg uppercase tracking-[0.3em] rounded-[2.5rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all"
-                   >
-                     {isProcessing ? <Loader2 className="w-8 h-8 animate-spin mr-3" /> : <Upload className="w-8 h-8 mr-4" />}
-                     Upload
-                   </Button>
-                   {(file || lastUploadUrl) && (
-                     <button onClick={() => { setFile(null); setLastUploadUrl(null); setUploadProgress(0); }} className="w-full text-[10px] font-black uppercase text-foreground/20 hover:text-primary transition-all tracking-widest">Clear Buffer</button>
-                   )}
-                 </div>
-
-                 {lastUploadUrl && (
-                    <div className="p-8 rounded-[3rem] bg-emerald-500/10 border border-emerald-500/20 space-y-6 animate-in zoom-in-95 duration-500 shadow-2xl relative overflow-hidden">
-                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                       <div className="flex items-center justify-between relative z-10">
-                          <div className="flex items-center gap-3">
-                             <Globe className="w-5 h-5 text-emerald-500" />
-                             <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest">Public URL Node</span>
+                   {lastUploadUrl && (
+                      <div className="p-8 rounded-[3rem] bg-emerald-500/10 border border-emerald-500/20 space-y-6 animate-in zoom-in-95 duration-500 shadow-2xl relative overflow-hidden">
+                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                         <div className="flex items-center justify-between relative z-10">
+                            <div className="flex items-center gap-3">
+                               <Globe className="w-5 h-5 text-emerald-500" />
+                               <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest">Public URL Node</span>
                           </div>
                           <button onClick={() => setLastUploadUrl(null)} className="text-emerald-500/40 hover:text-emerald-500"><X className="w-5 h-5" /></button>
                        </div>
@@ -809,9 +811,10 @@ export default function TempUploadPage() {
                    ))}
                 </div>
               )}
-           </div>
-        </main>
-      </div>
+             </div>
+          </main>
+        </div>
+      )}
 
       {/* --- CONFIRMATION OVERLAYS --- */}
 
@@ -892,6 +895,6 @@ export default function TempUploadPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
