@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { 
   Cloud, 
   Upload, 
-  Settings, 
+  Settings2, 
   History, 
   Trash2, 
   Copy, 
@@ -42,7 +42,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Settings2,
   Layers,
   ChevronRight,
   Maximize,
@@ -55,7 +54,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -67,6 +72,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
@@ -82,9 +95,9 @@ import JSZip from 'jszip';
 // --- Global Utilities ---
 
 const formatSize = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return '0 B';
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
@@ -407,7 +420,6 @@ export default function TempUploadPage() {
   return (
     <>
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 max-w-7xl">
-        {/* HERO SECTION */}
         <div className="mb-20 animate-reveal text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
             <Cloud className="w-3.5 h-3.5" /> High-Entropy Storage Matrix
@@ -444,9 +456,7 @@ export default function TempUploadPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start animate-in fade-in duration-1000">
             
-            {/* LEFT: Calibration & Intake */}
             <div className="lg:col-span-5 space-y-12">
-              
               <div className="space-y-8">
                  <div className="space-y-2 px-1">
                     <Label className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Calibration</Label>
@@ -485,14 +495,13 @@ export default function TempUploadPage() {
                     </Button>
                  </div>
 
-                 {/* Collapsible Config Card */}
                  {isConfigOpen && currentProviderConfig && (
                    <div ref={configCardRef} className="animate-in slide-in-from-top-4 duration-500">
                       <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden">
                          <CardHeader className="py-6 px-8 border-b border-primary/10 flex flex-row items-center justify-between">
                             <div className="flex items-center gap-4">
                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                                  <Settings className="w-5 h-5" />
+                                  <Settings2 className="w-5 h-5" />
                                </div>
                                <span className="text-[11px] font-black uppercase tracking-widest text-foreground">{currentProviderConfig.label} Matrix</span>
                             </div>
@@ -606,51 +615,11 @@ export default function TempUploadPage() {
                        {isProcessing ? <Loader2 className="w-8 h-8 animate-spin mr-3" /> : <Upload className="w-8 h-8 mr-4" />}
                        Upload
                      </Button>
-                     {(file || lastUploadUrl) && (
-                       <button onClick={() => { setFile(null); setLastUploadUrl(null); setUploadProgress(0); }} className="w-full text-[10px] font-black uppercase text-foreground/20 hover:text-primary transition-all tracking-widest">Clear Buffer</button>
-                     )}
                    </div>
-
-                   {lastUploadUrl && (
-                      <div className="p-8 rounded-[3rem] bg-emerald-500/10 border border-emerald-500/20 space-y-6 animate-in zoom-in-95 duration-500 shadow-2xl relative overflow-hidden">
-                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                         <div className="flex items-center justify-between relative z-10">
-                            <div className="flex items-center gap-3">
-                               <Globe className="w-5 h-5 text-emerald-500" />
-                               <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest">Public URL Node</span>
-                          </div>
-                          <button onClick={() => setLastUploadUrl(null)} className="text-emerald-500/40 hover:text-emerald-500"><X className="w-5 h-5" /></button>
-                       </div>
-                       <div className="p-5 bg-black/60 rounded-2xl border border-emerald-500/20 font-mono text-xs font-bold text-foreground/60 break-all shadow-inner relative z-10">
-                          {lastUploadUrl}
-                       </div>
-                       <div className="grid grid-cols-2 gap-4 relative z-10">
-                         <Button onClick={() => { navigator.clipboard.writeText(lastUploadUrl || ''); toast({ title: "Isolated" }); }} className="h-14 bg-emerald-500 text-white font-black uppercase text-[10px] rounded-2xl shadow-xl">
-                            <Copy className="w-4 h-4 mr-2" /> Copy Link
-                         </Button>
-                         <Button asChild variant="outline" className="h-14 border-emerald-500/30 text-emerald-500 font-black uppercase text-[10px] bg-white/5">
-                            <a href={lastUploadUrl} target="_blank" rel="noopener noreferrer"><Download className="w-4 h-4 mr-2" /> Save</a>
-                         </Button>
-                      </div>
-                   </div>
-                 )}
-              </CardContent>
-            </Card>
-
-            <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-                  <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All binary synthesis and node communication occur strictly via secure server actions.
-                  </p>
-                </div>
-             </div>
+                 </CardContent>
+              </Card>
             </div>
 
-            {/* RIGHT: Registry & History */}
             <main className="lg:col-span-7 xl:col-span-8 space-y-12">
                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 px-2">
                   <div className="flex items-center gap-6">
@@ -824,7 +793,6 @@ export default function TempUploadPage() {
 
       {/* --- CONFIRMATION OVERLAYS --- */}
 
-      {/* Disconnect Alert */}
       <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
@@ -850,7 +818,6 @@ export default function TempUploadPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Item Confirmation */}
       <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
@@ -876,7 +843,6 @@ export default function TempUploadPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Clear All History Confirmation */}
       <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
