@@ -53,7 +53,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
@@ -156,6 +155,10 @@ export default function TempUploadPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  
+  // Deletion Matrix
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -301,6 +304,7 @@ export default function TempUploadPage() {
   const deleteRecord = (id: string) => {
     if (!db) return;
     deleteDoc(doc(db, 'temp_upload_history', id)).catch(() => {});
+    setItemToDelete(null);
     toast({ title: "Registry Purged" });
   };
 
@@ -313,6 +317,7 @@ export default function TempUploadPage() {
     
     try {
       await batch.commit();
+      setShowClearAllConfirm(false);
       toast({ title: "Archive Purged" });
     } catch (e) {
       toast({ variant: "destructive", title: "Purge Failed" });
@@ -375,6 +380,13 @@ export default function TempUploadPage() {
   [activeProvider]);
 
   const isCurrentConnected = connectedIds.has(activeProvider);
+
+  const handleClearWorkspace = () => {
+    setFile(null);
+    setLastUploadUrl(null);
+    setUploadProgress(0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-24 max-w-7xl bg-[#0a0a0c] min-h-screen">
@@ -616,7 +628,7 @@ export default function TempUploadPage() {
                    </Select>
                    
                    {history.length > 0 && (
-                      <button onClick={clearAllHistory} className="h-12 w-12 flex items-center justify-center rounded-2xl bg-red-500/10 text-red-500/60 hover:text-red-500 transition-all border border-red-500/10 shadow-lg">
+                      <button onClick={() => setShowClearAllConfirm(true)} className="h-12 w-12 flex items-center justify-center rounded-2xl bg-red-500/10 text-red-500/60 hover:text-red-500 transition-all border border-red-500/10 shadow-lg">
                         <Trash2 className="w-5 h-5" />
                       </button>
                    )}
@@ -659,7 +671,7 @@ export default function TempUploadPage() {
                               </div>
                               <div className="min-w-0 flex-1">
                                  <div className="flex flex-wrap items-center gap-3">
-                                    <h4 className="text-xs font-bold text-foreground break-words uppercase tracking-tight leading-tight">{item.name}</h4>
+                                    <h4 className="text-xs font-bold text-foreground break-words uppercase tracking-tight leading-tight">{item.customName || item.name}</h4>
                                     {getAlertBadge(item)}
                                  </div>
                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
@@ -673,8 +685,8 @@ export default function TempUploadPage() {
                                        {item.provider}
                                     </div>
                                     <span className="text-white/5">•</span>
-                                    <div className="flex items-center gap-1 text-[8px] font-black text-foreground/20 uppercase tracking-widest">
-                                       <Layers className="w-2.5 h-2.5" />
+                                    <div className="flex items-center gap-1.5 text-[9px] font-black text-foreground/20 uppercase tracking-widest">
+                                       <Layers className="w-3 h-3" />
                                        {formatSize(item.size)}
                                     </div>
                                  </div>
@@ -690,7 +702,7 @@ export default function TempUploadPage() {
                               <button onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} className="p-2 text-foreground/10 hover:text-primary transition-all">
                                  {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               </button>
-                              <button onClick={() => deleteRecord(item.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => setItemToDelete(item.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4" /></button>
                            </div>
                         </div>
 
@@ -770,6 +782,58 @@ export default function TempUploadPage() {
               className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
               Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Item Confirmation */}
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <Trash2 className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               Delete Record
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+              Are you sure you want to delete this item? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => itemToDelete && deleteRecord(itemToDelete)}
+              className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear All History Confirmation */}
+      <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <ShieldAlert className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               Clear Archive
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+              Are you sure you want to clear all history? This will definitively purge your entire registry.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={clearAllHistory}
+              className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20"
+            >
+              Clear All
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
