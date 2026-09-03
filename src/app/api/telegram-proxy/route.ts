@@ -4,10 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
  * @fileOverview Secure proxy for Telegram file downloads.
  * Bypasses CORS and hides the bot token from the client.
  */
+
+// Use the same standard fallback as the server actions
+const DEFAULT_TOKEN = '7170817006:AAH5Z8W6p_Hj7Z7M-J9q1L6_3_v4X3M5J8E';
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const fileId = searchParams.get('fileId');
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = (process.env.MYKIT_TG_TOKEN || DEFAULT_TOKEN).trim();
 
   if (!fileId || !token) {
     return new NextResponse('Protocol Error: Missing Identifiers', { status: 400 });

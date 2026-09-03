@@ -14,6 +14,7 @@ export interface FileLinkMatrix {
 }
 
 // Studio Standard Fallbacks for zero-config hosting
+// These are used if no environment variables are found on the hosting provider (e.g. Vercel)
 const DEFAULT_TOKEN = '7170817006:AAH5Z8W6p_Hj7Z7M-J9q1L6_3_v4X3M5J8E';
 const DEFAULT_CHAT_ID = '-1002142277028';
 
@@ -22,9 +23,10 @@ const DEFAULT_CHAT_ID = '-1002142277028';
  */
 export async function uploadToTelegram(formData: FormData, customToken?: string, customChatId?: string) {
   try {
-    // Priority: Custom UI Input -> Vercel Environment Variable -> Studio Public Fallback
-    const token = (customToken || process.env.TELEGRAM_BOT_TOKEN || DEFAULT_TOKEN).trim();
-    const chatId = (customChatId || process.env.TELEGRAM_CHAT_ID || DEFAULT_CHAT_ID).trim();
+    // Priority: Custom UI Input -> MyKit Specific Env Var -> Studio Public Fallback
+    // Using a unique name (MYKIT_TG_TOKEN) avoids conflicts with invalid generic tokens on Vercel
+    const token = (customToken || process.env.MYKIT_TG_TOKEN || DEFAULT_TOKEN).trim();
+    const chatId = (customChatId || process.env.MYKIT_TG_CHAT || DEFAULT_CHAT_ID).trim();
 
     if (!token || !chatId) {
       return { success: false, error: "CREDENTIALS_MISSING", message: "Telegram node credentials not identified." };
@@ -83,10 +85,10 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
  */
 export async function getDownloadProtocol(fileId: string, customToken?: string) {
   try {
-    const token = (customToken || process.env.TELEGRAM_BOT_TOKEN || DEFAULT_TOKEN).trim();
+    const token = (customToken || process.env.MYKIT_TG_TOKEN || DEFAULT_TOKEN).trim();
     if (!token) throw new Error("Credentials missing");
 
-    const response = await fetch(`https://api.api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
+    const response = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
     const data = await response.json();
 
     if (!data.ok) throw new Error(data.description || "File unreachable");
