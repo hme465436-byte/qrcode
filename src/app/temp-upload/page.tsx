@@ -55,7 +55,7 @@ import { collection, query, where, doc, setDoc, deleteDoc, updateDoc, writeBatch
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import * as actions from './actions';
-import { differenceInDays, format, isBefore, isAfter, addDays } from 'date-fns';
+import { differenceInDays, format, isBefore, isAfter } from 'date-fns';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
 type ProviderId = 'r2' | 'imgbb' | 'gofile' | 'pixeldrain' | 'custom';
@@ -112,18 +112,15 @@ export default function TempUploadPage() {
   const { user, loading: authLoading } = useUser();
   const db = useFirestore();
   
-  // Storage State
   const [activeProvider, setActiveProvider] = useState<ProviderId>('imgbb');
   const [configs, setConfigs] = useState<Record<string, any>>({});
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
   
-  // Upload State
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastUploadUrl, setLastUploadUrl] = useState<string | null>(null);
 
-  // History & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -138,7 +135,6 @@ export default function TempUploadPage() {
 
   const { data: historyData, loading: historyLoading } = useCollection<UploadRecord>(historyQuery);
 
-  // --- Filtering Matrix ---
   const history = useMemo(() => {
     const list = historyData || [];
     const now = new Date();
@@ -166,7 +162,6 @@ export default function TempUploadPage() {
       .sort((a, b) => b.timestamp - a.timestamp);
   }, [historyData, searchQuery, providerFilter, statusFilter]);
 
-  // --- Alerts Engine ---
   useEffect(() => {
     if (historyData && historyData.length > 0) {
       const now = new Date();
@@ -184,7 +179,6 @@ export default function TempUploadPage() {
     }
   }, [historyData, toast]);
 
-  // --- Persistence & Handshake ---
   useEffect(() => {
     const savedConfigs = localStorage.getItem('mykit_temp_upload_configs');
     const savedConnected = localStorage.getItem('mykit_temp_upload_connected');
@@ -209,7 +203,6 @@ export default function TempUploadPage() {
     toast({ title: "Node Decoupled" });
   };
 
-  // --- Upload Engine ---
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) setFile(f);
@@ -287,6 +280,21 @@ export default function TempUploadPage() {
     toast({ title: "Registry Purged" });
   };
 
+  const clearAllHistory = async () => {
+    if (!db || !user || history.length === 0) return;
+    const batch = writeBatch(db);
+    history.forEach(item => {
+      batch.delete(doc(db, 'temp_upload_history', item.id));
+    });
+    
+    try {
+      await batch.commit();
+      toast({ title: "Archive Purged" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Purge Failed" });
+    }
+  };
+
   const updateReminder = (id: string, date: string, note?: string) => {
     if (!db) return;
     updateDoc(doc(db, 'temp_upload_history', id), { reminderDate: date, reminderNote: note }).then(() => {
@@ -334,6 +342,13 @@ export default function TempUploadPage() {
     }
   };
 
+  const handleClearWorkspace = () => {
+    setFile(null);
+    setLastUploadUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    toast({ title: "Studio Reset" });
+  };
+
   return (
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-24 max-w-7xl">
       <div className="mb-20 animate-reveal text-center">
@@ -371,7 +386,7 @@ export default function TempUploadPage() {
                           <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase">
                              <div className="flex items-center gap-2">
                                 {p.label}
-                                {connectedIds.has(p.id) && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+                                {connectedIds.has(p.id) && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                              </div>
                           </SelectItem>
                         ))}
@@ -384,7 +399,7 @@ export default function TempUploadPage() {
                        <h3 className="text-sm font-black text-foreground uppercase tracking-tight">{PROVIDERS.find(p => p.id === activeProvider)?.label} Config</h3>
                        {connectedIds.has(activeProvider) && (
                          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black text-emerald-500 uppercase tracking-widest">
-                            <ShieldCheck className="w-3 h-3" /> Connected
+                            <ShieldCheck className="w-3.5 h-3.5" /> Connected
                          </div>
                        )}
                     </div>
@@ -573,7 +588,7 @@ export default function TempUploadPage() {
               ) : (
                 <div className="grid grid-cols-1 gap-4">
                    {history.map(item => (
-                     <Card key={item.id} className="glass-card border-border hover:border-primary/20 transition-all group overflow-hidden">
+                     <Card key={item.id} className={cn("glass-card border-border hover:border-primary/20 transition-all group overflow-hidden")}>
                         <div className="p-5 sm:p-6 flex items-center justify-between gap-8">
                            <div className="flex items-center gap-6 min-w-0">
                               <div className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center text-primary/40 shrink-0 shadow-inner group-hover:text-primary transition-colors">
@@ -581,11 +596,13 @@ export default function TempUploadPage() {
                               </div>
                               <div className="min-w-0">
                                  <div className="flex items-center gap-3">
-                                    <h4 className="text-sm font-bold text-foreground truncate uppercase tracking-tight">{item.customName || item.name}</h4>
+                                    <h4 className="text-sm font-bold text-foreground truncate uppercase tracking-tight">{item.name}</h4>
                                     {getAlertBadge(item)}
                                  </div>
                                  <div className="flex flex-wrap items-center gap-3 mt-1">
-                                    <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">{format(item.timestamp, 'MMM d, HH:mm')}</p>
+                                    <p className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">
+                                       {format(item.timestamp, 'MMM d, HH:mm')}
+                                    </p>
                                     <span className="text-white/5">•</span>
                                     <p className="text-[9px] font-bold text-primary/60 uppercase tracking-widest">{item.provider}</p>
                                     <span className="text-white/5">•</span>
@@ -652,7 +669,7 @@ export default function TempUploadPage() {
                                     <Button asChild variant="outline" className="h-10 px-6 border-white/10 bg-white/5 text-[9px] font-black uppercase">
                                        <a href={item.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-3.5 h-3.5 mr-2" /> Open Node</a>
                                     </Button>
-                                    <Button onClick={() => handleCopy(item.url, 'direct')} className="h-10 px-6 bg-primary text-white text-[9px] font-black uppercase">Copy URL</Button>
+                                    <Button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Copied" }); }} className="h-10 px-6 bg-primary text-white text-[9px] font-black uppercase">Copy URL</Button>
                                  </div>
                               </div>
                            </div>
@@ -664,6 +681,31 @@ export default function TempUploadPage() {
            </div>
         </main>
       </div>
+
+      <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <Unplug className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">
+               Disconnect Host
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+              Are you sure you want to disconnect your private node? This action is specific to your current identity session.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={disconnectNode}
+              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
