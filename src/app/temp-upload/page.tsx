@@ -43,7 +43,10 @@ import {
   Eye,
   EyeOff,
   Settings2,
-  Layers
+  Layers,
+  ChevronRight,
+  Maximize,
+  ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -158,11 +161,14 @@ export default function TempUploadPage() {
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  
+  // Modals
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const configRef = useRef<HTMLDivElement>(null);
+  const configCardRef = useRef<HTMLDivElement>(null);
 
   const historyQuery = useMemo(() => {
     if (!db || !user) return null;
@@ -199,7 +205,7 @@ export default function TempUploadPage() {
       .sort((a, b) => b.timestamp - a.timestamp);
   }, [historyData, searchQuery, providerFilter, statusFilter]);
 
-  // Check reminders on load
+  // Initial Check for Reminders
   useEffect(() => {
     if (historyData && historyData.length > 0) {
       const now = new Date();
@@ -238,6 +244,8 @@ export default function TempUploadPage() {
     nextConnected.delete(activeProvider);
     setConnectedIds(nextConnected);
     localStorage.setItem('mykit_temp_upload_connected', JSON.stringify(Array.from(nextConnected)));
+    setShowDisconnectConfirm(false);
+    setIsConfigOpen(false);
     toast({ title: "Node Decoupled" });
   };
 
@@ -383,7 +391,7 @@ export default function TempUploadPage() {
     setIsConfigOpen(next);
     if (next) {
       setTimeout(() => {
-        configRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        configCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 100);
     }
   };
@@ -399,7 +407,7 @@ export default function TempUploadPage() {
   return (
     <>
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 max-w-7xl">
-        {/* 1. HERO SECTION */}
+        {/* HERO SECTION */}
         <div className="mb-20 animate-reveal text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
             <Cloud className="w-3.5 h-3.5" /> High-Entropy Storage Matrix
@@ -439,7 +447,6 @@ export default function TempUploadPage() {
             {/* LEFT: Calibration & Intake */}
             <div className="lg:col-span-5 space-y-12">
               
-              {/* Protocol Selection UI */}
               <div className="space-y-8">
                  <div className="space-y-2 px-1">
                     <Label className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Calibration</Label>
@@ -480,7 +487,7 @@ export default function TempUploadPage() {
 
                  {/* Collapsible Config Card */}
                  {isConfigOpen && currentProviderConfig && (
-                   <div ref={configRef} className="animate-in slide-in-from-top-4 duration-500">
+                   <div ref={configCardRef} className="animate-in slide-in-from-top-4 duration-500">
                       <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden">
                          <CardHeader className="py-6 px-8 border-b border-primary/10 flex flex-row items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -527,7 +534,7 @@ export default function TempUploadPage() {
                                   <Zap className="w-4 h-4 mr-2" /> Initialize Handshake
                                </Button>
                                {isCurrentConnected && (
-                                 <Button variant="outline" onClick={disconnectProvider} className="h-14 w-14 rounded-2xl border-destructive/20 bg-destructive/5 text-destructive hover:bg-red-500 hover:text-white transition-all">
+                                 <Button variant="outline" onClick={() => setShowDisconnectConfirm(true)} className="h-14 w-14 rounded-2xl border-destructive/20 bg-destructive/5 text-destructive hover:bg-red-500 hover:text-white transition-all">
                                     <Unplug className="w-5 h-5" />
                                  </Button>
                                )}
@@ -538,7 +545,6 @@ export default function TempUploadPage() {
                  )}
               </div>
 
-              {/* 2. Transmission Intake */}
               <Card className={cn(
                  "glass-card border-border shadow-2xl transition-all duration-700 overflow-hidden bg-[#060608]",
                  !isCurrentConnected && "opacity-20 pointer-events-none grayscale blur-[1px]"
@@ -638,18 +644,18 @@ export default function TempUploadPage() {
                 <div className="space-y-2">
                   <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    All binary synthesis and node communication occur strictly via secure server actions. Your personal hardware identifiers are never transmitted.
+                    All binary synthesis and node communication occur strictly via secure server actions.
                   </p>
                 </div>
              </div>
-          </div>
+            </div>
 
-          {/* RIGHT: Registry & History */}
-          <main className="lg:col-span-7 xl:col-span-8 space-y-12">
-             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 px-2">
-                <div className="flex items-center gap-6">
-                   <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary shadow-inner border border-border">
-                      <History className="w-8 h-8" />
+            {/* RIGHT: Registry & History */}
+            <main className="lg:col-span-7 xl:col-span-8 space-y-12">
+               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 px-2">
+                  <div className="flex items-center gap-6">
+                     <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary shadow-inner border border-border">
+                        <History className="w-8 h-8" />
                    </div>
                    <div className="space-y-1">
                       <h3 className="text-3xl font-headline font-black uppercase text-foreground/60 tracking-tighter leading-none">Archive Registry</h3>
@@ -829,14 +835,14 @@ export default function TempUploadPage() {
                Disconnect Host
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
-              Are you sure you want to disconnect your private storage node? This action is specific to your current identity session.
+              Are you sure you want to disconnect your private storage node?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Abort</AlertDialogCancel>
             <AlertDialogAction 
               onClick={disconnectProvider}
-              className="h-12 flex-1 rounded-xl bg-destructive text-destructive-foreground font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
+              className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] tracking-widest shadow-xl shadow-destructive/20"
             >
               Disconnect
             </AlertDialogAction>
