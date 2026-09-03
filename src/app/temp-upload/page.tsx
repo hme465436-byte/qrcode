@@ -230,13 +230,21 @@ export default function TempUploadPage() {
   };
 
   const disconnectProvider = () => {
+    // 1. Remove from active connected IDs
     const nextConnected = new Set(connectedIds);
     nextConnected.delete(activeProvider);
     setConnectedIds(nextConnected);
     localStorage.setItem('mykit_temp_upload_connected', JSON.stringify(Array.from(nextConnected)));
+    
+    // 2. Definitive purge of config/keys for this provider
+    const nextConfigs = { ...configs };
+    delete nextConfigs[activeProvider];
+    setConfigs(nextConfigs);
+    localStorage.setItem('mykit_temp_upload_configs', JSON.stringify(nextConfigs));
+
     setShowDisconnectConfirm(false);
     setIsConfigOpen(false);
-    toast({ title: "Node Decoupled" });
+    toast({ title: "Node Decoupled", description: "Identity credentials purged." });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -371,44 +379,6 @@ export default function TempUploadPage() {
   const currentProviderConfig = useMemo(() => PROVIDERS.find(p => p.id === activeProvider), [activeProvider]);
   const isCurrentConnected = connectedIds.has(activeProvider);
 
-  if (authLoading) {
-    return (
-      <div className="container mx-auto px-4 py-20 flex justify-center">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 max-w-4xl">
-        <div className="mb-20 animate-reveal text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
-            <Cloud className="w-3.5 h-3.5" /> High-Entropy Storage Matrix
-          </div>
-          <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tighter leading-none mb-4">
-            Temp <span className="text-primary italic">Upload Studio</span>
-          </h1>
-        </div>
-        <Card className="glass-card border-border shadow-2xl p-12 sm:p-24 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/10 relative z-10">
-             <Lock className="w-8 h-8" />
-          </div>
-          <div className="space-y-4 relative z-10">
-             <h2 className="text-2xl sm:text-4xl font-headline font-black text-foreground uppercase tracking-tight">Authentication Required</h2>
-             <p className="text-[10px] sm:text-xs text-foreground/30 font-black uppercase tracking-[0.4em] leading-relaxed max-w-md mx-auto">
-                Login to save history permanently across all devices.
-             </p>
-          </div>
-          <Button asChild className="h-16 w-full max-w-md bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl relative z-10">
-             <Link href="/login?redirect=/temp-upload">Initialize Session</Link>
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 max-w-7xl animate-in fade-in duration-1000">
       <div className="mb-20 animate-reveal text-center">
@@ -518,7 +488,7 @@ export default function TempUploadPage() {
                        <div className="w-12 h-12 rounded-[1rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary transition-all mx-auto shadow-xl">
                          <FileUp className="w-6 h-6" />
                        </div>
-                       <span className="text-[9px] font-black uppercase text-foreground/30 tracking-widest group-hover/upload:text-primary transition-colors">Select Payload (Max 100MB)</span>
+                       <span className="text-[9px] font-black uppercase text-foreground/30 tracking-widest group-hover/upload:text-primary transition-colors">Select Payload</span>
                      </div>
                    )}
                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
@@ -633,7 +603,7 @@ export default function TempUploadPage() {
           <AlertDialogHeader className="space-y-4">
             <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto"><Unplug className="w-8 h-8" /></div>
             <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Disconnect Host</AlertDialogTitle>
-            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">Are you sure you want to decouple this node?</AlertDialogDescription>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">Are you sure you want to decouple this node? All keys will be purged from local storage.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
