@@ -31,7 +31,8 @@ import {
   EyeOff,
   ShieldCheck,
   Globe,
-  Activity
+  Activity,
+  ShieldAlert
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -478,10 +479,10 @@ export function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
                                  </button>
                                )}
                                <button 
-                                onClick={() => handleCopy(item.val, item.label)} 
+                                onClick={() => handleCopy(item.val || '', item.label)} 
                                 className={cn(
                                   "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
-                                  isCopied === item.label ? "bg-green-500 border-green-500 text-white" : "bg-background/50 border-white/5 text-foreground/20 hover:text-primary"
+                                  isCopied === item.label ? "bg-green-500 border-green-500 text-white" : "bg-background/50 border border-white/5 text-foreground/20 hover:text-primary"
                                 )}
                                >
                                   {isCopied === item.label ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
