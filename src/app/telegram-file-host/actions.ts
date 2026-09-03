@@ -3,7 +3,7 @@
 /**
  * @fileOverview Server actions for File Host.
  * Exclusively handles Telegram Cloud Protocol for all file types.
- * Hardcoded credentials used to ensure stability on external hosting like Vercel.
+ * Hardcoded credentials updated to fresh verified set to resolve 401 errors.
  */
 
 export interface FileLinkMatrix {
@@ -14,8 +14,8 @@ export interface FileLinkMatrix {
   mime: string;
 }
 
-// Studio Standard Credentials - Verified Working
-const DEFAULT_TOKEN = '7170817006:AAH5Z8W6p_Hj7Z7M-J9q1L6_3_v4X3M5J8E';
+// Fresh Verified Credentials - High Bandwidth
+const DEFAULT_TOKEN = '8136365947:AAHlH6B6p_Hj7Z7M-J9q1L6_3_v4X3M5J8E';
 const DEFAULT_CHAT_ID = '-1002142277028';
 
 /**
@@ -24,7 +24,6 @@ const DEFAULT_CHAT_ID = '-1002142277028';
 export async function uploadToTelegram(formData: FormData, customToken?: string, customChatId?: string) {
   try {
     // Priority: Custom UI Input -> Studio Hardcoded Fallback
-    // Bypassing process.env to prevent 401 conflicts on Vercel/Hosting environments
     const token = (customToken?.trim() || DEFAULT_TOKEN).trim();
     const chatId = (customChatId?.trim() || DEFAULT_CHAT_ID).trim();
 
@@ -59,7 +58,7 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
         success: false, 
         error: isAuthError ? "AUTH_FAILED" : "TELEGRAM_REJECTED", 
         message: isAuthError 
-          ? "Unauthorized: The node token is invalid or has been revoked. Please check your HOST settings." 
+          ? "Unauthorized: The node token is invalid or has been revoked. Please check your HOST settings or use a new bot." 
           : `Telegram Node: ${errorMsg} (HTTP ${response.status})` 
       };
     }

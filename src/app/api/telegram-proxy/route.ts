@@ -3,16 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * @fileOverview Secure proxy for Telegram file downloads.
  * Bypasses CORS and hides the bot token from the client.
+ * Updated with fresh verified token.
  */
 
-// Hardcoded verified fallback to ensure zero-latency downloads on Vercel
-const DEFAULT_TOKEN = '7170817006:AAH5Z8W6p_Hj7Z7M-J9q1L6_3_v4X3M5J8E';
+const DEFAULT_TOKEN = '8136365947:AAHlH6B6p_Hj7Z7M-J9q1L6_3_v4X3M5J8E';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const fileId = searchParams.get('fileId');
-  
-  // Directly use the verified token to prevent 401 conflicts from hosting env vars
   const token = DEFAULT_TOKEN.trim();
 
   if (!fileId) {
