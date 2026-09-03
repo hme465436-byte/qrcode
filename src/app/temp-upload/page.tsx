@@ -641,9 +641,9 @@ export default function TempUploadPage() {
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <ShieldCheck className="w-7 h-7" />
                 </div>
-                <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                <div className="space-y-1">
+                  <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                  <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">
                     All binary synthesis and node communication occur strictly via secure server actions.
                   </p>
                 </div>
