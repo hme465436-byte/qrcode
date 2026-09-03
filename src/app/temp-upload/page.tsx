@@ -42,7 +42,8 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Settings2
+  Settings2,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -524,8 +525,8 @@ export default function TempUploadPage() {
                           <Upload className="w-8 h-8" />
                         </div>
                         <div className="space-y-2">
-                           <span className="text-xs font-black uppercase text-foreground/40 tracking-[0.2em] group-hover/upload:text-primary transition-colors">Select Visual or Binary Payload</span>
-                           <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">ALL FORMATS SUPPORTED (Max 100MB)</p>
+                           <span className="text-xs font-black uppercase text-foreground/40 tracking-[0.2em] group-hover/upload:text-primary transition-colors">Select Payload</span>
+                           <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">ALL FORMATS (Max 100MB)</p>
                         </div>
                       </div>
                     )}
@@ -535,7 +536,7 @@ export default function TempUploadPage() {
                  <div className="space-y-6">
                   {isProcessing && (
                     <div className="space-y-3 animate-in slide-in-from-top-2">
-                       <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-primary">
+                       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
                           <span className="animate-pulse">Synthesizing Link...</span>
                           <span>{uploadProgress}%</span>
                        </div>
@@ -747,7 +748,7 @@ export default function TempUploadPage() {
                                     <Button asChild variant="outline" className="h-12 px-8 border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest rounded-xl">
                                        <a href={item.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-4 h-4 mr-2" /> Open Remote Node</a>
                                     </Button>
-                                    <Button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Protocol Isolated" }); }} className="h-12 px-10 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-xl shadow-primary/20">Copy URL</Button>
+                                    <Button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Protocol Isolated" }); }} className="h-12 px-10 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-xl shadow-primary/30">Copy URL</Button>
                                  </div>
                               </div>
                            </div>
@@ -759,33 +760,6 @@ export default function TempUploadPage() {
            </div>
         </main>
       </div>
-
-      <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
-        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-10 max-w-sm">
-          <AlertDialogHeader className="space-y-6">
-            <div className="w-20 h-20 rounded-[2rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto shadow-2xl">
-               <Unplug className="w-10 h-10" />
-            </div>
-            <div className="space-y-2">
-               <AlertDialogTitle className="text-2xl font-headline font-black text-foreground uppercase tracking-tight text-center">
-                  Node Decouple
-               </AlertDialogTitle>
-               <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center px-4">
-                 Are you sure you want to decouple this storage protocol? This action is specific to your current hardware session.
-               </AlertDialogDescription>
-            </div>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-10 flex flex-col sm:flex-row gap-4">
-            <AlertDialogCancel className="h-14 flex-1 rounded-2xl border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-widest m-0 active:scale-95 transition-all">Abort</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={disconnectProvider}
-              className="h-14 flex-1 rounded-2xl bg-destructive text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-destructive/20 active:scale-95 transition-all"
-            >
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
