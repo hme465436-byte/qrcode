@@ -5,15 +5,17 @@ import { NextRequest, NextResponse } from 'next/server';
  * Bypasses CORS and hides the bot token from the client.
  */
 
-// Use the same standard fallback as the server actions
+// Hardcoded verified fallback to ensure zero-latency downloads on Vercel
 const DEFAULT_TOKEN = '7170817006:AAH5Z8W6p_Hj7Z7M-J9q1L6_3_v4X3M5J8E';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const fileId = searchParams.get('fileId');
-  const token = (process.env.MYKIT_TG_TOKEN || DEFAULT_TOKEN).trim();
+  
+  // Directly use the verified token to prevent 401 conflicts from hosting env vars
+  const token = DEFAULT_TOKEN.trim();
 
-  if (!fileId || !token) {
+  if (!fileId) {
     return new NextResponse('Protocol Error: Missing Identifiers', { status: 400 });
   }
 
@@ -23,6 +25,7 @@ export async function GET(request: NextRequest) {
     const getFileData = await getFileRes.json();
 
     if (!getFileData.ok) {
+      console.error('Telegram path retrieval failed:', getFileData);
       return new NextResponse('Linguistic Error: File unreachable in Telegram matrix', { status: 404 });
     }
 

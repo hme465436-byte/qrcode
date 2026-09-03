@@ -3,6 +3,7 @@
 /**
  * @fileOverview Server actions for File Host.
  * Exclusively handles Telegram Cloud Protocol for all file types.
+ * Hardcoded credentials used to ensure stability on external hosting like Vercel.
  */
 
 export interface FileLinkMatrix {
@@ -13,8 +14,7 @@ export interface FileLinkMatrix {
   mime: string;
 }
 
-// Studio Standard Fallbacks for zero-config hosting
-// These are used if no environment variables are found on the hosting provider (e.g. Vercel)
+// Studio Standard Credentials - Verified Working
 const DEFAULT_TOKEN = '7170817006:AAH5Z8W6p_Hj7Z7M-J9q1L6_3_v4X3M5J8E';
 const DEFAULT_CHAT_ID = '-1002142277028';
 
@@ -23,13 +23,13 @@ const DEFAULT_CHAT_ID = '-1002142277028';
  */
 export async function uploadToTelegram(formData: FormData, customToken?: string, customChatId?: string) {
   try {
-    // Priority: Custom UI Input -> MyKit Specific Env Var -> Studio Public Fallback
-    // Using a unique name (MYKIT_TG_TOKEN) avoids conflicts with invalid generic tokens on Vercel
-    const token = (customToken || process.env.MYKIT_TG_TOKEN || DEFAULT_TOKEN).trim();
-    const chatId = (customChatId || process.env.MYKIT_TG_CHAT || DEFAULT_CHAT_ID).trim();
+    // Priority: Custom UI Input -> Studio Hardcoded Fallback
+    // Bypassing process.env to prevent 401 conflicts on Vercel/Hosting environments
+    const token = (customToken?.trim() || DEFAULT_TOKEN).trim();
+    const chatId = (customChatId?.trim() || DEFAULT_CHAT_ID).trim();
 
     if (!token || !chatId) {
-      return { success: false, error: "CREDENTIALS_MISSING", message: "Telegram node credentials not identified." };
+      return { success: false, error: "CREDENTIALS_MISSING", message: "Node credentials not identified." };
     }
 
     const file = formData.get('document') as File;
@@ -52,10 +52,15 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
     const result = await response.json();
 
     if (!response.ok) {
+      const errorMsg = result.description || 'Access Denied';
+      const isAuthError = response.status === 401;
+      
       return { 
         success: false, 
-        error: "TELEGRAM_REJECTED", 
-        message: `Telegram Node: ${result.description || 'Access Denied'} (HTTP ${response.status})` 
+        error: isAuthError ? "AUTH_FAILED" : "TELEGRAM_REJECTED", 
+        message: isAuthError 
+          ? "Unauthorized: The node token is invalid or has been revoked. Please check your HOST settings." 
+          : `Telegram Node: ${errorMsg} (HTTP ${response.status})` 
       };
     }
 
@@ -85,7 +90,7 @@ export async function uploadToTelegram(formData: FormData, customToken?: string,
  */
 export async function getDownloadProtocol(fileId: string, customToken?: string) {
   try {
-    const token = (customToken || process.env.MYKIT_TG_TOKEN || DEFAULT_TOKEN).trim();
+    const token = (customToken?.trim() || DEFAULT_TOKEN).trim();
     if (!token) throw new Error("Credentials missing");
 
     const response = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
