@@ -128,6 +128,10 @@ import { SpaceBackground } from '@/components/qr-canvas/space-background';
 import { Card, CardContent } from '@/components/ui/card';
 
 const VIEW_MODE_KEY = 'mykit_view_mode';
+const SESSION_SCROLL_KEY = 'mykit_home_scroll';
+const SESSION_COUNT_KEY = 'mykit_home_count';
+const SESSION_CAT_KEY = 'mykit_home_cat';
+const SESSION_SEARCH_KEY = 'mykit_home_search';
 
 type ToolCategory = 'all' | 'pdf' | 'image' | 'generators' | 'utilities';
 
@@ -1535,6 +1539,10 @@ function ToolItem({ item, mode }: { item: Tool, mode: 'grid' | 'list' }) {
   return (
     <Link 
       href={item.href} 
+      onClick={() => {
+        // Save scroll position before leaving
+        sessionStorage.setItem(SESSION_SCROLL_KEY, window.scrollY.toString());
+      }}
       className={cn(
         "group relative flex transition-all duration-300 min-w-0",
         isGrid ? "h-full w-full" : "w-full"
@@ -1635,6 +1643,45 @@ export default function Home() {
     ];
     return [...list].sort(() => Math.random() - 0.5);
   }, []);
+
+  // --- Scroll Restoration Logic ---
+  useEffect(() => {
+    const savedCount = sessionStorage.getItem(SESSION_COUNT_KEY);
+    const savedCat = sessionStorage.getItem(SESSION_CAT_KEY);
+    const savedSearch = sessionStorage.getItem(SESSION_SEARCH_KEY);
+    const savedScroll = sessionStorage.getItem(SESSION_SCROLL_KEY);
+
+    if (savedCount) setVisibleCount(parseInt(savedCount));
+    if (savedCat) setSelectedCategory(savedCat as ToolCategory);
+    if (savedSearch) setSearchQuery(savedSearch);
+
+    if (savedScroll) {
+      // Small delay to ensure render cycle complete before scroll
+      setTimeout(() => {
+        window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
+      }, 50);
+    }
+
+    const handleScroll = () => {
+      sessionStorage.setItem(SESSION_SCROLL_KEY, window.scrollY.toString());
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Persist functional states as they change
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_COUNT_KEY, visibleCount.toString());
+  }, [visibleCount]);
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_CAT_KEY, selectedCategory);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    sessionStorage.setItem(SESSION_SEARCH_KEY, searchQuery);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (isFocused || searchQuery) {
