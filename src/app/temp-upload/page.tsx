@@ -17,15 +17,16 @@ import {
   CheckCircle2, 
   AlertCircle, 
   FileUp, 
-  Image as ImageIcon,
-  Calendar,
-  Bell,
-  Unplug,
-  ShieldAlert,
-  ChevronUp,
-  ChevronDown,
-  Search,
-  Server
+  ImageIcon, 
+  Calendar, 
+  Bell, 
+  Unplug, 
+  ShieldAlert, 
+  ChevronUp, 
+  ChevronDown, 
+  Search, 
+  Server,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -249,6 +250,12 @@ export default function TempUploadPage() {
     if (differenceInDays(reminder, now) <= 2) return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[7px] uppercase">NEAR</Badge>;
     return null;
   };
+
+  const handleClearWorkspace = () => {
+    setFile(null);
+    setLastUploadUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-24 max-w-7xl">
@@ -534,7 +541,7 @@ export default function TempUploadPage() {
       </div>
       
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -542,10 +549,4 @@ export default function TempUploadPage() {
       `}</style>
     </div>
   );
-
-  function handleClearWorkspace() {
-    setFile(null);
-    setLastUploadUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }
 }
