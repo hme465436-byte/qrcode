@@ -1,156 +1,83 @@
 
 {
   "entities": {
-    "SignalingRoom": {
-      "title": "Signaling Room",
-      "description": "A temporary room for WebRTC signaling exchange.",
-      "type": "object",
-      "properties": {
-        "offer": { "type": "string" },
-        "answer": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "fileMeta": {
-          "type": "object",
-          "properties": {
-            "name": { "type": "string" },
-            "size": { "type": "number" },
-            "type": { "type": "string" }
-          }
-        }
-      }
-    },
-    "IceCandidate": {
-      "title": "ICE Candidate",
-      "description": "An ICE candidate for WebRTC connection.",
-      "type": "object",
-      "properties": {
-        "candidate": { "type": "string" },
-        "sdpMLineIndex": { "type": "number" },
-        "sdpMid": { "type": "string" }
-      }
-    },
-    "TempRoom": {
-      "title": "Temp Room",
-      "description": "A temporary room for live text synchronization.",
-      "type": "object",
-      "properties": {
-        "peerId": { "type": "string" },
-        "status": { "type": "string", "enum": ["waiting", "connected"] },
-        "createdAt": { "type": "number" }
-      }
-    },
-    "HostedPage": {
-      "title": "Hosted Page",
-      "description": "A static HTML page or code block hosted via URL.",
-      "type": "object",
-      "properties": {
-        "html": { "type": "string", "description": "The code content of the page." },
-        "title": { "type": "string", "description": "Title for the page." },
-        "language": { "type": "string", "description": "The language protocol (html, python, etc)." },
-        "uid": { "type": "string", "description": "The owner's unique identity token (optional for anonymous)." },
-        "createdAt": { "type": "object", "description": "Firestore server timestamp." }
-      },
-      "required": ["html", "createdAt"]
-    },
-    "FileHostHistory": {
-      "title": "File Host History",
-      "description": "Metadata for files hosted on external providers like Telegram.",
-      "type": "object",
-      "properties": {
-        "uid": { "type": "string", "description": "The user ID of the file owner." },
-        "name": { "type": "string", "description": "Original filename." },
-        "customName": { "type": "string", "description": "User-assigned label." },
-        "size": { "type": "number", "description": "File size in bytes." },
-        "mime": { "type": "string", "description": "MIME type of the file." },
-        "fileId": { "type": "string", "description": "Provider-specific file identifier (e.g. Telegram file_id)." },
-        "directUrl": { "type": "string", "description": "Direct download URL if available." },
-        "isFavorite": { "type": "boolean" },
-        "timestamp": { "type": "number", "description": "Creation epoch." },
-        "provider": { "type": "string", "description": "The hosting provider used (e.g. Telegram)." }
-      },
-      "required": ["uid", "name", "timestamp"]
-    },
-    "ImageToUrlHistory": {
-      "title": "Image to URL History",
-      "description": "Metadata for images hosted on external providers like ImgBB.",
+    "ChatUser": {
+      "title": "Chat User",
+      "description": "User profile metadata for the chat system.",
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
-        "name": { "type": "string" },
-        "url": { "type": "string" },
-        "thumb": { "type": "string" },
-        "size": { "type": "number" },
-        "mime": { "type": "string" },
-        "timestamp": { "type": "number" },
-        "isFavorite": { "type": "boolean" },
-        "links": {
-          "type": "object",
-          "properties": {
-            "direct": { "type": "string" },
-            "view": { "type": "string" },
-            "markdown": { "type": "string" },
-            "html": { "type": "string" },
-            "bbcode": { "type": "string" }
-          }
-        }
+        "username": { "type": "string" },
+        "username_lowercase": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "about": { "type": "string" },
+        "isOnline": { "type": "boolean" },
+        "lastSeen": { "type": "object" }
       },
-      "required": ["uid", "url", "timestamp"]
+      "required": ["uid", "username"]
     },
-    "TempUploadHistory": {
-      "title": "Temp Upload History",
-      "description": "Metadata for files uploaded via connected storage providers.",
+    "FriendRequest": {
+      "title": "Friend Request",
+      "description": "Pending connection request between two users.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "uid": { "type": "string" },
-        "name": { "type": "string" },
-        "type": { "type": "string" },
-        "size": { "type": "number" },
-        "provider": { "type": "string" },
-        "url": { "type": "string" },
-        "timestamp": { "type": "number" },
-        "expiryDate": { "type": "string", "format": "date-time" },
-        "reminderDate": { "type": "string", "format": "date-time" },
-        "reminderNote": { "type": "string" }
-      },
-      "required": ["uid", "name", "url", "timestamp"]
+        "from": { "type": "string" },
+        "fromName": { "type": "string" },
+        "to": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+        "timestamp": { "type": "object" }
+      }
+    },
+    "Chat": {
+      "title": "Chat Session",
+      "description": "A 1:1 chat session metadata.",
+      "type": "object",
+      "properties": {
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "lastMessage": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" },
+            "senderId": { "type": "string" },
+            "timestamp": { "type": "object" }
+          }
+        },
+        "unreadCount": { "type": "object" }
+      }
+    },
+    "Message": {
+      "title": "Message",
+      "description": "An individual chat message.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "timestamp": { "type": "object" },
+        "status": { "type": "string", "enum": ["sent", "seen"] }
+      }
     }
   },
   "auth": {
-    "providers": ["anonymous", "email"]
+    "providers": ["email"]
   },
   "firestore": {
-    "/p2p_signaling/{roomId}": {
-      "schema": "#/entities/SignalingRoom",
-      "description": "Active P2P signaling rooms."
+    "/chat_users/{uid}": {
+      "schema": "#/entities/ChatUser",
+      "description": "User profiles for the chat system."
     },
-    "/p2p_signaling/{roomId}/callerCandidates/{id}": {
-      "schema": "#/entities/IceCandidate",
-      "description": "ICE candidates from the sender."
+    "/friend_requests/{requestId}": {
+      "schema": "#/entities/FriendRequest",
+      "description": "Inbound and outbound friend requests."
     },
-    "/p2p_signaling/{roomId}/calleeCandidates/{id}": {
-      "schema": "#/entities/IceCandidate",
-      "description": "ICE candidates from the receiver."
+    "/chats/{chatId}": {
+      "schema": "#/entities/Chat",
+      "description": "Active chat sessions."
     },
-    "/temp_rooms/{code}": {
-      "schema": "#/entities/TempRoom",
-      "description": "Ephemeral pairing data for live clipboard sharing."
-    },
-    "/pages/{id}": {
-      "schema": "#/entities/HostedPage",
-      "description": "User generated static HTML pages and code blocks."
-    },
-    "/file_host_history/{docId}": {
-      "schema": "#/entities/FileHostHistory",
-      "description": "Secure archive of hosted file metadata."
-    },
-    "/image_to_url_history/{docId}": {
-      "schema": "#/entities/ImageToUrlHistory",
-      "description": "Secure archive of hosted image metadata."
-    },
-    "/temp_upload_history/{docId}": {
-      "schema": "#/entities/TempUploadHistory",
-      "description": "Secure archive of temporary file metadata."
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": "#/entities/Message",
+      "description": "Real-time message stream for a chat."
     }
   }
 }
