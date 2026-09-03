@@ -36,7 +36,10 @@ import {
   Filter,
   Clock,
   RotateCcw,
-  Check
+  Check,
+  FileImage,
+  TrendingDown,
+  Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,6 +69,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+// --- Global Utilities ---
+
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
 
 type ProviderId = 'r2' | 'imgbb' | 'gofile' | 'pixeldrain' | 'custom';
 
@@ -121,15 +134,18 @@ export default function TempUploadPage() {
   const { user, loading: authLoading } = useUser();
   const db = useFirestore();
   
+  // Settings & Status
   const [activeProvider, setActiveProvider] = useState<ProviderId>('imgbb');
   const [configs, setConfigs] = useState<Record<string, any>>({});
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
   
+  // Upload State
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastUploadUrl, setLastUploadUrl] = useState<string | null>(null);
 
+  // Registry State
   const [searchQuery, setSearchQuery] = useState('');
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -183,7 +199,6 @@ export default function TempUploadPage() {
         toast({
           title: "Studio Reminder Active",
           description: `You have ${dueReminders.length} asset(s) with active reminders.`,
-          duration: 6000
         });
       }
     }
@@ -305,29 +320,6 @@ export default function TempUploadPage() {
     });
   };
 
-  const getAlertBadge = (item: UploadRecord) => {
-    const now = new Date();
-    if (item.expiryDate) {
-      const expiry = new Date(item.expiryDate);
-      if (isBefore(expiry, now)) return <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-[7px] uppercase font-black">EXPIRED</Badge>;
-      if (differenceInDays(expiry, now) <= 3) return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[7px] uppercase font-black">EXPIRING SOON</Badge>;
-    }
-    if (item.reminderDate) {
-      const reminder = new Date(item.reminderDate);
-      if (isBefore(reminder, now)) return <Badge className="bg-primary/10 text-primary border-primary/20 text-[7px] uppercase font-black">REMINDER DUE</Badge>;
-    }
-    return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[7px] uppercase font-black">ACTIVE</Badge>;
-  };
-
-  const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <FileImage className="w-5 h-5 text-emerald-500" />;
-    if (type.startsWith('video/')) return <FileVideo className="w-5 h-5 text-rose-500" />;
-    if (type.startsWith('audio/')) return <FileAudio className="w-5 h-5 text-blue-500" />;
-    if (type.includes('zip') || type.includes('archive')) return <FileArchive className="w-5 h-5 text-amber-500" />;
-    if (type.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
-    return <FileIcon className="w-5 h-5 text-foreground/40" />;
-  };
-
   const handleDownload = async (url: string, name: string) => {
     try {
       const res = await fetch(url);
@@ -343,6 +335,29 @@ export default function TempUploadPage() {
       window.open(url, '_blank');
       toast({ title: "External Link", description: "Node restricted direct fetch. Link opened in new tab." });
     }
+  };
+
+  const getAlertBadge = (item: UploadRecord) => {
+    const now = new Date();
+    if (item.expiryDate) {
+      const expiry = new Date(item.expiryDate);
+      if (isBefore(expiry, now)) return <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-[7px] uppercase font-black px-2 py-0.5">EXPIRED</Badge>;
+      if (differenceInDays(expiry, now) <= 3) return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[7px] uppercase font-black px-2 py-0.5">EXPIRING SOON</Badge>;
+    }
+    if (item.reminderDate) {
+      const reminder = new Date(item.reminderDate);
+      if (isBefore(reminder, now)) return <Badge className="bg-primary/10 text-primary border-primary/20 text-[7px] uppercase font-black px-2 py-0.5">REMINDER DUE</Badge>;
+    }
+    return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[7px] uppercase font-black px-2 py-0.5">ACTIVE</Badge>;
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <FileImage className="w-5 h-5 text-emerald-500" />;
+    if (type.startsWith('video/')) return <FileVideo className="w-5 h-5 text-rose-500" />;
+    if (type.startsWith('audio/')) return <FileAudio className="w-5 h-5 text-blue-500" />;
+    if (type.includes('zip') || type.includes('archive')) return <FileArchive className="w-5 h-5 text-amber-500" />;
+    if (type.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
+    return <FileIcon className="w-5 h-5 text-foreground/40" />;
   };
 
   const handleClearWorkspace = () => {
@@ -470,7 +485,7 @@ export default function TempUploadPage() {
                          </div>
                          <div className="space-y-1">
                             <span className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover/upload:text-primary transition-colors">Select Payload</span>
-                            <p className="text-[8px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">ALL FORMATS (Max 100MB)</p>
+                            <p className="text-[8px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">Max 100MB Recommended</p>
                          </div>
                       </div>
                     )}
@@ -505,7 +520,7 @@ export default function TempUploadPage() {
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-3">
                             <Globe className="w-4 h-4 text-emerald-500" />
-                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Public Signal Active</span>
+                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Public Matrix URL</span>
                          </div>
                          <button onClick={() => setLastUploadUrl(null)} className="text-emerald-500/40 hover:text-emerald-500"><X className="w-4 h-4" /></button>
                       </div>
