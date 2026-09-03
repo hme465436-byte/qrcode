@@ -279,7 +279,6 @@ export default function TempUploadPage() {
     if (selectedFile) {
       setFile(selectedFile);
       setLastUploadUrl(null);
-      setError(null);
       toast({ title: "Asset Buffered" });
     }
   };
@@ -322,7 +321,7 @@ export default function TempUploadPage() {
       return;
     }
 
-    // Protocol: XMLHttpRequest for real-time progress on Direct API Providers
+    // Protocol: XMLHttpRequest for 1:1 hardware bitstream monitoring
     const xhr = new XMLHttpRequest();
     let uploadUrl = "";
 
@@ -337,7 +336,7 @@ export default function TempUploadPage() {
       formData.append('file', file);
     }
 
-    // Open must be called before headers are set
+    // Handshake initialization
     xhr.open('POST', uploadUrl);
 
     if (activeProvider === 'pixeldrain') {
@@ -373,7 +372,7 @@ export default function TempUploadPage() {
           setIsProcessing(false);
         }
       } else {
-        const errText = xhr.status === 0 ? "Network error or CORS block. Ensure the provider node is reachable." : `Node Rejection (${xhr.status})`;
+        const errText = xhr.status === 0 ? "Network error or CORS block." : `Node Rejection (${xhr.status})`;
         toast({ variant: "destructive", title: "Transmission Failed", description: errText });
         setIsProcessing(false);
       }
@@ -464,175 +463,176 @@ export default function TempUploadPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 max-w-7xl">
-      <div className="mb-20 animate-reveal text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
-          <Cloud className="w-3.5 h-3.5" /> High-Entropy Storage
-        </div>
-        <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tighter leading-none mb-4">
-          Temp <span className="text-primary italic">Upload Studio</span>
-        </h1>
-        <p className="text-foreground/40 text-sm md:text-lg font-medium max-w-2xl mx-auto leading-relaxed uppercase tracking-widest">
-          Connect personal storage nodes and host ephemeral assets with clinical precision.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-        {/* Left Column: Settings & Input */}
-        <div className="lg:col-span-5 space-y-10">
-          <div className="space-y-8">
-             <div className="space-y-2 px-1">
-                <Label className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Protocol Selection</Label>
-                <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">Storage Node</h3>
-             </div>
-             <div className="flex flex-col sm:flex-row items-center gap-3">
-                <Select value={activeProvider} onValueChange={(v: ProviderId) => { setActiveProvider(v); setIsConfigOpen(false); }}>
-                  <SelectTrigger className="h-14 flex-1 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest">
-                    <SelectValue placeholder="Choose Provider" />
-                  </SelectTrigger>
-                  <SelectContent className="glass-card">
-                    {PROVIDERS.map(p => (
-                      <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase tracking-widest">
-                        <div className="flex items-center gap-3">
-                            {p.label}
-                            {connectedIds.has(p.id) && <CheckCircle2 className="w-3 text-emerald-500" />}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    const next = !isConfigOpen;
-                    setIsConfigOpen(next);
-                    if (next) setTimeout(() => configCardRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-                  }} 
-                  className={cn("h-14 px-6 rounded-2xl border-white/10 text-[9px] font-black uppercase tracking-widest", isConfigOpen ? "bg-primary text-white border-primary" : "bg-secondary")}
-                >
-                  {isConfigOpen ? <ChevronUp className="w-4 h-4 mr-2" /> : <Settings2 className="w-4 h-4 mr-2" />}
-                  {isConfigOpen ? 'Close' : 'Configure'}
-                </Button>
-             </div>
-
-             {isConfigOpen && currentProviderConfig && (
-               <div ref={configCardRef} className="animate-in slide-in-from-top-4 duration-500">
-                  <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden">
-                     <CardHeader className="py-6 px-8 border-b border-primary/10 flex flex-row items-center justify-between bg-black/20">
-                        <div className="flex items-center gap-3">
-                           <KeyRound className="w-4 h-4 text-primary" />
-                           <span className="text-[11px] font-black uppercase tracking-widest text-foreground">{currentProviderConfig.label} Config</span>
-                        </div>
-                        <Badge variant="outline" className={cn("text-[8px] font-black uppercase", isCurrentConnected ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-white/5 text-white/20 border-white/5")}>
-                           {isCurrentConnected ? 'LINKED' : 'STANDBY'}
-                        </Badge>
-                     </CardHeader>
-                     <CardContent className="p-8 space-y-6">
-                        {currentProviderConfig.fields.map(f => (
-                          <div key={f.key} className="space-y-2">
-                             <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">{f.label}</Label>
-                             <div className="relative">
-                                <Input 
-                                  type={f.isSecret && !showSecrets[f.key] ? 'password' : 'text'}
-                                  value={configs[activeProvider]?.[f.key] || ''}
-                                  onChange={e => setConfigs({ ...configs, [activeProvider]: { ...(configs[activeProvider] || {}), [f.key]: e.target.value } })}
-                                  className="h-12 bg-black/40 border-border rounded-xl text-xs font-bold"
-                                />
-                                {f.isSecret && (
-                                   <button onClick={() => setShowSecrets(prev => ({ ...prev, [f.key]: !prev[f.key] }))} className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/20 hover:text-primary transition-colors">
-                                      {showSecrets[f.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                   </button>
-                                 )}
-                             </div>
-                          </div>
-                        ))}
-                        <div className="flex gap-3 pt-2">
-                           <Button onClick={saveConfig} className="flex-1 h-12 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-xl">Initialize Node</Button>
-                           {isCurrentConnected && (
-                             <Button variant="outline" onClick={() => setShowDisconnectConfirm(true)} className="h-12 w-12 border-red-500/20 text-red-500 rounded-xl hover:bg-red-500/10">
-                               <Unplug className="w-5 h-5" />
-                             </Button>
-                           )}
-                        </div>
-                     </CardContent>
-                  </Card>
-               </div>
-             )}
+    <>
+      <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 max-w-7xl">
+        <div className="mb-20 animate-reveal text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
+            <Cloud className="w-3.5 h-3.5" /> High-Entropy Storage
           </div>
+          <h1 className="text-4xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tighter leading-none mb-4">
+            Temp <span className="text-primary italic">Upload Studio</span>
+          </h1>
+          <p className="text-foreground/40 text-sm md:text-lg font-medium max-w-2xl mx-auto leading-relaxed uppercase tracking-widest">
+            Connect personal storage nodes and host ephemeral assets with clinical precision.
+          </p>
+        </div>
 
-          <Card className={cn(
-            "glass-card border-border shadow-2xl transition-all duration-700 overflow-hidden bg-[#060608]", 
-            !isCurrentConnected && "opacity-20 pointer-events-none grayscale"
-          )}>
-             <CardHeader className="py-6 border-b border-white/5 bg-secondary/30">
-                <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-4 text-foreground">
-                   <FileUp className="w-5 h-5 text-primary" /> Asset Injection
-                </CardTitle>
-             </CardHeader>
-             <CardContent className="pt-10 space-y-8">
-                <div 
-                  onClick={() => !isProcessing && fileInputRef.current?.click()} 
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); }}
-                  className={cn(
-                    "relative h-56 rounded-[2.5rem] border-2 border-dashed border-white/5 hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-black/40 cursor-pointer group/upload overflow-hidden", 
-                    file && "border-solid border-primary/20 bg-background/50"
-                  )}
-                >
-                   {file ? (
-                     <div className="text-center p-8 space-y-4">
-                        <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-inner">
-                          {file.type.startsWith('image/') ? <FileImage className="w-8 h-8" /> : <FileIcon className="w-8 h-8" />}
-                       </div>
-                        <div className="space-y-1">
-                           <p className="text-xs font-bold text-white truncate max-w-[240px] uppercase">{file.name}</p>
-                           <p className="text-[9px] font-black text-foreground/20 uppercase">{formatSize(file.size)} detected</p>
-                        </div>
-                     </div>
-                   ) : (
-                     <div className="text-center space-y-4">
-                       <div className="w-14 h-14 rounded-[1.2rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary group-hover/upload:scale-110 transition-all mx-auto shadow-xl">
-                         <FileUp className="w-6 h-6" />
-                       </div>
-                       <span className="text-[9px] font-black uppercase text-foreground/30 tracking-widest group-hover/upload:text-primary transition-colors">Select Payload</span>
-                     </div>
-                   )}
-                   <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-                </div>
-
-                <div className="space-y-6">
-                  {isProcessing && (
-                    <div className="space-y-2 animate-in slide-in-from-top-2">
-                       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
-                          <span className="animate-pulse">{statusLabel}</span>
-                          <span>{uploadProgress}%</span>
-                       </div>
-                       <Progress value={uploadProgress} className="h-1 rounded-full" />
-                    </div>
-                  )}
-                  
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          {/* Left Column: Settings & Input */}
+          <div className="lg:col-span-5 space-y-10">
+            <div className="space-y-8">
+               <div className="space-y-2 px-1">
+                  <Label className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Protocol Selection</Label>
+                  <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">Storage Node</h3>
+               </div>
+               <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <Select value={activeProvider} onValueChange={(v: ProviderId) => { setActiveProvider(v); setIsConfigOpen(false); }}>
+                    <SelectTrigger className="h-14 flex-1 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest">
+                      <SelectValue placeholder="Choose Provider" />
+                    </SelectTrigger>
+                    <SelectContent className="glass-card">
+                      {PROVIDERS.map(p => (
+                        <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase tracking-widest">
+                          <div className="flex items-center gap-3">
+                              {p.label}
+                              {connectedIds.has(p.id) && <CheckCircle2 className="w-3 text-emerald-500" />}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button 
-                    onClick={executeUpload} 
-                    disabled={isProcessing || !file || !isCurrentConnected} 
-                    className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                    variant="outline" 
+                    onClick={() => {
+                      const next = !isConfigOpen;
+                      setIsConfigOpen(next);
+                      if (next) setTimeout(() => configCardRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                    }} 
+                    className={cn("h-14 px-6 rounded-2xl border-white/10 text-[9px] font-black uppercase tracking-widest", isConfigOpen ? "bg-primary text-white border-primary" : "bg-secondary")}
                   >
-                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                     Upload
+                    {isConfigOpen ? <ChevronUp className="w-4 h-4 mr-2" /> : <Settings2 className="w-4 h-4 mr-2" />}
+                    {isConfigOpen ? 'Close' : 'Configure'}
                   </Button>
+               </div>
 
-                  {lastUploadUrl && !isProcessing && (
-                     <div className="space-y-4 animate-in zoom-in-95 duration-500">
-                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                           <span className="text-[9px] font-black uppercase text-emerald-600">Transmission Complete</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                           <Button onClick={() => { navigator.clipboard.writeText(lastUploadUrl); toast({ title: "Copied" }); }} variant="outline" className="h-12 text-[9px] font-black uppercase tracking-widest rounded-xl">
-                              <Copy className="w-3.5 h-3.5 mr-2" /> Link
-                           </Button>
-                           <Button asChild variant="outline" className="h-12 text-[9px] font-black uppercase tracking-widest rounded-xl">
-                              <a href={lastUploadUrl} target="_blank"><ExternalLink className="w-3.5 h-3.5 mr-2" /> View</a>
-                           </Button>
+               {isConfigOpen && currentProviderConfig && (
+                 <div ref={configCardRef} className="animate-in slide-in-from-top-4 duration-500">
+                    <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden">
+                       <CardHeader className="py-6 px-8 border-b border-primary/10 flex flex-row items-center justify-between bg-black/20">
+                          <div className="flex items-center gap-3">
+                             <KeyRound className="w-4 h-4 text-primary" />
+                             <span className="text-[11px] font-black uppercase tracking-widest text-foreground">{currentProviderConfig.label} Config</span>
+                          </div>
+                          <Badge variant="outline" className={cn("text-[8px] font-black uppercase", isCurrentConnected ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-white/5 text-white/20 border-white/5")}>
+                             {isCurrentConnected ? 'LINKED' : 'STANDBY'}
+                          </Badge>
+                       </CardHeader>
+                       <CardContent className="p-8 space-y-6">
+                          {currentProviderConfig.fields.map(f => (
+                            <div key={f.key} className="space-y-2">
+                               <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">{f.label}</Label>
+                               <div className="relative">
+                                  <Input 
+                                    type={f.isSecret && !showSecrets[f.key] ? 'password' : 'text'}
+                                    value={configs[activeProvider]?.[f.key] || ''}
+                                    onChange={e => setConfigs({ ...configs, [activeProvider]: { ...(configs[activeProvider] || {}), [f.key]: e.target.value } })}
+                                    className="h-12 bg-black/40 border-border rounded-xl text-xs font-bold"
+                                  />
+                                  {f.isSecret && (
+                                     <button onClick={() => setShowSecrets(prev => ({ ...prev, [f.key]: !prev[f.key] }))} className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/20 hover:text-primary transition-colors">
+                                        {showSecrets[f.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                     </button>
+                                   )}
+                               </div>
+                            </div>
+                          ))}
+                          <div className="flex gap-3 pt-2">
+                             <Button onClick={saveConfig} className="flex-1 h-12 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-xl">Initialize Node</Button>
+                             {isCurrentConnected && (
+                               <Button variant="outline" onClick={() => setShowDisconnectConfirm(true)} className="h-12 w-12 border-red-500/20 text-red-500 rounded-xl hover:bg-red-500/10">
+                                 <Unplug className="w-5 h-5" />
+                               </Button>
+                             )}
+                          </div>
+                       </CardContent>
+                    </Card>
+                 </div>
+               )}
+            </div>
+
+            <Card className={cn(
+              "glass-card border-border shadow-2xl transition-all duration-700 overflow-hidden bg-[#060608]", 
+              !isCurrentConnected && "opacity-20 pointer-events-none grayscale"
+            )}>
+               <CardHeader className="py-6 border-b border-white/5 bg-secondary/30">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-4 text-foreground">
+                     <FileUp className="w-5 h-5 text-primary" /> Asset Injection
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className="pt-10 space-y-8">
+                  <div 
+                    onClick={() => !isProcessing && fileInputRef.current?.click()} 
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); }}
+                    className={cn(
+                      "relative h-56 rounded-[2.5rem] border-2 border-dashed border-white/5 hover:border-primary/40 transition-all flex flex-col items-center justify-center bg-black/40 cursor-pointer group/upload overflow-hidden", 
+                      file && "border-solid border-primary/20 bg-background/50"
+                    )}
+                  >
+                     {file ? (
+                       <div className="text-center p-8 space-y-4">
+                          <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-inner">
+                            {file.type.startsWith('image/') ? <FileImage className="w-8 h-8" /> : <FileIcon className="w-8 h-8" />}
+                         </div>
+                          <div className="space-y-1">
+                             <p className="text-xs font-bold text-white truncate max-w-[240px] uppercase">{file.name}</p>
+                             <p className="text-[9px] font-black text-foreground/20 uppercase">{formatSize(file.size)} detected</p>
+                          </div>
+                       </div>
+                     ) : (
+                       <div className="text-center space-y-4">
+                         <div className="w-14 h-14 rounded-[1.2rem] bg-background border border-border flex items-center justify-center text-foreground/10 group-hover/upload:text-primary group-hover/upload:scale-110 transition-all mx-auto shadow-xl">
+                           <FileUp className="w-6 h-6" />
+                         </div>
+                         <span className="text-[9px] font-black uppercase text-foreground/30 tracking-widest group-hover/upload:text-primary transition-colors">Select Payload</span>
+                       </div>
+                     )}
+                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+                  </div>
+
+                  <div className="space-y-6">
+                    {isProcessing && (
+                      <div className="space-y-2 animate-in slide-in-from-top-2">
+                         <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
+                            <span className="animate-pulse">{statusLabel}</span>
+                            <span>{uploadProgress}%</span>
+                         </div>
+                         <Progress value={uploadProgress} className="h-1" />
+                      </div>
+                    )}
+                    
+                    <Button 
+                      onClick={executeUpload} 
+                      disabled={isProcessing || !file || !isCurrentConnected} 
+                      className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                    >
+                       {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
+                       Upload
+                    </Button>
+
+                    {lastUploadUrl && !isProcessing && (
+                       <div className="space-y-4 animate-in zoom-in-95 duration-500">
+                          <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                             <span className="text-[9px] font-black uppercase text-emerald-600">Transmission Complete</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                             <Button onClick={() => { navigator.clipboard.writeText(lastUploadUrl); toast({ title: "Copied" }); }} variant="outline" className="h-12 text-[9px] font-black uppercase tracking-widest rounded-xl">
+                                <Copy className="w-3.5 h-3.5 mr-2" /> Link
+                             </Button>
+                             <Button asChild variant="outline" className="h-12 text-[9px] font-black uppercase tracking-widest rounded-xl">
+                                <a href={lastUploadUrl} target="_blank"><ExternalLink className="w-3.5 h-3.5 mr-2" /> View</a>
+                             </Button>
                         </div>
                      </div>
                   )}
@@ -782,6 +782,6 @@ export default function TempUploadPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
