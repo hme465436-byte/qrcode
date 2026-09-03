@@ -1,7 +1,7 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   MessageSquare, 
   Search, 
@@ -48,6 +48,8 @@ import {
   updateDoc,
   deleteDoc,
   getDocs,
+  writeBatch,
+  onSnapshot,
   Timestamp
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -60,6 +62,7 @@ import Link from 'next/link';
 interface ChatUser {
   uid: string;
   username: string;
+  username_lowercase: string;
   displayName: string;
   photoURL?: string;
   about?: string;
@@ -534,12 +537,12 @@ export default function ChatAppPage() {
                           ) : (
                             <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
                           )}
-                          <div className={cn("text-[8px] font-bold uppercase mt-2 flex items-center gap-2", isMe ? "text-white/40" : "text-foreground/20")}>
+                          <div className={cn("text-[8px] font-bold uppercase mt-2", isMe ? "text-white/40" : "text-foreground/20")}>
                              {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '...'}
                              {isMe && <Check className="w-3 h-3" />}
                           </div>
                           {isMe && (
-                             <button onClick={() => deleteDoc(doc(db!, 'chats', activeChatId, 'messages', msg.id))} className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 text-white/0 group-hover/msg:text-red-500 transition-all"><Trash2 className="w-3 h-3" /></button>
+                             <button onClick={() => deleteDoc(doc(db!, 'chats', activeChatId, 'messages', msg.id))} className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 text-white/0 group-hover/msg:text-red-500 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
                           )}
                        </div>
                     </div>
@@ -634,4 +637,3 @@ export default function ChatAppPage() {
     </div>
   );
 }
-

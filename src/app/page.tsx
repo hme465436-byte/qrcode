@@ -1,7 +1,7 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { 
   QrCode, 
   Layers, 
@@ -1342,7 +1342,7 @@ const TOOLS: Tool[] = [
     desc: 'Convert multiple images into a professional PDF.', 
     label: 'DOCUMENT', 
     color: 'text-red-500 bg-red-500/10 border-red-500/20',
-    glowClass: 'bg-red-500/10',
+    glowClass: 'bg-target-color/10',
     keywords: ['image to pdf', 'jpg to pdf', 'png to pdf', 'photo pdf', 'convert pdf', 'bundle', 'pdf'],
     category: 'image'
   },
