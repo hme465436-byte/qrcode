@@ -18,16 +18,14 @@ import {
   AlertCircle, 
   FileUp, 
   Image as ImageIcon,
-  Clock,
   Calendar,
   Bell,
-  MoreVertical,
-  Plus,
   Unplug,
   ShieldAlert,
   ChevronUp,
   ChevronDown,
-  Search
+  Search,
+  Server
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
@@ -56,13 +55,6 @@ interface ProviderConfig {
 }
 
 const PROVIDERS: ProviderConfig[] = [
-  { id: 'r2', label: 'Cloudflare R2', fields: [
-    { key: 'accountId', label: 'Account ID', placeholder: 'Enter Account ID' },
-    { key: 'accessKey', label: 'Access Key', placeholder: 'Enter Access Key' },
-    { key: 'secretKey', label: 'Secret Key', placeholder: 'Enter Secret Key', type: 'password' },
-    { key: 'bucket', label: 'Bucket Name', placeholder: 'e.g. static-assets' },
-    { key: 'publicUrl', label: 'Public URL / Endpoint', placeholder: 'https://pub-xxx.r2.dev' },
-  ]},
   { id: 'imgbb', label: 'ImgBB', fields: [
     { key: 'apiKey', label: 'API Key', placeholder: 'Enter ImgBB API Key' },
   ]},
@@ -71,6 +63,13 @@ const PROVIDERS: ProviderConfig[] = [
   ]},
   { id: 'pixeldrain', label: 'Pixeldrain', fields: [
     { key: 'apiKey', label: 'API Key', placeholder: 'Enter API Key' },
+  ]},
+  { id: 'r2', label: 'Cloudflare R2', fields: [
+    { key: 'accountId', label: 'Account ID', placeholder: 'Enter Account ID' },
+    { key: 'accessKey', label: 'Access Key', placeholder: 'Enter Access Key' },
+    { key: 'secretKey', label: 'Secret Key', placeholder: 'Enter Secret Key', type: 'password' },
+    { key: 'bucket', label: 'Bucket Name', placeholder: 'e.g. static-assets' },
+    { key: 'publicUrl', label: 'Public URL / Endpoint', placeholder: 'https://pub-xxx.r2.dev' },
   ]},
   { id: 'custom', label: 'Custom API', fields: [
     { key: 'url', label: 'API URL', placeholder: 'https://api.site.com/upload' },
@@ -225,10 +224,9 @@ export default function TempUploadPage() {
         setIsProcessing(false);
       }
     };
-    reader.readAsDataURL(base64);
+    reader.readAsDataURL(file);
   };
 
-  // --- History & Reminder Management ---
   const deleteRecord = (id: string) => {
     if (!db) return;
     deleteDoc(doc(db, 'temp_upload_history', id)).catch(() => {});
@@ -254,7 +252,6 @@ export default function TempUploadPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-24 max-w-7xl">
-      {/* HERO SECTION */}
       <div className="mb-20 animate-reveal text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-6">
           <Cloud className="w-3.5 h-3.5" /> High-Entropy Storage Matrix
@@ -263,42 +260,44 @@ export default function TempUploadPage() {
           Temp <span className="text-primary italic">Upload Studio</span>
         </h1>
         <p className="text-foreground/40 text-sm md:text-lg font-medium max-w-2xl mx-auto leading-relaxed uppercase tracking-widest">
-          Connect any storage API and upload files with permanent account history and expiry reminders.
+          Connect storage, upload files, and keep history with expiry reminders.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
         
         {/* LEFT: Provider & Upload */}
-        <div className="lg:col-span-5 space-y-8">
-           {/* Provider Connection Panel */}
+        <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
            <Card className="glass-card border-border shadow-2xl overflow-visible relative group">
               <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[80px]" />
               <CardHeader className="py-8 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Settings className="w-5 h-5 text-primary" /> Node Configuration
+                    <Server className="w-5 h-5 text-primary" /> Node Discovery
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-10 space-y-8">
-                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                    {PROVIDERS.map(p => (
-                      <button
-                        key={p.id}
-                        onClick={() => setActiveProvider(p.id)}
-                        className={cn(
-                          "flex flex-col items-center justify-center gap-2 px-6 h-20 rounded-2xl border transition-all shrink-0",
-                          activeProvider === p.id ? "bg-primary text-white border-primary shadow-lg scale-105" : "bg-secondary/50 border-border text-foreground/40 hover:text-primary"
-                        )}
-                      >
-                         <span className="text-[9px] font-black uppercase tracking-widest">{p.label}</span>
-                         {connectedIds.has(p.id) && <div className="w-1.5 h-1.5 rounded-full bg-green-400" />}
-                      </button>
-                    ))}
+                 <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Select Storage Protocol</Label>
+                    <Select value={activeProvider} onValueChange={(v: ProviderId) => setActiveProvider(v)}>
+                      <SelectTrigger className="h-14 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest">
+                        <SelectValue placeholder="Choose Provider" />
+                      </SelectTrigger>
+                      <SelectContent className="glass-card">
+                        {PROVIDERS.map(p => (
+                          <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase">
+                             <div className="flex items-center gap-2">
+                                {p.label}
+                                {connectedIds.has(p.id) && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+                             </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                  </div>
 
                  <div className="space-y-6 animate-in fade-in duration-300">
                     <div className="flex items-center justify-between">
-                       <h3 className="text-sm font-bold text-foreground uppercase tracking-tight">{PROVIDERS.find(p => p.id === activeProvider)?.label} Setup</h3>
+                       <h3 className="text-sm font-bold text-foreground uppercase tracking-tight">{PROVIDERS.find(p => p.id === activeProvider)?.label} Calibration</h3>
                        {connectedIds.has(activeProvider) && (
                          <Button variant="ghost" size="sm" onClick={() => disconnectProvider(activeProvider)} className="text-red-500/60 hover:text-red-500 hover:bg-red-500/10 text-[8px] font-black uppercase">
                             <Unplug className="w-3.5 h-3.5 mr-1.5" /> Decouple
@@ -322,13 +321,12 @@ export default function TempUploadPage() {
                     </div>
 
                     <Button onClick={saveConfig} className="w-full h-14 bg-primary text-white font-black uppercase text-[10px] rounded-2xl shadow-xl shadow-primary/30">
-                       <CheckCircle2 className="w-4 h-4 mr-2" /> Connect Node
+                       <Zap className="w-4 h-4 mr-2" /> Initialize Connection
                     </Button>
                  </div>
               </CardContent>
            </Card>
 
-           {/* Upload Component */}
            <Card className={cn(
              "glass-card border-border shadow-2xl transition-all duration-700 overflow-hidden",
              !connectedIds.has(activeProvider) && "opacity-30 pointer-events-none grayscale"
@@ -345,8 +343,7 @@ export default function TempUploadPage() {
                   onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) setFile(f); }}
                   className={cn(
                     "relative h-48 rounded-[2.5rem] border-2 border-dashed border-border hover:border-primary/40 flex flex-col items-center justify-center bg-secondary/30 cursor-pointer group/upload transition-all",
-                    file && "border-solid border-primary/20 bg-background/50",
-                    isProcessing && "opacity-50 cursor-not-allowed"
+                    file && "border-solid border-primary/20 bg-background/50"
                   )}
                  >
                     {file ? (
@@ -362,14 +359,15 @@ export default function TempUploadPage() {
                          </div>
                          <div className="space-y-1">
                             <span className="text-[10px] font-black uppercase text-foreground/40 tracking-widest group-hover/upload:text-primary transition-colors">Select Payload</span>
-                            <p className="text-[8px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">ALL FORMATS SUPPORTED</p>
+                            <p className="text-[8px] text-foreground/20 font-bold uppercase tracking-widest leading-relaxed">ALL FORMATS (Max 100MB)</p>
                          </div>
                       </div>
                     )}
                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
                  </div>
 
-                 {isProcessing && (
+                 <div className="space-y-6">
+                  {isProcessing && (
                     <div className="space-y-2 animate-in slide-in-from-top-2">
                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
                           <span className="animate-pulse">Synthesizing Link...</span>
@@ -377,18 +375,21 @@ export default function TempUploadPage() {
                        </div>
                        <Progress value={uploadProgress} className="h-1" />
                     </div>
-                 )}
-
-                 <Button 
-                   onClick={executeUpload} 
-                   disabled={isProcessing || !file || !connectedIds.has(activeProvider)}
-                   className="w-full h-16 bg-primary text-white font-black text-sm uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
-                 >
-                    {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
+                  )}
+                  <Button 
+                    onClick={executeUpload} 
+                    disabled={isProcessing || !file || !connectedIds.has(activeProvider)}
+                    className="w-full h-16 bg-primary text-white font-black text-sm uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                  >
+                    {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Upload className="w-5 h-5 mr-3" />}
                     Upload
-                 </Button>
+                  </Button>
+                  {(file || lastUploadUrl) && (
+                    <button onClick={handleClearWorkspace} className="w-full text-[9px] font-black uppercase text-foreground/20 hover:text-primary transition-all">Reset Workspace</button>
+                  )}
+                </div>
 
-                 {lastUploadUrl && (
+                {lastUploadUrl && (
                    <div className="p-6 rounded-[2rem] bg-emerald-500/10 border border-emerald-500/20 space-y-4 animate-in zoom-in-95 duration-500">
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-3">
@@ -400,26 +401,16 @@ export default function TempUploadPage() {
                       <div className="p-4 bg-black/40 rounded-xl border border-emerald-500/10 font-mono text-[10px] text-foreground/60 break-all shadow-inner">
                          {lastUploadUrl}
                       </div>
-                      <Button onClick={() => { navigator.clipboard.writeText(lastUploadUrl || ''); toast({ title: "Identity Isolated" }); }} className="w-full h-12 bg-emerald-500 text-white font-black uppercase text-[10px] rounded-xl shadow-lg">
+                      <Button onClick={() => { navigator.clipboard.writeText(lastUploadUrl || ''); toast({ title: "Signal Isolated" }); }} className="w-full h-12 bg-emerald-500 text-white font-black uppercase text-[10px] rounded-xl shadow-lg">
                          <Copy className="w-4 h-4 mr-2" /> Copy Link
                       </Button>
                    </div>
-                 )}
+                )}
               </CardContent>
            </Card>
-
-           {!user && !authLoading && (
-             <div className="p-6 rounded-[2.5rem] bg-amber-500/5 border border-amber-500/10 flex items-start gap-5 animate-in slide-in-from-bottom-2">
-                <ShieldAlert className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                   <h4 className="text-[11px] font-black uppercase text-amber-700 tracking-widest leading-none">Authentication Offline</h4>
-                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Login to save history permanently across all devices.</p>
-                </div>
-             </div>
-           )}
         </div>
 
-        {/* RIGHT: History & Reminders */}
+        {/* RIGHT: History */}
         <main className="lg:col-span-7 xl:col-span-8 space-y-10 animate-in fade-in slide-in-from-right-6 duration-1000">
            <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-4">
@@ -480,9 +471,9 @@ export default function TempUploadPage() {
                            </div>
 
                            <div className="flex items-center gap-3 shrink-0">
-                              <button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Copied" }); }} className="p-2 text-foreground/10 hover:text-primary"><Copy className="w-4 h-4" /></button>
+                              <button onClick={() => { navigator.clipboard.writeText(item.url); toast({ title: "Copied" }); }} className="p-2 text-foreground/10 hover:text-primary transition-colors"><Copy className="w-4 h-4" /></button>
                               <a href={item.url} target="_blank" rel="noopener noreferrer" className="p-2 text-foreground/10 hover:text-primary"><ExternalLink className="w-4 h-4" /></a>
-                              <button onClick={() => deleteRecord(item.id)} className="p-2 text-foreground/10 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => deleteRecord(item.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                               <button onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} className="p-2 text-foreground/10 hover:text-primary">
                                  {expandedId === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               </button>
@@ -539,42 +530,9 @@ export default function TempUploadPage() {
                 </div>
               )}
            </div>
-
-           {/* Stats Matrix */}
-           {history.length > 0 && (
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10">
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                   <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                      <ShieldCheck className="w-6 h-6" />
-                   </div>
-                   <div className="space-y-1">
-                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Zero Tracking</h4>
-                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Metadata is held strictly within your sovereign identity node. No analytics are performed on your file content.</p>
-                   </div>
-                </div>
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                   <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                      <Clock className="w-6 h-6" />
-                   </div>
-                   <div className="space-y-1">
-                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest">Active Retention</h4>
-                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Manage TTL (Time-To-Live) for your assets with precision alerts to prevent broken external links.</p>
-                   </div>
-                </div>
-                <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                   <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                      <Globe className="w-6 h-6" />
-                   </div>
-                   <div className="space-y-1">
-                      <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest">Multi-Provider Sync</h4>
-                      <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">A unified linguistic interface for diverse storage architectures, from S3 buckets to social media hosts.</p>
-                   </div>
-                </div>
-             </div>
-           )}
         </main>
       </div>
-
+      
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
@@ -584,4 +542,10 @@ export default function TempUploadPage() {
       `}</style>
     </div>
   );
+
+  function handleClearWorkspace() {
+    setFile(null);
+    setLastUploadUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
 }
