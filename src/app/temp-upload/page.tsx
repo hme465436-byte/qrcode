@@ -465,7 +465,7 @@ export default function TempUploadPage() {
                             <SelectItem key={p.id} value={p.id} className="text-[10px] font-black uppercase tracking-widest">
                               <div className="flex items-center gap-3">
                                   {p.label}
-                                  {connectedIds.has(p.id) && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+                                  {connectedIds.has(p.id) && <CheckCircle2 className="w-3" />}
                               </div>
                             </SelectItem>
                           ))}
@@ -639,7 +639,7 @@ export default function TempUploadPage() {
 
             <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-7 h-7" />
+                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div className="space-y-1">
                   <h4 className="text-[12px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
