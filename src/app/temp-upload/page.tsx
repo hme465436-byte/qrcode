@@ -46,7 +46,8 @@ import {
   Layers,
   ChevronRight,
   Maximize,
-  ArrowRight
+  ArrowRight,
+  KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -391,7 +392,7 @@ export default function TempUploadPage() {
         </div>
         <Card className="glass-card border-border shadow-2xl p-12 sm:p-24 text-center flex flex-col items-center gap-8 relative overflow-hidden bg-black/10 rounded-[2.5rem]">
           <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl relative z-10">
+          <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl ring-1 ring-primary/10 relative z-10">
              <Lock className="w-8 h-8" />
           </div>
           <div className="space-y-4 relative z-10">
@@ -461,7 +462,10 @@ export default function TempUploadPage() {
                <div ref={configCardRef} className="animate-in slide-in-from-top-4 duration-500">
                   <Card className="glass-card border-primary/20 bg-primary/[0.03] shadow-2xl overflow-hidden">
                      <CardHeader className="py-6 px-8 border-b border-primary/10 flex flex-row items-center justify-between">
-                        <span className="text-[11px] font-black uppercase tracking-widest text-foreground">{currentProviderConfig.label} Matrix</span>
+                        <div className="flex items-center gap-3">
+                           <KeyRound className="w-4 h-4 text-primary" />
+                           <span className="text-[11px] font-black uppercase tracking-widest text-foreground">{currentProviderConfig.label} Matrix</span>
+                        </div>
                         <Badge variant="outline" className={cn("text-[8px] font-black uppercase", isCurrentConnected ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-white/5 text-white/20 border-white/5")}>
                            {isCurrentConnected ? 'CONNECTED' : 'STANDBY'}
                         </Badge>
@@ -527,7 +531,7 @@ export default function TempUploadPage() {
                     </div>
                   )}
                   <Button onClick={executeUpload} disabled={isProcessing || !file || !isCurrentConnected} className="w-full h-16 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/30">
-                     Start Transmission
+                     Upload
                   </Button>
                 </div>
              </CardContent>
