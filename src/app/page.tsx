@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { 
   QrCode, 
@@ -1533,14 +1533,13 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: any }[] = [
   { id: 'utilities', label: 'Utilities', icon: Zap },
 ];
 
-function ToolItem({ item, mode }: { item: Tool, mode: 'grid' | 'list' }) {
+const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list' }) => {
   const isGrid = mode === 'grid';
 
   return (
     <Link 
       href={item.href} 
       onClick={() => {
-        // Save scroll position before leaving
         sessionStorage.setItem(SESSION_SCROLL_KEY, window.scrollY.toString());
       }}
       className={cn(
@@ -1598,7 +1597,9 @@ function ToolItem({ item, mode }: { item: Tool, mode: 'grid' | 'list' }) {
       </Card>
     </Link>
   );
-}
+});
+
+ToolItem.displayName = 'ToolItem';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -1656,7 +1657,6 @@ export default function Home() {
     if (savedSearch) setSearchQuery(savedSearch);
 
     if (savedScroll) {
-      // Small delay to ensure render cycle complete before scroll
       setTimeout(() => {
         window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
       }, 50);
@@ -1670,7 +1670,6 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Persist functional states as they change
   useEffect(() => {
     sessionStorage.setItem(SESSION_COUNT_KEY, visibleCount.toString());
   }, [visibleCount]);
@@ -1725,10 +1724,10 @@ export default function Home() {
     if (saved) setViewMode(saved);
   }, []);
 
-  const toggleViewMode = (mode: 'grid' | 'list') => {
+  const toggleViewMode = useCallback((mode: 'grid' | 'list') => {
     setViewMode(mode);
     localStorage.setItem(VIEW_MODE_KEY, mode);
-  };
+  }, []);
 
   const filteredTools = useMemo(() => {
     let result = TOOLS;
@@ -1751,6 +1750,10 @@ export default function Home() {
   const visibleTools = useMemo(() => {
     return filteredTools.slice(0, visibleCount);
   }, [filteredTools, visibleCount]);
+
+  const handleVisibleCount = useCallback(() => {
+    setVisibleCount(prev => prev + 6);
+  }, []);
 
   return (
     <div className="flex flex-col items-center w-full max-w-full overflow-x-hidden pb-16">
@@ -1904,7 +1907,7 @@ export default function Home() {
             {visibleCount < filteredTools.length && (
               <div className="flex flex-col items-center gap-6 animate-in fade-in duration-700">
                  <ShadButton 
-                   onClick={() => setVisibleCount(prev => prev + 6)}
+                   onClick={handleVisibleCount}
                    variant="outline"
                    className="h-14 sm:h-16 px-10 sm:px-12 rounded-full border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-[10px] sm:xs backdrop-blur-xl hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] group/see"
                  >
