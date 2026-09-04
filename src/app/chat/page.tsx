@@ -60,7 +60,8 @@ import {
   ChevronDown,
   MoreHorizontal as MoreIcon,
   Heart,
-  Paperclip
+  Paperclip,
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,6 +69,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -187,17 +189,6 @@ interface FriendRequest {
   timestamp: any;
 }
 
-interface StatusStory {
-  id: string;
-  uid: string;
-  username: string;
-  text?: string;
-  imageUrl?: string;
-  timestamp: number;
-}
-
-const COMMON_EMOJIS = ['❤️', '😂', '🔥', '👍', '😊', '🙌', '✨', '🚀', '✅', '🙏', '💯', '🤔', '👀', '🎉', '💡', '📍'];
-
 export default function ChatAppPage() {
   const { toast } = useToast();
   const db = useFirestore();
@@ -223,14 +214,12 @@ export default function ChatAppPage() {
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
-  const [showScrollDown, setShowScrollDown] = useState(false);
   
   // Modals
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [showForwardDialog, setShowForwardDialog] = useState<Message | null>(null);
   const [showMediaPreview, setShowMediaPreview] = useState<{url: string, type: 'image' | 'video'} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState<ChatUser[]>([]);
@@ -345,7 +334,7 @@ export default function ChatAppPage() {
       });
   }, [rawChats, chatPeers, user, profile?.archivedChats]);
 
-  const totalUnreadCount = useMemo(() => {
+  const unreadCount = useMemo(() => {
     if (!chats || !user) return 0;
     return chats.reduce((acc, chat) => acc + (chat.unreadCount?.[user.uid] || 0), 0);
   }, [chats, user]);
@@ -465,12 +454,28 @@ export default function ChatAppPage() {
     }
   };
 
+  const handleChatInputChange = (val: string) => {
+    setMessageInput(val);
+    if (!db || !activeChatId || !user) return;
+    const chatRef = doc(db, 'chats', activeChatId);
+    updateDoc(chatRef, { [`typing.${user.uid}`]: val.length > 0 });
+  };
+
   // --- 4. Matrix Management ---
   const handlePinChat = (id: string, isPinned: boolean) => {
     if (!db || !user) return;
     updateDoc(doc(db, 'chats', id), {
       pinnedBy: isPinned ? arrayRemove(user.uid) : arrayUnion(user.uid)
     });
+  };
+
+  const handleArchiveChat = (id: string) => {
+    if (!db || !user) return;
+    updateDoc(doc(db, 'chat_users', user.uid), {
+      archivedChats: arrayUnion(id)
+    });
+    setActiveChatId(null);
+    toast({ title: "Stream Archived" });
   };
 
   const handleDeleteEveryone = async (msgId: string) => {
@@ -556,7 +561,7 @@ export default function ChatAppPage() {
     if (!text) return;
     navigator.clipboard.writeText(text);
     setIsCopied(label);
-    toast({ title: "Copied" });
+    toast({ title: "Copied", description: `${label} saved to clipboard.` });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -645,7 +650,7 @@ export default function ChatAppPage() {
 
         <div className="grid grid-cols-4 h-14 border-b border-white/5 bg-black/40 shrink-0">
            {[
-             { id: 'chats', label: 'CHATS', icon: MessageSquare, badge: totalUnreadCount },
+             { id: 'chats', label: 'CHATS', icon: MessageSquare, badge: unreadCount },
              { id: 'status', label: 'STATUS', icon: Activity, badge: 0 },
              { id: 'friends', label: 'PEERS', icon: User, badge: 0 },
              { id: 'requests', label: 'UPLINKS', icon: Zap, badge: incomingRequests?.length || 0 }
@@ -718,6 +723,29 @@ export default function ChatAppPage() {
                          </div>
                       </div>
                       <button onClick={() => setActiveChatId(chat.id)} className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all"><MessageSquare className="w-5 h-5" /></button>
+                   </div>
+                 ))}
+              </div>
+           )}
+
+           {sidebarTab === 'requests' && (
+              <div className="p-4 space-y-4">
+                 <p className="text-[9px] font-black text-foreground/20 uppercase px-2">Inbound Signals</p>
+                 {incomingRequests?.length === 0 ? (
+                   <div className="py-20 text-center opacity-10">
+                      <Activity className="w-10 h-10 mx-auto" />
+                      <p className="text-[9px] font-black uppercase tracking-widest mt-2">Zero Inbound Signals</p>
+                   </div>
+                 ) : incomingRequests?.map(req => (
+                   <div key={req.id} className="p-4 rounded-3xl bg-primary/5 border border-primary/10 flex items-center justify-between">
+                      <div className="min-w-0">
+                         <p className="text-[11px] font-bold text-white uppercase">{req.fromName}</p>
+                         <p className="text-[8px] text-foreground/20 uppercase tracking-widest">Protocol Handshake</p>
+                      </div>
+                      <div className="flex gap-2">
+                         <Button onClick={() => acceptRequest(req)} size="sm" className="h-8 px-3 rounded-lg bg-primary text-[8px] font-black uppercase">Accept</Button>
+                         <Button onClick={() => deleteDoc(doc(db!, 'friend_requests', req.id))} variant="ghost" size="sm" className="h-8 px-3 rounded-lg text-red-500 bg-red-500/10 text-[8px] font-black uppercase">Ignore</Button>
+                      </div>
                    </div>
                  ))}
               </div>
@@ -859,7 +887,7 @@ export default function ChatAppPage() {
                      <Switch checked={profile.privacy?.readReceipts} onCheckedChange={(v) => updateDoc(doc(db!, 'chat_users', user.uid), { 'privacy.readReceipts': v })} />
                   </div>
                </div>
-               <Button onClick={handleLogout} variant="destructive" className="w-full h-14 rounded-2xl uppercase tracking-widest text-[9px]"><LogOut className="w-4 h-4 mr-2" /> Terminate Session</Button>
+               <Button onClick={() => setShowLeaveConfirm(true)} variant="destructive" className="w-full h-14 rounded-2xl uppercase tracking-widest text-[9px]"><LogOut className="w-4 h-4 mr-2" /> Terminate Session</Button>
             </div>
          </DialogContent>
       </Dialog>
@@ -885,6 +913,22 @@ export default function ChatAppPage() {
             </div>
          </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <LogOut className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Terminate Session</AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">Are you sure you want to log out? Your identity will be preserved in the matrix but you will be disconnected from active streams.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
