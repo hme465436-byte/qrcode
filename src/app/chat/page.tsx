@@ -151,15 +151,11 @@ interface Message {
   imageUrl?: string;
   videoUrl?: string;
   fileUrl?: string;
-  voiceUrl?: string;
-  fileName?: string;
-  fileSize?: number;
+  videoThumb?: string;
   timestamp: any;
   status: 'sent' | 'seen';
   replyTo?: { id: string, text: string, sender: string };
   deletedFor?: string[];
-  isDeletedEveryone?: boolean;
-  starredBy?: string[];
 }
 
 interface Chat {
@@ -245,7 +241,6 @@ export default function ChatAppPage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
 
   // --- 1. Identity & Presence Logic ---
   useEffect(() => {
@@ -309,7 +304,6 @@ export default function ChatAppPage() {
 
   /**
    * ImgBB Avatar Upload Protocol
-   * Bypasses Firebase Storage for visual hosting
    */
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -342,14 +336,12 @@ export default function ChatAppPage() {
 
   /**
    * Remove Avatar Protocol
-   * Definitively purges the link to leave the circle empty
    */
   const handleRemoveAvatar = async () => {
     if (!user || !db) return;
     setIsUploadingAvatar(true);
     try {
       const userRef = doc(db, 'chat_users', user.uid);
-      // Neutralize field to leave circle empty/plain as requested
       await updateDoc(userRef, { photoURL: null });
       toast({ title: "Identity Sanitized", description: "Profile photo purged from matrix." });
     } catch (err) {
@@ -426,7 +418,7 @@ export default function ChatAppPage() {
   const { data: incomingRequests } = useCollection<FriendRequest>(requestsQuery);
 
   // --- 3. Communication Protocols ---
-  const handleSendMessage = async (payload: { text?: string, imageUrl?: string, videoUrl?: string, voiceUrl?: string, fileUrl?: string, fileName?: string, fileSize?: number }) => {
+  const handleSendMessage = async (payload: any) => {
     if (!db || !user || !activeChatId) return;
     
     const chatRef = doc(db, 'chats', activeChatId);
@@ -445,7 +437,7 @@ export default function ChatAppPage() {
       
       const updates: any = {
         lastMessage: {
-          text: payload.text || (payload.imageUrl ? 'Photo' : payload.videoUrl ? 'Video' : payload.voiceUrl ? 'Voice Note' : 'File'),
+          text: payload.text || 'Media',
           senderId: user.uid,
           timestamp: serverTimestamp()
         }
@@ -465,64 +457,24 @@ export default function ChatAppPage() {
     }
   };
 
-  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video' | 'file') => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeChatId) return;
     setIsUploading(true);
-    toast({ title: "Transmitting Matrix..." });
     try {
-       // Using ImgBB for images as it's now preferred in the studio
-       if (type === 'image') {
-          const reader = new FileReader();
-          const base64 = await new Promise<string>((resolve) => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          const res = await uploadAvatarAction(base64);
-          if (res.success && res.url) {
-            await handleSendMessage({ imageUrl: res.url });
-          }
-       } else {
-          // Video/Files still require a direct link (Placeholder for direct binary send)
-          toast({ title: "Asset Node Restricted", description: "Use ImgBB for images only." });
-       }
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      const res = await uploadAvatarAction(base64);
+      if (res.success && res.url) {
+        await handleSendMessage({ imageUrl: res.url });
+      }
     } catch (err) {
       toast({ variant: "destructive", title: "Transmission Failed" });
     } finally {
       setIsUploading(false);
-    }
-  };
-
-  const startVoiceRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-      audioChunksRef.current = [];
-      
-      recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
-      recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        if (audioBlob.size < 1000) return; 
-        
-        setIsUploading(true);
-        // Placeholder for voice note hosting
-        toast({ title: "Acoustic Stream Blocked", description: "Voice hosting not yet available on ImgBB node." });
-        setIsUploading(false);
-      };
-
-      recorder.start();
-      setIsRecording(true);
-    } catch (e) {
-      toast({ variant: "destructive", title: "Acoustic Block" });
-    }
-  };
-
-  const stopVoiceRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
     }
   };
 
@@ -866,16 +818,12 @@ export default function ChatAppPage() {
                       <div className="flex gap-1.5 mb-1.5">
                          <button className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary transition-all"><Smile className="w-5 h-5" /></button>
                          <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary border border-white/5"><Paperclip className="w-5 h-5" /></button>
-                         <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleMediaUpload(e, 'image')} />
+                         <input type="file" ref={fileInputRef} className="hidden" onChange={handleMediaUpload} />
                       </div>
                       <div className="flex-1">
                          <Textarea value={messageInput} onChange={e => handleChatInputChange(e.target.value)} onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage({ text: messageInput }); } }} placeholder="Draft encrypted signal..." className="min-h-[50px] max-h-[120px] bg-secondary/60 border-white/10 rounded-[1.5rem] text-[15px] font-medium px-6 py-3.5 focus:ring-primary/40 text-white resize-none" />
                       </div>
-                      {messageInput.trim() || isUploading ? (
-                         <Button onClick={() => handleSendMessage({ text: messageInput })} disabled={!messageInput.trim() || isUploading} className="h-12 w-12 rounded-full bg-primary text-white shadow-xl mb-1">{isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}</Button>
-                      ) : (
-                         <button onMouseDown={startVoiceRecording} onMouseUp={stopVoiceRecording} onTouchStart={startVoiceRecording} onTouchEnd={stopVoiceRecording} className={cn("h-12 w-12 rounded-full flex items-center justify-center transition-all mb-1 shrink-0", isRecording ? "bg-red-500 text-white scale-125 animate-pulse" : "bg-secondary text-primary/40 hover:text-primary")}><Mic className="w-5 h-5" /></button>
-                      )}
+                      <Button onClick={() => handleSendMessage({ text: messageInput })} disabled={!messageInput.trim() || isUploading} className="h-12 w-12 rounded-full bg-primary text-white shadow-xl mb-1">{isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}</Button>
                    </div>
                 </div>
              </footer>
@@ -891,8 +839,6 @@ export default function ChatAppPage() {
          )}
       </main>
 
-      <audio ref={audioPlaybackRef} className="hidden" />
-
       {/* OVERLAYS */}
       <Dialog open={!!showMediaPreview} onOpenChange={() => setShowMediaPreview(null)}>
          <DialogContent className="max-w-4xl p-0 bg-black border-none overflow-hidden h-[90vh]">
@@ -905,8 +851,8 @@ export default function ChatAppPage() {
       </Dialog>
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-         <DialogContent className="glass-card max-w-md p-0 rounded-[2.5rem] overflow-hidden">
-            <DialogHeader className="p-8 border-b border-white/5 bg-secondary/30 relative">
+         <DialogContent className="glass-card max-w-md p-0 rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90vh]">
+            <DialogHeader className="p-8 border-b border-white/5 bg-secondary/30 relative shrink-0">
                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
                <div className="flex flex-col items-center gap-6 relative z-10">
                   <div className="relative group/avatar-edit">
@@ -925,7 +871,8 @@ export default function ChatAppPage() {
                   </div>
                </div>
             </DialogHeader>
-            <div className="p-8 space-y-8 bg-[#0d0d0f]">
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8 bg-[#0d0d0f]">
                <div className="space-y-4">
                   <div className="space-y-2">
                      <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Identity Status (About)</Label>
@@ -951,11 +898,13 @@ export default function ChatAppPage() {
                      <Switch checked={profile.privacy?.readReceipts} onCheckedChange={(v) => updateDoc(doc(db!, 'chat_users', user.uid), { 'privacy.readReceipts': v })} />
                   </div>
                </div>
-               
+            </div>
+
+            <DialogFooter className="p-8 border-t border-white/5 bg-black/40 shrink-0">
                <Button onClick={() => setShowLeaveConfirm(true)} variant="destructive" className="w-full h-14 rounded-2xl uppercase tracking-[0.3em] text-[10px] shadow-xl shadow-red-500/10">
                   <LogOut className="w-4 h-4 mr-2" /> Terminate Session
                </Button>
-            </div>
+            </DialogFooter>
          </DialogContent>
       </Dialog>
 
