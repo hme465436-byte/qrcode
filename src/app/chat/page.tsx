@@ -213,7 +213,7 @@ export default function ChatAppPage() {
   const [isSettingUp, setIsSettingUp] = useState(false);
   
   // Navigation State
-  const [sidebarTab, setSidebarTab] = useState<'chats' | 'status' | 'friends' | 'requests'>('chats');
+  const [sidebarTab, setSidebarTab] = useState<'chats' | 'friends' | 'requests'>('chats');
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   
   // Interaction State
@@ -642,10 +642,9 @@ export default function ChatAppPage() {
            </div>
         </header>
 
-        <div className="grid grid-cols-4 h-14 border-b border-white/5 bg-black/40 shrink-0">
+        <div className="grid grid-cols-3 h-14 border-b border-white/5 bg-black/40 shrink-0">
            {[
              { id: 'chats', label: 'CHATS', icon: MessageSquare, badge: unreadCount },
-             { id: 'status', label: 'STATUS', icon: Activity, badge: 0 },
              { id: 'friends', label: 'PEERS', icon: User, badge: 0 },
              { id: 'requests', label: 'UPLINKS', icon: Zap, badge: incomingRequests?.length || 0 }
            ].map(tab => (
@@ -686,22 +685,6 @@ export default function ChatAppPage() {
                  </button>
                ))}
              </>
-           )}
-
-           {sidebarTab === 'status' && (
-              <div className="p-4 space-y-6">
-                 <div className="p-6 rounded-[2.5rem] bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-primary/10 transition-all">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"><Plus className="w-6 h-6" /></div>
-                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">Update Status</span>
-                 </div>
-                 <div className="space-y-4">
-                    <p className="text-[9px] font-black text-foreground/20 uppercase px-2">Recent Matrix Updates</p>
-                    <div className="flex flex-col items-center justify-center py-20 opacity-10">
-                       <Activity className="w-10 h-10" />
-                       <p className="text-[9px] font-black uppercase mt-2">Zero Status Signals</p>
-                    </div>
-                 </div>
-              </div>
            )}
 
            {sidebarTab === 'friends' && (
