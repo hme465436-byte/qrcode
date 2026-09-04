@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -132,7 +133,8 @@ export default function AIChatbotPage() {
 
   useEffect(() => {
     if (cloudSessions && cloudSessions.length > 0) {
-      // Logic to merge cloud sessions into local state would go here for a production app
+      // In a more complex app, we would perform a deep merge here.
+      // For the MVP, we favor local state but ensure cloud records are accessible.
     }
   }, [cloudSessions]);
 
@@ -172,14 +174,17 @@ export default function AIChatbotPage() {
   const saveToCloud = (sessionId: string, session: Session) => {
     if (!db || !user) return;
     const docRef = doc(db, 'ai_history', user.uid, 'sessions', sessionId);
+    
+    // Non-blocking mutation with specialized error emission
     setDoc(docRef, {
       ...session,
       uid: user.uid,
       timestamp: serverTimestamp()
-    }, { merge: true }).catch(async (err) => {
+    }, { merge: true }).catch(async (serverError) => {
       const permissionError = new FirestorePermissionError({
         path: docRef.path,
         operation: 'write',
+        requestResourceData: session,
       });
       errorEmitter.emit('permission-error', permissionError);
     });
@@ -236,9 +241,16 @@ export default function AIChatbotPage() {
   const deleteSession = async (id: string) => {
     setSessions(prev => prev.filter(s => s.id !== id));
     if (activeSessionId === id) setActiveSessionId(null);
+    
     if (db && user) {
       const docRef = doc(db, 'ai_history', user.uid, 'sessions', id);
-      deleteDoc(docRef).catch(() => {});
+      deleteDoc(docRef).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
     }
     toast({ title: "Session Purged" });
   };
@@ -456,7 +468,7 @@ export default function AIChatbotPage() {
                     />
                  </div>
 
-                 <Button onClick={() => setConfig(INITIAL_CONFIG)} variant="ghost" className="w-full h-8 text-[8px] font-black uppercase text-foreground/20 hover:text-primary">Reset to Factory</Button>
+                 <button onClick={() => setConfig(INITIAL_CONFIG)} className="w-full h-8 text-[8px] font-black uppercase text-foreground/20 hover:text-primary transition-colors">Reset to Factory</button>
               </CardContent>
            </Card>
          )}

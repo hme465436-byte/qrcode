@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "ChatUser": {
@@ -56,6 +57,18 @@
         "timestamp": { "type": "object" },
         "status": { "type": "string", "enum": ["sent", "seen"] }
       }
+    },
+    "AIChatSession": {
+      "title": "AI Chat Session",
+      "description": "A conversation with the AI assistant.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "lastUpdated": { "type": "number" },
+        "messages": { "type": "array", "items": { "$ref": "#/entities/Message" } },
+        "uid": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -78,9 +91,9 @@
       "schema": "#/entities/Message",
       "description": "Real-time message stream for a chat."
     },
-    "/ai_history/{uid}/messages/{messageId}": {
-      "schema": "#/entities/Message",
-      "description": "Persistent AI chat history for the user."
+    "/ai_history/{uid}/sessions/{sessionId}": {
+      "schema": "#/entities/AIChatSession",
+      "description": "Persistent AI chat sessions for the user."
     }
   }
 }
