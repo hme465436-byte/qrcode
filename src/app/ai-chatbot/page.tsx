@@ -554,16 +554,16 @@ export default function AIChatbotPage() {
 
          {/* Advanced Config Overlay */}
          {isConfigOpen && (
-           <Card className="absolute top-20 right-6 w-80 glass-card border-primary/20 bg-[#0d0d0f]/95 shadow-3xl z-50 animate-in zoom-in-95 duration-300">
-              <CardHeader className="py-4 border-b border-white/5 flex flex-row items-center justify-between">
+           <Card className="absolute top-4 right-6 w-80 glass-card border-primary/20 bg-[#0d0d0f]/95 shadow-3xl z-50 animate-in zoom-in-95 duration-300 flex flex-col max-h-[calc(100%-32px)]">
+              <CardHeader className="py-4 border-b border-white/5 flex flex-row items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
                     <Settings2 className="w-4 h-4 text-primary" />
                     <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Synthesis Engine</span>
                  </div>
                  <button onClick={() => setIsConfigOpen(false)} className="text-white/20 hover:text-white"><X className="w-4 h-4" /></button>
               </CardHeader>
-              <CardContent className="p-6 space-y-8">
-                 <div className="space-y-4">
+              <CardContent className="p-5 space-y-6 overflow-y-auto custom-scrollbar">
+                 <div className="space-y-3">
                     <Label className="text-[9px] font-black uppercase text-foreground/40">Model Identity</Label>
                     <Select value={config.model} onValueChange={v => setConfig({...config, model: v})}>
                        <SelectTrigger className="h-10 bg-secondary/50 border-border text-[9px] font-bold">
@@ -577,7 +577,7 @@ export default function AIChatbotPage() {
                     </Select>
                  </div>
 
-                 <div className="space-y-4">
+                 <div className="space-y-3">
                     <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-foreground/30">
                        <Label>Temperature (Creativity)</Label>
                        <span className="text-primary font-mono">{config.temperature}</span>
@@ -595,11 +595,11 @@ export default function AIChatbotPage() {
                     />
                  </div>
 
-                 <div className="pt-4 grid grid-cols-2 gap-2">
-                    <Button variant="outline" size="sm" onClick={downloadHistory} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5">
+                 <div className="pt-2 grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" onClick={downloadHistory} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5 bg-white/5">
                        <FileDown className="w-3.5 h-3.5 mr-1.5" /> Export .TXT
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleCopy(activeSession?.messages.map(m => m.content).join('\n') || '', 'all')} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5">
+                    <Button variant="outline" size="sm" onClick={() => handleCopy(activeSession?.messages.map(m => m.content).join('\n') || '', 'all')} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5 bg-white/5">
                        <Copy className="w-3.5 h-3.5 mr-1.5" /> Copy All
                     </Button>
                  </div>
