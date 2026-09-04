@@ -20,7 +20,8 @@ import {
   History,
   ChevronRight,
   RotateCcw,
-  Settings2
+  Settings2,
+  Type
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -172,8 +173,6 @@ export default function SpeechToTextPage() {
     );
   }
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
-
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal">
@@ -192,7 +191,7 @@ export default function SpeechToTextPage() {
           <div className="flex items-center gap-3">
              <GetHelp toolId="speech-to-text" />
              {(transcript || error) && (
-               <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
+               <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
                   <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
                </Button>
              )}
