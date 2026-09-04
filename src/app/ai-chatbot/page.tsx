@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -638,12 +637,12 @@ export default function AIChatbotPage() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === 'Enter' && e.shiftKey) {
                         e.preventDefault();
                         handleSend();
                       }
                     }}
-                    placeholder="Type your message..."
+                    placeholder="Type your message... (Shift+Enter to send)"
                     className="min-h-[44px] max-h-40 w-full pl-12 pr-14 bg-white/[0.02] border-white/10 rounded-2xl text-sm font-medium py-2.5 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-inner custom-scrollbar"
                   />
                   <div className="absolute right-1.5 bottom-1.5">
