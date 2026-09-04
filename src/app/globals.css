@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -49,25 +48,22 @@
 }
 
 @layer base {
-  /* Global Scrollbar Neutralization */
-  html, body, * {
-    scrollbar-width: none !important;
-  }
-  html::-webkit-scrollbar,
-  body::-webkit-scrollbar,
-  *::-webkit-scrollbar {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-  }
-
+  /* Global Scrollbar Neutralization - Optimized for performance */
   html, body {
     @apply m-0 p-0;
+    scrollbar-width: none !important;
     overflow-x: hidden !important;
     max-width: 100vw !important;
     width: 100% !important;
     box-sizing: border-box !important;
     scroll-behavior: smooth;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   body {

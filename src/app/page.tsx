@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -128,9 +127,6 @@ import { SpaceBackground } from '@/components/qr-canvas/space-background';
 import { Card, CardContent } from '@/components/ui/card';
 
 const VIEW_MODE_KEY = 'mykit_view_mode';
-const SESSION_COUNT_KEY = 'mykit_home_count';
-const SESSION_CAT_KEY = 'mykit_home_cat';
-const SESSION_SEARCH_KEY = 'mykit_home_search';
 
 type ToolCategory = 'all' | 'pdf' | 'image' | 'generators' | 'utilities';
 
@@ -1287,7 +1283,7 @@ const TOOLS: Tool[] = [
     desc: 'Convert binary files to hexadecimal matrix.', 
     label: 'BINARY', 
     color: 'text-indigo-600 bg-indigo-600/10 border-indigo-600/20',
-    glowClass: 'bg-indigo-600/10',
+    glowClass: 'bg-indigo-100/10',
     keywords: ['hex', 'hexadecimal', 'binary', 'file', 'matrix', 'bytes', 'dump', 'offset'],
     category: 'utilities'
   },
@@ -1378,6 +1374,34 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: any }[] = [
   { id: 'utilities', label: 'Utilities', icon: Zap },
 ];
 
+const PHRASES = [
+  'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
+  'Word to PDF', 'Photo Enhance', 'Age Calculator', 'Photo to Text', 
+  'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
+  'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
+  'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
+  'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark',
+  'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
+  'Hide text in image', 'Secret photo', 'Stenography', 'Temp Room', 'Clipboard share', 
+  'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
+  'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
+  'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP', 'Currency Converter',
+  'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection',
+  'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
+  'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
+  'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom',
+  'Pet Studio', 'Dog photos', 'Cat pictures', 'Random Facts', 'Useless Facts',
+  'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
+  'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
+  'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'GitHub Finder', 'Developer profile',
+  'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
+  'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
+  'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
+  'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
+  'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
+  'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain'
+].sort(() => Math.random() - 0.5);
+
 const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list' }) => {
   const isGrid = mode === 'grid';
 
@@ -1456,60 +1480,6 @@ export default function Home() {
   const [typingSpeed, setTypingSpeed] = useState(70);
   const [isFocused, setIsFocused] = useState(false);
 
-  const phrases = useMemo(() => {
-    const list = [
-      'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
-      'Word to PDF', 'Photo Enhance', 'Age Calculator', 'Photo to Text', 
-      'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
-      'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
-      'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
-      'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark',
-      'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
-      'Hide text in image', 'Secret photo', 'Stenography', 'Temp Room', 'Clipboard share', 
-      'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
-      'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
-      'Enlarge image', 'KB size increaser', 'Speed Test', 'Internet speed', 'IP Finder', 'What is my IP', 'Currency Converter',
-      'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection',
-      'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
-      'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
-      'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom',
-      'Pet Studio', 'Dog photos', 'Cat pictures', 'Random Facts', 'Useless Facts',
-      'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
-      'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
-      'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'GitHub Finder', 'Developer profile',
-      'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
-      'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
-      'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
-      'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
-      'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
-      'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain'
-    ];
-    return [...list].sort(() => Math.random() - 0.5);
-  }, []);
-
-  // --- Scroll Restoration Logic ---
-  useEffect(() => {
-    const savedCount = sessionStorage.getItem(SESSION_COUNT_KEY);
-    const savedCat = sessionStorage.getItem(SESSION_CAT_KEY);
-    const savedSearch = sessionStorage.getItem(SESSION_SEARCH_KEY);
-
-    if (savedCount) setVisibleCount(parseInt(savedCount));
-    if (savedCat) setSelectedCategory(savedCat as ToolCategory);
-    if (savedSearch) setSearchQuery(savedSearch);
-  }, []);
-
-  useEffect(() => {
-    sessionStorage.setItem(SESSION_COUNT_KEY, visibleCount.toString());
-  }, [visibleCount]);
-
-  useEffect(() => {
-    sessionStorage.setItem(SESSION_CAT_KEY, selectedCategory);
-  }, [selectedCategory]);
-
-  useEffect(() => {
-    sessionStorage.setItem(SESSION_SEARCH_KEY, searchQuery);
-  }, [searchQuery]);
-
   useEffect(() => {
     if (isFocused || searchQuery) {
       setPlaceholder('');
@@ -1517,7 +1487,7 @@ export default function Home() {
     }
 
     const timeout = setTimeout(() => {
-      const currentPhrase = phrases[toolIndex];
+      const currentPhrase = PHRASES[toolIndex];
       
       if (!isDeleting) {
         setPlaceholder(currentPhrase.substring(0, placeholder.length + 1));
@@ -1533,14 +1503,14 @@ export default function Home() {
         setTypingSpeed(35);
         if (placeholder.length === 0) {
           setIsDeleting(false);
-          setToolIndex((prev) => (prev + 1) % phrases.length);
+          setToolIndex((prev) => (prev + 1) % PHRASES.length);
           setTypingSpeed(500);
         }
       }
     }, typingSpeed);
 
     return () => clearTimeout(timeout);
-  }, [placeholder, isDeleting, toolIndex, phrases, typingSpeed, isFocused, searchQuery]);
+  }, [placeholder, isDeleting, toolIndex, typingSpeed, isFocused, searchQuery]);
 
   const dynamicPlaceholder = useMemo(() => {
     if (isFocused || searchQuery) return 'Search tools...';
