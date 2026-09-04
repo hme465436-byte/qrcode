@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -28,7 +27,11 @@ import {
   BookOpen,
   ImageIcon,
   Settings2,
-  Globe
+  Globe,
+  KeyRound,
+  Unplug,
+  Database,
+  ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,7 +55,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, query, doc, setDoc, deleteDoc, orderBy } from 'firebase/firestore';
-import { ChatMessage, ChatConfig } from './actions';
+import { ChatMessage, ChatConfig, CustomApiConfig } from './actions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { marked } from 'marked';
@@ -78,14 +81,15 @@ interface Persona {
 }
 
 const PERSONAS: Persona[] = [
-  { id: 'helper', label: 'Detailed Helper', icon: Bot, prompt: 'You are a highly capable and professional AI assistant. Provide clear, accurate, and detailed answers. Stay on topic, be thorough, and maintain a helpful, encouraging tone. Ensure your responses add genuine value to the user.' },
-  { id: 'coder', label: 'Code Architect', icon: Code2, prompt: 'You are an expert senior software engineer and architect. Provide clean, secure, and production-ready code. Always include brief technical explanations, follow best practices, and suggest optimizations or security considerations.' },
-  { id: 'writer', label: 'Creative Writer', icon: Edit3, prompt: 'You are a professional creative writer and linguistic editor. Focus on engaging language, impeccable clarity, and sophisticated narrative flow. Help the user expand their ideas while maintaining stylistic consistency.' },
-  { id: 'teacher', label: 'Master Educator', icon: BookOpen, prompt: 'You are a knowledgeable and patient educator. Break down complex concepts into simple, understandable steps. Use examples, analogies, and verify understanding. Your goal is to make the user an expert.' },
-  { id: 'short', label: 'Quick Signal', icon: Zap, prompt: 'You are a highly efficient and concise assistant. Provide the shortest possible accurate answers. Use bullet points if helpful. Zero fluff, maximum precision, high-speed replies only.' },
+  { id: 'helper', label: 'Detailed Helper', icon: Bot, prompt: 'You are a highly capable and professional AI assistant. Provide clear, accurate, and detailed answers. Stay on topic, be thorough, and maintain a helpful, encouraging tone.' },
+  { id: 'coder', label: 'Code Architect', icon: Code2, prompt: 'You are an expert senior software engineer and architect. Provide clean, secure, and production-ready code. Always include brief technical explanations.' },
+  { id: 'writer', label: 'Creative Writer', icon: Edit3, prompt: 'You are a professional creative writer and linguistic editor. Focus on engaging language, impeccable clarity, and sophisticated narrative flow.' },
+  { id: 'teacher', label: 'Master Educator', icon: BookOpen, prompt: 'You are a knowledgeable and patient educator. Break down complex concepts into simple, understandable steps.' },
+  { id: 'short', label: 'Quick Signal', icon: Zap, prompt: 'You are a highly efficient and concise assistant. Provide the shortest possible accurate answers. Zero fluff, maximum precision.' },
 ];
 
-const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v5';
+const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v6';
+const CUSTOM_API_KEY = 'mykit_ai_custom_api_v1';
 const INITIAL_CONFIG: ChatConfig = {
   node: 'auto',
   temperature: 0.7,
@@ -112,6 +116,14 @@ export default function AIChatbotPage() {
   
   // Config State
   const [config, setConfig] = useState<ChatConfig>(INITIAL_CONFIG);
+  const [customApi, setCustomApi] = useState<CustomApiConfig>({
+    providerName: '',
+    apiUrl: '',
+    apiKey: '',
+    modelName: '',
+    customHeader: ''
+  });
+  const [isCustomConnected, setIsCustomConnected] = useState(false);
   const [activePersona, setActivePersona] = useState<PersonaId>('helper');
 
   // UI Meta
@@ -126,6 +138,15 @@ export default function AIChatbotPage() {
         const parsed = JSON.parse(saved);
         setSessions(parsed);
         if (parsed.length > 0 && !activeSessionId) setActiveSessionId(parsed[0].id);
+      } catch (e) {}
+    }
+
+    const savedApi = localStorage.getItem(CUSTOM_API_KEY);
+    if (savedApi) {
+      try {
+        const parsed = JSON.parse(savedApi);
+        setCustomApi(parsed);
+        setIsCustomConnected(true);
       } catch (e) {}
     }
   }, []);
@@ -181,8 +202,6 @@ export default function AIChatbotPage() {
   // --- 3. Controlled Gentle Scroll ---
   useEffect(() => {
     if (isProcessing && scrollRef.current) {
-      // Gentle scroll down by a small fixed amount to show the incoming signal area
-      // without jumping to the very bottom or disorienting the user
       const timeout = setTimeout(() => {
         scrollRef.current?.scrollBy({
           top: 150,
@@ -257,7 +276,13 @@ export default function AIChatbotPage() {
       const response = await fetch('/api/ai-chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: updatedMessages, config })
+        body: JSON.stringify({ 
+          messages: updatedMessages, 
+          config: {
+            ...config,
+            customApi: config.node === 'custom' ? customApi : undefined
+          } 
+        })
       });
 
       const result = await response.json();
@@ -344,16 +369,39 @@ export default function AIChatbotPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleConnectCustom = () => {
+    if (!customApi.apiUrl || !customApi.apiKey) {
+      toast({ variant: "destructive", title: "Config Incomplete", description: "API URL and Key are required." });
+      return;
+    }
+    localStorage.setItem(CUSTOM_API_KEY, JSON.stringify(customApi));
+    setIsCustomConnected(true);
+    setConfig(prev => ({ ...prev, node: 'custom' }));
+    toast({ title: "Node Integrated", description: "Personal API node is now active." });
+  };
+
+  const handleDisconnectCustom = () => {
+    localStorage.removeItem(CUSTOM_API_KEY);
+    setCustomApi({ providerName: '', apiUrl: '', apiKey: '', modelName: '', customHeader: '' });
+    setIsCustomConnected(false);
+    setConfig(prev => ({ ...prev, node: 'auto' }));
+    toast({ title: "Node Decoupled" });
+  };
+
   const filteredSidebarSessions = useMemo(() => {
     return sessions.filter(s => s.title.toLowerCase().includes(sidebarSearch.toLowerCase()));
   }, [sessions, sidebarSearch]);
 
   const renderContent = (content: string, role: string) => {
     if (role !== 'assistant') {
-      return <p className="text-sm sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap break-words selection:bg-black/20">{content}</p>;
+      return <p className="text-sm sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap break-words">{content}</p>;
     }
-    const html = DOMPurify.sanitize(marked.parse(content) as string);
-    return <div className="text-sm sm:text-[15px] font-medium leading-relaxed markdown-content" dangerouslySetInnerHTML={{ __html: html }} />;
+    try {
+      const html = DOMPurify.sanitize(marked.parse(content) as string);
+      return <div className="text-sm sm:text-[15px] font-medium leading-relaxed markdown-content" dangerouslySetInnerHTML={{ __html: html }} />;
+    } catch (e) {
+      return <p className="text-sm sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap break-words">{content}</p>;
+    }
   };
 
   return (
@@ -458,7 +506,7 @@ export default function AIChatbotPage() {
                  <ShieldCheck className="w-4 h-4 text-emerald-500/40" />
                  <span className="text-[9px] font-black uppercase text-foreground/30">Local Sandbox</span>
               </div>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[7px] font-black px-2">v7.2 PRO</Badge>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[7px] font-black px-2">v7.3 PRO</Badge>
            </div>
         </div>
       </aside>
@@ -583,6 +631,89 @@ export default function AIChatbotPage() {
               </CardHeader>
               <CardContent className="p-5 space-y-6 overflow-y-auto custom-scrollbar">
                  <div className="space-y-3">
+                    <Label className="text-[9px] font-black uppercase text-foreground/40">Node Access</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                       {(['auto', 'groq', 'openrouter', 'custom'] as const).map(n => (
+                          <button
+                            key={n}
+                            onClick={() => setConfig({...config, node: n})}
+                            className={cn(
+                              "h-10 rounded-xl border text-[8px] font-black uppercase transition-all",
+                              config.node === n ? "bg-primary text-white border-primary" : "bg-secondary/50 border-white/5 text-white/40 hover:text-white"
+                            )}
+                          >
+                             {n === 'openrouter' ? 'OR' : n}
+                          </button>
+                       ))}
+                    </div>
+                 </div>
+
+                 {config.node === 'custom' && (
+                    <div className="space-y-4 p-4 rounded-2xl bg-primary/5 border border-primary/20 animate-in slide-in-from-top-2">
+                       <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-black uppercase text-primary tracking-widest">Custom API</Label>
+                          {isCustomConnected ? (
+                             <Badge className="bg-emerald-500/10 text-emerald-500 text-[7px] border-emerald-500/20">LINKED</Badge>
+                          ) : (
+                             <Badge className="bg-white/5 text-white/40 text-[7px]">STANDBY</Badge>
+                          )}
+                       </div>
+                       <div className="space-y-3">
+                          <div className="space-y-1.5">
+                             <Label className="text-[8px] font-black uppercase text-foreground/20">Provider Name</Label>
+                             <Input 
+                               value={customApi.providerName} 
+                               onChange={e => setCustomApi({...customApi, providerName: e.target.value})} 
+                               placeholder="e.g. My Llama Node" 
+                               className="h-8 bg-black/40 border-white/5 text-[9px] font-bold"
+                             />
+                          </div>
+                          <div className="space-y-1.5">
+                             <Label className="text-[8px] font-black uppercase text-foreground/20">Endpoint URL</Label>
+                             <div className="relative">
+                                <Globe className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/10" />
+                                <Input 
+                                  value={customApi.apiUrl} 
+                                  onChange={e => setCustomApi({...customApi, apiUrl: e.target.value})} 
+                                  placeholder="https://api.provider.com/v1/chat" 
+                                  className="h-8 pl-7 bg-black/40 border-white/5 text-[9px] font-mono"
+                                />
+                             </div>
+                          </div>
+                          <div className="space-y-1.5">
+                             <Label className="text-[8px] font-black uppercase text-foreground/20">API Key</Label>
+                             <div className="relative">
+                                <KeyRound className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/10" />
+                                <Input 
+                                  type="password"
+                                  value={customApi.apiKey} 
+                                  onChange={e => setCustomApi({...customApi, apiKey: e.target.value})} 
+                                  placeholder="sk-..." 
+                                  className="h-8 pl-7 bg-black/40 border-white/5 text-[9px] font-mono"
+                                />
+                             </div>
+                          </div>
+                          <div className="space-y-1.5">
+                             <Label className="text-[8px] font-black uppercase text-foreground/20">Model ID</Label>
+                             <Input 
+                               value={customApi.modelName} 
+                               onChange={e => setCustomApi({...customApi, modelName: e.target.value})} 
+                               placeholder="e.g. meta-llama/Llama-3" 
+                               className="h-8 bg-black/40 border-white/5 text-[9px] font-bold"
+                             />
+                          </div>
+                          
+                          <div className="flex gap-2 pt-2">
+                             <Button onClick={handleConnectCustom} className="h-9 flex-1 bg-primary text-white text-[8px] font-black uppercase rounded-lg">Connect</Button>
+                             {isCustomConnected && (
+                                <Button variant="outline" onClick={handleDisconnectCustom} className="h-9 w-9 p-0 border-red-500/20 text-red-500 hover:bg-red-500/10"><Unplug className="w-4 h-4" /></Button>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+                 )}
+
+                 <div className="space-y-3">
                     <Label className="text-[9px] font-black uppercase text-foreground/40">Model Identity</Label>
                     <Select value={config.model} onValueChange={v => setConfig({...config, model: v})}>
                        <SelectTrigger className="h-10 bg-secondary/50 border-border text-[9px] font-bold">
@@ -681,7 +812,7 @@ export default function AIChatbotPage() {
                
                <div className="mt-3 flex items-center justify-between px-4">
                   <div className="flex items-center gap-4 text-[8px] font-black uppercase tracking-[0.4em] text-foreground/20">
-                     <span className="flex items-center gap-1.5"><Globe className="w-2.5 h-2.5" /> Node: {config.node?.toUpperCase()}</span>
+                     <span className="flex items-center gap-1.5"><Globe className="w-2.5 h-2.5" /> Node: {config.node === 'custom' ? (customApi.providerName || 'CUSTOM') : config.node?.toUpperCase()}</span>
                      <span>•</span>
                      <span>Memory: {activeSession?.messages.length || 0} Blocks</span>
                   </div>

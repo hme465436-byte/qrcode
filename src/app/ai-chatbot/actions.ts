@@ -10,10 +10,19 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface CustomApiConfig {
+  providerName: string;
+  apiUrl: string;
+  apiKey: string;
+  modelName: string;
+  customHeader?: string;
+}
+
 export interface ChatConfig {
   model?: string;
   temperature?: number;
   systemPrompt?: string;
   maxTokens?: number;
-  node?: 'auto' | 'groq' | 'openrouter';
+  node?: 'auto' | 'groq' | 'openrouter' | 'custom';
+  customApi?: CustomApiConfig;
 }
