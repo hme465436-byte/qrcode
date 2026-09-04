@@ -51,7 +51,8 @@ import {
   ChevronLeft,
   Copy,
   Maximize2,
-  Play
+  Play,
+  Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -557,7 +558,7 @@ export default function ChatAppPage() {
                  <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Username Identifier</Label>
                  <Input 
                    value={setupUsername}
-                   onChange={e => setSetupUsername(e.target.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                   onChange={e => setSetupUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                    placeholder="e.g. matrix_node_1"
                    className="h-14 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-center text-lg focus:ring-primary/20"
                  />
