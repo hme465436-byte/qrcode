@@ -1,7 +1,6 @@
-
 'use client';
 
-import React;
+import React from 'react';
 
 /**
  * Optimized Static Background Matrix.
