@@ -158,6 +158,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/reverse-video', 
+    icon: RotateCcw, 
+    title: 'Reverse Video', 
+    desc: 'Reverse any video in your browser with FFmpeg.wasm.', 
+    label: 'MEDIA', 
+    color: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
+    glowClass: 'bg-purple-500/10',
+    keywords: ['reverse video', 'rewind', 'video editor', 'ffmpeg', 'backwards'],
+    category: 'utilities'
+  },
+  { 
     href: '/speech-to-text', 
     icon: Mic, 
     title: 'Speech to Text', 
@@ -1437,7 +1448,7 @@ const PHRASES = [
   'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
   'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain',
   'Mouse Cursor Maker', 'Windows cursor', '.cur maker', 'pointer', 'Speech to Text', 'Voice typing', 'Transcribe', 'Text to Speech', 'Voice', 'Read aloud',
-  'Voice Changer', 'Voice effect', 'Robot voice', 'Helium voice', 'Deep voice'
+  'Voice Changer', 'Voice effect', 'Robot voice', 'Helium voice', 'Deep voice', 'Reverse Video', 'Rewind clip'
 ];
 
 const ToolItem = React.memo(({ item, mode, onNavigate }: { item: Tool, mode: 'grid' | 'list', onNavigate: () => void }) => {
