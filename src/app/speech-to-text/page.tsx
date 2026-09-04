@@ -19,7 +19,8 @@ import {
   Activity,
   History,
   ChevronRight,
-  RotateCcw
+  RotateCcw,
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import Link from 'next/link';
 
 interface HistoryItem {
   id: string;
@@ -75,8 +77,7 @@ export default function SpeechToTextPage() {
         currentTranscript += event.results[i][0].transcript;
       }
       setTranscript(prev => {
-        // We append if it's a new final segment, or handle live update
-        // Simple implementation: replace with full buffer for live feel
+        // Replace with full buffer for live feel
         const full = Array.from(event.results)
           .map((res: any) => res[0].transcript)
           .join(' ');
@@ -170,6 +171,8 @@ export default function SpeechToTextPage() {
       </div>
     );
   }
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
@@ -409,5 +412,3 @@ export default function SpeechToTextPage() {
     </div>
   );
 }
-
-import Link from 'next/link';
