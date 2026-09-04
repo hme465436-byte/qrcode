@@ -38,7 +38,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -207,6 +209,16 @@ export default function MouseCursorMakerPage() {
     lastMousePos.current = { x: clientX, y: clientY };
   };
 
+  const handleClear = () => {
+    setImage(null);
+    setLoadedImage(null);
+    setPos({ x: 0, y: 0 });
+    setZoom(1);
+    setHotspot({ x: 0, y: 0 });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    toast({ title: "Studio Reset" });
+  };
+
   return (
     <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-7xl">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -309,7 +321,7 @@ export default function MouseCursorMakerPage() {
           </Card>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-             <div className="p-8 rounded-[3rem] bg-secondary border border-white/5 flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <ShieldCheck className="w-7 h-7" />
                 </div>
@@ -320,7 +332,7 @@ export default function MouseCursorMakerPage() {
                   </p>
                 </div>
              </div>
-             <div className="p-8 rounded-[3rem] bg-secondary border border-white/5 flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <Maximize2 className="w-7 h-7" />
                 </div>
@@ -456,4 +468,3 @@ export default function MouseCursorMakerPage() {
     </div>
   );
 }
-
