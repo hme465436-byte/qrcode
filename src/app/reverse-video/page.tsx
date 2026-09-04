@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -29,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -309,7 +309,7 @@ export default function ReverseVideoPage() {
                     <Button 
                       onClick={executeReverse}
                       disabled={isProcessing}
-                      className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
+                      className="w-full h-16 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-primary/30 transition-all active:scale-95 group/btn"
                     >
                       {isProcessing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 group-hover:rotate-12 transition-transform" />}
                       Synthesize Inversion
@@ -375,7 +375,7 @@ export default function ReverseVideoPage() {
                            
                            {/* Terminal Logs */}
                            <div className="mt-8 p-4 rounded-2xl bg-black/90 border border-white/10 text-left font-mono text-[9px] text-green-500/60 overflow-hidden shadow-inner h-32">
-                             <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-2">
+                             <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-2 text-white/20">
                                 <Terminal className="w-3 h-3" />
                                 <span className="uppercase tracking-widest text-white/20">WASM LOGS</span>
                              </div>
