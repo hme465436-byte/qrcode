@@ -51,7 +51,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, query, doc, setDoc, deleteDoc, orderBy } from 'firebase/firestore';
-import { chatWithAI, ChatMessage, ChatConfig } from './actions';
+import { ChatMessage, ChatConfig } from './actions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -242,26 +242,41 @@ export default function AIChatbotPage() {
     setInput('');
     setIsProcessing(true);
 
-    const response = await chatWithAI(updatedMessages, config);
+    try {
+      const response = await fetch('/api/ai-chatbot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: updatedMessages, config })
+      });
 
-    if (response.success && response.text) {
-      const aiMsg: ChatMessage = { role: 'assistant', content: response.text };
-      setSessions(prev => prev.map(s => {
-        if (s.id === targetId) {
-          const next = { ...s, messages: [...s.messages, aiMsg], lastUpdated: Date.now() };
-          saveToCloud(s.id, next);
-          return next;
-        }
-        return s;
-      }));
-    } else {
+      const result = await response.json();
+
+      if (response.ok && result.success && result.text) {
+        const aiMsg: ChatMessage = { role: 'assistant', content: result.text };
+        setSessions(prev => prev.map(s => {
+          if (s.id === targetId) {
+            const next = { ...s, messages: [...s.messages, aiMsg], lastUpdated: Date.now() };
+            saveToCloud(s.id, next);
+            return next;
+          }
+          return s;
+        }));
+      } else {
+        toast({ 
+          variant: "destructive", 
+          title: "Protocol Failure", 
+          description: result.message || "Uplink restricted by server node." 
+        });
+      }
+    } catch (err: any) {
       toast({ 
         variant: "destructive", 
-        title: "Protocol Failure", 
-        description: response.message || "Uplink restricted by server node." 
+        title: "Network Error", 
+        description: "Failed to establish binary link with server." 
       });
+    } finally {
+      setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
 
   const deleteSession = async (id: string) => {
