@@ -816,17 +816,6 @@ const TOOLS: Tool[] = [
     category: 'image'
   },
   { 
-    href: '/live-wallpaper', 
-    icon: MonitorPlay, 
-    title: 'Live Wallpaper', 
-    desc: 'Turn any video into a looping live wallpaper for PC or phone.', 
-    label: 'MEDIA', 
-    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
-    glowClass: 'bg-indigo-400/10',
-    keywords: ['live wallpaper', 'video wallpaper', 'loop', 'pc', 'phone', 'lively', 'wallpaper engine'],
-    category: 'utilities'
-  },
-  { 
     href: '/rename-file', 
     icon: FileSignature, 
     title: 'Rename File', 
@@ -1496,26 +1485,10 @@ export default function Home() {
     if (saved) {
       window.scrollTo(0, parseInt(saved));
     }
-
-    // 3. Throttled Position Capture
-    let timeout: NodeJS.Timeout;
-    const handleScroll = () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        sessionStorage.setItem(SCROLL_POS_KEY, window.scrollY.toString());
-      }, 150); // Balanced for performance
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if ('scrollRestoration' in window.history) {
-        window.history.scrollRestoration = 'auto';
-      }
-    };
   }, []);
 
   const handleToolNavigation = useCallback(() => {
+    if (typeof window === 'undefined') return;
     sessionStorage.setItem(SCROLL_POS_KEY, window.scrollY.toString());
   }, []);
 
