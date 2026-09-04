@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   Mic, 
   MicOff, 
@@ -88,13 +88,13 @@ export default function SpeechToTextPage() {
     };
 
     recognition.onerror = (event: any) => {
-      console.error('Speech Recognition Error:', event.error);
+      // Centrally managed error handling - avoiding console.error to prevent intrusive dev overlays
       setIsListening(false);
       
       if (event.error === 'not-allowed') {
         setError("Microphone access denied. Please enable hardware permissions.");
       } else if (event.error === 'network') {
-        setError("Network protocol failure. This API requires a cloud-connected node.");
+        setError("Network protocol failure. This API requires a cloud-connected node to process audio.");
       } else {
         setError(`Linguistic error: ${event.error}`);
       }
@@ -296,7 +296,7 @@ export default function SpeechToTextPage() {
 
           {/* History Tracker */}
           <Card className="glass-card border-border shadow-xl flex flex-col min-h-[300px]">
-             <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex items-center justify-between shrink-0">
+             <CardHeader className="py-4 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                    <History className="w-4 h-4 text-primary" />
                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Archive Registry</CardTitle>
@@ -316,7 +316,7 @@ export default function SpeechToTextPage() {
                      {history.map(item => (
                        <div key={item.id} className="p-5 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => setTranscript(item.text)}>
                           <div className="flex items-center gap-4 overflow-hidden">
-                             <div className="w-10 h-10 rounded-xl bg-secondary border border-white/5 flex items-center justify-center text-primary/40 group-hover:text-primary transition-colors shrink-0 shadow-inner font-mono text-[9px] font-bold">
+                             <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-colors shrink-0 shadow-inner font-mono text-[9px] font-bold">
                                 {item.lang.split('-')[0].toUpperCase()}
                              </div>
                              <div className="min-w-0">
