@@ -302,28 +302,6 @@ const TOOLS: Tool[] = [
     category: 'image'
   },
   { 
-    href: '/wallpapers', 
-    icon: Monitor, 
-    title: 'Wallpapers', 
-    desc: 'Browse and download high-res PC, Mobile and Anime wallpapers.', 
-    label: 'DAILY', 
-    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
-    glowClass: 'bg-indigo-400/10',
-    keywords: ['wallpaper', 'background', 'desktop', 'mobile', '4k', 'hd', 'nasa', 'space', 'nature', 'anime', 'waifu'],
-    category: 'image'
-  },
-  { 
-    href: '/url-shortener', 
-    icon: LinkIcon, 
-    title: 'URL Shortener', 
-    desc: 'Professional linguistic compression for long URLs.', 
-    label: 'WEB UTILITY', 
-    color: 'text-sky-400 bg-sky-400/10 border-sky-400/20',
-    glowClass: 'bg-sky-400/10',
-    keywords: ['url shortener', 'tinyurl', 'short link', 'link compressor', 'shorten url', 'tiny link'],
-    category: 'utilities'
-  },
-  { 
     href: '/dns-lookup', 
     icon: Globe, 
     title: 'DNS Lookup', 
@@ -346,17 +324,6 @@ const TOOLS: Tool[] = [
     category: 'utilities'
   },
   { 
-    href: '/city-explorer', 
-    icon: MapPin, 
-    title: 'City Explorer', 
-    desc: 'Professional geographic mapping and address validation for regional nodes.', 
-    label: 'GEOGRAPHY', 
-    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
-    glowClass: 'bg-emerald-400/10',
-    keywords: ['city explorer', 'map', 'address', 'coordinates', 'lat long', 'pakistan cities', 'geocoding'],
-    category: 'utilities'
-  },
-  { 
     href: '/website-trust-checker', 
     icon: ShieldCheck, 
     title: 'Trust Checker', 
@@ -365,17 +332,6 @@ const TOOLS: Tool[] = [
     color: 'text-red-500 bg-red-500/10 border-red-500/20',
     glowClass: 'bg-red-500/10',
     keywords: ['trust', 'security', 'malware', 'dns', 'ip', 'safe', 'website check', 'phishing'],
-    category: 'utilities'
-  },
-  { 
-    href: '/wikipedia', 
-    icon: Globe, 
-    title: 'Wikipedia Studio', 
-    desc: 'Isolate high-fidelity summaries and global knowledge nodes instantly.', 
-    label: 'KNOWLEDGE', 
-    color: 'text-white bg-white/10 border-white/20',
-    glowClass: 'bg-white/10',
-    keywords: ['wikipedia', 'search', 'info', 'summary', 'knowledge', 'encyclopedia'],
     category: 'utilities'
   },
   { 
@@ -445,28 +401,6 @@ const TOOLS: Tool[] = [
     category: 'utilities'
   },
   { 
-    href: '/quotes', 
-    icon: Quote, 
-    title: 'Quote Studio', 
-    desc: 'Synthesize high-fidelity inspiration and randomized wisdom instantly.', 
-    label: 'LINGUISTIC', 
-    color: 'text-sky-400 bg-sky-400/10 border-sky-400/20',
-    glowClass: 'bg-sky-400/10',
-    keywords: ['quote', 'inspiration', 'random quote', 'wisdom', 'motive'],
-    category: 'generators'
-  },
-  { 
-    href: '/books', 
-    icon: Book, 
-    title: 'Book Studio', 
-    desc: 'Isolate global book identities and covers via Open Library.', 
-    label: 'LIBRARY', 
-    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
-    glowClass: 'bg-indigo-500/10',
-    keywords: ['books', 'library', 'author', 'title', 'search', 'find books'],
-    category: 'generators'
-  },
-  { 
     href: '/pokemon', 
     icon: Gamepad2, 
     title: 'Pokemon Studio', 
@@ -489,17 +423,6 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
-    href: '/jokes', 
-    icon: Laugh, 
-    title: 'Joke Studio', 
-    desc: 'Synthesize high-fidelity humor and randomized punchlines instantly.', 
-    label: 'HUMOR', 
-    color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
-    glowClass: 'bg-yellow-400/10',
-    keywords: ['joke', 'humor', 'funny', 'punchline', 'random joke', 'laugh'],
-    category: 'generators'
-  },
-  { 
     href: '/pets', 
     icon: Footprints, 
     title: 'Pet Studio', 
@@ -508,17 +431,6 @@ const TOOLS: Tool[] = [
     color: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
     glowClass: 'bg-orange-400/10',
     keywords: ['dog', 'cat', 'pets', 'random photo', 'canine', 'feline', 'animal'],
-    category: 'generators'
-  },
-  { 
-    href: '/advice', 
-    icon: Sparkles, 
-    title: 'Advice Studio', 
-    desc: 'Synthesize high-fidelity wisdom and clinical advice instantly.', 
-    label: 'LINGUISTIC', 
-    color: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
-    glowClass: 'bg-amber-400/10',
-    keywords: ['advice', 'wisdom', 'quotes', 'linguistic', 'life tips'],
     category: 'generators'
   },
   { 
@@ -797,17 +709,6 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
-    href: '/barcode-reader', 
-    icon: Scan, 
-    title: 'Barcode Reader', 
-    desc: 'Scan industrial barcodes and QR patterns via camera or image.', 
-    label: 'HARDWARE', 
-    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
-    glowClass: 'bg-rose-500/10',
-    keywords: ['barcode', 'scanner', 'ean', 'upc', 'read barcode', 'scan qr', 'decoder'],
-    category: 'utilities'
-  },
-  { 
     href: '/custom-watermark', 
     icon: Stamp, 
     title: 'Custom Watermark', 
@@ -960,50 +861,6 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-400/10',
     keywords: ['json to csv', 'convert json', 'flatten json', 'data converter', 'csv maker', 'parse json'],
     category: 'utilities'
-  },
-  { 
-    href: '/image-url-downloader', 
-    icon: DownloadCloud, 
-    title: 'URL Downloader', 
-    desc: 'Extract images and YouTube thumbnails from any URL.', 
-    label: 'MEDIA', 
-    color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
-    glowClass: 'bg-cyan-500/10',
-    keywords: ['image downloader', 'save image', 'url image', 'extract images', 'yt thumbnail', 'downloader'],
-    category: 'image'
-  },
-  { 
-    href: '/speaker-tester', 
-    icon: Activity, 
-    title: 'Speaker Tester', 
-    desc: 'Test Left/Right channels and frequency response.', 
-    label: 'HARDWARE', 
-    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-    glowClass: 'bg-emerald-500/10',
-    keywords: ['speaker tester', 'audio test', 'left right', 'frequency sweep', 'sound test', 'headphones'],
-    category: 'utilities'
-  },
-  { 
-    href: '/mic-tester', 
-    icon: Mic, 
-    title: 'Mic Tester Studio', 
-    desc: 'Test hardware input levels and loopback echo.', 
-    label: 'HARDWARE', 
-    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
-    glowClass: 'bg-emerald-500/10',
-    keywords: ['mic tester', 'microphone test', 'audio input', 'record test', 'voice test', 'hardware check'],
-    category: 'utilities'
-  },
-  { 
-    href: '/youtube-thumbnail-downloader', 
-    icon: MonitorPlay, 
-    title: 'YT Downloader', 
-    desc: 'Extract and save thumbnails in all available qualities.', 
-    label: 'MEDIA', 
-    color: 'text-red-500 bg-red-500/10 border-red-500/20',
-    glowClass: 'bg-red-500/10',
-    keywords: ['youtube thumbnail downloader', 'save youtube image', 'yt thumbnail', 'extract thumbnail'],
-    category: 'image'
   },
   { 
     href: '/logo-maker', 
@@ -1180,17 +1037,6 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-rose-500/10',
     keywords: ['youtube thumbnail size', '1280x720', 'yt thumbnail maker', 'thumbnail resizer', 'youtube thumbnail resizer'],
     category: 'generators'
-  },
-  { 
-    href: '/age-calculator', 
-    icon: Clock, 
-    title: 'Age Calculator', 
-    desc: 'Calculate exact age and birthday countdowns.', 
-    label: 'STATS', 
-    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-    glowClass: 'bg-emerald-500/10',
-    keywords: ['age calculator', 'date of birth', 'how old am i', 'birthday', 'chronos', 'time lived'],
-    category: 'utilities'
   },
   { 
     href: '/password-generator', 
@@ -1620,8 +1466,8 @@ export default function Home() {
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
       'Letter Art', 'Favicon Studio', 'JSON Formatter', 'Regex Tester', 'Hash Generator',
-      'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark', 'Barcode Reader',
-      'Images to GIF', 'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
+      'UUID Generator', 'Lorem Ipsum', 'Image Border', 'Custom Watermark',
+      'Image to WebP', 'Blur Face', 'WiFi QR', 'P2P Share', 'Send File', 'Toffee',
       'Hide text in image', 'Secret photo', 'Stenography', 'Temp Room', 'Clipboard share', 
       'Join code', 'Sim Data', 'HTML to URL', 'Paste HTML link', 'Tax Calculator', 'GST Calculator', 'Lucky Draw', 'Spin Wheel',
       'BMI Calculator', 'Body Mass Index', 'Healthy weight', 'Bio Maker', 'Instagram Bio', 'WPS Sheets', 'Inventory Table',
@@ -1629,13 +1475,13 @@ export default function Home() {
       'Exchange rate', 'USD to PKR', 'SAR conversion', 'Weather forecast', 'Current temperature', 'Rain projection',
       'Namaz Times', 'Prayer timings', 'Salat schedule', 'Karachi Namaz', 'Quran Ayah', 'Islamic verse', 'Random ayah',
       'Crypto Prices', 'Bitcoin BTC', 'ETH current price', 'Solana SOL', 'Country Info', 'Country details', 'World map',
-      'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom', 'Advice Slip',
-      'Pet Studio', 'Dog photos', 'Cat pictures', 'Jokes Studio', 'Random Joke', 'Punchline', 'Random Facts', 'Useless Facts',
+      'English Dictionary', 'Word Meaning', 'Definition', 'Thesaurus', 'Advice Studio', 'Daily Wisdom',
+      'Pet Studio', 'Dog photos', 'Cat pictures', 'Random Facts', 'Useless Facts',
       'Pokemon Studio', 'Pokedex', 'Pokemon stats', 'Book Studio', 'Find Books', 'Open Library', 'Holiday Studio', 'Pakistan Holidays',
       'Quote Studio', 'Motivation', 'Zen Quotes', 'Image Gallery', 'Search NASA', 'Art History', 'Translate', 'Free Games', 'Coding Matrix',
-      'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'City Explorer', 'Pakistan Cities', 'Address Lookup', 'GitHub Finder', 'Developer profile',
+      'Wikipedia Studio', 'Summarize', 'Search Wikipedia', 'GitHub Finder', 'Developer profile',
       'Password Breach', 'Pwned Check', 'Hack Search', 'Website Trust', 'Domain Safety', 'DNS Lookup', 'MX Records', 'URL Shortener', 'Tiny Link',
-      'Wallpapers Studio', 'PC backgrounds', 'Mobile wallpapers', 'NASA APOD', '4K backgrounds', 'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
+      'Image to Link', 'Direct URL', 'Hosting', 'FILE HOST', 'Upload Studio',
       'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
       'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
       'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
