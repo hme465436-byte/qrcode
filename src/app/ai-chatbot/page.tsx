@@ -499,49 +499,49 @@ export default function AIChatbotPage() {
                  </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-12 max-w-4xl mx-auto w-full pb-20">
+              <div className="flex flex-col gap-10 max-w-4xl mx-auto w-full pb-20">
                  {activeSession.messages.map((msg, i) => (
                    <div key={i} className={cn(
-                     "flex gap-5 group/msg animate-in slide-in-from-bottom-4 duration-500",
+                     "flex gap-4 group/msg animate-in slide-in-from-bottom-3 duration-500",
                      msg.role === 'assistant' ? "mr-auto" : "ml-auto flex-row-reverse"
                    )}>
                       <div className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg border transition-all duration-500",
+                        "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-lg border transition-all duration-500",
                         msg.role === 'assistant' ? "bg-primary/10 border-primary/20 text-primary" : "bg-secondary border-border text-foreground/40"
                       )}>
                          {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
                       </div>
-                      <div className={cn("space-y-3 min-w-0 flex-1 max-w-[85%]", msg.role === 'user' ? "text-right" : "text-left")}>
+                      <div className={cn("space-y-2.5 min-w-0 flex-1 max-w-[88%]", msg.role === 'user' ? "text-right" : "text-left")}>
                          <div className={cn(
-                           "p-6 rounded-[2.5rem] shadow-2xl relative group/card overflow-hidden transition-all",
-                           msg.role === 'assistant' ? "bg-white/[0.03] border border-white/5 rounded-tl-none" : "bg-primary text-white rounded-tr-none shadow-primary/20"
+                           "px-4 py-3 rounded-[1.25rem] shadow-xl relative group/card transition-all",
+                           msg.role === 'assistant' ? "bg-white/[0.03] border border-white/5 rounded-tl-none" : "bg-primary text-white rounded-tr-none shadow-primary/15"
                          )}>
-                            <p className="text-sm sm:text-base font-medium leading-relaxed whitespace-pre-wrap break-words selection:bg-black/20">
+                            <p className="text-sm sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap break-words selection:bg-black/20">
                                {msg.content}
                             </p>
                             {msg.role === 'assistant' && (
-                               <div className="absolute right-4 bottom-4 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all">
-                                  <button onClick={() => handleCopy(msg.content, `msg-${i}`)} className="p-2 rounded-lg bg-black/40 text-white/40 hover:text-white shadow-xl">
+                               <div className="absolute right-3 bottom-2 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all">
+                                  <button onClick={() => handleCopy(msg.content, `msg-${i}`)} className="p-1.5 rounded-lg bg-black/60 text-white/40 hover:text-white shadow-xl">
                                      {isCopied === `msg-${i}` ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                                   </button>
                                </div>
                             )}
                          </div>
-                         <div className={cn("flex items-center gap-3 px-4", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
+                         <div className={cn("flex items-center gap-2.5 px-2", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
                             <span className="text-[8px] font-black uppercase text-foreground/20 tracking-widest">{msg.role === 'assistant' ? 'Assistant' : 'You'}</span>
                             {msg.role === 'user' && i === activeSession.messages.length - 1 && (
-                               <button onClick={() => { setInput(msg.content); handleSend(undefined, msg.content); }} className="text-[8px] font-black uppercase text-primary/40 hover:text-primary transition-all">Retry</button>
+                               <button onClick={() => { setInput(msg.content); handleSend(undefined, msg.content); }} className="text-[8px] font-black uppercase text-primary/40 hover:text-primary transition-all">Retry Signal</button>
                             )}
                          </div>
                       </div>
                    </div>
                  ))}
                  {isProcessing && (
-                    <div className="flex gap-5 mr-auto animate-in fade-in duration-500">
-                       <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                          <Loader2 className="w-5 h-5 animate-spin" />
+                    <div className="flex gap-4 mr-auto animate-in fade-in duration-500">
+                       <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                          <Loader2 className="w-4 h-4 animate-spin" />
                        </div>
-                       <div className="bg-white/5 p-5 rounded-[2.5rem] rounded-tl-none border border-white/5 flex gap-1.5 items-center shadow-2xl">
+                       <div className="bg-white/5 p-4 rounded-[1.25rem] rounded-tl-none border border-white/5 flex gap-1.5 items-center shadow-xl">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0s]" />
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.2s]" />
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.4s]" />
@@ -610,7 +610,7 @@ export default function AIChatbotPage() {
          )}
 
          {/* Input Matrix */}
-         <div className="p-4 sm:p-6 border-t border-white/5 bg-[#0a0a0c] shrink-0">
+         <div className="p-4 sm:p-5 border-t border-white/5 bg-[#0a0a0c] shrink-0">
             <div className="max-w-4xl mx-auto w-full relative group/input">
                {/* Quick Templates */}
                <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1 px-1">
@@ -650,9 +650,9 @@ export default function AIChatbotPage() {
                      <Button 
                       type="submit" 
                       disabled={!input.trim() || isProcessing}
-                      className="h-9 w-9 rounded-xl bg-primary text-white shadow-xl shadow-primary/30 active:scale-95 transition-all group/btn p-0"
+                      className="h-8 w-8 rounded-xl bg-primary text-white shadow-xl shadow-primary/30 active:scale-95 transition-all group/btn p-0"
                      >
-                        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />}
+                        {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />}
                      </Button>
                   </div>
                </form>
