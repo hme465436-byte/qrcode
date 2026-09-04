@@ -67,10 +67,14 @@
     max-width: 100vw !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-foreground;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -92,6 +96,7 @@
 @layer utilities {
   .glass-card {
     @apply bg-white/40 dark:bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-2xl transition-all duration-500 overflow-hidden;
+    will-change: backdrop-filter, transform;
   }
 
   .glass-card:hover {
@@ -142,12 +147,14 @@
   .search-container-glow {
     @apply absolute -inset-10 bg-primary/20 blur-[60px] rounded-full pointer-events-none;
     animation: search-pulse 6s ease-in-out infinite;
+    will-change: opacity, transform;
   }
 
   .search-moving-border {
     @apply absolute inset-[-200%] pointer-events-none;
     background: conic-gradient(from 0deg, transparent 0%, transparent 40%, hsl(var(--primary)) 50%, transparent 60%, transparent 100%);
     animation: search-spin 4s linear infinite;
+    will-change: transform;
   }
 
   .search-inner-glow {

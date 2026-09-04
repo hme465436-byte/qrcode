@@ -1,6 +1,7 @@
+
 "use client"
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { 
   QrCode, 
@@ -1506,13 +1507,6 @@ export default function Home() {
         window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
       }, 50);
     }
-
-    const handleScroll = () => {
-      sessionStorage.setItem(SESSION_SCROLL_KEY, window.scrollY.toString());
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
