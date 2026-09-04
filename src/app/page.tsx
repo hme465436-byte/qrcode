@@ -148,17 +148,6 @@ interface Tool {
 
 const TOOLS: Tool[] = [
   { 
-    href: '/chat', 
-    icon: MessageSquare, 
-    title: 'Chat Studio', 
-    desc: 'Login with email, add friends, and chat in real time like a professional app.', 
-    label: 'IDENTITY', 
-    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
-    glowClass: 'bg-indigo-400/10',
-    keywords: ['chat', 'whatsapp', 'messenger', 'messages', 'friends', 'realtime', 'social'],
-    category: 'utilities'
-  },
-  { 
     href: '/single', 
     icon: QrCode, 
     title: 'Single Studio', 
@@ -1626,7 +1615,7 @@ export default function Home() {
 
   const phrases = useMemo(() => {
     const list = [
-      'Chat Studio', 'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
+      'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
       'Word to PDF', 'Photo Enhance', 'Age Calculator', 'Photo to Text', 
       'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
       'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
