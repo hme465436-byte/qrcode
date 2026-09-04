@@ -52,7 +52,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, query, doc, setDoc, deleteDoc, orderBy } from 'firebase/firestore';
-import { ChatMessage, ChatConfig, ChatRole } from './actions';
+import { ChatMessage, ChatConfig } from './actions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -343,14 +343,14 @@ export default function AIChatbotPage() {
       {/* SIDEBAR OVERLAY */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-all duration-300"
+          className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm transition-all duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* SIDEBAR */}
       <aside className={cn(
-        "fixed lg:absolute inset-y-0 left-0 flex flex-col bg-[#0a0a0c] border-r border-white/5 transition-all duration-500 z-50 overflow-hidden shadow-2xl",
+        "absolute inset-y-0 left-0 flex flex-col bg-[#0a0a0c] border-r border-white/5 transition-all duration-500 z-50 overflow-hidden shadow-2xl",
         isSidebarOpen ? "translate-x-0 w-80" : "-translate-x-full w-80"
       )}>
         <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/20">
