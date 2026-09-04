@@ -34,7 +34,8 @@ import {
   Database,
   ArrowRight,
   RefreshCcw,
-  Square
+  Square,
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -427,6 +428,21 @@ export default function AIChatbotPage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
+  const handleShare = async (text: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'AI Chatbot Response',
+          text: text,
+        });
+      } catch (err) {
+        handleCopy(text, 'share-fail');
+      }
+    } else {
+      handleCopy(text, 'share-manual');
+    }
+  };
+
   const downloadHistory = () => {
     if (!activeSession) return;
     const content = activeSession.messages.map(m => `[${m.role.toUpperCase()}]\n${m.content}\n`).join('\n---\n\n');
@@ -524,7 +540,7 @@ export default function AIChatbotPage() {
                 <p className="text-[10px] font-black uppercase tracking-widest">No Sessions Found</p>
              </div>
            ) : (
-             filteredSidebarSessions.map(s => (
+             <filteredSidebarSessions.map(s => (
                <div key={s.id} className="group relative">
                   {isRenaming === s.id ? (
                     <div className="flex items-center gap-2 p-2">
@@ -652,7 +668,7 @@ export default function AIChatbotPage() {
                       )}>
                          {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
                       </div>
-                      <div className={cn("space-y-2.5 min-w-0 flex-1 max-w-[88%]", msg.role === 'user' ? "text-right" : "text-left")}>
+                      <div className={cn("space-y-2 min-w-0 flex-1 max-w-[88%]", msg.role === 'user' ? "text-right" : "text-left")}>
                          <div className={cn(
                            "px-4 py-3 rounded-[1.25rem] shadow-xl relative group/card transition-all",
                            msg.role === 'assistant' ? "bg-white/[0.03] border border-white/5 rounded-tl-none" : "bg-primary text-white rounded-tr-none shadow-primary/15"
@@ -663,19 +679,33 @@ export default function AIChatbotPage() {
                                msg.role === 'assistant' ? "right-3 bottom-2" : "left-3 bottom-2"
                             )}>
                                <button onClick={() => handleCopy(msg.content, `msg-${i}`)} className="p-1.5 rounded-lg bg-black/60 text-white/40 hover:text-white shadow-xl">
-                                  {isCopied === `msg-${i}` ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                  {isCopied === `msg-${i}` ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                                </button>
                             </div>
                          </div>
-                         <div className={cn("flex items-center gap-2.5 px-2", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
-                            <span className="text-[8px] font-black uppercase text-foreground/20 tracking-widest">{msg.role === 'assistant' ? 'Assistant' : 'You'}</span>
+
+                         {/* Action Row Under Bubble */}
+                         <div className={cn("flex items-center gap-3 px-2", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
+                            {msg.role === 'assistant' ? (
+                               <div className="flex items-center gap-4 opacity-40 hover:opacity-100 transition-opacity">
+                                  <button onClick={() => handleCopy(msg.content, `ai-copy-${i}`)} className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest hover:text-primary transition-colors">
+                                     {isCopied === `ai-copy-${i}` ? <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
+                                     {isCopied === `ai-copy-${i}` ? 'Copied' : 'Copy'}
+                                  </button>
+                                  <button onClick={() => handleShare(msg.content)} className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest hover:text-primary transition-colors">
+                                     <Share2 className="w-2.5 h-2.5" /> Share
+                                  </button>
+                                  {isLastAssistant && !isProcessing && (
+                                     <button onClick={handleRegenerate} className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest hover:text-primary transition-colors">
+                                        <RefreshCcw className="w-2.5 h-2.5" /> Regenerate
+                                     </button>
+                                  )}
+                               </div>
+                            ) : (
+                               <span className="text-[8px] font-black uppercase text-foreground/20 tracking-widest">You</span>
+                            )}
                             {msg.role === 'user' && i === activeSession.messages.length - 1 && (
                                <button onClick={() => { setInput(msg.content); handleSend(undefined, msg.content); }} className="text-[8px] font-black uppercase text-primary/40 hover:text-primary transition-all">Retry Signal</button>
-                            )}
-                            {isLastAssistant && !isProcessing && (
-                               <button onClick={handleRegenerate} className="text-[8px] font-black uppercase text-primary/40 hover:text-primary transition-all flex items-center gap-1">
-                                  <RefreshCcw className="w-2.5 h-2.5" /> Regenerate
-                               </button>
                             )}
                          </div>
                       </div>
