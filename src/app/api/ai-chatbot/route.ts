@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * @fileOverview Secure Server Node for AI Chatbot.
  * Accesses private API keys and performs multi-node failover.
- * Support for Custom User API Nodes added.
+ * Support for Custom User API Nodes with Auto-Detection.
  */
 
 export const dynamic = 'force-dynamic';
@@ -26,18 +26,47 @@ export async function POST(req: NextRequest) {
 
     // 1. Check for Custom Node Protocol
     if (config.node === 'custom' && config.customApi) {
-      const { apiUrl, apiKey, modelName, customHeader } = config.customApi;
+      let { apiUrl, apiKey, modelName, customHeader } = config.customApi;
+      const trimmedKey = (apiKey || '').trim();
       
-      if (!apiUrl || !apiKey) {
+      if (!trimmedKey) {
         return NextResponse.json({ 
           success: false, 
-          message: "Custom Node Error: API URL or Key is missing from your local configuration." 
+          message: "Custom Node Error: API Key is required for personal node integration." 
+        }, { status: 400 });
+      }
+
+      // --- AUTO-DETECTION MATRIX ---
+      let effectiveUrl = apiUrl?.trim();
+      let effectiveModel = modelName?.trim();
+
+      if (!effectiveUrl || !effectiveModel) {
+        if (trimmedKey.startsWith('gsk_')) {
+          effectiveUrl = effectiveUrl || 'https://api.groq.com/openai/v1/chat/completions';
+          effectiveModel = effectiveModel || 'llama-3.1-8b-instant';
+        } else if (trimmedKey.startsWith('sk-or-')) {
+          effectiveUrl = effectiveUrl || 'https://openrouter.ai/api/v1/chat/completions';
+          effectiveModel = effectiveModel || 'meta-llama/llama-3.1-8b-instruct';
+        } else if (trimmedKey.startsWith('AIza')) {
+          // Google Gemini OpenAI-Compatible Endpoint
+          effectiveUrl = effectiveUrl || 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+          effectiveModel = effectiveModel || 'gemini-1.5-flash';
+        } else if (trimmedKey.startsWith('sk-')) {
+          effectiveUrl = effectiveUrl || 'https://api.openai.com/v1/chat/completions';
+          effectiveModel = effectiveModel || 'gpt-4o-mini';
+        }
+      }
+
+      if (!effectiveUrl) {
+        return NextResponse.json({ 
+          success: false, 
+          message: "Custom Node Error: API URL could not be auto-detected. Please enter it manually." 
         }, { status: 400 });
       }
 
       try {
         const headers: Record<string, string> = {
-          'Authorization': `Bearer ${apiKey.trim()}`,
+          'Authorization': `Bearer ${trimmedKey}`,
           'Content-Type': 'application/json',
         };
 
@@ -50,11 +79,11 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        const response = await fetch(apiUrl.trim(), {
+        const response = await fetch(effectiveUrl, {
           method: 'POST',
           headers,
           body: JSON.stringify({
-            model: modelName || 'default',
+            model: effectiveModel || 'gpt-4o-mini',
             messages: payload,
             temperature: temperature,
             max_tokens: config.maxTokens || 2048,
@@ -71,10 +100,11 @@ export async function POST(req: NextRequest) {
             node: config.customApi.providerName || 'Custom Node' 
           });
         } else {
+          const errorMsg = data.error?.message || data.message || `Node Rejection: HTTP ${response.status}`;
           return NextResponse.json({ 
             success: false, 
-            message: data.error?.message || `Custom Node Failure: HTTP ${response.status}` 
-          }, { status: response.status });
+            message: errorMsg 
+          }, { status: response.status || 500 });
         }
       } catch (err: any) {
         return NextResponse.json({ 

@@ -370,14 +370,14 @@ export default function AIChatbotPage() {
   };
 
   const handleConnectCustom = () => {
-    if (!customApi.apiUrl || !customApi.apiKey) {
-      toast({ variant: "destructive", title: "Config Incomplete", description: "API URL and Key are required." });
+    if (!customApi.apiKey) {
+      toast({ variant: "destructive", title: "Key Required", description: "Personal API key is required to initialize node." });
       return;
     }
     localStorage.setItem(CUSTOM_API_KEY, JSON.stringify(customApi));
     setIsCustomConnected(true);
     setConfig(prev => ({ ...prev, node: 'custom' }));
-    toast({ title: "Node Integrated", description: "Personal API node is now active." });
+    toast({ title: "Node Integrated", description: "Personal node calibrated and active." });
   };
 
   const handleDisconnectCustom = () => {
@@ -669,18 +669,6 @@ export default function AIChatbotPage() {
                              />
                           </div>
                           <div className="space-y-1.5">
-                             <Label className="text-[8px] font-black uppercase text-foreground/20">Endpoint URL</Label>
-                             <div className="relative">
-                                <Globe className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/10" />
-                                <Input 
-                                  value={customApi.apiUrl} 
-                                  onChange={e => setCustomApi({...customApi, apiUrl: e.target.value})} 
-                                  placeholder="https://api.provider.com/v1/chat" 
-                                  className="h-8 pl-7 bg-black/40 border-white/5 text-[9px] font-mono"
-                                />
-                             </div>
-                          </div>
-                          <div className="space-y-1.5">
                              <Label className="text-[8px] font-black uppercase text-foreground/20">API Key</Label>
                              <div className="relative">
                                 <KeyRound className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/10" />
@@ -694,11 +682,23 @@ export default function AIChatbotPage() {
                              </div>
                           </div>
                           <div className="space-y-1.5">
-                             <Label className="text-[8px] font-black uppercase text-foreground/20">Model ID</Label>
+                             <Label className="text-[8px] font-black uppercase text-foreground/20">Endpoint URL (Optional)</Label>
+                             <div className="relative">
+                                <Globe className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/10" />
+                                <Input 
+                                  value={customApi.apiUrl} 
+                                  onChange={e => setCustomApi({...customApi, apiUrl: e.target.value})} 
+                                  placeholder="Auto-detected from key" 
+                                  className="h-8 pl-7 bg-black/40 border-white/5 text-[9px] font-mono"
+                                />
+                             </div>
+                          </div>
+                          <div className="space-y-1.5">
+                             <Label className="text-[8px] font-black uppercase text-foreground/20">Model ID (Optional)</Label>
                              <Input 
                                value={customApi.modelName} 
                                onChange={e => setCustomApi({...customApi, modelName: e.target.value})} 
-                               placeholder="e.g. meta-llama/Llama-3" 
+                               placeholder="Auto-detected from key" 
                                className="h-8 bg-black/40 border-white/5 text-[9px] font-bold"
                              />
                           </div>
