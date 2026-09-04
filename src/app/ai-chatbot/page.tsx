@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -16,39 +17,23 @@ import {
   Zap,
   ShieldCheck,
   AlertCircle,
-  MoreVertical,
   X,
-  Sparkles,
-  ArrowRight,
-  Shield,
-  Smartphone,
-  Lock,
-  ChevronRight,
-  Check,
-  Globe,
-  Settings2,
   Edit3,
-  AlignLeft,
   Menu,
-  RotateCcw,
   Pin,
   PinOff,
   Search,
-  Download,
   FileDown,
-  FileText,
   Code2,
-  Languages,
   BookOpen,
   Image as ImageIcon,
-  ChevronDown
+  Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,7 +50,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, query, where, doc, setDoc, deleteDoc, serverTimestamp, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, query, doc, setDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { chatWithAI, ChatMessage, ChatConfig } from './actions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -115,7 +100,7 @@ export default function AIChatbotPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Default hidden for auto-hide behavior
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
@@ -138,16 +123,7 @@ export default function AIChatbotPage() {
         const parsed = JSON.parse(saved);
         setSessions(parsed);
         if (parsed.length > 0) setActiveSessionId(parsed[0].id);
-        else createNewSession();
-      } catch (e) {
-        createNewSession();
-      }
-    } else {
-      createNewSession();
-    }
-    
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      setIsSidebarOpen(false);
+      } catch (e) {}
     }
   }, []);
 
@@ -220,7 +196,7 @@ export default function AIChatbotPage() {
     };
     setSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newId);
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) setIsSidebarOpen(false);
+    setIsSidebarOpen(false); // Auto-hide sidebar after creating
     return newId;
   };
 
@@ -301,6 +277,7 @@ export default function AIChatbotPage() {
       deleteDoc(docRef).catch(() => {});
     }
     setSessionToDelete(null);
+    setIsSidebarOpen(false); // Auto-hide after delete
     toast({ title: "Session Purged" });
   };
 
@@ -347,21 +324,34 @@ export default function AIChatbotPage() {
   }, [sessions, sidebarSearch]);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#060608] selection:bg-primary/20">
+    <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#060608] selection:bg-primary/20 relative">
       
-      {/* SIDEBAR */}
+      {/* SIDEBAR OVERLAY (BACKDROP) */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-all duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* SIDEBAR (Threads) */}
       <aside className={cn(
-        "flex flex-col h-full bg-[#0a0a0c] border-r border-white/5 transition-all duration-500 z-50 overflow-hidden shrink-0",
-        isSidebarOpen ? "w-80" : "w-0 opacity-0"
+        "fixed lg:absolute inset-y-0 left-0 flex flex-col bg-[#0a0a0c] border-r border-white/5 transition-all duration-500 z-50 overflow-hidden shadow-2xl",
+        isSidebarOpen ? "translate-x-0 w-80" : "-translate-x-full w-80"
       )}>
         <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/20">
            <div className="flex items-center gap-3">
               <History className="w-4 h-4 text-primary/40" />
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Threads</span>
            </div>
-           <button onClick={() => createNewSession()} className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-lg">
-              <Plus className="w-4 h-4" />
-           </button>
+           <div className="flex items-center gap-2">
+              <button onClick={() => createNewSession()} className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-lg">
+                <Plus className="w-4 h-4" />
+              </button>
+              <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-foreground/20 hover:text-foreground">
+                <X className="w-4 h-4" />
+              </button>
+           </div>
         </div>
 
         <div className="p-4 border-b border-white/5 bg-black/10">
@@ -398,7 +388,7 @@ export default function AIChatbotPage() {
                     </div>
                   ) : (
                     <button
-                      onClick={() => { setActiveSessionId(s.id); if(typeof window !== 'undefined' && window.innerWidth < 1024) setIsSidebarOpen(false); }}
+                      onClick={() => { setActiveSessionId(s.id); setIsSidebarOpen(false); }}
                       className={cn(
                         "w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all border border-transparent",
                         activeSessionId === s.id ? "bg-primary/10 border-primary/20 text-primary shadow-inner" : "text-foreground/40 hover:bg-white/5"
@@ -430,14 +420,6 @@ export default function AIChatbotPage() {
         </div>
 
         <div className="p-6 bg-black/40 border-t border-white/5 space-y-6">
-           {!user && (
-             <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                <p className="text-[9px] text-foreground/40 font-bold uppercase leading-relaxed">
-                   Login to synchronize your chat registry across devices.
-                </p>
-             </div>
-           )}
            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                  <ShieldCheck className="w-4 h-4 text-emerald-500/40" />
@@ -451,9 +433,9 @@ export default function AIChatbotPage() {
       {/* MAIN CHAT AREA */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
          {/* Top Monitor Bar */}
-         <header className="h-14 border-b border-white/5 bg-[#0a0a0c]/80 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-40">
+         <header className="h-14 border-b border-white/5 bg-[#0a0a0c]/80 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-30">
             <div className="flex items-center gap-6">
-               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-white/5 text-foreground/40 hover:text-primary transition-all">
+               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={cn("p-2 rounded-lg transition-all", isSidebarOpen ? "bg-primary text-white shadow-lg" : "text-foreground/40 hover:text-primary")}>
                   <Menu className="w-5 h-5" />
                </button>
                <div className="flex items-center gap-3 min-w-0">
@@ -531,7 +513,7 @@ export default function AIChatbotPage() {
                             {msg.role === 'assistant' && (
                                <div className="absolute right-4 bottom-4 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all">
                                   <button onClick={() => handleCopy(msg.content, `msg-${i}`)} className="p-2 rounded-lg bg-black/40 text-white/40 hover:text-white shadow-xl">
-                                     {isCopied === `msg-${i}` ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                     {isCopied === `msg-${i}` ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                                   </button>
                                </div>
                             )}
@@ -705,3 +687,4 @@ export default function AIChatbotPage() {
     </div>
   );
 }
+
