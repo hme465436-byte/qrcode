@@ -1,8 +1,10 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * @fileOverview Secure Server Node for AI Chatbot.
  * Accesses private API keys and performs multi-node failover.
+ * Enhanced system instruction matrix for peak quality.
  */
 
 export const dynamic = 'force-dynamic';
@@ -22,12 +24,13 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
+    // Advanced Quality Control: Strong System Instruction Fallback
     const systemMessage = {
       role: 'system',
-      content: config.systemPrompt || 'You are a professional AI assistant.'
+      content: config.systemPrompt || 'You are a highly capable and professional AI assistant. Provide clear, accurate, and contextually relevant answers. Stay on topic and be as helpful as possible while maintaining a professional tone. Provide detailed explanations when needed, and be concise only when requested.'
     };
 
-    // Optimize context window for reliability
+    // Optimize context window for reliability (Last 10 messages)
     const payload = [systemMessage, ...messages.slice(-10)];
     const temperature = config.temperature ?? 0.7;
 

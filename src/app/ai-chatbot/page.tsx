@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -75,11 +76,11 @@ interface Persona {
 }
 
 const PERSONAS: Persona[] = [
-  { id: 'helper', label: 'General Helper', icon: Bot, prompt: 'You are a professional AI assistant. Provide helpful, accurate, and concise answers.' },
-  { id: 'coder', label: 'Code Architect', icon: Code2, prompt: 'You are an expert senior software engineer. Provide clean, secure, and optimized code with technical explanations.' },
-  { id: 'writer', label: 'Creative Writer', icon: Edit3, prompt: 'You are a professional creative writer and editor. Focus on engaging language, clarity, and narrative flow.' },
-  { id: 'teacher', label: 'Academic Teacher', icon: BookOpen, prompt: 'You are a knowledgeable educator. Explain concepts simply, step-by-step, and provide examples.' },
-  { id: 'short', label: 'Quick Signal', icon: Zap, prompt: 'You are a highly concise assistant. Provide the shortest possible accurate answers with no fluff.' },
+  { id: 'helper', label: 'Detailed Helper', icon: Bot, prompt: 'You are a highly capable and professional AI assistant. Provide clear, accurate, and detailed answers. Stay on topic, be thorough, and maintain a helpful, encouraging tone. Ensure your responses add genuine value to the user.' },
+  { id: 'coder', label: 'Code Architect', icon: Code2, prompt: 'You are an expert senior software engineer and architect. Provide clean, secure, and production-ready code. Always include brief technical explanations, follow best practices, and suggest optimizations or security considerations.' },
+  { id: 'writer', label: 'Creative Writer', icon: Edit3, prompt: 'You are a professional creative writer and linguistic editor. Focus on engaging language, impeccable clarity, and sophisticated narrative flow. Help the user expand their ideas while maintaining stylistic consistency.' },
+  { id: 'teacher', label: 'Master Educator', icon: BookOpen, prompt: 'You are a knowledgeable and patient educator. Break down complex concepts into simple, understandable steps. Use examples, analogies, and verify understanding. Your goal is to make the user an expert.' },
+  { id: 'short', label: 'Quick Signal', icon: Zap, prompt: 'You are a highly efficient and concise assistant. Provide the shortest possible accurate answers. Use bullet points if helpful. Zero fluff, maximum precision, high-speed replies only.' },
 ];
 
 const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v5';
@@ -635,8 +636,8 @@ export default function AIChatbotPage() {
                   </div>
                   <Textarea 
                     value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => {
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
                       if (e.key === 'Enter' && e.shiftKey) {
                         e.preventDefault();
                         handleSend();
