@@ -42,6 +42,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -57,6 +58,16 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useUser, useFirestore, useCollection, useStorage } from '@/firebase';
 import { 
   doc, 
@@ -138,6 +149,7 @@ export default function ChatAppPage() {
   // UI State
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState<ChatUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -409,7 +421,7 @@ export default function ChatAppPage() {
                  <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Username Identifier</Label>
                  <Input 
                    value={setupUsername}
-                   onChange={e => setSetupUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                   onChange={e => setSetupUsername(e.target.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                    placeholder="e.g. matrix_node"
                    className="h-14 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-center text-lg focus:ring-primary/20"
                  />
@@ -453,7 +465,7 @@ export default function ChatAppPage() {
                     <DropdownMenuItem onClick={() => setShowSettings(true)} className="text-[9px] font-black uppercase cursor-pointer"><Settings2 className="w-3.5 h-3.5 mr-2" /> Settings</DropdownMenuItem>
                     <DropdownMenuItem className="text-[9px] font-black uppercase cursor-pointer"><Archive className="w-3.5 h-3.5 mr-2" /> Archived</DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-white/5" />
-                    <DropdownMenuItem onClick={() => router.push('/account')} className="text-[9px] font-black uppercase cursor-pointer text-red-500"><LogOut className="w-3.5 h-3.5 mr-2" /> Exit Studio</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="text-[9px] font-black uppercase cursor-pointer text-red-500"><LogOut className="w-3.5 h-3.5 mr-2" /> Exit Studio</DropdownMenuItem>
                  </DropdownMenuContent>
               </DropdownMenu>
            </div>
@@ -581,16 +593,15 @@ export default function ChatAppPage() {
              <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-checkered bg-fixed dark:bg-black/40">
                 {messages?.map((msg, i) => {
                   const isMe = msg.senderId === user.uid;
-                  const showUsername = i === 0 || messages[i-1].username !== msg.username;
                   
                   return (
                     <div key={msg.id} className={cn("flex flex-col gap-1 max-w-[85%] sm:max-w-[70%] animate-in slide-in-from-bottom-2", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
                        <div className={cn(
-                         "p-4 rounded-[2rem] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.5)] relative group/msg transition-all border",
+                         "p-4 rounded-3xl shadow-[0_10px_40px_-15px_rgba(0,0,0,0.5)] relative group/msg transition-all border",
                          isMe ? "bg-primary text-white rounded-tr-none border-primary/20" : "bg-secondary text-foreground rounded-tl-none border-white/5"
                        )}>
                           {msg.imageUrl ? (
-                             <img src={msg.imageUrl} className="max-h-[350px] w-auto rounded-2xl shadow-2xl border border-white/10 mb-2" alt="" />
+                             <img src={msg.imageUrl} className="max-h-[350px] w-auto rounded-2xl shadow-lg border border-white/10 mb-2" alt="" />
                           ) : (
                             <p className="text-[14px] sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                           )}
