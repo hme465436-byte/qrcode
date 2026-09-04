@@ -35,6 +35,7 @@ import {
   PinOff,
   Search,
   Download,
+  FileDown,
   FileText,
   Code2,
   Languages,
