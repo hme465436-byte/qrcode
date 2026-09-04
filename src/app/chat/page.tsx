@@ -119,9 +119,9 @@ import {
   increment,
   Unsubscribe
 } from 'firebase/firestore';
+import { signOut, updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import { uploadAvatarAction } from './actions';
 
@@ -234,14 +234,12 @@ export default function ChatAppPage() {
     if (!db || !user) return;
     const userRef = doc(db, 'chat_users', user.uid);
     
-    // Listener for profile ONLY - No updates inside here
     const unsub = onSnapshot(userRef, (snap) => {
       if (snap.exists()) {
         setProfile(snap.data() as ChatUser);
       }
     });
 
-    // Handle Presence updates once or on visibility change
     const updatePresence = (isOnline: boolean) => {
       updateDoc(userRef, { isOnline, lastSeen: serverTimestamp() }).catch(() => {});
     };
@@ -359,7 +357,6 @@ export default function ChatAppPage() {
       if (peerId) activePeerIds.add(peerId);
     });
 
-    // Cleanup stale listeners
     peerUnsubs.current.forEach((unsub, id) => {
       if (!activePeerIds.has(id)) {
         unsub();
@@ -367,7 +364,6 @@ export default function ChatAppPage() {
       }
     });
 
-    // Add new listeners
     activePeerIds.forEach(peerId => {
       if (!peerUnsubs.current.has(peerId)) {
         const unsub = onSnapshot(doc(db, 'chat_users', peerId), (snap) => {
@@ -491,7 +487,6 @@ export default function ChatAppPage() {
     setMessageInput(val);
     if (!db || !activeChatId || !user) return;
     
-    // Gated Typing Update
     const isTyping = val.length > 0;
     if (isTyping !== lastTypingStatus.current) {
       lastTypingStatus.current = isTyping;
@@ -649,7 +644,7 @@ export default function ChatAppPage() {
                     <DropdownMenuItem onClick={() => setShowSettings(true)} className="text-[9px] font-black uppercase"><Settings2 className="w-3.5 h-3.5 mr-2" /> Settings</DropdownMenuItem>
                     <DropdownMenuItem className="text-[9px] font-black uppercase"><Archive className="w-3.5 h-3.5 mr-2" /> Archived</DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-white/5" />
-                    <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="text-[9px] font-black uppercase text-red-500"><LogOut className="w-3.5 h-3.5 mr-2" /> Sign Out</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="text-[9px] font-black uppercase text-red-500"><LogOut className="w-3.5 h-3.5 mr-2" /> Logout</DropdownMenuItem>
                  </DropdownMenuContent>
               </DropdownMenu>
            </div>
@@ -846,13 +841,13 @@ export default function ChatAppPage() {
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
          <DialogContent className="glass-card max-w-md p-0 rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90vh]">
-            <DialogHeader className="p-8 border-b border-white/5 bg-secondary/30 relative shrink-0">
+            <DialogHeader className="p-5 sm:p-6 border-b border-white/5 bg-secondary/30 relative shrink-0">
                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-               <div className="flex flex-col items-center gap-6 relative z-10">
+               <div className="flex flex-col items-center gap-4 relative z-10">
                   <div className="relative group/avatar-edit">
-                    <ChatAvatar src={profile.photoURL} className={cn("w-32 h-32 rounded-[2.5rem] border-4 border-white/10 shadow-2xl transition-all", isUploadingAvatar && "opacity-50 blur-sm")} />
-                    <div className="absolute inset-0 bg-black/60 rounded-[2.5rem] opacity-0 group-hover/avatar-edit:opacity-100 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                       <CameraIcon className="w-8 h-8 text-white" />
+                    <ChatAvatar src={profile.photoURL} className={cn("w-24 h-24 rounded-[2rem] border-4 border-white/10 shadow-2xl transition-all", isUploadingAvatar && "opacity-50 blur-sm")} />
+                    <div className="absolute inset-0 bg-black/60 rounded-[2rem] opacity-0 group-hover/avatar-edit:opacity-100 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                       <CameraIcon className="w-6 h-6 text-white" />
                        <span className="text-[8px] font-black uppercase text-white tracking-widest">Update DP</span>
                     </div>
                     {isUploadingAvatar && <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-spin" />}
@@ -896,7 +891,7 @@ export default function ChatAppPage() {
 
             <DialogFooter className="p-8 border-t border-white/5 bg-black/40 shrink-0">
                <Button onClick={() => setShowLeaveConfirm(true)} variant="destructive" className="w-full h-14 rounded-2xl uppercase tracking-[0.3em] text-[10px] shadow-xl shadow-red-500/10">
-                  <LogOut className="w-4 h-4 mr-2" /> Terminate Session
+                  <LogOut className="w-4 h-4 mr-2" /> Logout
                </Button>
             </DialogFooter>
          </DialogContent>
@@ -954,7 +949,7 @@ export default function ChatAppPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveAvatar} className="h-12 flex-1 rounded-xl bg-red-500 text-white font-black uppercase text-[9px] shadow-xl shadow-red-500/20">Purge</AlertDialogAction>
+            <AlertDialogAction handleRemoveAvatar={handleRemoveAvatar} className="h-12 flex-1 rounded-xl bg-red-500 text-white font-black uppercase text-[9px] shadow-xl shadow-red-500/20">Purge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
