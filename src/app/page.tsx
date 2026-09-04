@@ -119,7 +119,8 @@ import {
   MessageSquare,
   Database,
   CloudUpload,
-  MousePointer2
+  MousePointer2,
+  Mic2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -176,6 +177,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['text to speech', 'voice', 'read aloud', 'audio', 'voiceover', 'speech synthesis'],
+    category: 'utilities'
+  },
+  { 
+    href: '/voice-changer', 
+    icon: Mic2, 
+    title: 'Voice Changer', 
+    desc: 'Change your voice live with robot, deep, helium and more effects.', 
+    label: 'MEDIA', 
+    color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
+    glowClass: 'bg-rose-500/10',
+    keywords: ['voice changer', 'voice effect', 'robot voice', 'helium voice', 'deep voice', 'microphone', 'audio effect'],
     category: 'utilities'
   },
   { 
@@ -1424,7 +1436,8 @@ const PHRASES = [
   'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
   'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
   'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain',
-  'Mouse Cursor Maker', 'Windows cursor', '.cur maker', 'pointer', 'Speech to Text', 'Voice typing', 'Transcribe', 'Text to Speech', 'Voice', 'Read aloud'
+  'Mouse Cursor Maker', 'Windows cursor', '.cur maker', 'pointer', 'Speech to Text', 'Voice typing', 'Transcribe', 'Text to Speech', 'Voice', 'Read aloud',
+  'Voice Changer', 'Voice effect', 'Robot voice', 'Helium voice', 'Deep voice'
 ];
 
 const ToolItem = React.memo(({ item, mode, onNavigate }: { item: Tool, mode: 'grid' | 'list', onNavigate: () => void }) => {
