@@ -610,10 +610,10 @@ export default function AIChatbotPage() {
          )}
 
          {/* Input Matrix */}
-         <div className="p-6 sm:p-10 border-t border-white/5 bg-[#0a0a0c] shrink-0">
+         <div className="p-4 sm:p-6 border-t border-white/5 bg-[#0a0a0c] shrink-0">
             <div className="max-w-4xl mx-auto w-full relative group/input">
                {/* Quick Templates */}
-               <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-2 px-2">
+               <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1 px-1">
                   {[
                     { label: 'Explain', text: 'Explain this concept simply: ' },
                     { label: 'Fix Code', text: 'Fix this code and explain why: ' },
@@ -631,8 +631,8 @@ export default function AIChatbotPage() {
                </div>
 
                <form onSubmit={handleSend} className="relative">
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-20 pointer-events-none group-focus-within/input:opacity-100 transition-opacity">
-                     <ImageIcon className="w-5 h-5 text-foreground/40" />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-20 pointer-events-none group-focus-within/input:opacity-100 transition-opacity">
+                     <ImageIcon className="w-4 h-4 text-foreground/40" />
                   </div>
                   <Textarea 
                     value={input}
@@ -643,27 +643,27 @@ export default function AIChatbotPage() {
                         handleSend();
                       }
                     }}
-                    placeholder="Type your message... (Shift+Enter for new line)"
-                    className="min-h-[60px] max-h-40 w-full pl-14 pr-16 bg-white/[0.02] border-white/10 rounded-[2.5rem] text-sm font-medium py-5 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-inner custom-scrollbar"
+                    placeholder="Type your message..."
+                    className="min-h-[44px] max-h-40 w-full pl-12 pr-14 bg-white/[0.02] border-white/10 rounded-2xl text-sm font-medium py-2.5 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-inner custom-scrollbar"
                   />
-                  <div className="absolute right-2.5 bottom-2.5">
+                  <div className="absolute right-1.5 bottom-1.5">
                      <Button 
                       type="submit" 
                       disabled={!input.trim() || isProcessing}
-                      className="h-12 w-12 rounded-full bg-primary text-white shadow-xl shadow-primary/30 active:scale-95 transition-all group/btn"
+                      className="h-9 w-9 rounded-xl bg-primary text-white shadow-xl shadow-primary/30 active:scale-95 transition-all group/btn p-0"
                      >
-                        {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />}
+                        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />}
                      </Button>
                   </div>
                </form>
                
-               <div className="mt-4 flex items-center justify-between px-6">
+               <div className="mt-3 flex items-center justify-between px-4">
                   <div className="flex items-center gap-4 text-[8px] font-black uppercase tracking-[0.4em] text-foreground/20">
                      <span className="flex items-center gap-1.5"><Globe className="w-2.5 h-2.5" /> Node: {config.node?.toUpperCase()}</span>
                      <span>•</span>
                      <span>Memory: {activeSession?.messages.length || 0} Blocks</span>
                   </div>
-                  {isProcessing && <span className="text-[8px] font-bold text-primary animate-pulse uppercase tracking-widest">Processing bitstream...</span>}
+                  {isProcessing && <span className="text-[8px] font-bold text-primary animate-pulse uppercase tracking-widest">Processing...</span>}
                </div>
             </div>
          </div>
