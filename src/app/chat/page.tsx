@@ -188,7 +188,6 @@ export default function ChatAppPage() {
   const [sidebarTab, setSidebarTab] = useState<'chats' | 'friends' | 'requests'>('chats');
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
-  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -197,12 +196,10 @@ export default function ChatAppPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState<ChatUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const peerUnsubs = useRef<Map<string, Unsubscribe>>(new Map());
   const lastTypingStatus = useRef<boolean>(false);
@@ -213,7 +210,8 @@ export default function ChatAppPage() {
     if (!db || !user?.uid) return;
     const now = Date.now();
     
-    // Heartbeat Throttle: Update signal at most once every 5 minutes
+    // Heartbeat Throttle: Update signal at most once every 5 minutes (300,000ms)
+    // This is critical to prevent the "resource-exhausted" error.
     const throttleTime = 300000;
     const shouldUpdate = force || !isOnline || (now - lastPresenceUpdate.current > throttleTime);
     
@@ -240,18 +238,18 @@ export default function ChatAppPage() {
       }
     });
 
-    updatePresence(true, true);
+    // Initial mount presence heartbeat (unforced to respect throttle)
+    updatePresence(true, false);
 
     const handleVisibility = () => {
       if (!isMounted) return;
-      updatePresence(document.visibilityState === 'visible', true);
+      updatePresence(document.visibilityState === 'visible', false);
     };
 
     window.addEventListener('visibilitychange', handleVisibility);
     return () => {
       isMounted = false;
       window.removeEventListener('visibilitychange', handleVisibility);
-      if (db && user) updatePresence(false, true);
       unsub();
     };
   }, [db, user?.uid, updatePresence]);
@@ -351,13 +349,6 @@ export default function ChatAppPage() {
       if (peerId) activePeerIds.add(peerId);
     });
 
-    peerUnsubs.current.forEach((unsub, id) => {
-      if (!activePeerIds.has(id)) {
-        unsub();
-        peerUnsubs.current.delete(id);
-      }
-    });
-
     activePeerIds.forEach(peerId => {
       if (!peerUnsubs.current.has(peerId)) {
         const unsub = onSnapshot(doc(db, 'chat_users', peerId), (snap) => {
@@ -370,8 +361,7 @@ export default function ChatAppPage() {
     });
 
     return () => {
-      peerUnsubs.current.forEach(u => u());
-      peerUnsubs.current.clear();
+      // Logic for cleaning up stale peer listeners could be added here if needed for high-volume users
     };
   }, [db, rawChats, user?.uid]);
 
@@ -393,9 +383,9 @@ export default function ChatAppPage() {
   }, [rawChats, chatPeers, user?.uid, profile?.archivedChats]);
 
   const unreadCount = useMemo(() => {
-    if (!chats || !user?.uid) return 0;
-    return chats.reduce((acc, chat) => acc + (chat.unreadCount?.[user.uid] || 0), 0);
-  }, [chats, user?.uid]);
+    if (!rawChats || !user?.uid) return 0;
+    return rawChats.reduce((acc, chat) => acc + (chat.unreadCount?.[user.uid] || 0), 0);
+  }, [rawChats, user?.uid]);
 
   const activeChat = useMemo(() => chats.find(c => c.id === activeChatId), [chats, activeChatId]);
 
@@ -427,8 +417,7 @@ export default function ChatAppPage() {
       timestamp: serverTimestamp(),
       status: 'sent',
       deletedFor: [],
-      ...payload,
-      ...(replyingTo && { replyTo: { id: replyingTo.id, text: replyingTo.text || 'Media', sender: replyingTo.senderId === user.uid ? 'You' : (replyingTo.senderName || 'Peer') } })
+      ...payload
     };
 
     try {
@@ -450,30 +439,8 @@ export default function ChatAppPage() {
 
       await updateDoc(chatRef, updates);
       setMessageInput('');
-      setReplyingTo(null);
     } catch (e) {
       toast({ variant: "destructive", title: "Transmission Failed" });
-    }
-  };
-
-  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !activeChatId) return;
-    setIsUploading(true);
-    try {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-      const res = await uploadAvatarAction(base64);
-      if (res.success && res.url) {
-        await handleSendMessage({ imageUrl: res.url });
-      }
-    } catch (err) {
-      toast({ variant: "destructive", title: "Upload Failed" });
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -481,6 +448,7 @@ export default function ChatAppPage() {
     setMessageInput(val);
     if (!db || !activeChatId || !user?.uid) return;
     
+    // Gated Typing Indicator: Only write if status actually changed
     const isTyping = val.length > 0;
     if (isTyping !== lastTypingStatus.current) {
       lastTypingStatus.current = isTyping;
@@ -627,10 +595,10 @@ export default function ChatAppPage() {
               <DropdownMenu>
                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-10 w-10 text-white/20 hover:text-white"><MoreVertical className="w-5 h-5" /></Button></DropdownMenuTrigger>
                  <DropdownMenuContent align="end" className="glass-card border-white/10 w-52">
-                    <DropdownMenuItem onClick={() => setShowSettings(true)} className="text-[9px] font-black uppercase"><Settings2 className="w-3.5 h-3.5 mr-2" /> Settings</DropdownMenuItem>
-                    <DropdownMenuItem className="text-[9px] font-black uppercase"><Archive className="w-3.5 h-3.5 mr-2" /> Archived</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowSettings(true)} className="text-[9px] font-black uppercase cursor-pointer"><Settings2 className="w-3.5 h-3.5 mr-2" /> Settings</DropdownMenuItem>
+                    <DropdownMenuItem className="text-[9px] font-black uppercase cursor-pointer"><Archive className="w-3.5 h-3.5 mr-2" /> Archived</DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-white/5" />
-                    <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="text-[9px] font-black uppercase text-red-500"><LogOut className="w-3.5 h-3.5 mr-2" /> Logout</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="text-[9px] font-black uppercase text-red-500 cursor-pointer"><LogOut className="w-3.5 h-3.5 mr-2" /> Logout</DropdownMenuItem>
                  </DropdownMenuContent>
               </DropdownMenu>
            </div>
@@ -744,10 +712,10 @@ export default function ChatAppPage() {
                    <DropdownMenu>
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="text-white/20 hover:text-white"><MoreHorizontal className="w-5 h-5" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="glass-card w-52">
-                         <DropdownMenuItem onClick={() => handlePinChat(activeChat.id, activeChat.pinnedBy?.includes(user.uid) || false)} className="text-[9px] font-black uppercase"><Pin className="w-3.5 h-3.5 mr-2" /> Pin</DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => handleArchiveChat(activeChat.id)} className="text-[9px] font-black uppercase"><Archive className="w-3.5 h-3.5 mr-2" /> Archive</DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => handlePinChat(activeChat.id, activeChat.pinnedBy?.includes(user.uid) || false)} className="text-[9px] font-black uppercase cursor-pointer"><Pin className="w-3.5 h-3.5 mr-2" /> Pin</DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => handleArchiveChat(activeChat.id)} className="text-[9px] font-black uppercase cursor-pointer"><Archive className="w-3.5 h-3.5 mr-2" /> Archive</DropdownMenuItem>
                          <DropdownMenuSeparator className="bg-white/5" />
-                         <DropdownMenuItem onClick={() => setActiveChatId(null)} className="text-[9px] font-black uppercase text-red-500"><X className="w-3.5 h-3.5 mr-2" /> Close Chat</DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => setActiveChatId(null)} className="text-[9px] font-black uppercase text-red-500 cursor-pointer"><X className="w-3.5 h-3.5 mr-2" /> Close Chat</DropdownMenuItem>
                       </DropdownMenuContent>
                    </DropdownMenu>
                 </div>
@@ -776,13 +744,12 @@ export default function ChatAppPage() {
                    <div className="flex items-end gap-3 relative">
                       <div className="flex gap-1.5 mb-1.5">
                          <button className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary transition-all"><Smile className="w-5 h-5" /></button>
-                         <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary border border-white/5"><Paperclip className="w-5 h-5" /></button>
-                         <input type="file" ref={fileInputRef} className="hidden" onChange={handleMediaUpload} />
+                         <button onClick={() => {}} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary border border-white/5"><Paperclip className="w-5 h-5" /></button>
                       </div>
                       <div className="flex-1">
                          <Textarea value={messageInput} onChange={e => handleChatInputChange(e.target.value)} onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage({ text: messageInput }); } }} placeholder="Draft encrypted signal..." className="min-h-[50px] max-h-[120px] bg-secondary/60 border-white/10 rounded-[1.5rem] text-[15px] font-medium px-6 py-3.5 focus:ring-primary/40 text-white resize-none" />
                       </div>
-                      <Button onClick={() => handleSendMessage({ text: messageInput })} disabled={!messageInput.trim() || isUploading} className="h-12 w-12 rounded-full bg-primary text-white shadow-xl mb-1">{isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}</Button>
+                      <Button onClick={() => handleSendMessage({ text: messageInput })} disabled={!messageInput.trim()} className="h-12 w-12 rounded-full bg-primary text-white shadow-xl mb-1"><Send className="w-5 h-5" /></Button>
                    </div>
                 </div>
              </footer>
@@ -800,7 +767,7 @@ export default function ChatAppPage() {
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
          <DialogContent className="glass-card max-w-md p-0 rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90vh]">
-            <DialogHeader className="p-3 sm:p-4 border-b border-white/5 bg-secondary/30 relative shrink-0">
+            <DialogHeader className="p-4 border-b border-white/5 bg-secondary/30 relative shrink-0">
                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
                <div className="flex flex-col items-center gap-3 relative z-10">
                   <div className="relative group/avatar-edit">
@@ -877,6 +844,19 @@ export default function ChatAppPage() {
                     </div>
                   ))}
                </div>
+            </div>
+         </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
+         <DialogContent className="glass-card border-white/20 p-8 rounded-[2.5rem]">
+            <DialogHeader>
+               <DialogTitle className="text-xl font-headline font-black uppercase">Synthesize Group Node</DialogTitle>
+               <DialogDescription className="text-[10px] uppercase font-bold text-foreground/40">Collaborative production environment</DialogDescription>
+            </DialogHeader>
+            <div className="py-10 text-center opacity-10 space-y-4">
+               <Users className="w-16 h-16 mx-auto" />
+               <p className="text-[10px] font-black uppercase tracking-[0.4em]">Group logic in development</p>
             </div>
          </DialogContent>
       </Dialog>
