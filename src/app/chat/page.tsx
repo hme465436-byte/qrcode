@@ -63,7 +63,8 @@ import {
   Paperclip,
   Users,
   CameraIcon,
-  Eraser
+  Eraser,
+  Upload as UploadIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -116,8 +117,7 @@ import {
   onSnapshot,
   arrayUnion,
   arrayRemove,
-  increment,
-  Timestamp
+  increment
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
@@ -806,7 +806,7 @@ export default function ChatAppPage() {
                             <Badge variant="outline" className="bg-white/5 text-[8px] font-black uppercase tracking-[0.3em] border-white/10 px-4 py-1 rounded-full text-foreground/40">{getMessageDateLabel(msg.timestamp)}</Badge>
                          </div>
                        )}
-                       <div className={cn("flex flex-col gap-1.5 max-w-[85%] sm:max-w-[70%]", isMe ? "ml-auto items-end" : "mr-auto items-start animate-in slide-in-from-left-2")}>
+                       <div className={cn("flex flex-col gap-1.5", isMe ? "ml-auto items-end" : "mr-auto items-start animate-in slide-in-from-left-2")}>
                           <div className={cn("p-4 rounded-3xl shadow-xl relative group/msg transition-all border", isMe ? "bg-primary text-white rounded-tr-none border-primary/20" : "bg-secondary text-foreground rounded-tl-none border-white/5")}>
                              {msg.replyTo && (
                                <div className="mb-3 p-2 rounded-xl bg-black/20 border-l-4 border-white/40 text-[10px] opacity-70"><p className="font-black uppercase text-[8px] mb-1">{msg.replyTo.sender}</p><p className="truncate line-clamp-1">{msg.replyTo.text}</p></div>
