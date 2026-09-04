@@ -61,7 +61,9 @@ import {
   MoreHorizontal as MoreIcon,
   Heart,
   Paperclip,
-  Users
+  Users,
+  CameraIcon,
+  Eraser
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -205,13 +207,10 @@ export default function ChatAppPage() {
   // Navigation State
   const [sidebarTab, setSidebarTab] = useState<'chats' | 'status' | 'friends' | 'requests'>('chats');
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
   
   // Interaction State
   const [messageInput, setMessageInput] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
-  const [searchInChat, setSearchInChat] = useState('');
-  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
   
@@ -220,15 +219,18 @@ export default function ChatAppPage() {
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showRemoveAvatarConfirm, setShowRemoveAvatarConfirm] = useState(false);
   const [showMediaPreview, setShowMediaPreview] = useState<{url: string, type: 'image' | 'video'} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState<ChatUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Refs
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
@@ -295,6 +297,45 @@ export default function ChatAppPage() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !storage || !user || !db) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      const storageRef = ref(storage, `chat-profiles/${user.uid}/avatar`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      
+      const userRef = doc(db, 'chat_users', user.uid);
+      await updateDoc(userRef, { photoURL: url });
+      
+      toast({ title: "Identity Scaled", description: "Profile photo updated successfully." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Uplink Failed", description: "Failed to transmit visual data." });
+    } finally {
+      setIsUploadingAvatar(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user || !db) return;
+    setIsUploadingAvatar(true);
+    try {
+      const userRef = doc(db, 'chat_users', user.uid);
+      // Fallback to default Picsum avatar
+      const defaultUrl = `https://picsum.photos/seed/${user.uid}/300/300`;
+      await updateDoc(userRef, { photoURL: defaultUrl });
+      toast({ title: "Identity Sanitized", description: "Profile photo restored to default." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Protocol Failed" });
+    } finally {
+      setIsUploadingAvatar(false);
+      setShowRemoveAvatarConfirm(false);
+    }
+  };
+
   // --- 2. Data Stream Matrix ---
   const chatsQuery = useMemo(() => {
     if (!db || !user) return null;
@@ -309,13 +350,15 @@ export default function ChatAppPage() {
     rawChats.forEach(chat => {
       if (chat.isGroup) return;
       const peerId = chat.participants.find(id => id !== user.uid);
-      if (peerId && !chatPeers[peerId]) {
-        getDoc(doc(db, 'chat_users', peerId)).then(snap => {
-          if (snap.exists()) setChatPeers(prev => ({ ...prev, [peerId]: snap.data() as ChatUser }));
+      if (peerId) {
+        onSnapshot(doc(db, 'chat_users', peerId), (snap) => {
+          if (snap.exists()) {
+            setChatPeers(prev => ({ ...prev, [peerId]: snap.data() as ChatUser }));
+          }
         });
       }
     });
-  }, [db, rawChats, user, chatPeers]);
+  }, [db, rawChats, user]);
 
   const chats = useMemo(() => {
     if (!rawChats || !user) return [];
@@ -393,9 +436,8 @@ export default function ChatAppPage() {
       await updateDoc(chatRef, updates);
       setMessageInput('');
       setReplyingTo(null);
-      setIsEmojiOpen(false);
     } catch (e) {
-      toast({ variant: "destructive", title: "Signal Lost", description: "Message could not be transmitted." });
+      toast({ variant: "destructive", title: "Signal Lost" });
     }
   };
 
@@ -461,7 +503,6 @@ export default function ChatAppPage() {
     updateDoc(chatRef, { [`typing.${user.uid}`]: val.length > 0 });
   };
 
-  // --- 4. Matrix Management ---
   const handlePinChat = (id: string, isPinned: boolean) => {
     if (!db || !user) return;
     updateDoc(doc(db, 'chats', id), {
@@ -476,39 +517,6 @@ export default function ChatAppPage() {
     });
     setActiveChatId(null);
     toast({ title: "Stream Archived" });
-  };
-
-  const handleDeleteEveryone = async (msgId: string) => {
-    if (!db || !activeChatId) return;
-    await updateDoc(doc(db, 'chats', activeChatId, 'messages', msgId), {
-      isDeletedEveryone: true,
-      text: "This message was deleted.",
-      imageUrl: null,
-      videoUrl: null,
-      fileUrl: null,
-      voiceUrl: null
-    });
-  };
-
-  const createGroup = async (name: string, pIds: string[]) => {
-    if (!db || !user) return;
-    try {
-      const gId = `group_${Date.now()}`;
-      await setDoc(doc(db, 'chats', gId), {
-        id: gId,
-        isGroup: true,
-        groupName: name,
-        groupAdmin: user.uid,
-        participants: [user.uid, ...pIds],
-        timestamp: serverTimestamp(),
-        lastMessage: { text: "Group Matrix Created", senderId: 'system', timestamp: serverTimestamp() },
-        unreadCount: pIds.reduce((acc, id) => ({ ...acc, [id]: 1 }), { [user.uid]: 0 })
-      });
-      setShowCreateGroup(false);
-      toast({ title: "Group Forged" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Forge Failed" });
-    }
   };
 
   const searchUsers = async () => {
@@ -561,7 +569,7 @@ export default function ChatAppPage() {
     if (!text) return;
     navigator.clipboard.writeText(text);
     setIsCopied(label);
-    toast({ title: "Copied", description: `${label} saved to clipboard.` });
+    toast({ title: "Copied" });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -581,7 +589,6 @@ export default function ChatAppPage() {
     return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // --- 5. Render Pipeline ---
   if (authLoading) return <div className="h-screen flex items-center justify-center bg-[#0a0a0c]"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
 
   if (!user) return (
@@ -627,7 +634,12 @@ export default function ChatAppPage() {
       )}>
         <header className="h-20 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/40">
            <div className="flex items-center gap-4 cursor-pointer" onClick={() => setShowSettings(true)}>
-              <img src={profile.photoURL} className="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-lg" alt="" />
+              <div className="relative group/nav-avatar">
+                <img src={profile.photoURL} className="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-lg" alt="" />
+                <div className="absolute inset-0 bg-primary/20 rounded-2xl opacity-0 group-hover/nav-avatar:opacity-100 transition-opacity flex items-center justify-center">
+                   <Settings2 className="w-5 h-5 text-white" />
+                </div>
+              </div>
               <div className="min-w-0">
                  <h2 className="text-sm font-black text-white uppercase tracking-widest truncate">{profile.username}</h2>
                  <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Linked</p>
@@ -696,7 +708,7 @@ export default function ChatAppPage() {
 
            {sidebarTab === 'status' && (
               <div className="p-4 space-y-6">
-                 <div onClick={() => fileInputRef.current?.click()} className="p-6 rounded-[2.5rem] bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-primary/10 transition-all">
+                 <div className="p-6 rounded-[2.5rem] bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-primary/10 transition-all">
                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"><Plus className="w-6 h-6" /></div>
                     <span className="text-[10px] font-black uppercase text-primary tracking-widest">Update Status</span>
                  </div>
@@ -810,7 +822,7 @@ export default function ChatAppPage() {
                              {msg.text && <p className="text-[14px] font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
                              <div className={cn("flex items-center gap-2 mt-2", isMe ? "justify-end text-white/40" : "justify-start text-foreground/20")}>
                                 <span className="text-[8px] font-black uppercase">{formatTime(msg.timestamp)}</span>
-                                {isMe && (msg.status === 'seen' ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Check className="w-3 h-3" />)}
+                                {isMe && (msg.status === 'seen' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Check className="w-3.5 h-3.5" />)}
                              </div>
                           </div>
                        </div>
@@ -829,7 +841,7 @@ export default function ChatAppPage() {
                    )}
                    <div className="flex items-end gap-3 relative">
                       <div className="flex gap-1.5 mb-1.5">
-                         <button onClick={() => setIsEmojiOpen(!isEmojiOpen)} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary transition-all"><Smile className="w-5 h-5" /></button>
+                         <button className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary transition-all"><Smile className="w-5 h-5" /></button>
                          <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary border border-white/5"><Paperclip className="w-5 h-5" /></button>
                          <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleMediaUpload(e, 'image')} />
                       </div>
@@ -870,24 +882,56 @@ export default function ChatAppPage() {
       </Dialog>
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-         <DialogContent className="glass-card max-w-md p-8 rounded-[2.5rem]">
-            <DialogHeader className="text-center space-y-4">
-               <img src={profile.photoURL} className="w-24 h-24 rounded-[2rem] mx-auto border-4 border-white/10" alt="" />
-               <DialogTitle className="text-2xl font-black uppercase">{profile.username}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6 pt-6">
-               <div className="space-y-2">
-                  <Label className="text-[9px] font-black uppercase text-foreground/40">Status About</Label>
-                  <Input value={profile.about} onChange={e => updateDoc(doc(db!, 'chat_users', user.uid), { about: e.target.value.substring(0, 100) })} className="h-12 rounded-xl bg-secondary/50" />
+         <DialogContent className="glass-card max-w-md p-0 rounded-[2.5rem] overflow-hidden">
+            <DialogHeader className="p-8 border-b border-white/5 bg-secondary/30 relative">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+               <div className="flex flex-col items-center gap-6 relative z-10">
+                  <div className="relative group/avatar-edit">
+                    <img src={profile.photoURL} className={cn("w-32 h-32 rounded-[2.5rem] object-cover border-4 border-white/10 shadow-2xl transition-all", isUploadingAvatar && "opacity-50 blur-sm")} alt="" />
+                    <div className="absolute inset-0 bg-black/60 rounded-[2.5rem] opacity-0 group-hover/avatar-edit:opacity-100 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                       <CameraIcon className="w-8 h-8 text-white" />
+                       <span className="text-[8px] font-black uppercase text-white tracking-widest">Update DP</span>
+                    </div>
+                    {isUploadingAvatar && <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-spin" />}
+                  </div>
+                  <input type="file" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                  
+                  <div className="text-center space-y-1">
+                    <DialogTitle className="text-2xl font-black uppercase tracking-tight">{profile.username}</DialogTitle>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{profile.displayName}</p>
+                  </div>
                </div>
-               <div className="space-y-4 pt-4 border-t border-white/5">
-                  <Label className="text-[9px] font-black uppercase text-foreground/40">Privacy Controls</Label>
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/30">
-                     <span className="text-[10px] font-bold text-white/40 uppercase">Read Receipts</span>
+            </DialogHeader>
+            <div className="p-8 space-y-8 bg-[#0d0d0f]">
+               <div className="space-y-4">
+                  <div className="space-y-2">
+                     <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Identity Status (About)</Label>
+                     <Textarea value={profile.about} onChange={e => updateDoc(doc(db!, 'chat_users', user.uid), { about: e.target.value.substring(0, 100) })} className="bg-secondary/50 rounded-2xl border-white/5 text-sm font-medium p-4 resize-none h-24" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                     <Button variant="outline" onClick={() => avatarInputRef.current?.click()} className="h-11 rounded-xl bg-white/5 border-white/10 text-[9px] font-black uppercase">
+                        <UploadIcon className="w-3.5 h-3.5 mr-2" /> Upload DP
+                     </Button>
+                     <Button variant="outline" onClick={() => setShowRemoveAvatarConfirm(true)} className="h-11 rounded-xl bg-white/5 border-white/10 text-red-500/60 hover:text-red-500 text-[9px] font-black uppercase">
+                        <Eraser className="w-3.5 h-3.5 mr-2" /> Remove
+                     </Button>
+                  </div>
+               </div>
+               
+               <div className="space-y-4 pt-6 border-t border-white/5">
+                  <Label className="text-[10px] font-black uppercase text-foreground/40 ml-1">Privacy Controls</Label>
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-white/5 group hover:border-primary/20 transition-all">
+                     <div className="space-y-0.5">
+                        <span className="text-[10px] font-bold text-white uppercase tracking-tight">Read Receipts</span>
+                        <p className="text-[7px] text-white/20 uppercase font-black">Broadcast "seen" signals</p>
+                     </div>
                      <Switch checked={profile.privacy?.readReceipts} onCheckedChange={(v) => updateDoc(doc(db!, 'chat_users', user.uid), { 'privacy.readReceipts': v })} />
                   </div>
                </div>
-               <Button onClick={() => setShowLeaveConfirm(true)} variant="destructive" className="w-full h-14 rounded-2xl uppercase tracking-widest text-[9px]"><LogOut className="w-4 h-4 mr-2" /> Terminate Session</Button>
+               
+               <Button onClick={() => setShowLeaveConfirm(true)} variant="destructive" className="w-full h-14 rounded-2xl uppercase tracking-[0.3em] text-[10px] shadow-xl shadow-red-500/10">
+                  <LogOut className="w-4 h-4 mr-2" /> Terminate Session
+               </Button>
             </div>
          </DialogContent>
       </Dialog>
@@ -902,7 +946,7 @@ export default function ChatAppPage() {
                   <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="ENTER HANDLE..." className="h-14 rounded-2xl bg-secondary/50 text-center text-lg font-black uppercase tracking-widest" />
                   <Button onClick={searchUsers} disabled={isSearching} className="h-14 w-14 rounded-2xl">{isSearching ? <Loader2 className="animate-spin" /> : <Search />}</Button>
                </div>
-               <div className="space-y-2 max-h-[300px] overflow-auto">
+               <div className="space-y-2 max-h-[300px] overflow-auto custom-scrollbar">
                   {userSearchResults.map(u => (
                     <div key={u.uid} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between group hover:border-primary/20">
                        <div className="flex items-center gap-4"><img src={u.photoURL} className="w-10 h-10 rounded-xl object-cover" alt="" /><span className="text-[11px] font-bold text-white uppercase">{u.username}</span></div>
@@ -923,9 +967,25 @@ export default function ChatAppPage() {
             <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Terminate Session</AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">Are you sure you want to log out? Your identity will be preserved in the matrix but you will be disconnected from active streams.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="mt-8 flex flex-col sm:flex-row gap-3">
-            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase tracking-widest m-0">Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="mt-8 flex gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleLogout} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showRemoveAvatarConfirm} onOpenChange={setShowRemoveAvatarConfirm}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mx-auto">
+               <Trash2 className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Remove Photo</AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">This will definitively purge your custom profile photo and restore the studio's default identity signal.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveAvatar} className="h-12 flex-1 rounded-xl bg-red-500 text-white font-black uppercase text-[9px] shadow-xl shadow-red-500/20">Purge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
