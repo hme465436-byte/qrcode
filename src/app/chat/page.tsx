@@ -116,7 +116,8 @@ import {
   onSnapshot,
   arrayUnion,
   arrayRemove,
-  increment
+  increment,
+  Unsubscribe
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -186,10 +187,6 @@ interface FriendRequest {
   timestamp: any;
 }
 
-/**
- * Standardized Chat Avatar Component
- * Handles the "empty" state requested for removed DPs
- */
 const ChatAvatar = ({ src, className }: { src?: string, className?: string }) => (
   <div className={cn("relative shrink-0 overflow-hidden bg-secondary border border-white/5 flex items-center justify-center", className)}>
     {src ? (
@@ -207,22 +204,13 @@ export default function ChatAppPage() {
   const { user, loading: authLoading } = useUser();
   const router = useRouter();
   
-  // App Identity State
   const [profile, setProfile] = useState<ChatUser | null>(null);
   const [setupUsername, setSetupUsername] = useState('');
   const [isSettingUp, setIsSettingUp] = useState(false);
-  
-  // Navigation State
   const [sidebarTab, setSidebarTab] = useState<'chats' | 'friends' | 'requests'>('chats');
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  
-  // Interaction State
   const [messageInput, setMessageInput] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isCopied, setIsCopied] = useState<string | null>(null);
-  
-  // Modals
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -235,34 +223,40 @@ export default function ChatAppPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
-  // Refs
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const peerUnsubs = useRef<Map<string, Unsubscribe>>(new Map());
+  const lastTypingStatus = useRef<boolean>(false);
 
   // --- 1. Identity & Presence Logic ---
   useEffect(() => {
     if (!db || !user) return;
     const userRef = doc(db, 'chat_users', user.uid);
+    
+    // Listener for profile ONLY - No updates inside here
     const unsub = onSnapshot(userRef, (snap) => {
       if (snap.exists()) {
         setProfile(snap.data() as ChatUser);
-        updateDoc(userRef, { isOnline: true, lastSeen: serverTimestamp() }).catch(() => {});
       }
     });
 
+    // Handle Presence updates once or on visibility change
+    const updatePresence = (isOnline: boolean) => {
+      updateDoc(userRef, { isOnline, lastSeen: serverTimestamp() }).catch(() => {});
+    };
+
+    updatePresence(true);
+
     const handleVisibility = () => {
       if (!user || !db) return;
-      const isOnline = document.visibilityState === 'visible';
-      updateDoc(doc(db, 'chat_users', user.uid), { isOnline, lastSeen: serverTimestamp() }).catch(() => {});
+      updatePresence(document.visibilityState === 'visible');
     };
 
     window.addEventListener('visibilitychange', handleVisibility);
     return () => {
       window.removeEventListener('visibilitychange', handleVisibility);
-      if (user && db) updateDoc(doc(db, 'chat_users', user.uid), { isOnline: false, lastSeen: serverTimestamp() }).catch(() => {});
+      if (user && db) updatePresence(false);
       unsub();
     };
   }, [db, user]);
@@ -302,9 +296,6 @@ export default function ChatAppPage() {
     }
   };
 
-  /**
-   * ImgBB Avatar Upload Protocol
-   */
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user || !db) return;
@@ -334,9 +325,6 @@ export default function ChatAppPage() {
     }
   };
 
-  /**
-   * Remove Avatar Protocol
-   */
   const handleRemoveAvatar = async () => {
     if (!user || !db) return;
     setIsUploadingAvatar(true);
@@ -363,17 +351,38 @@ export default function ChatAppPage() {
 
   useEffect(() => {
     if (!db || !rawChats || !user) return;
+    
+    const activePeerIds = new Set<string>();
     rawChats.forEach(chat => {
       if (chat.isGroup) return;
       const peerId = chat.participants.find(id => id !== user.uid);
-      if (peerId) {
-        onSnapshot(doc(db, 'chat_users', peerId), (snap) => {
+      if (peerId) activePeerIds.add(peerId);
+    });
+
+    // Cleanup stale listeners
+    peerUnsubs.current.forEach((unsub, id) => {
+      if (!activePeerIds.has(id)) {
+        unsub();
+        peerUnsubs.current.delete(id);
+      }
+    });
+
+    // Add new listeners
+    activePeerIds.forEach(peerId => {
+      if (!peerUnsubs.current.has(peerId)) {
+        const unsub = onSnapshot(doc(db, 'chat_users', peerId), (snap) => {
           if (snap.exists()) {
             setChatPeers(prev => ({ ...prev, [peerId]: snap.data() as ChatUser }));
           }
         });
+        peerUnsubs.current.set(peerId, unsub);
       }
     });
+
+    return () => {
+      peerUnsubs.current.forEach(u => u());
+      peerUnsubs.current.clear();
+    };
   }, [db, rawChats, user]);
 
   const chats = useMemo(() => {
@@ -481,8 +490,13 @@ export default function ChatAppPage() {
   const handleChatInputChange = (val: string) => {
     setMessageInput(val);
     if (!db || !activeChatId || !user) return;
-    const chatRef = doc(db, 'chats', activeChatId);
-    updateDoc(chatRef, { [`typing.${user.uid}`]: val.length > 0 });
+    
+    // Gated Typing Update
+    const isTyping = val.length > 0;
+    if (isTyping !== lastTypingStatus.current) {
+      lastTypingStatus.current = isTyping;
+      updateDoc(doc(db, 'chats', activeChatId), { [`typing.${user.uid}`]: isTyping }).catch(() => {});
+    }
   };
 
   const handlePinChat = (id: string, isPinned: boolean) => {
@@ -609,7 +623,6 @@ export default function ChatAppPage() {
   return (
     <div className="fixed inset-0 top-16 bg-[#060608] flex overflow-hidden z-50">
       
-      {/* SIDEBAR */}
       <aside className={cn(
         "w-full lg:w-[440px] border-r border-white/5 flex flex-col bg-[#0d0d0f] transition-all duration-500 z-30",
         activeChatId && "max-lg:hidden"
@@ -730,7 +743,6 @@ export default function ChatAppPage() {
         </div>
       </aside>
 
-      {/* CHAT VIEWPORT */}
       <main className="flex-1 flex flex-col relative bg-[#060608] overflow-hidden">
          {activeChat ? (
            <>
@@ -822,7 +834,6 @@ export default function ChatAppPage() {
          )}
       </main>
 
-      {/* OVERLAYS */}
       <Dialog open={!!showMediaPreview} onOpenChange={() => setShowMediaPreview(null)}>
          <DialogContent className="max-w-4xl p-0 bg-black border-none overflow-hidden h-[90vh]">
             {showMediaPreview?.type === 'image' ? (
