@@ -50,7 +50,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -111,6 +110,9 @@ export default function MouseCursorMakerPage() {
   const [showGrid, setShowGrid] = useState(true);
   const [activeTab, setActiveTab] = useState('geometry');
   
+  // Hover Test State
+  const [testCursorUrl, setTestCursorUrl] = useState<string>('');
+  
   // History for Undo
   const [history, setHistory] = useState<CursorState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -119,6 +121,17 @@ export default function MouseCursorMakerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check mobile status for hover advisory
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024 || /Android|iPhone|iPad/i.test(navigator.userAgent));
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // --- Rendering Logic ---
   const renderCanvas = useCallback((targetCanvas?: HTMLCanvasElement) => {
@@ -185,9 +198,8 @@ export default function MouseCursorMakerPage() {
       ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
     }
 
-    // Effects Pass 3: Outline (Post-process via edge detect or stroke fallback)
+    // Effects Pass 3: Outline
     if (state.outlineWidth > 0) {
-      // Simplified outline using shadow-stacking
       ctx.shadowBlur = 0;
       ctx.shadowColor = state.outlineColor;
       const ow = state.outlineWidth * previewToRealScale;
@@ -196,16 +208,39 @@ export default function MouseCursorMakerPage() {
            ctx.drawImage(img, -drawW / 2 + x, -drawH / 2 + y, drawW, drawH);
         }
       }
-      // Re-draw original on top
       ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
     }
 
     ctx.restore();
   }, [loadedImage, state]);
 
+  // Effect to update the main preview canvas
   useEffect(() => {
     renderCanvas();
   }, [renderCanvas]);
+
+  // Effect to synthesize the CSS-compatible cursor for the hover test zone
+  useEffect(() => {
+    if (!loadedImage) {
+      setTestCursorUrl('');
+      return;
+    }
+    
+    // We debounce this slightly to avoid performance drops during slider movement
+    const timer = setTimeout(() => {
+      const tempCanvas = document.createElement('canvas');
+      // Most browsers only support cursor images up to 128x128
+      const maxCssSize = Math.min(128, state.targetSize);
+      
+      // Temporarily render at targetSize for a high-quality CSS data URL
+      const exportCanvas = document.createElement('canvas');
+      renderCanvas(exportCanvas);
+      
+      setTestCursorUrl(exportCanvas.toDataURL('image/png'));
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [state, loadedImage, renderCanvas]);
 
   const commitChange = useCallback((newState: CursorState) => {
     setHistory(prev => {
@@ -431,9 +466,9 @@ export default function MouseCursorMakerPage() {
                 <CardTitle className="text-[9px] font-black text-primary uppercase tracking-[0.4em] flex items-center gap-2">
                    <MonitorPlay className="w-3.5 h-3.5" /> High-Res Matrix Preview
                 </CardTitle>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                    <div className="flex items-center gap-2 bg-background/50 px-3 py-1 rounded-full border border-border">
-                      <span className="text-[8px] font-black uppercase text-foreground/40">Grid</span>
+                      <span className="text-[8px] font-black uppercase text-foreground/40">Geometric Grid</span>
                       <Switch checked={showGrid} onCheckedChange={setShowGrid} className="scale-50 h-4 w-8" />
                    </div>
                 </div>
@@ -462,6 +497,7 @@ export default function MouseCursorMakerPage() {
                       onTouchStart={handleDragStart}
                       onTouchMove={handleDragMove}
                       onTouchEnd={handleDragEnd}
+                      onClick={handlePreviewClick}
                      >
                         {showGrid && (
                            <div className="absolute inset-0 z-10 pointer-events-none opacity-20" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 0)', backgroundSize: '15px 15px' }} />
@@ -497,7 +533,7 @@ export default function MouseCursorMakerPage() {
              </CardContent>
           </Card>
 
-          {/* HOVER TEST ZONE */}
+          {/* HOVER TEST ZONE - Fixed implementation */}
           {image && (
             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex flex-col items-center gap-6 animate-in slide-in-from-bottom-6 duration-700">
                <div className="flex items-center gap-3">
@@ -506,9 +542,17 @@ export default function MouseCursorMakerPage() {
                </div>
                <div 
                 className="w-full h-48 rounded-[2.5rem] bg-white dark:bg-black/40 border-2 border-dashed border-primary/20 flex items-center justify-center text-center p-10 transition-all hover:bg-primary/[0.03] group/test"
-                style={{ cursor: canvasRef.current ? `url(${canvasRef.current.toDataURL()}) ${state.hotspot.x} ${state.hotspot.y}, auto` : 'default' }}
+                style={{ 
+                  cursor: testCursorUrl && !isMobile 
+                    ? `url(${testCursorUrl}) ${state.hotspot.x} ${state.hotspot.y}, auto` 
+                    : 'default' 
+                }}
                >
-                  <p className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/10 group-hover/test:text-primary group-hover/test:opacity-100 transition-all">Move your mouse here to test tracking</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/20 group-hover/test:text-primary group-hover/test:opacity-100 transition-all leading-relaxed max-w-xs">
+                    {isMobile 
+                      ? "Hardware Limitation: Hover test requires a desktop environment." 
+                      : "Move your mouse over this zone to test tracking accuracy."}
+                  </p>
                </div>
             </div>
           )}
@@ -552,7 +596,7 @@ export default function MouseCursorMakerPage() {
                        <div className="space-y-6">
                           <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-foreground/40">
                              <Label className="flex items-center gap-2"><Maximize className="w-3.5 h-3.5 text-primary" /> Visual Scale</Label>
-                             <span className="text-primary font-mono">{(state.zoom * 100).toFixed(0)}%</span>
+                             <span className="text-primary font-mono text-[10px]">{(state.zoom * 100).toFixed(0)}%</span>
                           </div>
                           <Slider value={[state.zoom * 100]} min={20} max={300} step={1} onValueChange={v => updateState({ zoom: v[0] / 100 }, true)} onValueCommit={() => commitChange(state)} />
                        </div>
@@ -600,7 +644,7 @@ export default function MouseCursorMakerPage() {
                              </div>
                              <Slider value={[state.tintOpacity * 100]} min={0} max={100} step={1} onValueChange={v => updateState({ tintOpacity: v[0]/100 })} />
                              <div className="flex items-center gap-3">
-                                {['#3b82f6', '#ef4444', '#10b981', '#ffffff', '#000000'].map(c => (
+                                {['#3b82f6', '#ef4444', '#22c55e', '#ffffff', '#000000'].map(c => (
                                   <button key={c} onClick={() => updateState({ tint: c })} className={cn("w-6 h-6 rounded-full border border-white/20 transition-all", state.tint === c && "scale-125 ring-2 ring-primary ring-offset-2 ring-offset-black")} style={{ backgroundColor: c }} />
                                 ))}
                              </div>
@@ -697,6 +741,7 @@ export default function MouseCursorMakerPage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
         .bg-checkered {
           background-image: linear-gradient(45deg, #111113 25%, transparent 25%), 
                             linear-gradient(-45deg, #111113 25%, transparent 25%), 
