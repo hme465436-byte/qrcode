@@ -1,9 +1,8 @@
 'use server';
 
 /**
- * @fileOverview Advanced Server Actions for the AI Chatbot.
- * Implements a dual-node strategy: Groq (Primary) -> OpenRouter (Fallback).
- * Supports full conversation memory and error telemetry.
+ * @fileOverview Overhauled Server Actions for the AI Chatbot.
+ * Optimized for Vercel production stability with clinical error telemetry.
  */
 
 export type ChatRole = 'user' | 'assistant' | 'system';
@@ -22,20 +21,31 @@ export interface ChatConfig {
 }
 
 export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {}) {
+  // 1. Strict Server-Side Environment Extraction
   const groqKey = (process.env.GROQ_API_KEY || '').trim();
   const orKey = (process.env.OPENROUTER_API_KEY || '').trim();
+
+  // 2. Pre-flight Infrastructure Validation
+  if (!groqKey && !orKey) {
+    return { 
+      success: false, 
+      message: "Infrastructure Alert: API keys (GROQ_API_KEY or OPENROUTER_API_KEY) are missing on the server. Please configure environment variables in the Vercel Dashboard." 
+    };
+  }
 
   const systemMessage: ChatMessage = {
     role: 'system',
     content: config.systemPrompt || 'You are a professional AI assistant. Your tone is helpful and technically accurate.'
   };
 
-  const payload = [systemMessage, ...messages];
+  // Optimize context for free-tier limits
+  const contextWindow = messages.slice(-10);
+  const payload = [systemMessage, ...contextWindow];
   const temperature = config.temperature ?? 0.7;
 
-  let lastError = '';
+  let diagnosticReports: string[] = [];
 
-  // 1. Primary Node: Groq (Llama 3.3 Protocol)
+  // 3. Primary Node logic: Groq (Llama 3.3)
   if (config.node === 'auto' || config.node === 'groq') {
     if (groqKey) {
       try {
@@ -63,15 +73,18 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
             node: 'Groq (Llama 3.3)' 
           };
         } else {
-          lastError = data.error?.message || `Groq Node Error (${response.status})`;
+          const groqError = data.error?.message || `HTTP ${response.status}`;
+          diagnosticReports.push(`Groq: ${groqError}`);
         }
       } catch (e: any) {
-        lastError = `Groq Connection Failed: ${e.message}`;
+        diagnosticReports.push(`Groq Connection: ${e.message}`);
       }
+    } else if (config.node === 'groq') {
+      diagnosticReports.push("Groq Node: API Key is not set.");
     }
   }
 
-  // 2. Fallback Node: OpenRouter (Llama 3.1 Protocol)
+  // 4. Fallback Node Logic: OpenRouter (Llama 3.1)
   if (config.node === 'auto' || config.node === 'openrouter') {
     if (orKey) {
       try {
@@ -100,16 +113,22 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
             node: 'OpenRouter (Llama 3.1)' 
           };
         } else {
-          lastError = data.error?.message || `OpenRouter Node Error (${response.status})`;
+          const orError = data.error?.message || `HTTP ${response.status}`;
+          diagnosticReports.push(`OpenRouter: ${orError}`);
         }
       } catch (e: any) {
-        lastError = `OpenRouter Connection Failed: ${e.message}`;
+        diagnosticReports.push(`OpenRouter Connection: ${e.message}`);
       }
+    } else if (config.node === 'openrouter') {
+      diagnosticReports.push("OpenRouter Node: API Key is not set.");
     }
   }
 
+  // 5. Consolidated Failure Report
   return { 
     success: false, 
-    message: lastError || 'All AI discovery nodes are currently restricted or unreachable.' 
+    message: diagnosticReports.length > 0 
+      ? diagnosticReports.join(' | ') 
+      : 'Critical Failure: Discovery nodes unreachable. Verify server network and API quota.' 
   };
 }

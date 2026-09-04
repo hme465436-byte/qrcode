@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -27,7 +26,8 @@ import {
   Code2,
   BookOpen,
   Image as ImageIcon,
-  Settings2
+  Settings2,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,7 +100,7 @@ export default function AIChatbotPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Default hidden for auto-hide behavior
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
@@ -196,7 +196,7 @@ export default function AIChatbotPage() {
     };
     setSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newId);
-    setIsSidebarOpen(false); // Auto-hide sidebar after creating
+    setIsSidebarOpen(false); 
     return newId;
   };
 
@@ -242,8 +242,7 @@ export default function AIChatbotPage() {
     setInput('');
     setIsProcessing(true);
 
-    const context = updatedMessages.slice(-12);
-    const response = await chatWithAI(context, config);
+    const response = await chatWithAI(updatedMessages, config);
 
     if (response.success && response.text) {
       const aiMsg: ChatMessage = { role: 'assistant', content: response.text };
@@ -258,8 +257,8 @@ export default function AIChatbotPage() {
     } else {
       toast({ 
         variant: "destructive", 
-        title: "Node Error", 
-        description: response.message || "Failed to negotiate with AI registry." 
+        title: "Protocol Failure", 
+        description: response.message || "Uplink restricted by server node." 
       });
     }
     setIsProcessing(false);
@@ -277,7 +276,7 @@ export default function AIChatbotPage() {
       deleteDoc(docRef).catch(() => {});
     }
     setSessionToDelete(null);
-    setIsSidebarOpen(false); // Auto-hide after delete
+    setIsSidebarOpen(false); 
     toast({ title: "Session Purged" });
   };
 
@@ -326,7 +325,7 @@ export default function AIChatbotPage() {
   return (
     <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#060608] selection:bg-primary/20 relative">
       
-      {/* SIDEBAR OVERLAY (BACKDROP) */}
+      {/* SIDEBAR OVERLAY */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-all duration-300"
@@ -334,7 +333,7 @@ export default function AIChatbotPage() {
         />
       )}
 
-      {/* SIDEBAR (Threads) */}
+      {/* SIDEBAR */}
       <aside className={cn(
         "fixed lg:absolute inset-y-0 left-0 flex flex-col bg-[#0a0a0c] border-r border-white/5 transition-all duration-500 z-50 overflow-hidden shadow-2xl",
         isSidebarOpen ? "translate-x-0 w-80" : "-translate-x-full w-80"
@@ -370,7 +369,7 @@ export default function AIChatbotPage() {
            {filteredSidebarSessions.length === 0 ? (
              <div className="py-20 text-center opacity-10 flex flex-col items-center gap-4">
                 <MessageSquare className="w-10 h-10" />
-                <p className="text-[10px] font-black uppercase tracking-widest">No Active Sessions</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">Zero Registry Signal</p>
              </div>
            ) : (
              filteredSidebarSessions.map(s => (
@@ -425,7 +424,7 @@ export default function AIChatbotPage() {
                  <ShieldCheck className="w-4 h-4 text-emerald-500/40" />
                  <span className="text-[9px] font-black uppercase text-foreground/30">Local Isolation</span>
               </div>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[7px] font-black px-2">v8.0 PRO</Badge>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[7px] font-black px-2">v8.2 PRO</Badge>
            </div>
         </div>
       </aside>
@@ -466,8 +465,8 @@ export default function AIChatbotPage() {
                </div>
 
                <div className="hidden md:flex items-center gap-2">
-                  <button onClick={() => setConfig({...config, node: 'groq'})} className={cn("px-3 py-1 rounded-lg text-[8px] font-black uppercase border transition-all", config.node === 'groq' ? "bg-primary text-white border-primary" : "text-white/20 border-white/5")}>Groq</button>
-                  <button onClick={() => setConfig({...config, node: 'auto'})} className={cn("px-3 py-1 rounded-lg text-[8px] font-black uppercase border transition-all", config.node === 'auto' ? "bg-primary text-white border-primary" : "text-white/20 border-white/5")}>Auto</button>
+                  <button onClick={() => setConfig({...config, node: 'groq'})} className={cn("px-3 py-1 rounded-lg text-[8px] font-black uppercase border transition-all", config.node === 'groq' ? "bg-primary text-white border-primary" : "bg-white/20 border-white/5")}>Groq</button>
+                  <button onClick={() => setConfig({...config, node: 'auto'})} className={cn("px-3 py-1 rounded-lg text-[8px] font-black uppercase border transition-all", config.node === 'auto' ? "bg-primary text-white border-primary" : "bg-white/20 border-white/5")}>Auto</button>
                </div>
 
                <button onClick={() => setIsConfigOpen(!isConfigOpen)} className={cn("p-2 rounded-lg transition-all", isConfigOpen ? "text-primary bg-primary/10" : "text-white/20 hover:text-white")}>
@@ -502,7 +501,7 @@ export default function AIChatbotPage() {
                       )}>
                          {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
                       </div>
-                      <div className={cn("space-y-3 min-w-0 max-w-[85%]", msg.role === 'user' ? "text-right" : "text-left")}>
+                      <div className={cn("space-y-3 min-w-0 flex-1 max-w-[85%]", msg.role === 'user' ? "text-right" : "text-left")}>
                          <div className={cn(
                            "p-6 rounded-[2.5rem] shadow-2xl relative group/card overflow-hidden transition-all",
                            msg.role === 'assistant' ? "bg-white/[0.03] border border-white/5 rounded-tl-none" : "bg-primary text-white rounded-tr-none shadow-primary/20"
@@ -518,7 +517,7 @@ export default function AIChatbotPage() {
                                </div>
                             )}
                          </div>
-                         <div className="flex items-center gap-3 px-4">
+                         <div className={cn("flex items-center gap-3 px-4", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
                             <span className="text-[8px] font-black uppercase text-foreground/20 tracking-widest">{msg.role === 'assistant' ? 'Assistant Node' : 'User Node'}</span>
                             {msg.role === 'user' && i === activeSession.messages.length - 1 && (
                                <button onClick={() => { setInput(msg.content); handleSend(undefined, msg.content); }} className="text-[8px] font-black uppercase text-primary/40 hover:text-primary transition-all">Retry</button>
@@ -687,4 +686,3 @@ export default function AIChatbotPage() {
     </div>
   );
 }
-
