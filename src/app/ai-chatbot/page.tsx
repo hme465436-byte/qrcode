@@ -178,7 +178,22 @@ export default function AIChatbotPage() {
     }
   }, [activeSessionId]);
 
-  // --- 3. Actions ---
+  // --- 3. Controlled Gentle Scroll ---
+  useEffect(() => {
+    if (isProcessing && scrollRef.current) {
+      // Gentle scroll down by a small fixed amount to show the incoming signal area
+      // without jumping to the very bottom or disorienting the user
+      const timeout = setTimeout(() => {
+        scrollRef.current?.scrollBy({
+          top: 150,
+          behavior: 'smooth'
+        });
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [isProcessing]);
+
+  // --- 4. Actions ---
 
   const createNewSession = (initialPrompt?: string) => {
     const newId = Math.random().toString(36).substr(2, 9);
