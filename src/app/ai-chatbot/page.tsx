@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -540,7 +539,7 @@ export default function AIChatbotPage() {
                 <p className="text-[10px] font-black uppercase tracking-widest">No Sessions Found</p>
              </div>
            ) : (
-             <filteredSidebarSessions.map(s => (
+             filteredSidebarSessions.map(s => (
                <div key={s.id} className="group relative">
                   {isRenaming === s.id ? (
                     <div className="flex items-center gap-2 p-2">
@@ -854,7 +853,7 @@ export default function AIChatbotPage() {
                  </div>
 
                  <div className="pt-4 grid grid-cols-2 gap-2">
-                    <Button variant="outline" size="sm" downloadHistory disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5 bg-white/5">
+                    <Button variant="outline" size="sm" onClick={downloadHistory} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5 bg-white/5">
                        <FileDown className="w-3.5 h-3.5 mr-1.5" /> Export .TXT
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleCopy(activeSession?.messages.map(m => m.content).join('\n') || '', 'all')} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5 bg-white/5">
