@@ -48,7 +48,10 @@ import {
   UserCheck,
   History,
   CornerDownLeft,
-  ChevronLeft
+  ChevronLeft,
+  Copy,
+  Maximize2,
+  Play
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,7 +84,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useUser, useFirestore, useCollection, useStorage } from '@/firebase';
+import { useUser, useFirestore, useCollection, useStorage, useAuth } from '@/firebase';
 import { 
   doc, 
   setDoc, 
@@ -105,6 +108,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 
 // --- Types ---
@@ -162,6 +166,7 @@ export default function ChatAppPage() {
   const { toast } = useToast();
   const db = useFirestore();
   const storage = useStorage();
+  const auth = useAuth();
   const { user, loading: authLoading } = useUser();
   const router = useRouter();
   
@@ -180,7 +185,7 @@ export default function ChatAppPage() {
   const [searchInChat, setSearchInChat] = useState('');
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordProgress, setProgress] = useState(0);
+  const [isCopied, setIsCopied] = useState<string | null>(null);
   
   // Modals
   const [showAddFriend, setShowAddFriend] = useState(false);
@@ -296,6 +301,11 @@ export default function ChatAppPage() {
       });
   }, [rawChats, chatPeers, user, profile?.archivedChats]);
 
+  const unreadCount = useMemo(() => {
+    if (!chats || !user) return 0;
+    return chats.reduce((acc, chat) => acc + (chat.unreadCount?.[user.uid] || 0), 0);
+  }, [chats, user]);
+
   const activeChat = useMemo(() => chats.find(c => c.id === activeChatId), [chats, activeChatId]);
 
   const messagesQuery = useMemo(() => {
@@ -375,7 +385,7 @@ export default function ChatAppPage() {
       recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
       recorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        if (audioBlob.size < 1000) return; // Ignore very short clicks
+        if (audioBlob.size < 1000) return; 
         
         setIsUploading(true);
         const sRef = ref(storage!, `chat-media/${activeChatId}/${Date.now()}_voice.webm`);
@@ -398,6 +408,13 @@ export default function ChatAppPage() {
       setIsRecording(false);
       mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
     }
+  };
+
+  const handleCopyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setIsCopied(label);
+    toast({ title: `${label} Copied` });
+    setTimeout(() => setIsCopied(null), 2000);
   };
 
   // --- 4. Matrix Management ---
@@ -494,6 +511,14 @@ export default function ChatAppPage() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/');
+      toast({ title: "Logged Out" });
+    }
+  };
+
   // --- 5. Render Pipeline ---
   if (authLoading) return <div className="h-screen flex items-center justify-center bg-[#0a0a0c]"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
 
@@ -532,7 +557,7 @@ export default function ChatAppPage() {
                  <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Username Identifier</Label>
                  <Input 
                    value={setupUsername}
-                   onChange={e => setSetupUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                   onChange={e => setSetupUsername(e.target.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                    placeholder="e.g. matrix_node_1"
                    className="h-14 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-center text-lg focus:ring-primary/20"
                  />
@@ -698,7 +723,7 @@ export default function ChatAppPage() {
               <div className="p-4 space-y-6">
                  <div className="space-y-4">
                     <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 px-2">
-                       <Zap className="w-3 h-3" /> Inbound Uplinks ({incomingRequests?.length || 0})
+                       <Zap className="w-3.5 h-3.5" /> Inbound Uplinks ({incomingRequests?.length || 0})
                     </p>
                     {incomingRequests && incomingRequests.length > 0 ? incomingRequests.map(req => (
                       <div key={req.id} className="flex items-center justify-between p-4 rounded-3xl bg-black/40 border border-white/5 shadow-inner animate-in slide-in-from-top-2">
@@ -794,7 +819,7 @@ export default function ChatAppPage() {
                           <DropdownMenuTrigger asChild>
                              <div className={cn(
                                "p-4 rounded-3xl shadow-xl relative group/msg transition-all border cursor-pointer select-none",
-                               isMe ? "bg-primary text-white rounded-tr-none border-primary/20" : "bg-secondary text-foreground rounded-tl-none border-white/5"
+                               isMe ? "bg-primary text-white rounded-tr-none border-primary/20" : "bg-secondary text-foreground rounded-tl-none border border-white/5"
                              )}>
                                 {msg.replyTo && (
                                   <div className="mb-2 p-2 rounded-xl bg-black/20 border-l-4 border-white/40 text-[10px] opacity-70">
@@ -1001,7 +1026,7 @@ export default function ChatAppPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Stay</AlertDialogCancel>
-            <AlertDialogAction onClick={() => router.push('/')} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl">Exit</AlertDialogAction>
+            <AlertDialogAction onClick={handleLogout} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl">Exit</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
