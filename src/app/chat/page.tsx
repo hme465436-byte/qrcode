@@ -43,7 +43,7 @@ import {
   Paperclip,
   Users,
   Eraser,
-  Upload,
+  Upload as UploadIcon,
   ChevronUp,
   ChevronDown,
   ChevronLeft,
@@ -97,9 +97,6 @@ import {
   deleteDoc,
   getDocs,
   writeBatch,
-  onSnapshot,
-  arrayUnion,
-  arrayRemove,
   increment,
   getDoc
 } from 'firebase/firestore';
@@ -172,7 +169,7 @@ const ChatAvatar = ({ src, className }: { src?: string | null, className?: strin
     {src ? (
       <img src={src} className="w-full h-full object-cover" alt="" />
     ) : (
-      <div className="w-full h-full bg-secondary" />
+      null 
     )}
   </div>
 );
@@ -199,7 +196,6 @@ export default function ChatAppPage() {
   const [userSearchResults, setUserSearchResults] = useState<ChatUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [isCopied, setIsCopied] = useState<string | null>(null);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -210,13 +206,9 @@ export default function ChatAppPage() {
   const updatePresence = useCallback(async (isOnline: boolean, force = false) => {
     if (!db || !user?.uid || quotaExceeded) return;
     const now = Date.now();
+    const throttleTime = 300000; // 5 minute heartbeat
     
-    // Heartbeat Throttle: 5 minutes (300,000ms)
-    // Critical to prevent quota exhaustion
-    const throttleTime = 300000;
-    const shouldUpdate = force || !isOnline || (now - lastPresenceUpdate.current > throttleTime);
-    
-    if (!shouldUpdate) return;
+    if (!force && (now - lastPresenceUpdate.current < throttleTime)) return;
     
     const userRef = doc(db, 'chat_users', user.uid);
     try {
@@ -233,7 +225,6 @@ export default function ChatAppPage() {
   useEffect(() => {
     if (!db || !user?.uid || quotaExceeded) return;
     
-    // Use getDoc instead of onSnapshot for the profile to reduce reads
     const fetchProfile = async () => {
       try {
         const snap = await getDoc(doc(db, 'chat_users', user.uid));
@@ -245,17 +236,14 @@ export default function ChatAppPage() {
       }
     };
     fetchProfile();
-
-    updatePresence(true, false);
+    updatePresence(true, true);
 
     const handleVisibility = () => {
       updatePresence(document.visibilityState === 'visible', false);
     };
 
     window.addEventListener('visibilitychange', handleVisibility);
-    return () => {
-      window.removeEventListener('visibilitychange', handleVisibility);
-    };
+    return () => window.removeEventListener('visibilitychange', handleVisibility);
   }, [db, user?.uid, quotaExceeded, updatePresence]);
 
   const handleSetupProfile = async () => {
@@ -346,10 +334,13 @@ export default function ChatAppPage() {
     return query(collection(db, 'chats'), where('participants', 'array-contains', user.uid), limit(50));
   }, [db, user?.uid, quotaExceeded]);
 
-  const { data: rawChats, loading: chatsLoading } = useCollection<Chat>(chatsQuery);
+  const { data: rawChats, loading: chatsLoading, error: chatsError } = useCollection<Chat>(chatsQuery);
   const [chatPeers, setChatPeers] = useState<Record<string, ChatUser>>({});
 
-  // Optimized Peer Discovery: Sidebar peers are fetched via static read to save quota
+  useEffect(() => {
+    if (chatsError?.message?.includes('resource-exhausted')) setQuotaExceeded(true);
+  }, [chatsError]);
+
   useEffect(() => {
     if (!db || !rawChats || !user?.uid || quotaExceeded) return;
     
@@ -372,9 +363,8 @@ export default function ChatAppPage() {
         if (e.code === 'resource-exhausted') setQuotaExceeded(true);
       }
     };
-
     fetchPeers();
-  }, [db, rawChats, user?.uid, quotaExceeded]);
+  }, [db, rawChats, user?.uid, quotaExceeded, chatPeers]);
 
   const chats = useMemo(() => {
     if (!rawChats || !user?.uid) return [];
@@ -393,11 +383,6 @@ export default function ChatAppPage() {
       });
   }, [rawChats, chatPeers, user?.uid, profile?.archivedChats]);
 
-  const unreadCountTotal = useMemo(() => {
-    if (!rawChats || !user?.uid) return 0;
-    return rawChats.reduce((acc, chat) => acc + (chat.unreadCount?.[user.uid] || 0), 0);
-  }, [rawChats, user?.uid]);
-
   const activeChat = useMemo(() => chats.find(c => c.id === activeChatId), [chats, activeChatId]);
 
   const messagesQuery = useMemo(() => {
@@ -413,83 +398,51 @@ export default function ChatAppPage() {
 
   const requestsQuery = useMemo(() => {
     if (!db || !user?.uid || quotaExceeded) return null;
-    return query(collection(db, 'friend_requests'), where('to', '==', user.uid), where('status', '==', 'pending'));
+    return query(collection(db, 'friend_requests'), where('to', '==', user.uid), where('status', '==', 'pending'), limit(10));
   }, [db, user?.uid, quotaExceeded]);
   const { data: incomingRequests } = useCollection<FriendRequest>(requestsQuery);
 
   // --- 3. Communication Protocols ---
   const handleSendMessage = async (payload: any) => {
     if (!db || !user || !activeChatId || quotaExceeded) return;
-    
     const chatRef = doc(db, 'chats', activeChatId);
-    const msgPayload = {
-      senderId: user.uid,
-      senderName: profile?.displayName,
-      timestamp: serverTimestamp(),
-      status: 'sent',
-      deletedFor: [],
-      ...payload
-    };
-
     try {
-      await addDoc(collection(chatRef, 'messages'), msgPayload);
-      
-      const updates: any = {
-        lastMessage: {
-          text: payload.text || 'Media',
-          senderId: user.uid,
-          timestamp: serverTimestamp()
-        }
-      };
-
-      activeChat?.participants.forEach(pId => {
-        if (pId !== user.uid) {
-          updates[`unreadCount.${pId}`] = increment(1);
-        }
+      await addDoc(collection(chatRef, 'messages'), {
+        senderId: user.uid,
+        senderName: profile?.displayName,
+        timestamp: serverTimestamp(),
+        status: 'sent',
+        deletedFor: [],
+        ...payload
       });
-
+      const updates: any = { [`unreadCount.${activeChat?.participants.find(p => p !== user.uid)}`]: increment(1), lastMessage: { text: payload.text || 'Media', senderId: user.uid, timestamp: serverTimestamp() } };
       await updateDoc(chatRef, updates);
       setMessageInput('');
     } catch (e: any) {
       if (e.code === 'resource-exhausted') setQuotaExceeded(true);
-      toast({ variant: "destructive", title: "Transmission Failed" });
     }
   };
 
   const handlePinChat = (id: string, isPinned: boolean) => {
     if (!db || !user?.uid || quotaExceeded) return;
-    updateDoc(doc(db, 'chats', id), {
-      pinnedBy: isPinned ? arrayRemove(user.uid) : arrayUnion(user.uid)
-    });
+    updateDoc(doc(db, 'chats', id), { pinnedBy: isPinned ? arrayRemove(user.uid) : arrayUnion(user.uid) });
   };
 
   const handleArchiveChat = (id: string) => {
     if (!db || !user?.uid || quotaExceeded) return;
-    updateDoc(doc(db, 'chat_users', user.uid), {
-      archivedChats: arrayUnion(id)
-    });
+    updateDoc(doc(db, 'chat_users', user.uid), { archivedChats: arrayUnion(id) });
     setActiveChatId(null);
-    toast({ title: "Chat Archived" });
   };
 
   const searchUsers = async () => {
     if (!searchQuery.trim() || !db || quotaExceeded) return;
     setIsSearching(true);
     try {
-      const q = query(
-        collection(db, 'chat_users'), 
-        where('username_lowercase', '>=', searchQuery.toLowerCase()),
-        where('username_lowercase', '<=', searchQuery.toLowerCase() + '\uf8ff'),
-        limit(5)
-      );
+      const q = query(collection(db, 'chat_users'), where('username_lowercase', '>=', searchQuery.toLowerCase()), where('username_lowercase', '<=', searchQuery.toLowerCase() + '\uf8ff'), limit(5));
       const snap = await getDocs(q);
-      const users = snap.docs
-        .map(d => d.data() as ChatUser)
-        .filter(u => u.uid !== user?.uid);
-      setUserSearchResults(users);
-    } catch (err: any) {
-      if (err.code === 'resource-exhausted') setQuotaExceeded(true);
-      toast({ variant: "destructive", title: "Search Failed" });
+      setUserSearchResults(snap.docs.map(d => d.data() as ChatUser).filter(u => u.uid !== user?.uid));
+    } catch (e: any) {
+      if (e.code === 'resource-exhausted') setQuotaExceeded(true);
     } finally {
       setIsSearching(false);
     }
@@ -498,24 +451,14 @@ export default function ChatAppPage() {
   const acceptRequest = async (req: FriendRequest) => {
     if (!db || !user || quotaExceeded) return;
     const batch = writeBatch(db);
-    
     const chatRef = doc(collection(db, 'chats'));
-    batch.set(chatRef, {
-      id: chatRef.id,
-      participants: [req.from, req.to],
-      createdAt: serverTimestamp(),
-      unreadCount: { [req.from]: 0, [req.to]: 0 }
-    });
-
+    batch.set(chatRef, { id: chatRef.id, participants: [req.from, req.to], createdAt: serverTimestamp(), unreadCount: { [req.from]: 0, [req.to]: 0 } });
     batch.delete(doc(db, 'friend_requests', req.id));
-
     try {
       await batch.commit();
-      toast({ title: "Uplink Established", description: "Chat room synthesized." });
       setActiveChatId(chatRef.id);
     } catch (e: any) {
       if (e.code === 'resource-exhausted') setQuotaExceeded(true);
-      toast({ variant: "destructive", title: "Protocol Error" });
     }
   };
 
@@ -541,44 +484,25 @@ export default function ChatAppPage() {
            <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
            <div className="space-y-2">
               <h2 className="text-xl font-headline font-black uppercase text-white">Service Busy</h2>
-              <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest leading-relaxed">The linguistic matrix has exceeded its current resource quota. Please attempt a manual re-sync in a few minutes.</p>
+              <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest leading-relaxed">The studio has reached its maximum resource quota. Please attempt a manual re-sync later.</p>
            </div>
-           <Button onClick={() => window.location.reload()} className="h-12 w-full bg-primary text-white font-black uppercase tracking-widest text-[10px]">
-              <RefreshCcw className="w-4 h-4 mr-2" /> Re-Sync Matrix
-           </Button>
+           <Button onClick={() => window.location.reload()} className="h-12 w-full bg-primary text-white font-black uppercase tracking-widest text-[10px]"><RefreshCcw className="w-4 h-4 mr-2" /> Re-Sync Matrix</Button>
         </Card>
       </div>
     );
   }
 
-  if (!user) return (
-    <div className="h-screen flex items-center justify-center bg-[#0a0a0c] p-6">
-      <Card className="glass-card border-white/5 shadow-2xl p-12 text-center flex flex-col items-center gap-10 rounded-[3rem] max-w-lg w-full">
-         <div className="w-20 h-20 rounded-[2.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl"><Lock className="w-8 h-8" /></div>
-         <div className="space-y-3">
-            <h2 className="text-3xl font-headline font-black text-white uppercase tracking-tight">Identity Required</h2>
-            <p className="text-[10px] text-foreground/30 font-black uppercase tracking-[0.4em]">Sign in to initialize secure communications.</p>
-         </div>
-         <Button asChild className="h-16 w-full bg-primary text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl shadow-primary/30">
-            <Link href="/login?redirect=/chat">Initialize Session</Link>
-         </Button>
-      </Card>
-    </div>
-  );
-
-  if (!profile) return (
+  if (!profile && user) return (
     <div className="h-screen flex items-center justify-center bg-[#0a0a0c] p-6">
       <Card className="glass-card border-white/5 shadow-2xl p-10 space-y-10 rounded-[2.5rem] max-w-md w-full">
          <div className="text-center space-y-2">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mx-auto mb-4 border border-primary/20"><UserPlus className="w-8 h-8" /></div>
             <h2 className="text-2xl font-headline font-black uppercase tracking-tight">Identity Forge</h2>
-            <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.4em]">Establish your studio handle</p>
+            <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.4em]">Establish your handle</p>
          </div>
          <div className="space-y-6">
             <Input value={setupUsername} onChange={e => setSetupUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="USERNAME IDENTIFIER" className="h-14 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-center" />
-            <Button onClick={handleSetupProfile} disabled={isSettingUp || !setupUsername.trim()} className="w-full h-16 bg-primary text-white font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-xl">
-               {isSettingUp ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 mr-3" />} Activate
-            </Button>
+            <Button onClick={handleSetupProfile} disabled={isSettingUp || !setupUsername.trim()} className="w-full h-16 bg-primary text-white font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-xl">{isSettingUp ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 mr-3" />} Activate</Button>
          </div>
       </Card>
     </div>
@@ -586,27 +510,21 @@ export default function ChatAppPage() {
 
   return (
     <div className="fixed inset-0 top-16 bg-[#060608] flex overflow-hidden z-50">
-      
-      <aside className={cn(
-        "w-full lg:w-[440px] border-r border-white/5 flex flex-col bg-[#0d0d0f] transition-all duration-500 z-30",
-        activeChatId && "max-lg:hidden"
-      )}>
+      <aside className={cn("w-full lg:w-[440px] border-r border-white/5 flex flex-col bg-[#0d0d0f] transition-all duration-500 z-30", activeChatId && "max-lg:hidden")}>
         <header className="h-20 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/40">
            <div className="flex items-center gap-4 cursor-pointer" onClick={() => setShowSettings(true)}>
-              <ChatAvatar src={profile.photoURL} className="w-12 h-12 rounded-2xl shadow-lg" />
+              <ChatAvatar src={profile?.photoURL} className="w-12 h-12 rounded-2xl shadow-lg" />
               <div className="min-w-0">
-                 <h2 className="text-sm font-black text-white uppercase tracking-widest truncate">{profile.username}</h2>
+                 <h2 className="text-sm font-black text-white uppercase tracking-widest truncate">{profile?.username}</h2>
                  <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Linked</p>
               </div>
            </div>
            <div className="flex items-center gap-1">
               <Button onClick={() => setShowAddFriend(true)} variant="ghost" size="icon" className="h-10 w-10 text-white/20 hover:text-primary"><UserPlus className="w-5 h-5" /></Button>
-              <Button onClick={() => setShowCreateGroup(true)} variant="ghost" size="icon" className="h-10 w-10 text-white/20 hover:text-primary"><Users className="w-5 h-5" /></Button>
               <DropdownMenu>
                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-10 w-10 text-white/20 hover:text-white"><MoreVertical className="w-5 h-5" /></Button></DropdownMenuTrigger>
                  <DropdownMenuContent align="end" className="glass-card border-white/10 w-52">
                     <DropdownMenuItem onClick={() => setShowSettings(true)} className="text-[9px] font-black uppercase cursor-pointer"><Settings2 className="w-3.5 h-3.5 mr-2" /> Settings</DropdownMenuItem>
-                    <DropdownMenuItem className="text-[9px] font-black uppercase cursor-pointer"><Archive className="w-3.5 h-3.5 mr-2" /> Archived</DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-white/5" />
                     <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="text-[9px] font-black uppercase text-red-500 cursor-pointer"><LogOut className="w-3.5 h-3.5 mr-2" /> Logout</DropdownMenuItem>
                  </DropdownMenuContent>
@@ -616,14 +534,13 @@ export default function ChatAppPage() {
 
         <div className="grid grid-cols-3 h-14 border-b border-white/5 bg-black/40 shrink-0">
            {[
-             { id: 'chats', label: 'CHATS', icon: MessageSquare, badge: unreadCountTotal },
-             { id: 'friends', label: 'PEERS', icon: User, badge: 0 },
-             { id: 'requests', label: 'UPLINKS', icon: Zap, badge: incomingRequests?.length || 0 }
+             { id: 'chats', label: 'CHATS', icon: MessageSquare },
+             { id: 'friends', label: 'PEERS', icon: User },
+             { id: 'requests', label: 'UPLINKS', icon: Zap }
            ].map(tab => (
              <button key={tab.id} onClick={() => setSidebarTab(tab.id as any)} className={cn("flex flex-col items-center justify-center gap-1 transition-all relative", sidebarTab === tab.id ? "text-primary border-b-2 border-primary bg-primary/5" : "text-foreground/20 hover:text-foreground/40")}>
                 <tab.icon className="w-4 h-4" />
                 <span className="text-[8px] font-black uppercase tracking-widest">{tab.label}</span>
-                {tab.badge > 0 && <div className="absolute top-2 right-4 w-4 h-4 rounded-full bg-primary text-white text-[7px] font-black flex items-center justify-center">{tab.badge}</div>}
              </button>
            ))}
         </div>
@@ -639,19 +556,19 @@ export default function ChatAppPage() {
                     <p className="text-[10px] font-black uppercase tracking-[0.4em]">Zero Streams</p>
                  </div>
                ) : chats.map(chat => (
-                 <button key={chat.id} onClick={() => { setActiveChatId(chat.id); if (chat.unreadCount?.[user.uid]) updateDoc(doc(db!, 'chats', chat.id), { [`unreadCount.${user.uid}`]: 0 }); }} className={cn("w-full p-4 rounded-[2rem] flex items-center gap-4 transition-all group relative", activeChatId === chat.id ? "bg-primary/10 border border-primary/20 shadow-inner" : "hover:bg-white/5 border border-transparent")}>
+                 <button key={chat.id} onClick={() => { setActiveChatId(chat.id); if (chat.unreadCount?.[user!.uid]) updateDoc(doc(db!, 'chats', chat.id), { [`unreadCount.${user!.uid}`]: 0 }); }} className={cn("w-full p-4 rounded-[2rem] flex items-center gap-4 transition-all group relative", activeChatId === chat.id ? "bg-primary/10 border border-primary/20 shadow-inner" : "hover:bg-white/5 border border-transparent")}>
                     <div className="relative shrink-0">
-                       <ChatAvatar src={chat.isGroup ? chat.groupAvatar : chat.peer?.photoURL} className="w-14 h-14 rounded-2xl shadow-md" />
-                       {!chat.isGroup && chat.peer?.isOnline && <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-[3px] border-[#0d0d0f]" />}
+                       <ChatAvatar src={chat.peer?.photoURL} className="w-14 h-14 rounded-2xl shadow-md" />
+                       {chat.peer?.isOnline && <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-[3px] border-[#0d0d0f]" />}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                        <div className="flex justify-between items-center mb-1">
-                          <h4 className="text-[13px] font-black text-white uppercase tracking-tight truncate">{chat.isGroup ? chat.groupName : chat.peer?.username || 'Node...'}</h4>
+                          <h4 className="text-[13px] font-black text-white uppercase tracking-tight truncate">{chat.peer?.username || 'Node...'}</h4>
                           <span className="text-[8px] font-bold text-foreground/20 uppercase whitespace-nowrap">{chat.lastMessage ? formatTime(chat.lastMessage.timestamp) : ''}</span>
                        </div>
                        <div className="flex items-center justify-between gap-4">
-                          <p className="text-[11px] font-medium text-foreground/40 truncate uppercase tracking-tighter flex-1">{chat.lastMessage?.senderId === user.uid && <Check className="w-3 h-3 inline mr-1 text-primary" />}{chat.lastMessage?.text || 'Linked'}</p>
-                          {chat.unreadCount?.[user.uid] ? <div className="w-5 h-5 rounded-full bg-primary text-white text-[9px] font-black flex items-center justify-center shadow-lg">{chat.unreadCount[user.uid]}</div> : null}
+                          <p className="text-[11px] font-medium text-foreground/40 truncate uppercase tracking-tighter flex-1">{chat.lastMessage?.text || 'Linked'}</p>
+                          {chat.unreadCount?.[user!.uid] ? <div className="w-5 h-5 rounded-full bg-primary text-white text-[9px] font-black flex items-center justify-center shadow-lg">{chat.unreadCount[user!.uid]}</div> : null}
                        </div>
                     </div>
                  </button>
@@ -708,12 +625,10 @@ export default function ChatAppPage() {
              <header className="h-20 border-b border-white/5 bg-black/40 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-10">
                 <div className="flex items-center gap-4 min-w-0">
                    <button onClick={() => setActiveChatId(null)} className="lg:hidden p-2 text-white/40 hover:text-white"><ChevronLeft className="w-6 h-6" /></button>
-                   <ChatAvatar src={activeChat.isGroup ? activeChat.groupAvatar : activeChat.peer?.photoURL} className="w-12 h-12 rounded-2xl" />
+                   <ChatAvatar src={activeChat.peer?.photoURL} className="w-12 h-12 rounded-2xl" />
                    <div className="min-w-0">
-                      <h2 className="text-base font-black text-white uppercase tracking-tight truncate">{activeChat.isGroup ? activeChat.groupName : activeChat.peer?.username}</h2>
-                      <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest mt-1">
-                        {activeChat.isGroup ? `${activeChat.participants.length} Members` : activeChat.peer?.isOnline ? 'Online' : 'Offline'}
-                      </p>
+                      <h2 className="text-base font-black text-white uppercase tracking-tight truncate">{activeChat.peer?.username}</h2>
+                      <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest mt-1">{activeChat.peer?.isOnline ? 'Online' : 'Offline'}</p>
                    </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -722,7 +637,7 @@ export default function ChatAppPage() {
                    <DropdownMenu>
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="text-white/20 hover:text-white"><MoreHorizontal className="w-5 h-5" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="glass-card w-52">
-                         <DropdownMenuItem onClick={() => handlePinChat(activeChat.id, activeChat.pinnedBy?.includes(user.uid) || false)} className="text-[9px] font-black uppercase cursor-pointer"><Pin className="w-3.5 h-3.5 mr-2" /> Pin</DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => handlePinChat(activeChat.id, activeChat.pinnedBy?.includes(user!.uid) || false)} className="text-[9px] font-black uppercase cursor-pointer"><Pin className="w-3.5 h-3.5 mr-2" /> Pin</DropdownMenuItem>
                          <DropdownMenuItem onClick={() => handleArchiveChat(activeChat.id)} className="text-[9px] font-black uppercase cursor-pointer"><Archive className="w-3.5 h-3.5 mr-2" /> Archive</DropdownMenuItem>
                          <DropdownMenuSeparator className="bg-white/5" />
                          <DropdownMenuItem onClick={() => setActiveChatId(null)} className="text-[9px] font-black uppercase text-red-500 cursor-pointer"><X className="w-3.5 h-3.5 mr-2" /> Close Chat</DropdownMenuItem>
@@ -733,16 +648,12 @@ export default function ChatAppPage() {
 
              <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-[#060608]">
                 {messages.map((msg) => {
-                  const isMe = msg.senderId === user.uid;
+                  const isMe = msg.senderId === user!.uid;
                   return (
                     <div key={msg.id} className={cn("flex flex-col gap-1.5", isMe ? "ml-auto items-end" : "mr-auto items-start animate-in slide-in-from-left-2")}>
-                       <div className={cn("p-4 rounded-3xl shadow-xl relative group/msg transition-all border", isMe ? "bg-primary text-white rounded-tr-none border-primary/20" : "bg-secondary text-foreground rounded-tl-none border-white/5")}>
-                          {msg.imageUrl && <div className="mb-2"><img src={msg.imageUrl} className="max-h-[350px] w-auto rounded-2xl border border-white/10" alt="" /></div>}
+                       <div className={cn("p-4 rounded-3xl shadow-xl border", isMe ? "bg-primary text-white rounded-tr-none border-primary/20" : "bg-secondary text-foreground rounded-tl-none border-white/5")}>
                           {msg.text && <p className="text-[14px] font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
-                          <div className={cn("flex items-center gap-2 mt-2", isMe ? "justify-end text-white/40" : "justify-start text-foreground/20")}>
-                             <span className="text-[8px] font-black uppercase">{formatTime(msg.timestamp)}</span>
-                             {isMe && (msg.status === 'seen' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Check className="w-3.5 h-3.5" />)}
-                          </div>
+                          <div className={cn("text-[8px] font-black uppercase mt-2", isMe ? "text-white/40" : "text-foreground/20")}>{formatTime(msg.timestamp)}</div>
                        </div>
                     </div>
                   );
@@ -750,39 +661,28 @@ export default function ChatAppPage() {
              </div>
 
              <footer className="p-4 sm:p-6 bg-[#0a0a0c] border-t border-white/5 shrink-0 z-20">
-                <div className="max-w-4xl mx-auto space-y-4">
-                   <div className="flex items-end gap-3 relative">
-                      <div className="flex gap-1.5 mb-1.5">
-                         <button className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary transition-all"><Smile className="w-5 h-5" /></button>
-                         <button onClick={() => {}} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary border border-white/5"><Paperclip className="w-5 h-5" /></button>
-                      </div>
-                      <div className="flex-1">
-                         <Textarea value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage({ text: messageInput }); } }} placeholder="Draft encrypted signal..." className="min-h-[50px] max-h-[120px] bg-secondary/60 border-white/10 rounded-[1.5rem] text-[15px] font-medium px-6 py-3.5 focus:ring-primary/40 text-white resize-none" />
-                      </div>
-                      <Button onClick={() => handleSendMessage({ text: messageInput })} disabled={!messageInput.trim()} className="h-12 w-12 rounded-full bg-primary text-white shadow-xl mb-1"><Send className="w-5 h-5" /></Button>
+                <form onSubmit={(e) => { e.preventDefault(); handleSendMessage({ text: messageInput }); }} className="max-w-4xl mx-auto flex items-end gap-3">
+                   <div className="flex-1 relative">
+                      <Textarea value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage({ text: messageInput }); } }} placeholder="Draft encrypted signal..." className="min-h-[50px] max-h-[120px] bg-secondary/60 border-white/10 rounded-[1.5rem] text-[15px] font-medium px-6 py-3.5 focus:ring-primary/40 text-white resize-none" />
                    </div>
-                </div>
+                   <Button type="submit" disabled={!messageInput.trim()} className="h-12 w-12 rounded-full bg-primary text-white shadow-xl mb-1"><Send className="w-5 h-5" /></Button>
+                </form>
              </footer>
            </>
          ) : (
            <div className="flex-1 flex flex-col items-center justify-center gap-12 opacity-10 grayscale p-10 text-center">
               <div className="w-40 h-40 rounded-[4rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl"><MessageSquare className="w-20 h-20" /></div>
-              <div className="space-y-3">
-                 <h3 className="text-3xl font-headline font-black uppercase tracking-[0.6em]">Matrix Standby</h3>
-                 <p className="text-[10px] font-black uppercase tracking-[0.4em] max-w-xs mx-auto">Select a verified node to initialize synchronization.</p>
-              </div>
+              <h3 className="text-3xl font-headline font-black uppercase tracking-[0.6em]">Matrix Standby</h3>
            </div>
          )}
       </main>
 
-      {/* Profile Settings Modal */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
          <DialogContent className="glass-card max-w-md p-0 rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90vh]">
             <DialogHeader className="p-4 border-b border-white/5 bg-secondary/30 relative shrink-0">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
                <div className="flex flex-col items-center gap-3 relative z-10">
                   <div className="relative group/avatar-edit">
-                    <ChatAvatar src={profile.photoURL} className={cn("w-20 h-20 rounded-[1.8rem] border-4 border-white/10 shadow-2xl transition-all", isUploadingAvatar && "opacity-50 blur-sm")} />
+                    <ChatAvatar src={profile?.photoURL} className={cn("w-20 h-20 rounded-[1.8rem] border-4 border-white/10 shadow-2xl transition-all", isUploadingAvatar && "opacity-50 blur-sm")} />
                     <div className="absolute inset-0 bg-black/60 rounded-[1.8rem] opacity-0 group-hover/avatar-edit:opacity-100 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
                        <CameraIcon className="w-5 h-5 text-white" />
                        <span className="text-[7px] font-black uppercase text-white tracking-widest text-center px-2">Update DP</span>
@@ -790,46 +690,33 @@ export default function ChatAppPage() {
                     {isUploadingAvatar && <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-primary animate-spin" />}
                   </div>
                   <input type="file" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-                  
-                  <div className="text-center space-y-0.5">
-                    <DialogTitle className="text-lg font-black uppercase tracking-tight truncate max-w-[200px]">{profile.username}</DialogTitle>
-                    <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">{profile.displayName}</p>
+                  <div className="text-center">
+                    <DialogTitle className="text-lg font-black uppercase tracking-tight truncate max-w-[200px]">{profile?.username}</DialogTitle>
+                    <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">{profile?.displayName}</p>
                   </div>
                </div>
             </DialogHeader>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-[#0d0d0f]">
                <div className="space-y-4">
-                  <div className="space-y-2">
-                     <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Identity Status (About)</Label>
-                     <Textarea value={profile.about} onChange={e => updateDoc(doc(db!, 'chat_users', user.uid), { about: e.target.value.substring(0, 100) })} className="bg-secondary/50 rounded-2xl border-white/5 text-sm font-medium p-4 resize-none h-24" />
-                  </div>
+                  <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Identity Status</Label>
+                  <Textarea value={profile?.about} onChange={e => updateDoc(doc(db!, 'chat_users', user!.uid), { about: e.target.value.substring(0, 100) })} className="bg-secondary/50 rounded-2xl border-white/5 text-sm font-medium p-4 resize-none h-24" />
                   <div className="grid grid-cols-2 gap-3 pt-2">
-                     <Button variant="outline" onClick={() => avatarInputRef.current?.click()} className="h-11 rounded-xl bg-white/5 border-white/10 text-[9px] font-black uppercase">
-                        <Upload className="w-3.5 h-3.5 mr-2" /> Upload DP
-                     </Button>
-                     <Button variant="outline" onClick={() => setShowRemoveAvatarConfirm(true)} className="h-11 rounded-xl bg-white/5 border-white/10 text-red-500/60 hover:text-red-500 text-[9px] font-black uppercase">
-                        <Eraser className="w-3.5 h-3.5 mr-2" /> Remove
-                     </Button>
+                     <Button variant="outline" onClick={() => avatarInputRef.current?.click()} className="h-11 rounded-xl bg-white/5 border-white/10 text-[9px] font-black uppercase"><UploadIcon className="w-3.5 h-3.5 mr-2" /> Upload DP</Button>
+                     <Button variant="outline" onClick={() => setShowRemoveAvatarConfirm(true)} className="h-11 rounded-xl bg-white/5 border-white/10 text-red-500/60 hover:text-red-500 text-[9px] font-black uppercase"><Eraser className="w-3.5 h-3.5 mr-2" /> Remove</Button>
                   </div>
                </div>
-               
                <div className="space-y-4 pt-6 border-t border-white/5">
                   <Label className="text-[10px] font-black uppercase text-foreground/40 ml-1">Privacy Controls</Label>
                   <div className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-white/5 group hover:border-primary/20 transition-all">
-                     <div className="space-y-0.5">
-                        <span className="text-[10px] font-bold text-white uppercase tracking-tight">Read Receipts</span>
-                        <p className="text-[7px] text-white/20 uppercase font-black">Broadcast "seen" signals</p>
-                     </div>
-                     <Switch checked={profile.privacy?.readReceipts} onCheckedChange={(v) => updateDoc(doc(db!, 'chat_users', user.uid), { 'privacy.readReceipts': v })} />
+                     <span className="text-[10px] font-bold text-white uppercase tracking-tight">Read Receipts</span>
+                     <Switch checked={profile?.privacy?.readReceipts} onCheckedChange={(v) => updateDoc(doc(db!, 'chat_users', user!.uid), { 'privacy.readReceipts': v })} />
                   </div>
                </div>
             </div>
 
             <DialogFooter className="p-6 border-t border-white/5 bg-black/40 shrink-0">
-               <Button onClick={() => setShowLeaveConfirm(true)} variant="destructive" className="w-full h-12 rounded-2xl uppercase tracking-[0.3em] text-[10px] shadow-xl shadow-red-500/10">
-                  <LogOut className="w-4 h-4 mr-2" /> Logout
-               </Button>
+               <Button onClick={() => setShowLeaveConfirm(true)} variant="destructive" className="w-full h-12 rounded-2xl uppercase tracking-[0.3em] text-[10px] shadow-xl shadow-red-500/10"><LogOut className="w-4 h-4 mr-2" /> Logout</Button>
             </DialogFooter>
          </DialogContent>
       </Dialog>
@@ -851,7 +738,7 @@ export default function ChatAppPage() {
                           <ChatAvatar src={u.photoURL} className="w-10 h-10 rounded-xl" />
                           <span className="text-[11px] font-bold text-white uppercase">{u.username}</span>
                        </div>
-                       <Button onClick={async () => { await addDoc(collection(db!, 'friend_requests'), { from: user.uid, fromName: profile.username, to: u.uid, status: 'pending', timestamp: serverTimestamp() }); setShowAddFriend(false); toast({title: "Uplink Sent"}); }} size="sm" variant="ghost" className="h-10 px-5 rounded-xl bg-primary/10 text-primary uppercase text-[9px] font-black">Link</Button>
+                       <Button onClick={async () => { await addDoc(collection(db!, 'friend_requests'), { from: user!.uid, fromName: profile!.username, to: u.uid, status: 'pending', timestamp: serverTimestamp() }); setShowAddFriend(false); toast({title: "Uplink Sent"}); }} size="sm" variant="ghost" className="h-10 px-5 rounded-xl bg-primary/10 text-primary uppercase text-[9px] font-black">Link</Button>
                     </div>
                   ))}
                </div>
@@ -859,25 +746,10 @@ export default function ChatAppPage() {
          </DialogContent>
       </Dialog>
 
-      <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
-         <DialogContent className="glass-card border-white/20 p-8 rounded-[2.5rem]">
-            <DialogHeader>
-               <DialogTitle className="text-xl font-headline font-black uppercase">Synthesize Group Node</DialogTitle>
-               <DialogDescription className="text-[10px] uppercase font-bold text-foreground/40">Collaborative production environment</DialogDescription>
-            </DialogHeader>
-            <div className="py-10 text-center opacity-10 space-y-4">
-               <Users className="w-16 h-16 mx-auto" />
-               <p className="text-[10px] font-black uppercase tracking-[0.4em]">Group logic in development</p>
-            </div>
-         </DialogContent>
-      </Dialog>
-
       <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
-               <LogOut className="w-8 h-8" />
-            </div>
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto"><LogOut className="w-8 h-8" /></div>
             <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Logout</AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">Are you sure you want to log out? Your session matrix will be decoupled.</AlertDialogDescription>
           </AlertDialogHeader>
@@ -891,9 +763,7 @@ export default function ChatAppPage() {
       <AlertDialog open={showRemoveAvatarConfirm} onOpenChange={setShowRemoveAvatarConfirm}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mx-auto">
-               <Trash2 className="w-8 h-8" />
-            </div>
+            <div className="w-16 h-16 rounded-[1.5rem] bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mx-auto"><Trash2 className="w-8 h-8" /></div>
             <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Remove Photo</AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">This will definitively purge your custom profile photo from the identity matrix.</AlertDialogDescription>
           </AlertDialogHeader>
