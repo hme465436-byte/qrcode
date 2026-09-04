@@ -69,11 +69,17 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
           // Diagnostic Capture
           const apiMsg = data.error?.message || response.statusText || 'Handshake failed';
           lastError = `Groq Error (${response.status}): ${apiMsg}`;
-          if (response.status === 401) lastError = "Groq: Invalid API Key.";
-          if (response.status === 429) lastError = "Groq: Rate limit or Quota reached.";
+          
+          // If Groq explicitly fails, and we are in auto mode, we continue to OpenRouter
+          if (config.node !== 'auto') {
+            return { success: false, message: lastError };
+          }
         }
       } catch (e: any) {
         lastError = `Groq Connection Failed: ${e.message}`;
+        if (config.node !== 'auto') {
+          return { success: false, message: lastError };
+        }
       }
     }
   }
@@ -93,7 +99,7 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
             'X-Title': 'MY KIT TOOL',
           },
           body: JSON.stringify({
-            model: 'meta-llama/llama-3.1-8b-instruct:free',
+            model: 'meta-llama/llama-3.1-8b-instruct',
             messages: payload,
             temperature: temperature,
           }),
@@ -112,8 +118,6 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
           // Diagnostic Capture
           const apiMsg = data.error?.message || response.statusText || 'Handshake failed';
           lastError = `OpenRouter Error (${response.status}): ${apiMsg}`;
-          if (response.status === 401) lastError = "OpenRouter: Invalid API Key.";
-          if (response.status === 429) lastError = "OpenRouter: Rate limit or Quota reached.";
         }
       } catch (e: any) {
         lastError = `OpenRouter Connection Failed: ${e.message}`;
