@@ -157,6 +157,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/speech-to-text', 
+    icon: Mic, 
+    title: 'Speech to Text', 
+    desc: 'Convert your voice into text instantly in the browser.', 
+    label: 'MEDIA', 
+    color: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+    glowClass: 'bg-orange-500/10',
+    keywords: ['speech to text', 'voice typing', 'transcribe', 'dictation', 'microphone'],
+    category: 'utilities'
+  },
+  { 
     href: '/temp-upload', 
     icon: CloudUpload, 
     title: 'Temp Upload', 
@@ -1402,7 +1413,7 @@ const PHRASES = [
   'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
   'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
   'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain',
-  'Mouse Cursor Maker', 'Windows cursor', '.cur maker', 'pointer'
+  'Mouse Cursor Maker', 'Windows cursor', '.cur maker', 'pointer', 'Speech to Text', 'Voice typing', 'Transcribe'
 ];
 
 const ToolItem = React.memo(({ item, mode, onNavigate }: { item: Tool, mode: 'grid' | 'list', onNavigate: () => void }) => {
