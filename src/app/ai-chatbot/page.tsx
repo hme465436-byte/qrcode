@@ -32,7 +32,9 @@ import {
   KeyRound,
   Unplug,
   Database,
-  ArrowRight
+  ArrowRight,
+  RefreshCcw,
+  Square
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -130,6 +132,7 @@ export default function AIChatbotPage() {
   // UI Meta
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // --- 1. Initialization ---
   useEffect(() => {
@@ -265,7 +268,15 @@ export default function AIChatbotPage() {
     });
   };
 
-  const handleSend = async (e?: React.FormEvent, retryText?: string) => {
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setIsProcessing(false);
+      toast({ title: "Signal Interrupted", description: "Linguistic synthesis halted." });
+    }
+  };
+
+  const handleSend = async (e?: React.FormEvent, retryText?: string, isRegenerate = false) => {
     e?.preventDefault();
     const textToProcess = retryText || input.trim();
     if (!textToProcess || isProcessing) return;
@@ -276,24 +287,35 @@ export default function AIChatbotPage() {
       else targetId = activeSessionId;
     }
 
-    const userMsg: ChatMessage = { role: 'user', content: textToProcess };
-    const sessionToUpdate = sessions.find(s => s.id === targetId);
-    const updatedMessages = [...(sessionToUpdate?.messages || []), userMsg];
+    let updatedMessages: ChatMessage[];
     
-    setSessions(prev => prev.map(s => s.id === targetId ? {
-      ...s,
-      messages: updatedMessages,
-      lastUpdated: Date.now(),
-      title: s.title === 'New Discussion' ? textToProcess.substring(0, 30) : s.title
-    } : s));
+    if (isRegenerate) {
+      // For regeneration, the caller (handleRegenerate) has already truncated the session
+      updatedMessages = activeSession?.messages || [];
+    } else {
+      const userMsg: ChatMessage = { role: 'user', content: textToProcess };
+      const sessionToUpdate = sessions.find(s => s.id === targetId);
+      updatedMessages = [...(sessionToUpdate?.messages || []), userMsg];
+      
+      setSessions(prev => prev.map(s => s.id === targetId ? {
+        ...s,
+        messages: updatedMessages,
+        lastUpdated: Date.now(),
+        title: s.title === 'New Discussion' ? textToProcess.substring(0, 30) : s.title
+      } : s));
+    }
 
     setInput('');
     setIsProcessing(true);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
       const response = await fetch('/api/ai-chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({ 
           messages: updatedMessages, 
           config: {
@@ -323,6 +345,7 @@ export default function AIChatbotPage() {
         });
       }
     } catch (err: any) {
+      if (err.name === 'AbortError') return;
       toast({ 
         variant: "destructive", 
         title: "Network Error", 
@@ -330,7 +353,36 @@ export default function AIChatbotPage() {
       });
     } finally {
       setIsProcessing(false);
+      abortControllerRef.current = null;
     }
+  };
+
+  const handleRegenerate = async () => {
+    if (!activeSession || isProcessing) return;
+
+    // Find the last user message to re-trigger
+    let lastUserIdx = -1;
+    for (let i = activeSession.messages.length - 1; i >= 0; i--) {
+      if (activeSession.messages[i].role === 'user') {
+        lastUserIdx = i;
+        break;
+      }
+    }
+
+    if (lastUserIdx === -1) return;
+
+    const userContent = activeSession.messages[lastUserIdx].content;
+    const truncatedMessages = activeSession.messages.slice(0, lastUserIdx + 1);
+
+    // Truncate the UI state immediately
+    setSessions(prev => prev.map(s => s.id === activeSessionId ? {
+      ...s,
+      messages: truncatedMessages,
+      lastUpdated: Date.now()
+    } : s));
+
+    // Execute synthesis using the specialized regenerate mode
+    await handleSend(undefined, userContent, true);
   };
 
   const deleteSession = async (id: string) => {
@@ -585,7 +637,9 @@ export default function AIChatbotPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-10 max-w-4xl mx-auto w-full pb-20">
-                 {activeSession.messages.map((msg, i) => (
+                 {activeSession.messages.map((msg, i) => {
+                   const isLastAssistant = msg.role === 'assistant' && i === activeSession.messages.length - 1;
+                   return (
                    <div 
                     key={i} 
                     className={cn(
@@ -618,10 +672,15 @@ export default function AIChatbotPage() {
                             {msg.role === 'user' && i === activeSession.messages.length - 1 && (
                                <button onClick={() => { setInput(msg.content); handleSend(undefined, msg.content); }} className="text-[8px] font-black uppercase text-primary/40 hover:text-primary transition-all">Retry Signal</button>
                             )}
+                            {isLastAssistant && !isProcessing && (
+                               <button onClick={handleRegenerate} className="text-[8px] font-black uppercase text-primary/40 hover:text-primary transition-all flex items-center gap-1">
+                                  <RefreshCcw className="w-2.5 h-2.5" /> Regenerate
+                               </button>
+                            )}
                          </div>
                       </div>
                    </div>
-                 ))}
+                 )})}
                  {isProcessing && (
                     <div className="flex gap-4 mr-auto animate-in fade-in duration-500">
                        <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
@@ -765,7 +824,7 @@ export default function AIChatbotPage() {
                  </div>
 
                  <div className="pt-4 grid grid-cols-2 gap-2">
-                    <Button variant="outline" size="sm" onClick={downloadHistory} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5 bg-white/5">
+                    <Button variant="outline" size="sm" downloadHistory disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5 bg-white/5">
                        <FileDown className="w-3.5 h-3.5 mr-1.5" /> Export .TXT
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleCopy(activeSession?.messages.map(m => m.content).join('\n') || '', 'all')} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5 bg-white/5">
@@ -808,7 +867,7 @@ export default function AIChatbotPage() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
-                        // Enter = New Line is default for Textarea
+                        // Enter = New Line
                       } else if (e.key === 'Enter' && e.shiftKey) {
                         // Shift+Enter = Send
                         e.preventDefault();
@@ -819,13 +878,23 @@ export default function AIChatbotPage() {
                     className="min-h-[44px] max-h-40 w-full pl-12 pr-14 bg-white/[0.02] border-white/10 rounded-2xl text-sm font-medium py-2.5 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-inner custom-scrollbar"
                   />
                   <div className="absolute right-1.5 bottom-1.5">
-                     <Button 
-                      type="submit" 
-                      disabled={!input.trim() || isProcessing}
-                      className="h-8 w-8 rounded-xl bg-primary text-white shadow-xl shadow-primary/30 active:scale-95 transition-all group/btn p-0"
-                     >
-                        {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />}
-                     </Button>
+                     {isProcessing ? (
+                        <Button 
+                          type="button"
+                          onClick={handleStop}
+                          className="h-8 w-8 rounded-xl bg-destructive text-white shadow-xl shadow-destructive/30 active:scale-95 transition-all p-0"
+                        >
+                           <Square className="w-3.5 h-3.5 fill-current" />
+                        </Button>
+                     ) : (
+                        <Button 
+                          type="submit" 
+                          disabled={!input.trim()}
+                          className="h-8 w-8 rounded-xl bg-primary text-white shadow-xl shadow-primary/30 active:scale-95 transition-all group/btn p-0"
+                        >
+                           <Send className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                        </Button>
+                     )}
                   </div>
                </form>
                
