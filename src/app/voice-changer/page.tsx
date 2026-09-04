@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -385,7 +386,7 @@ export default function VoiceChangerPage() {
                          </div>
                          
                          <div className="text-center space-y-4">
-                            <h3 className="text-2xl sm:text-4xl font-headline font-black uppercase text-foreground tracking-tight">{EFFECTS.find(e => e.id === activeEffect)?.label} Protocol</h3>
+                            <h3 className="text-2xl font-headline font-black uppercase text-foreground tracking-tight">{EFFECTS.find(e => e.id === activeEffect)?.label} Protocol</h3>
                             <p className="text-[10px] sm:text-xs font-bold text-foreground/30 uppercase tracking-[0.4em] max-w-sm mx-auto leading-relaxed">
                               {EFFECTS.find(e => e.id === activeEffect)?.desc}
                             </p>
@@ -418,7 +419,7 @@ export default function VoiceChangerPage() {
               </CardContent>
            </Card>
 
-           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all shadow-lg">
+           <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
              <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                 <ShieldCheck className="w-7 h-7" />
              </div>
