@@ -1,8 +1,9 @@
 'use server';
 
 /**
- * @fileOverview Server-side logic for the AI Chatbot.
+ * @fileOverview Advanced Server Actions for the AI Chatbot.
  * Implements a dual-node strategy: Groq (Primary) -> OpenRouter (Fallback).
+ * Supports dynamic model selection, temperature, and system prompt injection.
  */
 
 export type ChatRole = 'user' | 'assistant' | 'system';
@@ -12,7 +13,15 @@ export interface ChatMessage {
   content: string;
 }
 
-export async function chatWithAI(messages: ChatMessage[]) {
+export interface ChatConfig {
+  model?: string;
+  temperature?: number;
+  systemPrompt?: string;
+  maxTokens?: number;
+  node?: 'auto' | 'groq' | 'openrouter';
+}
+
+export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {}) {
   const groqKey = process.env.GROQ_API_KEY;
   const orKey = process.env.OPENROUTER_API_KEY;
 
@@ -20,19 +29,20 @@ export async function chatWithAI(messages: ChatMessage[]) {
     return { 
       success: false, 
       error: 'CONFIG_MISSING', 
-      message: 'Node restricted. Add GROQ_API_KEY or OPENROUTER_API_KEY to server environment.' 
+      message: 'Uplink Restricted: Add GROQ_API_KEY or OPENROUTER_API_KEY to server environment.' 
     };
   }
 
-  const systemPrompt: ChatMessage = {
+  const systemMessage: ChatMessage = {
     role: 'system',
-    content: 'You are a professional AI assistant in the MY KIT TOOL digital studio. Your tone is helpful, concise, and technically accurate. You help users with various digital tasks. Never use markdown formatting that could break simple text views unless necessary.'
+    content: config.systemPrompt || 'You are a professional AI assistant in the MY KIT TOOL digital studio. Your tone is helpful, concise, and technically accurate.'
   };
 
-  const payload = [systemPrompt, ...messages];
+  const payload = [systemMessage, ...messages];
+  const temperature = config.temperature ?? 0.7;
 
-  // 1. Primary Node: Groq (High Speed)
-  if (groqKey) {
+  // 1. Primary Node: Groq
+  if (groqKey && (config.node === 'auto' || config.node === 'groq')) {
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -41,10 +51,10 @@ export async function chatWithAI(messages: ChatMessage[]) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: config.model || 'llama-3.3-70b-versatile',
           messages: payload,
-          temperature: 0.7,
-          max_tokens: 1024,
+          temperature: temperature,
+          max_tokens: config.maxTokens || 1024,
         }),
       });
 
@@ -55,17 +65,14 @@ export async function chatWithAI(messages: ChatMessage[]) {
           text: data.choices[0].message.content, 
           node: 'Groq (Llama 3.3)' 
         };
-      } else {
-        const err = await response.json();
-        console.warn('Groq Node Error:', err);
       }
     } catch (e) {
-      console.warn('Groq uplink interrupted, switching to fallback node.');
+      console.warn('Groq node timeout, seeking fallback.');
     }
   }
 
-  // 2. Fallback Node: OpenRouter (Resilient)
-  if (orKey) {
+  // 2. Fallback Node: OpenRouter
+  if (orKey && (config.node === 'auto' || config.node === 'openrouter')) {
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -78,6 +85,7 @@ export async function chatWithAI(messages: ChatMessage[]) {
         body: JSON.stringify({
           model: 'meta-llama/llama-3.1-8b-instruct:free',
           messages: payload,
+          temperature: temperature,
         }),
       });
 
@@ -97,6 +105,6 @@ export async function chatWithAI(messages: ChatMessage[]) {
   return { 
     success: false, 
     error: 'NODES_UNREACHABLE', 
-    message: 'All cryptographic AI discovery nodes are currently restricted.' 
+    message: 'All cryptographic AI discovery nodes are currently restricted or unreachable.' 
   };
 }
