@@ -26,7 +26,7 @@ import {
   FileDown,
   Code2,
   BookOpen,
-  Image as ImageIcon,
+  ImageIcon,
   Settings2,
   Globe
 } from 'lucide-react';
@@ -55,6 +55,8 @@ import { collection, query, doc, setDoc, deleteDoc, orderBy } from 'firebase/fir
 import { ChatMessage, ChatConfig } from './actions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 // --- Types & Constants ---
 interface Session {
@@ -115,6 +117,7 @@ export default function AIChatbotPage() {
   // UI Meta
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
 
   // --- 1. Initialization ---
   useEffect(() => {
@@ -176,13 +179,30 @@ export default function AIChatbotPage() {
     }
   }, [activeSessionId]);
 
+  // --- 3. Targeted Scroll Logic ---
   useEffect(() => {
-    if (scrollRef.current) {
+    if (isProcessing && scrollRef.current) {
+      // Keep at bottom while thinking
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [isProcessing]);
+
+  useEffect(() => {
+    if (!isProcessing && lastMessageRef.current && scrollRef.current) {
+      const messages = activeSession?.messages || [];
+      const lastMsg = messages[messages.length - 1];
+      
+      if (lastMsg?.role === 'assistant') {
+        // Targeted scroll to the start of the new assistant message
+        lastMessageRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
     }
   }, [activeSession?.messages, isProcessing]);
 
-  // --- 3. Actions ---
+  // --- 4. Actions ---
 
   const createNewSession = (initialPrompt?: string) => {
     const newId = Math.random().toString(36).substr(2, 9);
@@ -336,6 +356,14 @@ export default function AIChatbotPage() {
   const filteredSidebarSessions = useMemo(() => {
     return sessions.filter(s => s.title.toLowerCase().includes(sidebarSearch.toLowerCase()));
   }, [sessions, sidebarSearch]);
+
+  const renderContent = (content: string, role: string) => {
+    if (role !== 'assistant') {
+      return <p className="text-sm sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap break-words selection:bg-black/20">{content}</p>;
+    }
+    const html = DOMPurify.sanitize(marked.parse(content) as string);
+    return <div className="text-sm sm:text-[15px] font-medium leading-relaxed markdown-content" dangerouslySetInnerHTML={{ __html: html }} />;
+  };
 
   return (
     <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#060608] selection:bg-primary/20 relative">
@@ -501,7 +529,10 @@ export default function AIChatbotPage() {
             ) : (
               <div className="flex flex-col gap-10 max-w-4xl mx-auto w-full pb-20">
                  {activeSession.messages.map((msg, i) => (
-                   <div key={i} className={cn(
+                   <div 
+                    key={i} 
+                    ref={i === activeSession.messages.length - 1 ? lastMessageRef : null}
+                    className={cn(
                      "flex gap-4 group/msg animate-in slide-in-from-bottom-3 duration-500",
                      msg.role === 'assistant' ? "mr-auto" : "ml-auto flex-row-reverse"
                    )}>
@@ -516,9 +547,7 @@ export default function AIChatbotPage() {
                            "px-4 py-3 rounded-[1.25rem] shadow-xl relative group/card transition-all",
                            msg.role === 'assistant' ? "bg-white/[0.03] border border-white/5 rounded-tl-none" : "bg-primary text-white rounded-tr-none shadow-primary/15"
                          )}>
-                            <p className="text-sm sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap break-words selection:bg-black/20">
-                               {msg.content}
-                            </p>
+                            {renderContent(msg.content, msg.role)}
                             {msg.role === 'assistant' && (
                                <div className="absolute right-3 bottom-2 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all">
                                   <button onClick={() => handleCopy(msg.content, `msg-${i}`)} className="p-1.5 rounded-lg bg-black/60 text-white/40 hover:text-white shadow-xl">
@@ -595,7 +624,7 @@ export default function AIChatbotPage() {
                     />
                  </div>
 
-                 <div className="pt-2 grid grid-cols-2 gap-2">
+                 <div className="pt-4 grid grid-cols-2 gap-2">
                     <Button variant="outline" size="sm" onClick={downloadHistory} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5 bg-white/5">
                        <FileDown className="w-3.5 h-3.5 mr-1.5" /> Export .TXT
                     </Button>
@@ -692,6 +721,19 @@ export default function AIChatbotPage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .markdown-content h1 { @apply text-lg font-bold mb-2 text-foreground; }
+        .markdown-content h2 { @apply text-base font-bold mb-2 text-foreground; }
+        .markdown-content h3 { @apply text-sm font-bold mb-1 text-foreground; }
+        .markdown-content p { @apply mb-3 last:mb-0; }
+        .markdown-content ul, .markdown-content ol { @apply mb-3 pl-4 list-outside; }
+        .markdown-content ul { @apply list-disc; }
+        .markdown-content ol { @apply list-decimal; }
+        .markdown-content li { @apply mb-1; }
+        .markdown-content code { @apply bg-black/40 px-1.5 py-0.5 rounded text-primary font-mono text-[13px] border border-white/5; }
+        .markdown-content pre { @apply bg-black/60 p-4 rounded-xl mb-3 overflow-x-auto border border-white/5; }
+        .markdown-content pre code { @apply bg-transparent p-0 border-none; }
+        .markdown-content blockquote { @apply border-l-2 border-primary/40 pl-4 italic text-foreground/60 mb-3; }
+        .markdown-content a { @apply text-primary hover:underline; }
       `}</style>
     </div>
   );
