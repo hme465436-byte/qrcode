@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "ChatUser": {
@@ -78,6 +77,10 @@
     "/chats/{chatId}/messages/{messageId}": {
       "schema": "#/entities/Message",
       "description": "Real-time message stream for a chat."
+    },
+    "/ai_history/{uid}/messages/{messageId}": {
+      "schema": "#/entities/Message",
+      "description": "Persistent AI chat history for the user."
     }
   }
 }

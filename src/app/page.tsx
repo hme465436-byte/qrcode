@@ -95,7 +95,7 @@ import {
   Cloud,
   Moon,
   BookOpen,
-  MessageCircle,
+  MessageSquare,
   Sparkles,
   Footprints,
   Laugh,
@@ -116,7 +116,7 @@ import {
   Hash as HashIcon,
   History,
   Edit3,
-  MessageSquare,
+  MessageSquare as MessageIcon,
   Database,
   CloudUpload,
   MousePointer2,
@@ -155,6 +155,17 @@ const TOOLS: Tool[] = [
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['qr', 'qr code', 'barcode', 'logo qr', 'brand qr', 'single', 'generator', 'scan'],
+    category: 'generators'
+  },
+  { 
+    href: '/ai-chatbot', 
+    icon: MessageIcon, 
+    title: 'AI Chatbot', 
+    desc: 'Chat with a fast AI using Groq or OpenRouter.', 
+    label: 'AI STUDIO', 
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    glowClass: 'bg-indigo-400/10',
+    keywords: ['ai', 'chat', 'bot', 'gpt', 'llama', 'groq', 'openrouter', 'assistant'],
     category: 'generators'
   },
   { 
@@ -324,7 +335,7 @@ const TOOLS: Tool[] = [
   },
   { 
     href: '/telegram-file-host', 
-    icon: MessageCircle, 
+    icon: MessageSquare, 
     title: 'FILE HOST', 
     desc: 'Archive and share any file via the Cloud Host Protocol.', 
     label: 'HOSTING', 
@@ -1422,6 +1433,7 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: any }[] = [
 ];
 
 const PHRASES = [
+  'AI Chatbot', 'Llama 3', 'Free AI', 'Groq Chat', 'OpenRouter',
   'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
   'Word to PDF', 'Photo Enhance', 'Age Calculator', 'Photo to Text', 
   'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
@@ -1448,7 +1460,7 @@ const PHRASES = [
   'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
   'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain',
   'Mouse Cursor Maker', 'Windows cursor', '.cur maker', 'pointer', 'Speech to Text', 'Voice typing', 'Transcribe', 'Text to Speech', 'Voice', 'Read aloud',
-  'Voice Changer', 'Voice effect', 'Robot voice', 'Helium voice', 'Deep voice', 'Reverse Video', 'Rewind clip'
+  'Voice Changer', 'Voice effect', 'Robot voice', 'Helium voice', 'deep voice', 'Reverse Video', 'Rewind clip'
 ];
 
 const ToolItem = React.memo(({ item, mode, onNavigate }: { item: Tool, mode: 'grid' | 'list', onNavigate: () => void }) => {

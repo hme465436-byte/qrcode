@@ -24,6 +24,23 @@ export const HELP_REGISTRY: Record<string, HelpContent> = {
     ],
     privacy: 'Generation occurs entirely on your device. Only AI prompts are sent to secure cloud nodes for processing.'
   },
+  'ai-chatbot': {
+    title: 'AI Chatbot Studio',
+    description: 'A professional linguistic synthesis environment for real-time AI collaboration.',
+    steps: [
+      'Initialize a session by typing a prompt in the command input.',
+      'Wait for the AI to synchronize with the Groq or OpenRouter matrix.',
+      'Isolate the generated response for your documentation or workflow.',
+      'Manage multiple threads or purge the session as needed.',
+      'Login to maintain a permanent archival record of your discovery signals.'
+    ],
+    tips: [
+      'Be specific in your prompts to isolate the highest fidelity results.',
+      'Use the Copy button to quickly extract response matrices.',
+      'The studio uses a context window of the last 10 messages for peak efficiency.'
+    ],
+    privacy: 'Chat history is stored locally (anonymous) or in Firestore (authenticated). No biometric data is logged.'
+  },
   'bulk': {
     title: 'Bulk Production Engine',
     description: 'Generate large batches of high-resolution QR assets from a list of data strings.',
