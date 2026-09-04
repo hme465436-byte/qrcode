@@ -720,8 +720,8 @@ export default function AIChatbotPage() {
                           <SelectValue placeholder="Select Model" />
                        </SelectTrigger>
                        <SelectContent className="glass-card">
+                          <SelectItem value="llama-3.1-8b-instant" className="text-[9px] uppercase font-bold">Llama 3.1 (Instant)</SelectItem>
                           <SelectItem value="llama-3.3-70b-versatile" className="text-[9px] uppercase font-bold">Llama 3.3 (High Perf)</SelectItem>
-                          <SelectItem value="mixtral-8x7b-32768" className="text-[9px] uppercase font-bold">Mixtral 8x7B (Stable)</SelectItem>
                           <SelectItem value="gemma2-9b-it" className="text-[9px] uppercase font-bold">Gemma 2 (Fast)</SelectItem>
                        </SelectContent>
                     </Select>

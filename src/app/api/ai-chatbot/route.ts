@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * @fileOverview Secure Server Node for AI Chatbot.
  * Accesses private API keys and performs multi-node failover.
  * Support for Custom User API Nodes with Auto-Detection and Model Fallbacks.
+ * Updated to use current Groq models (Llama 3.1/3.3) and remove dead Mixtral nodes.
  */
 
 export const dynamic = 'force-dynamic';
@@ -44,7 +45,8 @@ export async function POST(req: NextRequest) {
       if (trimmedKey.startsWith('gsk_')) {
         providerName = 'Groq Cloud';
         effectiveUrl = effectiveUrl || 'https://api.groq.com/openai/v1/chat/completions';
-        fallbackModels = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'mixtral-8x7b-32768'];
+        // Updated to remove decommissioned Mixtral models
+        fallbackModels = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'openai/gpt-oss-20b'];
       } else if (trimmedKey.startsWith('sk-or-')) {
         providerName = 'OpenRouter';
         effectiveUrl = effectiveUrl || 'https://openrouter.ai/api/v1/chat/completions';
@@ -115,7 +117,7 @@ export async function POST(req: NextRequest) {
             const errorMsg = data.error?.message || data.message || `HTTP ${response.status}`;
             lastError = errorMsg;
             // If it's a model error, continue to next fallback
-            if (errorMsg.toLowerCase().includes('model') || errorMsg.toLowerCase().includes('exist')) {
+            if (errorMsg.toLowerCase().includes('model') || errorMsg.toLowerCase().includes('exist') || errorMsg.toLowerCase().includes('support')) {
               continue;
             } else {
               // For auth or other critical errors, break early
@@ -142,40 +144,53 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    // 3. Primary Node: Groq (Llama 3.3)
+    // 3. Primary Node: Groq (Updated Model Hierarchy)
     if ((config.node === 'auto' || config.node === 'groq') && groqKey) {
-      try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${groqKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: config.model || 'llama-3.3-70b-versatile',
-            messages: payload,
-            temperature: temperature,
-            max_tokens: config.maxTokens || 2048,
-          }),
-          cache: 'no-store'
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.choices?.[0]?.message?.content) {
-          return NextResponse.json({ 
-            success: true, 
-            text: data.choices[0].message.content, 
-            node: 'Groq (Llama 3.3)' 
+      const groqModels = config.model ? [config.model] : ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'openai/gpt-oss-20b'];
+      
+      for (const model of groqModels) {
+        try {
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: payload,
+              temperature: temperature,
+              max_tokens: config.maxTokens || 2048,
+            }),
+            cache: 'no-store'
           });
-        } else if (config.node === 'groq') {
-          return NextResponse.json({ 
-            success: false, 
-            message: data.error?.message || `Groq Node Error: HTTP ${response.status}` 
-          }, { status: response.status });
+
+          const data = await response.json();
+
+          if (response.ok && data.choices?.[0]?.message?.content) {
+            return NextResponse.json({ 
+              success: true, 
+              text: data.choices[0].message.content, 
+              node: `Groq (${model})` 
+            });
+          } else {
+            const errorMsg = data.error?.message || "";
+            // Only retry if it's a model issue and we have more models to try
+            if (groqModels.length > 1 && (errorMsg.toLowerCase().includes('model') || errorMsg.toLowerCase().includes('support'))) {
+              continue;
+            }
+            // If explicit "groq" node selected and first fails, we might want to return error
+            if (config.node === 'groq') {
+              return NextResponse.json({ 
+                success: false, 
+                message: data.error?.message || `Groq Node Error: HTTP ${response.status}` 
+              }, { status: response.status });
+            }
+            break; // Break and try OpenRouter
+          }
+        } catch (e: any) {
+          if (config.node === 'groq' && groqModels.length === 1) throw e;
         }
-      } catch (e: any) {
-        if (config.node === 'groq') throw e;
       }
     }
 
