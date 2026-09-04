@@ -117,7 +117,6 @@ export default function AIChatbotPage() {
   // UI Meta
   const [isCopied, setIsCopied] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const lastMessageRef = useRef<HTMLDivElement>(null);
 
   // --- 1. Initialization ---
   useEffect(() => {
@@ -179,30 +178,7 @@ export default function AIChatbotPage() {
     }
   }, [activeSessionId]);
 
-  // --- 3. Targeted Scroll Logic ---
-  useEffect(() => {
-    if (isProcessing && scrollRef.current) {
-      // Keep at bottom while thinking
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [isProcessing]);
-
-  useEffect(() => {
-    if (!isProcessing && lastMessageRef.current && scrollRef.current) {
-      const messages = activeSession?.messages || [];
-      const lastMsg = messages[messages.length - 1];
-      
-      if (lastMsg?.role === 'assistant') {
-        // Targeted scroll to the start of the new assistant message
-        lastMessageRef.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }
-    }
-  }, [activeSession?.messages, isProcessing]);
-
-  // --- 4. Actions ---
+  // --- 3. Actions ---
 
   const createNewSession = (initialPrompt?: string) => {
     const newId = Math.random().toString(36).substr(2, 9);
@@ -531,7 +507,6 @@ export default function AIChatbotPage() {
                  {activeSession.messages.map((msg, i) => (
                    <div 
                     key={i} 
-                    ref={i === activeSession.messages.length - 1 ? lastMessageRef : null}
                     className={cn(
                      "flex gap-4 group/msg animate-in slide-in-from-bottom-3 duration-500",
                      msg.role === 'assistant' ? "mr-auto" : "ml-auto flex-row-reverse"
@@ -667,7 +642,10 @@ export default function AIChatbotPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.shiftKey) {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        // Enter = New Line is default for Textarea
+                      } else if (e.key === 'Enter' && e.shiftKey) {
+                        // Shift+Enter = Send
                         e.preventDefault();
                         handleSend();
                       }
