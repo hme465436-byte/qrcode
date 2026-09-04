@@ -23,7 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/free-games', '/coding-resources', '/wikipedia', '/github-user', '/website-trust-checker',
     '/password-breach-checker', '/dns-lookup', '/wallpapers', '/image-to-link', '/telegram-file-host',
     '/background-remove', '/temp-mail', '/link-safety-checker', '/username-checker', '/domain-whois', '/site-backup-cloner',
-    '/all-units-converter', '/whatsapp-link-generator', '/gmail-alias', '/fake-data'
+    '/all-units-converter', '/whatsapp-link-generator', '/gmail-alias', '/fake-data', '/mouse-cursor-maker'
   ];
 
   const routes = tools.map(tool => ({

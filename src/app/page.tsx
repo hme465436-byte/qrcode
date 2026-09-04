@@ -118,7 +118,8 @@ import {
   Edit3,
   MessageSquare,
   Database,
-  CloudUpload
+  CloudUpload,
+  MousePointer2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -1353,6 +1354,17 @@ const TOOLS: Tool[] = [
     glowClass: 'bg-blue-500/10',
     keywords: ['html', 'rescue', 'index', 'host', 'zip', 'package', 'fix links'],
     category: 'utilities'
+  },
+  { 
+    href: '/mouse-cursor-maker', 
+    icon: MousePointer2, 
+    title: 'Mouse Cursor Maker', 
+    desc: 'Convert any image into a real Windows .cur mouse cursor.', 
+    label: 'HARDWARE', 
+    color: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
+    glowClass: 'bg-cyan-500/10',
+    keywords: ['cursor', 'mouse', 'windows cursor', '.cur maker', 'pointer', 'make cursor'],
+    category: 'image'
   }
 ];
 
@@ -1389,7 +1401,8 @@ const PHRASES = [
   'Background Remove', 'Transparent Image', 'Remove.bg', 'Temp Mail', 'Anonymous Email', 'Disposable Mail', 'Link Safety', 'Phishing Check', 'Expand URL', 'Username Checker',
   'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
   'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
-  'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain'
+  'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain',
+  'Mouse Cursor Maker', 'Windows cursor', '.cur maker', 'pointer'
 ];
 
 const ToolItem = React.memo(({ item, mode, onNavigate }: { item: Tool, mode: 'grid' | 'list', onNavigate: () => void }) => {
