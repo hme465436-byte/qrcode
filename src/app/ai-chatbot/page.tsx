@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -199,7 +200,9 @@ export default function AIChatbotPage() {
     }
   }, [activeSessionId]);
 
-  // --- 3. Controlled Gentle Scroll ---
+  // --- 3. Scroll Restoration Matrix ---
+  
+  // A. Gentle scroll on new message
   useEffect(() => {
     if (isProcessing && scrollRef.current) {
       const timeout = setTimeout(() => {
@@ -211,6 +214,21 @@ export default function AIChatbotPage() {
       return () => clearTimeout(timeout);
     }
   }, [isProcessing]);
+
+  // B. Restore latest messages on session change or refresh
+  useEffect(() => {
+    if (activeSessionId && scrollRef.current) {
+      const timer = setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: 'instant'
+          });
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSessionId]);
 
   // --- 4. Actions ---
 
@@ -586,13 +604,14 @@ export default function AIChatbotPage() {
                            msg.role === 'assistant' ? "bg-white/[0.03] border border-white/5 rounded-tl-none" : "bg-primary text-white rounded-tr-none shadow-primary/15"
                          )}>
                             {renderContent(msg.content, msg.role)}
-                            {msg.role === 'assistant' && (
-                               <div className="absolute right-3 bottom-2 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all">
-                                  <button onClick={() => handleCopy(msg.content, `msg-${i}`)} className="p-1.5 rounded-lg bg-black/60 text-white/40 hover:text-white shadow-xl">
-                                     {isCopied === `msg-${i}` ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                  </button>
-                               </div>
-                            )}
+                            <div className={cn(
+                               "absolute flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all",
+                               msg.role === 'assistant' ? "right-3 bottom-2" : "left-3 bottom-2"
+                            )}>
+                               <button onClick={() => handleCopy(msg.content, `msg-${i}`)} className="p-1.5 rounded-lg bg-black/60 text-white/40 hover:text-white shadow-xl">
+                                  {isCopied === `msg-${i}` ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                               </button>
+                            </div>
                          </div>
                          <div className={cn("flex items-center gap-2.5 px-2", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
                             <span className="text-[8px] font-black uppercase text-foreground/20 tracking-widest">{msg.role === 'assistant' ? 'Assistant' : 'You'}</span>
