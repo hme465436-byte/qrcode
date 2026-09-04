@@ -389,31 +389,6 @@ export default function TextToSpeechPage() {
                    </div>
                 </CardContent>
              </Card>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                   <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                      <ShieldCheck className="w-7 h-7" />
-                   </div>
-                   <div className="space-y-2">
-                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                       Linguistic synthesis occurs 100% locally. Textual identifiers are processed in volatile memory and never touch remote servers.
-                     </p>
-                   </div>
-                </div>
-                <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                   <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                      <Zap className="w-7 h-7" />
-                   </div>
-                   <div className="space-y-2">
-                     <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Hardware Native</h4>
-                     <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                       Utilizing the SpeechSynthesis matrix for 1:1 hardware synchronization across all available system-level voices.
-                     </p>
-                   </div>
-                </div>
-             </div>
           </div>
 
           {/* Sidebar - Controls & History */}
