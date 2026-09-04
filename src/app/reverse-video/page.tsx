@@ -62,6 +62,15 @@ interface HistoryItem {
   size: number;
 }
 
+// --- Utilities ---
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
 export default function ReverseVideoPage() {
   const { toast } = useToast();
   
@@ -283,7 +292,7 @@ export default function ReverseVideoPage() {
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="reverse-video" />
            {(file || reversedUrl) && (
-             <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
+             <Button variant="outline" size="sm" onClick={handleClear} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
                 <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset Matrix
              </Button>
            )}
