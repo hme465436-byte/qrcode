@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * @fileOverview Secure Server Node for AI Chatbot.
  * Accesses private API keys and performs multi-node failover.
- * Support for Custom User API Nodes with Auto-Detection.
+ * Support for Custom User API Nodes with Auto-Detection and Model Fallbacks.
  */
 
 export const dynamic = 'force-dynamic';
@@ -36,25 +36,36 @@ export async function POST(req: NextRequest) {
         }, { status: 400 });
       }
 
-      // --- AUTO-DETECTION MATRIX ---
+      // --- PROVIDER DETECTION & MODEL MATRIX ---
       let effectiveUrl = apiUrl?.trim();
-      let effectiveModel = modelName?.trim();
+      let providerName = config.customApi.providerName || 'Custom Node';
+      let fallbackModels: string[] = [];
 
-      if (!effectiveUrl || !effectiveModel) {
-        if (trimmedKey.startsWith('gsk_')) {
-          effectiveUrl = effectiveUrl || 'https://api.groq.com/openai/v1/chat/completions';
-          effectiveModel = effectiveModel || 'llama-3.1-8b-instant';
-        } else if (trimmedKey.startsWith('sk-or-')) {
-          effectiveUrl = effectiveUrl || 'https://openrouter.ai/api/v1/chat/completions';
-          effectiveModel = effectiveModel || 'meta-llama/llama-3.1-8b-instruct';
-        } else if (trimmedKey.startsWith('AIza')) {
-          // Google Gemini OpenAI-Compatible Endpoint
-          effectiveUrl = effectiveUrl || 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-          effectiveModel = effectiveModel || 'gemini-1.5-flash';
-        } else if (trimmedKey.startsWith('sk-')) {
-          effectiveUrl = effectiveUrl || 'https://api.openai.com/v1/chat/completions';
-          effectiveModel = effectiveModel || 'gpt-4o-mini';
-        }
+      if (trimmedKey.startsWith('gsk_')) {
+        providerName = 'Groq Cloud';
+        effectiveUrl = effectiveUrl || 'https://api.groq.com/openai/v1/chat/completions';
+        fallbackModels = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'mixtral-8x7b-32768'];
+      } else if (trimmedKey.startsWith('sk-or-')) {
+        providerName = 'OpenRouter';
+        effectiveUrl = effectiveUrl || 'https://openrouter.ai/api/v1/chat/completions';
+        fallbackModels = ['meta-llama/llama-3.1-8b-instruct', 'meta-llama/llama-3.1-8b-instruct:free', 'openrouter/auto'];
+      } else if (trimmedKey.startsWith('AIza')) {
+        providerName = 'Google Gemini';
+        effectiveUrl = effectiveUrl || 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+        fallbackModels = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-exp'];
+      } else if (trimmedKey.startsWith('sk-')) {
+        providerName = 'OpenAI';
+        effectiveUrl = effectiveUrl || 'https://api.openai.com/v1/chat/completions';
+        fallbackModels = ['gpt-4o-mini', 'gpt-4o'];
+      } else {
+        // Generic fallback for unknown prefixes
+        effectiveUrl = effectiveUrl || 'https://api.openai.com/v1/chat/completions';
+        fallbackModels = ['gpt-4o-mini'];
+      }
+
+      // If user typed a model, try that first
+      if (modelName?.trim()) {
+        fallbackModels = [modelName.trim(), ...fallbackModels.filter(m => m !== modelName.trim())];
       }
 
       if (!effectiveUrl) {
@@ -64,54 +75,63 @@ export async function POST(req: NextRequest) {
         }, { status: 400 });
       }
 
-      try {
-        const headers: Record<string, string> = {
-          'Authorization': `Bearer ${trimmedKey}`,
-          'Content-Type': 'application/json',
-        };
+      // --- ITERATIVE EXECUTION LOOP ---
+      let lastError = null;
+      for (const model of fallbackModels) {
+        try {
+          const headers: Record<string, string> = {
+            'Authorization': `Bearer ${trimmedKey}`,
+            'Content-Type': 'application/json',
+          };
 
-        if (customHeader) {
-          try {
-            const extra = JSON.parse(customHeader);
-            Object.assign(headers, extra);
-          } catch (e) {
-            console.warn("Could not parse custom headers.");
+          if (customHeader) {
+            try {
+              const extra = JSON.parse(customHeader);
+              Object.assign(headers, extra);
+            } catch (e) {}
           }
-        }
 
-        const response = await fetch(effectiveUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            model: effectiveModel || 'gpt-4o-mini',
-            messages: payload,
-            temperature: temperature,
-            max_tokens: config.maxTokens || 2048,
-          }),
-          cache: 'no-store'
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.choices?.[0]?.message?.content) {
-          return NextResponse.json({ 
-            success: true, 
-            text: data.choices[0].message.content, 
-            node: config.customApi.providerName || 'Custom Node' 
+          const response = await fetch(effectiveUrl, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              model: model,
+              messages: payload,
+              temperature: temperature,
+              max_tokens: config.maxTokens || 2048,
+            }),
+            cache: 'no-store'
           });
-        } else {
-          const errorMsg = data.error?.message || data.message || `Node Rejection: HTTP ${response.status}`;
-          return NextResponse.json({ 
-            success: false, 
-            message: errorMsg 
-          }, { status: response.status || 500 });
+
+          const data = await response.json();
+
+          if (response.ok && data.choices?.[0]?.message?.content) {
+            return NextResponse.json({ 
+              success: true, 
+              text: data.choices[0].message.content, 
+              node: `${providerName} (${model})` 
+            });
+          } else {
+            const errorMsg = data.error?.message || data.message || `HTTP ${response.status}`;
+            lastError = errorMsg;
+            // If it's a model error, continue to next fallback
+            if (errorMsg.toLowerCase().includes('model') || errorMsg.toLowerCase().includes('exist')) {
+              continue;
+            } else {
+              // For auth or other critical errors, break early
+              break;
+            }
+          }
+        } catch (err: any) {
+          lastError = err.message;
+          continue;
         }
-      } catch (err: any) {
-        return NextResponse.json({ 
-          success: false, 
-          message: `Custom Node Handshake Error: ${err.message}` 
-        }, { status: 500 });
       }
+
+      return NextResponse.json({ 
+        success: false, 
+        message: `Custom Node Failure [${providerName}]: ${lastError || 'All fallback models restricted.'}` 
+      }, { status: 500 });
     }
 
     // 2. Pre-flight Validation for Native Nodes
