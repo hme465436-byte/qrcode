@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -38,7 +37,8 @@ import {
   FastForward,
   Star,
   Save,
-  Ear
+  Ear,
+  Unplug
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
