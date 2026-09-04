@@ -124,16 +124,19 @@ export default function TextToSpeechPage() {
     };
   }, [selectedVoiceName]);
 
+  const currentVoice = useMemo(() => 
+    voices.find(v => v.name === selectedVoiceName) || null, 
+  [voices, selectedVoiceName]);
+
   const speak = () => {
     if (!text.trim() || !isSupported) return;
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     
-    const voice = voices.find(v => v.name === selectedVoiceName);
-    if (voice) {
-      utterance.voice = voice;
-      localStorage.setItem('mykit_last_voice', voice.name);
+    if (currentVoice) {
+      utterance.voice = currentVoice;
+      localStorage.setItem('mykit_tts_last_voice', currentVoice.name);
     }
     
     utterance.rate = rate;
@@ -292,7 +295,7 @@ export default function TextToSpeechPage() {
            <AlertCircle className="w-16 h-16 text-destructive animate-pulse" />
            <div className="space-y-2">
               <h3 className="text-xl font-headline font-black text-foreground uppercase">Hardware Protocol Error</h3>
-              <p className="text-sm text-foreground/40 font-bold uppercase max-w-sm">The SpeechSynthesis matrix is not identified in this hardware context. Use Chrome or Edge for 1:1 fidelity.</p>
+              <p className="text-sm text-foreground/40 font-bold uppercase max-sm">The SpeechSynthesis matrix is not identified in this hardware context. Use Chrome or Edge for 1:1 fidelity.</p>
            </div>
         </Card>
       ) : (
@@ -536,4 +539,3 @@ export default function TextToSpeechPage() {
     </div>
   );
 }
-
