@@ -35,7 +35,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, query, where, doc, setDoc, deleteDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, query, where, doc, setDoc, deleteDoc, serverTimestamp, writeBatch, orderBy, getDocs } from 'firebase/firestore';
 import { chatWithAI, ChatMessage } from './actions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -54,6 +54,7 @@ export default function AIChatbotPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<string | null>(null);
+  const [interimText, setInterimText] = useState('');
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -88,8 +89,6 @@ export default function AIChatbotPage() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, interimText]);
-
-  const [interimText, setInterimText] = useState('');
 
   const saveToFirestore = (role: string, text: string) => {
     if (!db || !user) return;
