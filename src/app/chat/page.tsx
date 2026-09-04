@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -38,9 +39,6 @@ import {
   Video,
   Info,
   Mic,
-  Reply,
-  VolumeX,
-  Volume2,
   Activity,
   Paperclip,
   Users,
@@ -103,7 +101,7 @@ import {
   increment,
   Unsubscribe
 } from 'firebase/firestore';
-import { signOut, updateProfile } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -134,9 +132,6 @@ interface Message {
   senderName?: string;
   text?: string;
   imageUrl?: string;
-  videoUrl?: string;
-  fileUrl?: string;
-  videoThumb?: string;
   timestamp: any;
   status: 'sent' | 'seen';
   replyTo?: { id: string, text: string, sender: string };
@@ -148,7 +143,6 @@ interface Chat {
   participants: string[];
   isGroup?: boolean;
   groupName?: string;
-  groupAdmin?: string;
   groupAvatar?: string;
   lastMessage?: {
     text: string;
@@ -200,7 +194,6 @@ export default function ChatAppPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showRemoveAvatarConfirm, setShowRemoveAvatarConfirm] = useState(false);
-  const [showMediaPreview, setShowMediaPreview] = useState<{url: string, type: 'image' | 'video'} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState<ChatUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -220,8 +213,8 @@ export default function ChatAppPage() {
     if (!db || !user?.uid) return;
     const now = Date.now();
     
-    // Throttled: Update Online pulse at most once every 2 minutes
-    const throttleTime = 120000;
+    // Heartbeat Throttle: Update signal at most once every 5 minutes
+    const throttleTime = 300000;
     const shouldUpdate = force || !isOnline || (now - lastPresenceUpdate.current > throttleTime);
     
     if (!shouldUpdate) return;
@@ -247,7 +240,7 @@ export default function ChatAppPage() {
       }
     });
 
-    updatePresence(true);
+    updatePresence(true, true);
 
     const handleVisibility = () => {
       if (!isMounted) return;
@@ -766,7 +759,7 @@ export default function ChatAppPage() {
                   return (
                     <div key={msg.id} className={cn("flex flex-col gap-1.5", isMe ? "ml-auto items-end" : "mr-auto items-start animate-in slide-in-from-left-2")}>
                        <div className={cn("p-4 rounded-3xl shadow-xl relative group/msg transition-all border", isMe ? "bg-primary text-white rounded-tr-none border-primary/20" : "bg-secondary text-foreground rounded-tl-none border-white/5")}>
-                          {msg.imageUrl && <div onClick={() => setShowMediaPreview({url: msg.imageUrl!, type: 'image'})} className="cursor-zoom-in mb-2"><img src={msg.imageUrl} className="max-h-[350px] w-auto rounded-2xl border border-white/10" alt="" /></div>}
+                          {msg.imageUrl && <div className="mb-2"><img src={msg.imageUrl} className="max-h-[350px] w-auto rounded-2xl border border-white/10" alt="" /></div>}
                           {msg.text && <p className="text-[14px] font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
                           <div className={cn("flex items-center gap-2 mt-2", isMe ? "justify-end text-white/40" : "justify-start text-foreground/20")}>
                              <span className="text-[8px] font-black uppercase">{formatTime(msg.timestamp)}</span>
@@ -805,19 +798,9 @@ export default function ChatAppPage() {
          )}
       </main>
 
-      <Dialog open={!!showMediaPreview} onOpenChange={() => setShowMediaPreview(null)}>
-         <DialogContent className="max-w-4xl p-0 bg-black border-none overflow-hidden h-[90vh]">
-            {showMediaPreview?.type === 'image' ? (
-              <img src={showMediaPreview.url} className="w-full h-full object-contain" alt="" />
-            ) : (
-              <video src={showMediaPreview?.url} controls autoPlay className="w-full h-full object-contain" />
-            )}
-         </DialogContent>
-      </Dialog>
-
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
          <DialogContent className="glass-card max-w-md p-0 rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90vh]">
-            <DialogHeader className="p-4 sm:p-5 border-b border-white/5 bg-secondary/30 relative shrink-0">
+            <DialogHeader className="p-3 sm:p-4 border-b border-white/5 bg-secondary/30 relative shrink-0">
                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
                <div className="flex flex-col items-center gap-3 relative z-10">
                   <div className="relative group/avatar-edit">
@@ -831,13 +814,13 @@ export default function ChatAppPage() {
                   <input type="file" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                   
                   <div className="text-center space-y-0.5">
-                    <DialogTitle className="text-xl font-black uppercase tracking-tight truncate max-w-[200px]">{profile.username}</DialogTitle>
-                    <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">{profile.displayName}</p>
+                    <DialogTitle className="text-lg font-black uppercase tracking-tight truncate max-w-[200px]">{profile.username}</DialogTitle>
+                    <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">{profile.displayName}</p>
                   </div>
                </div>
             </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8 bg-[#0d0d0f]">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-[#0d0d0f]">
                <div className="space-y-4">
                   <div className="space-y-2">
                      <Label className="text-[9px] font-black uppercase text-foreground/40 ml-1">Identity Status (About)</Label>
