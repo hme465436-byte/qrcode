@@ -46,7 +46,9 @@ import {
   Upload,
   ChevronUp,
   ChevronDown,
-  ChevronLeft
+  ChevronLeft,
+  AlertCircle,
+  RefreshCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -99,7 +101,8 @@ import {
   arrayUnion,
   arrayRemove,
   increment,
-  Unsubscribe
+  Unsubscribe,
+  getDoc
 } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -198,20 +201,21 @@ export default function ChatAppPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isCopied, setIsCopied] = useState<string | null>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const peerUnsubs = useRef<Map<string, Unsubscribe>>(new Map());
   const lastTypingStatus = useRef<boolean>(false);
   const lastPresenceUpdate = useRef<number>(0);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- 1. Identity & Presence Logic ---
   const updatePresence = useCallback(async (isOnline: boolean, force = false) => {
-    if (!db || !user?.uid) return;
+    if (!db || !user?.uid || quotaExceeded) return;
     const now = Date.now();
     
-    // Heartbeat Throttle: Update signal at most once every 5 minutes (300,000ms)
-    // This is critical to prevent the "resource-exhausted" error.
+    // Heartbeat Throttle: 5 minutes (300,000ms)
+    // Critical to prevent quota exhaustion
     const throttleTime = 300000;
     const shouldUpdate = force || !isOnline || (now - lastPresenceUpdate.current > throttleTime);
     
@@ -224,8 +228,10 @@ export default function ChatAppPage() {
         isOnline, 
         lastSeen: serverTimestamp() 
       });
-    } catch (e) {}
-  }, [db, user?.uid]);
+    } catch (e: any) {
+      if (e.code === 'resource-exhausted') setQuotaExceeded(true);
+    }
+  }, [db, user?.uid, quotaExceeded]);
 
   useEffect(() => {
     if (!db || !user?.uid) return;
@@ -236,9 +242,11 @@ export default function ChatAppPage() {
       if (snap.exists() && isMounted) {
         setProfile(snap.data() as ChatUser);
       }
+    }, (err) => {
+      if (err.code === 'resource-exhausted') setQuotaExceeded(true);
     });
 
-    // Initial mount presence heartbeat (unforced to respect throttle)
+    // Initial heartbeat
     updatePresence(true, false);
 
     const handleVisibility = () => {
@@ -282,7 +290,8 @@ export default function ChatAppPage() {
 
       await setDoc(doc(db, 'chat_users', user.uid), payload);
       toast({ title: "Profile Linked" });
-    } catch (e) {
+    } catch (e: any) {
+      if (e.code === 'resource-exhausted') setQuotaExceeded(true);
       toast({ variant: "destructive", title: "Setup Error" });
     } finally {
       setIsSettingUp(false);
@@ -309,6 +318,7 @@ export default function ChatAppPage() {
         throw new Error(res.error);
       }
     } catch (err: any) {
+      if (err.code === 'resource-exhausted') setQuotaExceeded(true);
       toast({ variant: "destructive", title: "Upload Failed", description: err.message });
     } finally {
       setIsUploadingAvatar(false);
@@ -322,7 +332,8 @@ export default function ChatAppPage() {
     try {
       await updateDoc(doc(db, 'chat_users', user.uid), { photoURL: null });
       toast({ title: "DP Removed" });
-    } catch (err) {
+    } catch (err: any) {
+      if (err.code === 'resource-exhausted') setQuotaExceeded(true);
       toast({ variant: "destructive", title: "Action Failed" });
     } finally {
       setIsUploadingAvatar(false);
@@ -333,36 +344,53 @@ export default function ChatAppPage() {
   // --- 2. Data Stream Matrix ---
   const chatsQuery = useMemo(() => {
     if (!db || !user?.uid) return null;
-    return query(collection(db, 'chats'), where('participants', 'array-contains', user.uid));
+    return query(collection(db, 'chats'), where('participants', 'array-contains', user.uid), limit(50));
   }, [db, user?.uid]);
 
   const { data: rawChats, loading: chatsLoading } = useCollection<Chat>(chatsQuery);
   const [chatPeers, setChatPeers] = useState<Record<string, ChatUser>>({});
 
+  // Optimized Peer Discovery: Only use real-time listener for the ACTIVE peer
+  useEffect(() => {
+    if (!db || !user?.uid || !activeChatId) return;
+    
+    const activeChat = rawChats?.find(c => c.id === activeChatId);
+    const peerId = activeChat?.participants.find(id => id !== user.uid);
+    
+    if (peerId) {
+      const unsub = onSnapshot(doc(db, 'chat_users', peerId), (snap) => {
+        if (snap.exists()) {
+          setChatPeers(prev => ({ ...prev, [peerId]: snap.data() as ChatUser }));
+        }
+      }, (err) => {
+        if (err.code === 'resource-exhausted') setQuotaExceeded(true);
+      });
+      return () => unsub();
+    }
+  }, [db, activeChatId, user?.uid, rawChats]);
+
+  // Sidebar Static Fetch: Populated via getDoc to save quota
   useEffect(() => {
     if (!db || !rawChats || !user?.uid) return;
     
-    const activePeerIds = new Set<string>();
-    rawChats.forEach(chat => {
-      if (chat.isGroup) return;
-      const peerId = chat.participants.find(id => id !== user.uid);
-      if (peerId) activePeerIds.add(peerId);
-    });
+    const fetchPeers = async () => {
+      const missingPeerIds = rawChats
+        .filter(c => !c.isGroup)
+        .map(c => c.participants.find(id => id !== user.uid))
+        .filter((id): id is string => !!id && !chatPeers[id]);
 
-    activePeerIds.forEach(peerId => {
-      if (!peerUnsubs.current.has(peerId)) {
-        const unsub = onSnapshot(doc(db, 'chat_users', peerId), (snap) => {
-          if (snap.exists()) {
-            setChatPeers(prev => ({ ...prev, [peerId]: snap.data() as ChatUser }));
-          }
-        });
-        peerUnsubs.current.set(peerId, unsub);
-      }
-    });
+      if (missingPeerIds.length === 0) return;
 
-    return () => {
-      // Logic for cleaning up stale peer listeners could be added here if needed for high-volume users
+      const newPeers: Record<string, ChatUser> = {};
+      await Promise.all(missingPeerIds.map(async (id) => {
+        const snap = await getDoc(doc(db, 'chat_users', id));
+        if (snap.exists()) newPeers[id] = snap.data() as ChatUser;
+      }));
+
+      setChatPeers(prev => ({ ...prev, ...newPeers }));
     };
+
+    fetchPeers();
   }, [db, rawChats, user?.uid]);
 
   const chats = useMemo(() => {
@@ -382,7 +410,7 @@ export default function ChatAppPage() {
       });
   }, [rawChats, chatPeers, user?.uid, profile?.archivedChats]);
 
-  const unreadCount = useMemo(() => {
+  const unreadCountTotal = useMemo(() => {
     if (!rawChats || !user?.uid) return 0;
     return rawChats.reduce((acc, chat) => acc + (chat.unreadCount?.[user.uid] || 0), 0);
   }, [rawChats, user?.uid]);
@@ -391,7 +419,7 @@ export default function ChatAppPage() {
 
   const messagesQuery = useMemo(() => {
     if (!db || !activeChatId) return null;
-    return query(collection(db, 'chats', activeChatId, 'messages'), orderBy('timestamp', 'asc'), limit(200));
+    return query(collection(db, 'chats', activeChatId, 'messages'), orderBy('timestamp', 'asc'), limit(50));
   }, [db, activeChatId]);
   
   const { data: rawMessages } = useCollection<Message>(messagesQuery);
@@ -408,7 +436,7 @@ export default function ChatAppPage() {
 
   // --- 3. Communication Protocols ---
   const handleSendMessage = async (payload: any) => {
-    if (!db || !user || !activeChatId) return;
+    if (!db || !user || !activeChatId || quotaExceeded) return;
     
     const chatRef = doc(db, 'chats', activeChatId);
     const msgPayload = {
@@ -439,16 +467,17 @@ export default function ChatAppPage() {
 
       await updateDoc(chatRef, updates);
       setMessageInput('');
-    } catch (e) {
+    } catch (e: any) {
+      if (e.code === 'resource-exhausted') setQuotaExceeded(true);
       toast({ variant: "destructive", title: "Transmission Failed" });
     }
   };
 
   const handleChatInputChange = (val: string) => {
     setMessageInput(val);
-    if (!db || !activeChatId || !user?.uid) return;
+    if (!db || !activeChatId || !user?.uid || quotaExceeded) return;
     
-    // Gated Typing Indicator: Only write if status actually changed
+    // Gated Typing Indicator
     const isTyping = val.length > 0;
     if (isTyping !== lastTypingStatus.current) {
       lastTypingStatus.current = isTyping;
@@ -457,14 +486,14 @@ export default function ChatAppPage() {
   };
 
   const handlePinChat = (id: string, isPinned: boolean) => {
-    if (!db || !user?.uid) return;
+    if (!db || !user?.uid || quotaExceeded) return;
     updateDoc(doc(db, 'chats', id), {
       pinnedBy: isPinned ? arrayRemove(user.uid) : arrayUnion(user.uid)
     });
   };
 
   const handleArchiveChat = (id: string) => {
-    if (!db || !user?.uid) return;
+    if (!db || !user?.uid || quotaExceeded) return;
     updateDoc(doc(db, 'chat_users', user.uid), {
       archivedChats: arrayUnion(id)
     });
@@ -472,23 +501,15 @@ export default function ChatAppPage() {
     toast({ title: "Chat Archived" });
   };
 
-  const handleCopyText = (text: string, label: string) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setIsCopied(label);
-    toast({ title: "Copied" });
-    setTimeout(() => setIsCopied(null), 2000);
-  };
-
   const searchUsers = async () => {
-    if (!searchQuery.trim() || !db) return;
+    if (!searchQuery.trim() || !db || quotaExceeded) return;
     setIsSearching(true);
     try {
       const q = query(
         collection(db, 'chat_users'), 
         where('username_lowercase', '>=', searchQuery.toLowerCase()),
         where('username_lowercase', '<=', searchQuery.toLowerCase() + '\uf8ff'),
-        limit(10)
+        limit(5)
       );
       const snap = await getDocs(q);
       const users = snap.docs
@@ -496,7 +517,8 @@ export default function ChatAppPage() {
         .filter(u => u.uid !== user?.uid);
       setUserSearchResults(users);
       if (users.length === 0) toast({ title: "Zero Signal", description: "No users identified." });
-    } catch (err) {
+    } catch (err: any) {
+      if (err.code === 'resource-exhausted') setQuotaExceeded(true);
       toast({ variant: "destructive", title: "Search Failed" });
     } finally {
       setIsSearching(false);
@@ -504,7 +526,7 @@ export default function ChatAppPage() {
   };
 
   const acceptRequest = async (req: FriendRequest) => {
-    if (!db || !user) return;
+    if (!db || !user || quotaExceeded) return;
     const batch = writeBatch(db);
     
     const chatRef = doc(collection(db, 'chats'));
@@ -521,7 +543,8 @@ export default function ChatAppPage() {
       await batch.commit();
       toast({ title: "Uplink Established", description: "Chat room synthesized." });
       setActiveChatId(chatRef.id);
-    } catch (e) {
+    } catch (e: any) {
+      if (e.code === 'resource-exhausted') setQuotaExceeded(true);
       toast({ variant: "destructive", title: "Protocol Error" });
     }
   };
@@ -540,6 +563,23 @@ export default function ChatAppPage() {
   };
 
   if (authLoading) return <div className="h-screen flex items-center justify-center bg-[#0a0a0c]"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
+
+  if (quotaExceeded) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#0a0a0c] p-6">
+        <Card className="glass-card border-red-500/20 shadow-2xl p-10 space-y-6 rounded-[2.5rem] max-w-md text-center">
+           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+           <div className="space-y-2">
+              <h2 className="text-xl font-headline font-black uppercase text-white">Service Busy</h2>
+              <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest leading-relaxed">The linguistic matrix has exceeded its current resource quota. Please attempt a manual re-sync in a few minutes.</p>
+           </div>
+           <Button onClick={() => window.location.reload()} className="h-12 w-full bg-primary text-white font-black uppercase tracking-widest text-[10px]">
+              <RefreshCcw className="w-4 h-4 mr-2" /> Re-Sync Matrix
+           </Button>
+        </Card>
+      </div>
+    );
+  }
 
   if (!user) return (
     <div className="h-screen flex items-center justify-center bg-[#0a0a0c] p-6">
@@ -606,7 +646,7 @@ export default function ChatAppPage() {
 
         <div className="grid grid-cols-3 h-14 border-b border-white/5 bg-black/40 shrink-0">
            {[
-             { id: 'chats', label: 'CHATS', icon: MessageSquare, badge: unreadCount },
+             { id: 'chats', label: 'CHATS', icon: MessageSquare, badge: unreadCountTotal },
              { id: 'friends', label: 'PEERS', icon: User, badge: 0 },
              { id: 'requests', label: 'UPLINKS', icon: Zap, badge: incomingRequests?.length || 0 }
            ].map(tab => (
@@ -765,6 +805,7 @@ export default function ChatAppPage() {
          )}
       </main>
 
+      {/* Profile Settings Modal */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
          <DialogContent className="glass-card max-w-md p-0 rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90vh]">
             <DialogHeader className="p-4 border-b border-white/5 bg-secondary/30 relative shrink-0">
@@ -830,7 +871,11 @@ export default function ChatAppPage() {
             </DialogHeader>
             <div className="p-8 space-y-6">
                <div className="flex gap-2">
-                  <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="ENTER HANDLE..." className="h-14 rounded-2xl bg-secondary/50 text-center text-lg font-black uppercase tracking-widest" />
+                  <Input value={searchQuery} onChange={e => {
+                    setSearchQuery(e.target.value);
+                    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+                    searchTimeoutRef.current = setTimeout(() => searchUsers(), 500);
+                  }} placeholder="ENTER HANDLE..." className="h-14 rounded-2xl bg-secondary/50 text-center text-lg font-black uppercase tracking-widest" />
                   <Button onClick={searchUsers} disabled={isSearching} className="h-14 w-14 rounded-2xl">{isSearching ? <Loader2 className="animate-spin" /> : <Search />}</Button>
                </div>
                <div className="space-y-2 max-h-[300px] overflow-auto custom-scrollbar">
