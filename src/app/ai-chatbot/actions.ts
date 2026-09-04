@@ -66,11 +66,9 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
             node: 'Groq (Llama 3.3)' 
           };
         } else {
-          // Diagnostic Capture
           const apiMsg = data.error?.message || response.statusText || 'Handshake failed';
           lastError = `Groq Error (${response.status}): ${apiMsg}`;
           
-          // If Groq explicitly fails, and we are in auto mode, we continue to OpenRouter
           if (config.node !== 'auto') {
             return { success: false, message: lastError };
           }
@@ -115,7 +113,6 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
             node: 'OpenRouter (Llama 3.1)' 
           };
         } else {
-          // Diagnostic Capture
           const apiMsg = data.error?.message || response.statusText || 'Handshake failed';
           lastError = `OpenRouter Error (${response.status}): ${apiMsg}`;
         }
@@ -125,10 +122,9 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
     }
   }
 
-  // 4. Critical Failure Signal
   return { 
     success: false, 
     error: 'NODES_UNREACHABLE', 
-    message: lastError || 'All cryptographic AI nodes are currently restricted or unreachable.' 
+    message: lastError || 'All AI discovery nodes are currently restricted or unreachable.' 
   };
 }

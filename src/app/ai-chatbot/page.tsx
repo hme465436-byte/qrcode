@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -19,7 +18,6 @@ import {
   AlertCircle,
   MoreVertical,
   X,
-  RefreshCcw,
   Sparkles,
   ArrowRight,
   Shield,
@@ -27,13 +25,10 @@ import {
   Lock,
   ChevronRight,
   Check,
-  Trash,
   Globe,
   Settings2,
-  List,
   Edit3,
   AlignLeft,
-  ChevronDown,
   Menu,
   RotateCcw
 } from 'lucide-react';
@@ -59,11 +54,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, query, where, doc, setDoc, deleteDoc, serverTimestamp, writeBatch, orderBy, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, query, where, doc, setDoc, deleteDoc, serverTimestamp, orderBy, updateDoc } from 'firebase/firestore';
 import { chatWithAI, ChatMessage, ChatConfig } from './actions';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { GetHelp } from '@/components/qr-canvas/get-help';
 
 // --- Types ---
 interface Session {
@@ -73,7 +67,7 @@ interface Session {
   messages: ChatMessage[];
 }
 
-const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v2';
+const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v3';
 const INITIAL_CONFIG: ChatConfig = {
   node: 'auto',
   temperature: 0.7,
@@ -94,6 +88,8 @@ export default function AIChatbotPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [isRenaming, setIsRenaming] = useState<string | null>(null);
+  const [renameValue, setEditValue] = useState('');
   
   // Config State
   const [config, setConfig] = useState<ChatConfig>(INITIAL_CONFIG);
@@ -110,7 +106,10 @@ export default function AIChatbotPage() {
         const parsed = JSON.parse(saved);
         setSessions(parsed);
         if (parsed.length > 0) setActiveSessionId(parsed[0].id);
-      } catch (e) {}
+        else createNewSession();
+      } catch (e) {
+        createNewSession();
+      }
     } else {
       createNewSession();
     }
@@ -129,12 +128,21 @@ export default function AIChatbotPage() {
     );
   }, [db, user]);
 
-  const { data: cloudSessions } = useCollection<any>(cloudSessionsQuery);
+  const { data: cloudSessions } = useCollection<Session>(cloudSessionsQuery);
 
   useEffect(() => {
     if (cloudSessions && cloudSessions.length > 0) {
-      // In a more complex app, we would perform a deep merge here.
-      // For the MVP, we favor local state but ensure cloud records are accessible.
+      // Sync cloud sessions to local state if newer or missing
+      setSessions(prev => {
+        const localMap = new Map(prev.map(s => [s.id, s]));
+        cloudSessions.forEach(cs => {
+          const local = localMap.get(cs.id);
+          if (!local || cs.lastUpdated > local.lastUpdated) {
+            localMap.set(cs.id, cs);
+          }
+        });
+        return Array.from(localMap.values()).sort((a, b) => b.lastUpdated - a.lastUpdated);
+      });
     }
   }, [cloudSessions]);
 
@@ -175,11 +183,10 @@ export default function AIChatbotPage() {
     if (!db || !user) return;
     const docRef = doc(db, 'ai_history', user.uid, 'sessions', sessionId);
     
-    // Non-blocking mutation with specialized error emission
     setDoc(docRef, {
       ...session,
       uid: user.uid,
-      timestamp: serverTimestamp()
+      lastUpdated: Date.now()
     }, { merge: true }).catch(async (serverError) => {
       const permissionError = new FirestorePermissionError({
         path: docRef.path,
@@ -215,7 +222,9 @@ export default function AIChatbotPage() {
     setInput('');
     setIsProcessing(true);
 
-    const response = await chatWithAI(updatedMessages.slice(-10), config);
+    // Limit context window for performance
+    const context = updatedMessages.slice(-10);
+    const response = await chatWithAI(context, config);
 
     if (response.success && response.text) {
       const aiMsg: ChatMessage = { role: 'assistant', content: response.text };
@@ -240,7 +249,10 @@ export default function AIChatbotPage() {
 
   const deleteSession = async (id: string) => {
     setSessions(prev => prev.filter(s => s.id !== id));
-    if (activeSessionId === id) setActiveSessionId(null);
+    if (activeSessionId === id) {
+      const next = sessions.find(s => s.id !== id);
+      setActiveSessionId(next?.id || null);
+    }
     
     if (db && user) {
       const docRef = doc(db, 'ai_history', user.uid, 'sessions', id);
@@ -255,10 +267,18 @@ export default function AIChatbotPage() {
     toast({ title: "Session Purged" });
   };
 
+  const renameSession = (id: string) => {
+    if (!renameValue.trim()) { setIsRenaming(null); return; }
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, title: renameValue.trim(), lastUpdated: Date.now() } : s));
+    const session = sessions.find(s => s.id === id);
+    if (session) saveToCloud(id, { ...session, title: renameValue.trim() });
+    setIsRenaming(null);
+  };
+
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(id);
-    toast({ title: "Signal Isolated", description: "Content saved to clipboard." });
+    toast({ title: "Identity Isolated", description: "Content saved to clipboard." });
     setTimeout(() => setIsCopied(null), 2000);
   };
 
@@ -273,9 +293,9 @@ export default function AIChatbotPage() {
         <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/20">
            <div className="flex items-center gap-3">
               <History className="w-4 h-4 text-primary/40" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Registry History</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Threads</span>
            </div>
-           <button onClick={createNewSession} className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+           <button onClick={createNewSession} className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-lg">
               <Plus className="w-4 h-4" />
            </button>
         </div>
@@ -289,25 +309,40 @@ export default function AIChatbotPage() {
            ) : (
              sessions.map(s => (
                <div key={s.id} className="group relative">
-                  <button
-                    onClick={() => { setActiveSessionId(s.id); if(typeof window !== 'undefined' && window.innerWidth < 1024) setIsSidebarOpen(false); }}
-                    className={cn(
-                      "w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all border border-transparent",
-                      activeSessionId === s.id ? "bg-primary/10 border-primary/20 text-primary shadow-inner" : "text-foreground/40 hover:bg-white/5"
-                    )}
-                  >
-                     <MessageSquare className="w-4 h-4 shrink-0 opacity-40" />
-                     <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-bold truncate uppercase tracking-tight">{s.title}</p>
-                        <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest mt-0.5">{new Date(s.lastUpdated).toLocaleDateString()}</p>
-                     </div>
-                  </button>
-                  <button 
-                    onClick={() => deleteSession(s.id)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-all text-foreground/10 hover:text-red-500"
-                  >
-                     <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {isRenaming === s.id ? (
+                    <div className="flex items-center gap-2 p-2">
+                       <Input 
+                        autoFocus
+                        value={renameValue}
+                        onChange={e => setEditValue(e.target.value)}
+                        onBlur={() => renameSession(s.id)}
+                        onKeyDown={e => e.key === 'Enter' && renameSession(s.id)}
+                        className="h-10 bg-background border-primary/40 text-[11px] uppercase font-bold"
+                       />
+                       <button onClick={() => renameSession(s.id)} className="text-primary"><Check className="w-4 h-4" /></button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setActiveSessionId(s.id); if(typeof window !== 'undefined' && window.innerWidth < 1024) setIsSidebarOpen(false); }}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all border border-transparent",
+                        activeSessionId === s.id ? "bg-primary/10 border-primary/20 text-primary shadow-inner" : "text-foreground/40 hover:bg-white/5"
+                      )}
+                    >
+                       <MessageSquare className="w-4 h-4 shrink-0 opacity-40" />
+                       <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-bold truncate uppercase tracking-tight">{s.title}</p>
+                          <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest mt-0.5">{new Date(s.lastUpdated).toLocaleDateString()}</p>
+                       </div>
+                    </button>
+                  )}
+                  
+                  {isRenaming !== s.id && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                       <button onClick={() => { setIsRenaming(s.id); setEditValue(s.title); }} className="p-1.5 text-foreground/20 hover:text-primary"><Edit3 className="w-3.5 h-3.5" /></button>
+                       <button onClick={() => deleteSession(s.id)} className="p-1.5 text-foreground/20 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                  )}
                </div>
              ))
            )}
@@ -317,15 +352,15 @@ export default function AIChatbotPage() {
            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                  <ShieldCheck className="w-4 h-4 text-emerald-500/40" />
-                 <span className="text-[9px] font-black uppercase text-foreground/30">Local Sandbox</span>
+                 <span className="text-[9px] font-black uppercase text-foreground/30">Local Memory</span>
               </div>
-              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[7px] font-black px-2">V7.2 Pro</Badge>
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[7px] font-black px-2">v7.2 Pro</Badge>
            </div>
            {!user && (
              <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex items-start gap-3">
                 <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <p className="text-[9px] text-foreground/40 font-bold uppercase leading-relaxed">
-                   Login to synchronize your chat registry to the cloud.
+                   Login to synchronize your chat registry across devices.
                 </p>
              </div>
            )}
@@ -342,7 +377,7 @@ export default function AIChatbotPage() {
                </button>
                <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/60">{activeSession?.title || 'Standalone Matrix'}</h2>
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/60">{activeSession?.title || 'Disconnected Matrix'}</h2>
                </div>
             </div>
             <div className="flex items-center gap-4">
@@ -362,12 +397,12 @@ export default function AIChatbotPage() {
             {!activeSession?.messages.length ? (
               <div className="h-full flex flex-col items-center justify-center opacity-10 gap-10 grayscale">
                  <div className="relative">
-                    <div className="w-32 h-32 rounded-full border-4 border-primary/20" />
+                    <div className="w-32 h-32 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                     <Activity className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-primary animate-pulse" />
                  </div>
                  <div className="text-center space-y-2">
                     <p className="text-xl font-headline font-black uppercase tracking-[0.4em]">Initialize Pulse</p>
-                    <p className="text-[10px] font-bold uppercase tracking-widest">Protocol V7.2 Active</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Awaiting Identity Signal</p>
                  </div>
               </div>
             ) : (
@@ -383,12 +418,12 @@ export default function AIChatbotPage() {
                       )}>
                          {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
                       </div>
-                      <div className={cn("space-y-3", msg.role === 'user' ? "text-right" : "text-left")}>
+                      <div className={cn("space-y-3 min-w-0 max-w-[85%]", msg.role === 'user' ? "text-right" : "text-left")}>
                          <div className={cn(
-                           "p-6 rounded-[2.5rem] shadow-2xl relative group/card overflow-hidden",
+                           "p-6 rounded-[2.5rem] shadow-2xl relative group/card overflow-hidden transition-all",
                            msg.role === 'assistant' ? "bg-white/[0.03] border border-white/5 rounded-tl-none" : "bg-primary text-white rounded-tr-none shadow-primary/20"
                          )}>
-                            <p className="text-sm sm:text-base font-medium leading-relaxed whitespace-pre-wrap">
+                            <p className="text-sm sm:text-base font-medium leading-relaxed whitespace-pre-wrap break-words">
                                {msg.content}
                             </p>
                             {msg.role === 'assistant' && (
@@ -402,7 +437,7 @@ export default function AIChatbotPage() {
                          </div>
                          <div className="flex items-center gap-3 px-4">
                             <span className="text-[8px] font-black uppercase text-foreground/20 tracking-widest">{msg.role === 'assistant' ? 'Assistant Node' : 'User Node'}</span>
-                            {msg.role === 'user' && (
+                            {msg.role === 'user' && i === activeSession.messages.length - 1 && (
                                <button onClick={() => { setInput(msg.content); handleSend(undefined, msg.content); }} className="text-[8px] font-black uppercase text-primary/40 hover:text-primary transition-all">Retry</button>
                             )}
                          </div>
@@ -431,7 +466,7 @@ export default function AIChatbotPage() {
               <CardHeader className="py-4 border-b border-white/5 flex flex-row items-center justify-between">
                  <div className="flex items-center gap-3">
                     <Settings2 className="w-4 h-4 text-primary" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Node Calibration</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Synthesis Engine</span>
                  </div>
                  <button onClick={() => setIsConfigOpen(false)} className="text-white/20 hover:text-white"><X className="w-4 h-4" /></button>
               </CardHeader>
@@ -443,17 +478,17 @@ export default function AIChatbotPage() {
                           <SelectValue placeholder="Select Model" />
                        </SelectTrigger>
                        <SelectContent className="glass-card">
-                          <SelectItem value="llama-3.3-70b-versatile" className="text-[9px] uppercase font-bold">Llama 3.3 (70B)</SelectItem>
-                          <SelectItem value="mixtral-8x7b-32768" className="text-[9px] uppercase font-bold">Mixtral 8x7B</SelectItem>
-                          <SelectItem value="gemma2-9b-it" className="text-[9px] uppercase font-bold">Gemma 2 (9B)</SelectItem>
+                          <SelectItem value="llama-3.3-70b-versatile" className="text-[9px] uppercase font-bold">Llama 3.3 (High Perf)</SelectItem>
+                          <SelectItem value="mixtral-8x7b-32768" className="text-[9px] uppercase font-bold">Mixtral 8x7B (Stable)</SelectItem>
+                          <SelectItem value="gemma2-9b-it" className="text-[9px] uppercase font-bold">Gemma 2 (Fast)</SelectItem>
                        </SelectContent>
                     </Select>
                  </div>
 
                  <div className="space-y-4">
                     <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-foreground/30">
-                       <Label>Temperature</Label>
-                       <span className="text-primary">{config.temperature}</span>
+                       <Label>Temperature (Creativity)</Label>
+                       <span className="text-primary font-mono">{config.temperature}</span>
                     </div>
                     <Slider value={[config.temperature! * 100]} min={0} max={100} step={1} onValueChange={v => setConfig({...config, temperature: v[0]/100})} />
                  </div>
@@ -463,12 +498,12 @@ export default function AIChatbotPage() {
                     <Textarea 
                       value={config.systemPrompt} 
                       onChange={e => setConfig({...config, systemPrompt: e.target.value})} 
-                      placeholder="e.g. Expert programmer mode..."
+                      placeholder="Define the AI persona..."
                       className="h-24 bg-black/40 border-border text-[10px] leading-relaxed resize-none p-4"
                     />
                  </div>
 
-                 <button onClick={() => setConfig(INITIAL_CONFIG)} className="w-full h-8 text-[8px] font-black uppercase text-foreground/20 hover:text-primary transition-colors">Reset to Factory</button>
+                 <button onClick={() => setConfig(INITIAL_CONFIG)} className="w-full h-8 text-[8px] font-black uppercase text-foreground/20 hover:text-primary transition-colors border-t border-white/5 pt-2">Restore Factory Defaults</button>
               </CardContent>
            </Card>
          )}
@@ -486,7 +521,7 @@ export default function AIChatbotPage() {
                         handleSend();
                       }
                     }}
-                    placeholder="Enter cryptographic prompt..."
+                    placeholder="Enter prompt..."
                     className="min-h-[60px] max-h-40 w-full pl-6 pr-16 bg-white/[0.02] border-white/10 rounded-[2rem] text-sm font-medium py-5 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-inner custom-scrollbar"
                   />
                   <div className="absolute right-2 bottom-2">
@@ -501,9 +536,9 @@ export default function AIChatbotPage() {
                </form>
                <div className="mt-4 flex items-center justify-between px-6">
                   <div className="flex items-center gap-4 text-[8px] font-black uppercase tracking-[0.4em] text-foreground/20">
-                     <span>100% Local Encryption Protocol</span>
+                     <span className="hidden sm:inline">Enter to Send</span>
                      <span className="hidden sm:inline">•</span>
-                     <span className="hidden sm:inline">Shift+Enter for newline</span>
+                     <span className="hidden sm:inline">Shift+Enter for New Line</span>
                   </div>
                   {isProcessing && <span className="text-[8px] font-bold text-primary animate-pulse uppercase tracking-widest">Processing bitstream...</span>}
                </div>
@@ -511,15 +546,16 @@ export default function AIChatbotPage() {
          </div>
       </main>
 
+      {/* MODALS */}
       <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
             <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
                <AlertCircle className="w-8 h-8" />
             </div>
-            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Terminate Session</AlertDialogTitle>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Delete Entire Thread</AlertDialogTitle>
             <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
-               This will definitively purge the local registry for this specific discussion.
+               This will definitively purge the linguistic registry for this specific discussion.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
