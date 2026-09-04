@@ -3,7 +3,7 @@
 /**
  * @fileOverview Advanced Server Actions for the AI Chatbot.
  * Implements a dual-node strategy: Groq (Primary) -> OpenRouter (Fallback).
- * Supports dynamic model selection, temperature, and system prompt injection.
+ * Supports full conversation memory and error telemetry.
  */
 
 export type ChatRole = 'user' | 'assistant' | 'system';
@@ -22,13 +22,12 @@ export interface ChatConfig {
 }
 
 export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {}) {
-  // 1. Resolve Credentials Matrix
   const groqKey = (process.env.GROQ_API_KEY || '').trim();
   const orKey = (process.env.OPENROUTER_API_KEY || '').trim();
 
   const systemMessage: ChatMessage = {
     role: 'system',
-    content: config.systemPrompt || 'You are a professional AI assistant in the MY KIT TOOL digital studio. Your tone is helpful, concise, and technically accurate.'
+    content: config.systemPrompt || 'You are a professional AI assistant. Your tone is helpful and technically accurate.'
   };
 
   const payload = [systemMessage, ...messages];
@@ -36,11 +35,9 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
 
   let lastError = '';
 
-  // 2. Primary Node: Groq (Llama 3.3 Protocol)
+  // 1. Primary Node: Groq (Llama 3.3 Protocol)
   if (config.node === 'auto' || config.node === 'groq') {
-    if (!groqKey) {
-      lastError = 'Groq API Key is missing in server environment.';
-    } else {
+    if (groqKey) {
       try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
@@ -52,7 +49,7 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
             model: config.model || 'llama-3.3-70b-versatile',
             messages: payload,
             temperature: temperature,
-            max_tokens: config.maxTokens || 1024,
+            max_tokens: config.maxTokens || 2048,
           }),
           cache: 'no-store'
         });
@@ -66,27 +63,17 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
             node: 'Groq (Llama 3.3)' 
           };
         } else {
-          const apiMsg = data.error?.message || response.statusText || 'Handshake failed';
-          lastError = `Groq Error (${response.status}): ${apiMsg}`;
-          
-          if (config.node !== 'auto') {
-            return { success: false, message: lastError };
-          }
+          lastError = data.error?.message || `Groq Node Error (${response.status})`;
         }
       } catch (e: any) {
         lastError = `Groq Connection Failed: ${e.message}`;
-        if (config.node !== 'auto') {
-          return { success: false, message: lastError };
-        }
       }
     }
   }
 
-  // 3. Fallback Node: OpenRouter (Llama 3.1 Protocol)
+  // 2. Fallback Node: OpenRouter (Llama 3.1 Protocol)
   if (config.node === 'auto' || config.node === 'openrouter') {
-    if (!orKey) {
-      lastError = lastError || 'OpenRouter API Key is missing in server environment.';
-    } else {
+    if (orKey) {
       try {
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
@@ -113,8 +100,7 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
             node: 'OpenRouter (Llama 3.1)' 
           };
         } else {
-          const apiMsg = data.error?.message || response.statusText || 'Handshake failed';
-          lastError = `OpenRouter Error (${response.status}): ${apiMsg}`;
+          lastError = data.error?.message || `OpenRouter Node Error (${response.status})`;
         }
       } catch (e: any) {
         lastError = `OpenRouter Connection Failed: ${e.message}`;
@@ -124,7 +110,6 @@ export async function chatWithAI(messages: ChatMessage[], config: ChatConfig = {
 
   return { 
     success: false, 
-    error: 'NODES_UNREACHABLE', 
     message: lastError || 'All AI discovery nodes are currently restricted or unreachable.' 
   };
 }

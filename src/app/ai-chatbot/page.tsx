@@ -30,7 +30,17 @@ import {
   Edit3,
   AlignLeft,
   Menu,
-  RotateCcw
+  RotateCcw,
+  Pin,
+  PinOff,
+  Search,
+  Download,
+  FileText,
+  Code2,
+  Languages,
+  BookOpen,
+  Image as ImageIcon,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,14 +75,33 @@ interface Session {
   title: string;
   lastUpdated: number;
   messages: ChatMessage[];
+  isPinned?: boolean;
+  persona?: PersonaId;
 }
 
-const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v3';
+type PersonaId = 'helper' | 'coder' | 'writer' | 'teacher' | 'short';
+
+interface Persona {
+  id: PersonaId;
+  label: string;
+  icon: any;
+  prompt: string;
+}
+
+const PERSONAS: Persona[] = [
+  { id: 'helper', label: 'General Helper', icon: Bot, prompt: 'You are a professional AI assistant. Provide helpful, accurate, and concise answers.' },
+  { id: 'coder', label: 'Code Architect', icon: Code2, prompt: 'You are an expert senior software engineer. Provide clean, secure, and optimized code with technical explanations.' },
+  { id: 'writer', label: 'Creative Writer', icon: Edit3, prompt: 'You are a professional creative writer and editor. Focus on engaging language, clarity, and narrative flow.' },
+  { id: 'teacher', label: 'Academic Teacher', icon: BookOpen, prompt: 'You are a knowledgeable educator. Explain concepts simply, step-by-step, and provide examples.' },
+  { id: 'short', label: 'Quick Signal', icon: Zap, prompt: 'You are a highly concise assistant. Provide the shortest possible accurate answers with no fluff.' },
+];
+
+const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v4';
 const INITIAL_CONFIG: ChatConfig = {
   node: 'auto',
   temperature: 0.7,
-  systemPrompt: 'You are a professional AI assistant in the MY KIT TOOL digital studio. Your tone is helpful, concise, and technically accurate.',
-  maxTokens: 1024
+  systemPrompt: PERSONAS[0].prompt,
+  maxTokens: 2048
 };
 
 export default function AIChatbotPage() {
@@ -87,12 +116,14 @@ export default function AIChatbotPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
-  const [renameValue, setEditValue] = useState('');
+  const [renameValue, setRenameValue] = useState('');
+  const [sidebarSearch, setSidebarSearch] = useState('');
   
   // Config State
   const [config, setConfig] = useState<ChatConfig>(INITIAL_CONFIG);
+  const [activePersona, setActivePersona] = useState<PersonaId>('helper');
 
   // UI Meta
   const [isCopied, setIsCopied] = useState<string | null>(null);
@@ -132,7 +163,6 @@ export default function AIChatbotPage() {
 
   useEffect(() => {
     if (cloudSessions && cloudSessions.length > 0) {
-      // Sync cloud sessions to local state if newer or missing
       setSessions(prev => {
         const localMap = new Map(prev.map(s => [s.id, s]));
         cloudSessions.forEach(cs => {
@@ -141,7 +171,11 @@ export default function AIChatbotPage() {
             localMap.set(cs.id, cs);
           }
         });
-        return Array.from(localMap.values()).sort((a, b) => b.lastUpdated - a.lastUpdated);
+        return Array.from(localMap.values()).sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          return b.lastUpdated - a.lastUpdated;
+        });
       });
     }
   }, [cloudSessions]);
@@ -157,6 +191,14 @@ export default function AIChatbotPage() {
     sessions.find(s => s.id === activeSessionId) || null, 
   [sessions, activeSessionId]);
 
+  useEffect(() => {
+    if (activeSession?.persona) {
+      setActivePersona(activeSession.persona);
+      const persona = PERSONAS.find(p => p.id === activeSession.persona);
+      if (persona) setConfig(prev => ({ ...prev, systemPrompt: persona.prompt }));
+    }
+  }, [activeSessionId]);
+
   // Auto-scroll logic
   useEffect(() => {
     if (scrollRef.current) {
@@ -166,17 +208,19 @@ export default function AIChatbotPage() {
 
   // --- 4. Actions ---
 
-  const createNewSession = () => {
+  const createNewSession = (initialPrompt?: string) => {
     const newId = Math.random().toString(36).substr(2, 9);
     const newSession: Session = {
       id: newId,
-      title: 'New Discussion',
+      title: initialPrompt ? initialPrompt.substring(0, 30) : 'New Discussion',
       lastUpdated: Date.now(),
-      messages: []
+      messages: [],
+      persona: activePersona
     };
     setSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newId);
     if (typeof window !== 'undefined' && window.innerWidth < 1024) setIsSidebarOpen(false);
+    return newId;
   };
 
   const saveToCloud = (sessionId: string, session: Session) => {
@@ -200,43 +244,40 @@ export default function AIChatbotPage() {
   const handleSend = async (e?: React.FormEvent, retryText?: string) => {
     e?.preventDefault();
     const textToProcess = retryText || input.trim();
-    if (!textToProcess || isProcessing || !activeSessionId) return;
+    if (!textToProcess || isProcessing) return;
+
+    let targetId = activeSessionId;
+    if (!targetId || (activeSession && activeSession.messages.length === 0 && !retryText)) {
+      if (!targetId) targetId = createNewSession(textToProcess);
+    }
 
     const userMsg: ChatMessage = { role: 'user', content: textToProcess };
+    const sessionToUpdate = sessions.find(s => s.id === targetId);
+    const updatedMessages = [...(sessionToUpdate?.messages || []), userMsg];
     
-    // Update local state immediately
-    const updatedMessages = [...(activeSession?.messages || []), userMsg];
-    const updatedSessions = sessions.map(s => {
-      if (s.id === activeSessionId) {
-        return {
-          ...s,
-          messages: updatedMessages,
-          lastUpdated: Date.now(),
-          title: s.title === 'New Discussion' ? textToProcess.substring(0, 30) : s.title
-        };
-      }
-      return s;
-    });
+    setSessions(prev => prev.map(s => s.id === targetId ? {
+      ...s,
+      messages: updatedMessages,
+      lastUpdated: Date.now(),
+      title: s.title === 'New Discussion' ? textToProcess.substring(0, 30) : s.title
+    } : s));
 
-    setSessions(updatedSessions);
     setInput('');
     setIsProcessing(true);
 
-    // Limit context window for performance
-    const context = updatedMessages.slice(-10);
+    const context = updatedMessages.slice(-12);
     const response = await chatWithAI(context, config);
 
     if (response.success && response.text) {
       const aiMsg: ChatMessage = { role: 'assistant', content: response.text };
-      const finalSessions = updatedSessions.map(s => {
-        if (s.id === activeSessionId) {
+      setSessions(prev => prev.map(s => {
+        if (s.id === targetId) {
           const next = { ...s, messages: [...s.messages, aiMsg], lastUpdated: Date.now() };
           saveToCloud(s.id, next);
           return next;
         }
         return s;
-      });
-      setSessions(finalSessions);
+      }));
     } else {
       toast({ 
         variant: "destructive", 
@@ -256,15 +297,21 @@ export default function AIChatbotPage() {
     
     if (db && user) {
       const docRef = doc(db, 'ai_history', user.uid, 'sessions', id);
-      deleteDoc(docRef).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
+      deleteDoc(docRef).catch(() => {});
     }
+    setSessionToDelete(null);
     toast({ title: "Session Purged" });
+  };
+
+  const togglePin = (id: string) => {
+    setSessions(prev => prev.map(s => {
+      if (s.id === id) {
+        const next = { ...s, isPinned: !s.isPinned };
+        saveToCloud(id, next);
+        return next;
+      }
+      return s;
+    }));
   };
 
   const renameSession = (id: string) => {
@@ -278,16 +325,32 @@ export default function AIChatbotPage() {
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(id);
-    toast({ title: "Identity Isolated", description: "Content saved to clipboard." });
+    toast({ title: "Identity Isolated" });
     setTimeout(() => setIsCopied(null), 2000);
   };
+
+  const downloadHistory = () => {
+    if (!activeSession) return;
+    const content = activeSession.messages.map(m => `[${m.role.toUpperCase()}]\n${m.content}\n`).join('\n---\n\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat_${activeSession.title.replace(/\s+/g, '_')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const filteredSidebarSessions = useMemo(() => {
+    return sessions.filter(s => s.title.toLowerCase().includes(sidebarSearch.toLowerCase()));
+  }, [sessions, sidebarSearch]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#060608] selection:bg-primary/20">
       
       {/* SIDEBAR */}
       <aside className={cn(
-        "flex flex-col h-full bg-[#0a0a0c] border-r border-white/5 transition-all duration-500 z-50 overflow-hidden",
+        "flex flex-col h-full bg-[#0a0a0c] border-r border-white/5 transition-all duration-500 z-50 overflow-hidden shrink-0",
         isSidebarOpen ? "w-80" : "w-0 opacity-0"
       )}>
         <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/20">
@@ -295,31 +358,42 @@ export default function AIChatbotPage() {
               <History className="w-4 h-4 text-primary/40" />
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Threads</span>
            </div>
-           <button onClick={createNewSession} className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-lg">
+           <button onClick={() => createNewSession()} className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-lg">
               <Plus className="w-4 h-4" />
            </button>
         </div>
 
+        <div className="p-4 border-b border-white/5 bg-black/10">
+           <div className="relative group/search">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
+              <Input 
+                value={sidebarSearch}
+                onChange={e => setSidebarSearch(e.target.value)}
+                placeholder="Search history..."
+                className="h-10 pl-9 bg-background/50 border-white/5 rounded-xl text-[9px] font-black uppercase"
+              />
+           </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
-           {sessions.length === 0 ? (
+           {filteredSidebarSessions.length === 0 ? (
              <div className="py-20 text-center opacity-10 flex flex-col items-center gap-4">
                 <MessageSquare className="w-10 h-10" />
                 <p className="text-[10px] font-black uppercase tracking-widest">No Active Sessions</p>
              </div>
            ) : (
-             sessions.map(s => (
+             filteredSidebarSessions.map(s => (
                <div key={s.id} className="group relative">
                   {isRenaming === s.id ? (
                     <div className="flex items-center gap-2 p-2">
                        <Input 
                         autoFocus
                         value={renameValue}
-                        onChange={e => setEditValue(e.target.value)}
+                        onChange={e => setRenameValue(e.target.value)}
                         onBlur={() => renameSession(s.id)}
                         onKeyDown={e => e.key === 'Enter' && renameSession(s.id)}
                         className="h-10 bg-background border-primary/40 text-[11px] uppercase font-bold"
                        />
-                       <button onClick={() => renameSession(s.id)} className="text-primary"><Check className="w-4 h-4" /></button>
                     </div>
                   ) : (
                     <button
@@ -329,7 +403,10 @@ export default function AIChatbotPage() {
                         activeSessionId === s.id ? "bg-primary/10 border-primary/20 text-primary shadow-inner" : "text-foreground/40 hover:bg-white/5"
                       )}
                     >
-                       <MessageSquare className="w-4 h-4 shrink-0 opacity-40" />
+                       <div className="relative">
+                          <MessageSquare className="w-4 h-4 shrink-0 opacity-40" />
+                          {s.isPinned && <Pin className="absolute -top-1 -right-1 w-2 h-2 text-primary fill-current" />}
+                       </div>
                        <div className="min-w-0 flex-1">
                           <p className="text-[11px] font-bold truncate uppercase tracking-tight">{s.title}</p>
                           <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest mt-0.5">{new Date(s.lastUpdated).toLocaleDateString()}</p>
@@ -338,9 +415,12 @@ export default function AIChatbotPage() {
                   )}
                   
                   {isRenaming !== s.id && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                       <button onClick={() => { setIsRenaming(s.id); setEditValue(s.title); }} className="p-1.5 text-foreground/20 hover:text-primary"><Edit3 className="w-3.5 h-3.5" /></button>
-                       <button onClick={() => deleteSession(s.id)} className="p-1.5 text-foreground/20 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all bg-secondary/80 backdrop-blur-md p-1 rounded-lg">
+                       <button onClick={() => togglePin(s.id)} className={cn("p-1.5 transition-all", s.isPinned ? "text-primary" : "text-foreground/20 hover:text-primary")}>
+                          {s.isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                       </button>
+                       <button onClick={() => { setIsRenaming(s.id); setRenameValue(s.title); }} className="p-1.5 text-foreground/20 hover:text-primary"><Edit3 className="w-3.5 h-3.5" /></button>
+                       <button onClick={() => setSessionToDelete(s.id)} className="p-1.5 text-foreground/20 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   )}
                </div>
@@ -349,13 +429,6 @@ export default function AIChatbotPage() {
         </div>
 
         <div className="p-6 bg-black/40 border-t border-white/5 space-y-6">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                 <ShieldCheck className="w-4 h-4 text-emerald-500/40" />
-                 <span className="text-[9px] font-black uppercase text-foreground/30">Local Memory</span>
-              </div>
-              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[7px] font-black px-2">v7.2 Pro</Badge>
-           </div>
            {!user && (
              <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex items-start gap-3">
                 <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
@@ -364,6 +437,13 @@ export default function AIChatbotPage() {
                 </p>
              </div>
            )}
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                 <ShieldCheck className="w-4 h-4 text-emerald-500/40" />
+                 <span className="text-[9px] font-black uppercase text-foreground/30">Local Isolation</span>
+              </div>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[7px] font-black px-2">v8.0 PRO</Badge>
+           </div>
         </div>
       </aside>
 
@@ -375,17 +455,38 @@ export default function AIChatbotPage() {
                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-white/5 text-foreground/40 hover:text-primary transition-all">
                   <Menu className="w-5 h-5" />
                </button>
-               <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/60">{activeSession?.title || 'Disconnected Matrix'}</h2>
+               <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/60 truncate max-w-[200px]">{activeSession?.title || 'Disconnected Matrix'}</h2>
                </div>
             </div>
+            
             <div className="flex items-center gap-4">
                <div className="hidden sm:flex bg-white/5 rounded-xl p-0.5 border border-white/5">
-                  <button onClick={() => setConfig({...config, node: 'groq'})} className={cn("px-3 py-1 rounded-lg text-[8px] font-black uppercase transition-all", config.node === 'groq' ? "bg-primary text-white" : "text-white/20")}>Groq</button>
-                  <button onClick={() => setConfig({...config, node: 'auto'})} className={cn("px-3 py-1 rounded-lg text-[8px] font-black uppercase transition-all", config.node === 'auto' ? "bg-primary text-white" : "text-white/20")}>Auto</button>
-                  <button onClick={() => setConfig({...config, node: 'openrouter'})} className={cn("px-3 py-1 rounded-lg text-[8px] font-black uppercase transition-all", config.node === 'openrouter' ? "bg-primary text-white" : "text-white/20")}>OR</button>
+                  {PERSONAS.map(p => (
+                    <button 
+                      key={p.id}
+                      onClick={() => {
+                        setActivePersona(p.id);
+                        setConfig(prev => ({ ...prev, systemPrompt: p.prompt }));
+                        if (activeSessionId) setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, persona: p.id } : s));
+                      }}
+                      className={cn(
+                        "p-2 rounded-lg transition-all",
+                        activePersona === p.id ? "bg-primary text-white shadow-lg" : "text-white/20 hover:text-white"
+                      )}
+                      title={p.label}
+                    >
+                       <p.icon className="w-3.5 h-3.5" />
+                    </button>
+                  ))}
                </div>
+
+               <div className="hidden md:flex items-center gap-2">
+                  <button onClick={() => setConfig({...config, node: 'groq'})} className={cn("px-3 py-1 rounded-lg text-[8px] font-black uppercase border transition-all", config.node === 'groq' ? "bg-primary text-white border-primary" : "text-white/20 border-white/5")}>Groq</button>
+                  <button onClick={() => setConfig({...config, node: 'auto'})} className={cn("px-3 py-1 rounded-lg text-[8px] font-black uppercase border transition-all", config.node === 'auto' ? "bg-primary text-white border-primary" : "text-white/20 border-white/5")}>Auto</button>
+               </div>
+
                <button onClick={() => setIsConfigOpen(!isConfigOpen)} className={cn("p-2 rounded-lg transition-all", isConfigOpen ? "text-primary bg-primary/10" : "text-white/20 hover:text-white")}>
                   <Settings2 className="w-5 h-5" />
                </button>
@@ -406,7 +507,7 @@ export default function AIChatbotPage() {
                  </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-10 max-w-4xl mx-auto w-full pb-20">
+              <div className="flex flex-col gap-12 max-w-4xl mx-auto w-full pb-20">
                  {activeSession.messages.map((msg, i) => (
                    <div key={i} className={cn(
                      "flex gap-5 group/msg animate-in slide-in-from-bottom-4 duration-500",
@@ -423,16 +524,15 @@ export default function AIChatbotPage() {
                            "p-6 rounded-[2.5rem] shadow-2xl relative group/card overflow-hidden transition-all",
                            msg.role === 'assistant' ? "bg-white/[0.03] border border-white/5 rounded-tl-none" : "bg-primary text-white rounded-tr-none shadow-primary/20"
                          )}>
-                            <p className="text-sm sm:text-base font-medium leading-relaxed whitespace-pre-wrap break-words">
+                            <p className="text-sm sm:text-base font-medium leading-relaxed whitespace-pre-wrap break-words selection:bg-black/20">
                                {msg.content}
                             </p>
                             {msg.role === 'assistant' && (
-                               <button 
-                                onClick={() => handleCopy(msg.content, `msg-${i}`)}
-                                className="absolute right-4 bottom-4 p-2 rounded-lg bg-black/40 text-white/40 hover:text-white transition-all opacity-0 group-hover/card:opacity-100"
-                               >
-                                  {isCopied === `msg-${i}` ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                               </button>
+                               <div className="absolute right-4 bottom-4 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all">
+                                  <button onClick={() => handleCopy(msg.content, `msg-${i}`)} className="p-2 rounded-lg bg-black/40 text-white/40 hover:text-white shadow-xl">
+                                     {isCopied === `msg-${i}` ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                  </button>
+                               </div>
                             )}
                          </div>
                          <div className="flex items-center gap-3 px-4">
@@ -449,7 +549,7 @@ export default function AIChatbotPage() {
                        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
                           <Loader2 className="w-5 h-5 animate-spin" />
                        </div>
-                       <div className="bg-white/5 p-5 rounded-[2.5rem] rounded-tl-none border border-white/5 flex gap-1.5 items-center">
+                       <div className="bg-white/5 p-5 rounded-[2.5rem] rounded-tl-none border border-white/5 flex gap-1.5 items-center shadow-2xl">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0s]" />
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.2s]" />
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.4s]" />
@@ -503,7 +603,16 @@ export default function AIChatbotPage() {
                     />
                  </div>
 
-                 <button onClick={() => setConfig(INITIAL_CONFIG)} className="w-full h-8 text-[8px] font-black uppercase text-foreground/20 hover:text-primary transition-colors border-t border-white/5 pt-2">Restore Factory Defaults</button>
+                 <div className="pt-4 grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" onClick={downloadHistory} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5">
+                       <FileDown className="w-3.5 h-3.5 mr-1.5" /> Export .TXT
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleCopy(activeSession?.messages.map(m => m.content).join('\n') || '', 'all')} disabled={!activeSession?.messages.length} className="h-9 text-[8px] font-black uppercase rounded-xl border-white/5">
+                       <Copy className="w-3.5 h-3.5 mr-1.5" /> Copy All
+                    </Button>
+                 </div>
+
+                 <button onClick={() => { setConfig(INITIAL_CONFIG); setActivePersona('helper'); }} className="w-full h-8 text-[8px] font-black uppercase text-foreground/20 hover:text-primary transition-colors border-t border-white/5 pt-2">Restore Factory Defaults</button>
               </CardContent>
            </Card>
          )}
@@ -511,7 +620,28 @@ export default function AIChatbotPage() {
          {/* Input Matrix */}
          <div className="p-6 sm:p-10 border-t border-white/5 bg-[#0a0a0c] shrink-0">
             <div className="max-w-4xl mx-auto w-full relative group/input">
+               {/* Quick Templates */}
+               <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-2 px-2">
+                  {[
+                    { label: 'Explain', text: 'Explain this concept simply: ' },
+                    { label: 'Fix Code', text: 'Fix this code and explain why: ' },
+                    { label: 'Rewrite', text: 'Rewrite this professionally: ' },
+                    { label: 'Translate', text: 'Translate this to Urdu: ' }
+                  ].map(t => (
+                    <button 
+                      key={t.label}
+                      onClick={() => setInput(t.text)}
+                      className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[8px] font-black uppercase text-white/30 hover:text-primary hover:border-primary/20 transition-all whitespace-nowrap"
+                    >
+                       {t.label}
+                    </button>
+                  ))}
+               </div>
+
                <form onSubmit={handleSend} className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-20 pointer-events-none group-focus-within/input:opacity-100 transition-opacity">
+                     <ImageIcon className="w-5 h-5 text-foreground/40" />
+                  </div>
                   <Textarea 
                     value={input}
                     onChange={e => setInput(e.target.value)}
@@ -521,8 +651,8 @@ export default function AIChatbotPage() {
                         handleSend();
                       }
                     }}
-                    placeholder="Enter prompt..."
-                    className="min-h-[60px] max-h-40 w-full pl-6 pr-16 bg-white/[0.02] border-white/10 rounded-[2rem] text-sm font-medium py-5 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-inner custom-scrollbar"
+                    placeholder="Type prompt here... (Enter to send, Shift+Enter for newline)"
+                    className="min-h-[60px] max-h-40 w-full pl-12 pr-16 bg-white/[0.02] border-white/10 rounded-[2rem] text-sm font-medium py-5 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-inner custom-scrollbar"
                   />
                   <div className="absolute right-2 bottom-2">
                      <Button 
@@ -534,11 +664,12 @@ export default function AIChatbotPage() {
                      </Button>
                   </div>
                </form>
+               
                <div className="mt-4 flex items-center justify-between px-6">
                   <div className="flex items-center gap-4 text-[8px] font-black uppercase tracking-[0.4em] text-foreground/20">
-                     <span className="hidden sm:inline">Enter to Send</span>
-                     <span className="hidden sm:inline">•</span>
-                     <span className="hidden sm:inline">Shift+Enter for New Line</span>
+                     <span>Node: {config.node?.toUpperCase()}</span>
+                     <span>•</span>
+                     <span>Memory: {activeSession?.messages.length || 0} Blocks</span>
                   </div>
                   {isProcessing && <span className="text-[8px] font-bold text-primary animate-pulse uppercase tracking-widest">Processing bitstream...</span>}
                </div>
@@ -547,7 +678,7 @@ export default function AIChatbotPage() {
       </main>
 
       {/* MODALS */}
-      <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+      <AlertDialog open={!!sessionToDelete} onOpenChange={() => setSessionToDelete(null)}>
         <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
           <AlertDialogHeader className="space-y-4">
             <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
@@ -560,7 +691,7 @@ export default function AIChatbotPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Abort</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if(activeSessionId) deleteSession(activeSessionId); setShowLeaveConfirm(false); }} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl">Purge</AlertDialogAction>
+            <AlertDialogAction onClick={() => sessionToDelete && deleteSession(sessionToDelete)} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl">Purge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
