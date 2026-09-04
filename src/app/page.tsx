@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useLayoutEffect } from 'react';
 import Link from 'next/link';
 import { 
   QrCode, 
@@ -127,6 +127,7 @@ import { SpaceBackground } from '@/components/qr-canvas/space-background';
 import { Card, CardContent } from '@/components/ui/card';
 
 const VIEW_MODE_KEY = 'mykit_view_mode';
+const SCROLL_POS_KEY = 'mykit_home_scroll_v1';
 
 type ToolCategory = 'all' | 'pdf' | 'image' | 'generators' | 'utilities';
 
@@ -1238,7 +1239,7 @@ const TOOLS: Tool[] = [
     title: 'Volume Booster', 
     desc: 'Amplify audio levels safely entirely in your browser.', 
     label: 'BOOST', 
-    color: 'text-teal-600 bg-teal-500/10 border-teal-600/20',
+    color: 'text-teal-600 bg-teal-500/10 border-teal-500/20',
     glowClass: 'bg-blue-500/10',
     keywords: ['volume booster', 'louder audio', 'boost mp3', 'increase volume', 'audio gain', 'loud', 'mp3', 'wav'],
     category: 'utilities'
@@ -1400,14 +1401,15 @@ const PHRASES = [
   'Icon Studio', 'Social Icons', 'SVG PNG ICO', 'Username Forge', 'Identity generator', 'Hashtag Engine', 'Tags generator', 'HTML Site Rescue', 'Fix broken site',
   'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
   'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain'
-].sort(() => Math.random() - 0.5);
+];
 
-const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list' }) => {
+const ToolItem = React.memo(({ item, mode, onNavigate }: { item: Tool, mode: 'grid' | 'list', onNavigate: () => void }) => {
   const isGrid = mode === 'grid';
 
   return (
     <Link 
       href={item.href} 
+      onClick={onNavigate}
       className={cn(
         "group relative flex transition-all duration-300 min-w-0",
         isGrid ? "h-full w-full" : "w-full"
@@ -1479,6 +1481,43 @@ export default function Home() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [typingSpeed, setTypingSpeed] = useState(70);
   const [isFocused, setIsFocused] = useState(false);
+
+  // --- Scroll Restoration Matrix ---
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // 1. Disable browser's automatic jumpy restoration
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    // 2. Immediate restoration from local session matrix
+    const saved = sessionStorage.getItem(SCROLL_POS_KEY);
+    if (saved) {
+      window.scrollTo(0, parseInt(saved));
+    }
+
+    // 3. Throttled Position Capture
+    let timeout: NodeJS.Timeout;
+    const handleScroll = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        sessionStorage.setItem(SCROLL_POS_KEY, window.scrollY.toString());
+      }, 150); // Balanced for performance
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'auto';
+      }
+    };
+  }, []);
+
+  const handleToolNavigation = useCallback(() => {
+    sessionStorage.setItem(SCROLL_POS_KEY, window.scrollY.toString());
+  }, []);
 
   useEffect(() => {
     if (isFocused || searchQuery) {
@@ -1695,7 +1734,7 @@ export default function Home() {
             )}>
               {visibleTools.length > 0 ? (
                 visibleTools.map((item) => (
-                  <ToolItem key={item.href} item={item} mode={viewMode} />
+                  <ToolItem key={item.href} item={item} mode={viewMode} onNavigate={handleToolNavigation} />
                 ))
               ) : (
                 <EmptyState onReset={() => { setSearchQuery(''); setSelectedCategory('all'); setVisibleCount(9); }} />
