@@ -25,6 +25,7 @@ import {
   Trash2,
   Lock,
   Eye,
+  EyeOff,
   Camera,
   MoreHorizontal,
   ChevronRight,
@@ -187,7 +188,7 @@ interface FriendRequest {
   timestamp: any;
 }
 
-const ChatAvatar = ({ src, className }: { src?: string, className?: string }) => (
+const ChatAvatar = ({ src, className }: { src?: string | null, className?: string }) => (
   <div className={cn("relative shrink-0 overflow-hidden bg-secondary border border-white/5 flex items-center justify-center", className)}>
     {src ? (
       <img src={src} className="w-full h-full object-cover" alt="" />
@@ -228,36 +229,51 @@ export default function ChatAppPage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const peerUnsubs = useRef<Map<string, Unsubscribe>>(new Map());
   const lastTypingStatus = useRef<boolean>(false);
+  const lastPresenceUpdate = useRef<number>(0);
 
   // --- 1. Identity & Presence Logic ---
+  const updatePresence = useCallback(async (isOnline: boolean, force = false) => {
+    if (!db || !user) return;
+    const now = Date.now();
+    // Throttle presence updates to once every 2 minutes unless it's a critical state flip
+    if (!force && isOnline && now - lastPresenceUpdate.current < 120000) return;
+    
+    const userRef = doc(db, 'chat_users', user.uid);
+    try {
+      lastPresenceUpdate.current = now;
+      await updateDoc(userRef, { 
+        isOnline, 
+        lastSeen: serverTimestamp() 
+      });
+    } catch (e) {}
+  }, [db, user]);
+
   useEffect(() => {
     if (!db || !user) return;
     const userRef = doc(db, 'chat_users', user.uid);
+    let isMounted = true;
     
     const unsub = onSnapshot(userRef, (snap) => {
-      if (snap.exists()) {
+      if (snap.exists() && isMounted) {
         setProfile(snap.data() as ChatUser);
       }
     });
 
-    const updatePresence = (isOnline: boolean) => {
-      updateDoc(userRef, { isOnline, lastSeen: serverTimestamp() }).catch(() => {});
-    };
-
-    updatePresence(true);
+    updatePresence(true, true);
 
     const handleVisibility = () => {
-      if (!user || !db) return;
-      updatePresence(document.visibilityState === 'visible');
+      if (!isMounted) return;
+      updatePresence(document.visibilityState === 'visible', true);
     };
 
     window.addEventListener('visibilitychange', handleVisibility);
     return () => {
+      isMounted = false;
       window.removeEventListener('visibilitychange', handleVisibility);
-      if (user && db) updatePresence(false);
+      if (db && user) updatePresence(false, true);
       unsub();
     };
-  }, [db, user]);
+  }, [db, user, updatePresence]);
 
   const handleSetupProfile = async () => {
     if (!db || !user || !setupUsername.trim()) return;
@@ -741,7 +757,7 @@ export default function ChatAppPage() {
       <main className="flex-1 flex flex-col relative bg-[#060608] overflow-hidden">
          {activeChat ? (
            <>
-             <header className="h-20 border-b border-white/5 bg-black/40 backdrop-blur-2xl flex items-center justify-between px-6 shrink-0 z-10">
+             <header className="h-20 border-b border-white/5 bg-black/40 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-10">
                 <div className="flex items-center gap-4 min-w-0">
                    <button onClick={() => setActiveChatId(null)} className="lg:hidden p-2 text-white/40 hover:text-white"><ChevronLeft className="w-6 h-6" /></button>
                    <ChatAvatar src={activeChat.isGroup ? activeChat.groupAvatar : activeChat.peer?.photoURL} className="w-12 h-12 rounded-2xl" />
@@ -841,22 +857,22 @@ export default function ChatAppPage() {
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
          <DialogContent className="glass-card max-w-md p-0 rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90vh]">
-            <DialogHeader className="p-5 sm:p-6 border-b border-white/5 bg-secondary/30 relative shrink-0">
+            <DialogHeader className="p-4 sm:p-5 border-b border-white/5 bg-secondary/30 relative shrink-0">
                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-               <div className="flex flex-col items-center gap-4 relative z-10">
+               <div className="flex flex-col items-center gap-3 relative z-10">
                   <div className="relative group/avatar-edit">
-                    <ChatAvatar src={profile.photoURL} className={cn("w-24 h-24 rounded-[2rem] border-4 border-white/10 shadow-2xl transition-all", isUploadingAvatar && "opacity-50 blur-sm")} />
-                    <div className="absolute inset-0 bg-black/60 rounded-[2rem] opacity-0 group-hover/avatar-edit:opacity-100 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                       <CameraIcon className="w-6 h-6 text-white" />
-                       <span className="text-[8px] font-black uppercase text-white tracking-widest">Update DP</span>
+                    <ChatAvatar src={profile.photoURL} className={cn("w-20 h-20 rounded-[1.8rem] border-4 border-white/10 shadow-2xl transition-all", isUploadingAvatar && "opacity-50 blur-sm")} />
+                    <div className="absolute inset-0 bg-black/60 rounded-[1.8rem] opacity-0 group-hover/avatar-edit:opacity-100 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                       <CameraIcon className="w-5 h-5 text-white" />
+                       <span className="text-[7px] font-black uppercase text-white tracking-widest text-center px-2">Update DP</span>
                     </div>
-                    {isUploadingAvatar && <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-spin" />}
+                    {isUploadingAvatar && <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-primary animate-spin" />}
                   </div>
                   <input type="file" ref={avatarInputRef} accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                   
-                  <div className="text-center space-y-1">
-                    <DialogTitle className="text-2xl font-black uppercase tracking-tight">{profile.username}</DialogTitle>
-                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{profile.displayName}</p>
+                  <div className="text-center space-y-0.5">
+                    <DialogTitle className="text-xl font-black uppercase tracking-tight truncate max-w-[200px]">{profile.username}</DialogTitle>
+                    <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">{profile.displayName}</p>
                   </div>
                </div>
             </DialogHeader>
@@ -889,8 +905,8 @@ export default function ChatAppPage() {
                </div>
             </div>
 
-            <DialogFooter className="p-8 border-t border-white/5 bg-black/40 shrink-0">
-               <Button onClick={() => setShowLeaveConfirm(true)} variant="destructive" className="w-full h-14 rounded-2xl uppercase tracking-[0.3em] text-[10px] shadow-xl shadow-red-500/10">
+            <DialogFooter className="p-6 border-t border-white/5 bg-black/40 shrink-0">
+               <Button onClick={() => setShowLeaveConfirm(true)} variant="destructive" className="w-full h-12 rounded-2xl uppercase tracking-[0.3em] text-[10px] shadow-xl shadow-red-500/10">
                   <LogOut className="w-4 h-4 mr-2" /> Logout
                </Button>
             </DialogFooter>
@@ -933,7 +949,7 @@ export default function ChatAppPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLogout} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Sign Out</AlertDialogAction>
+            <AlertDialogAction onClick={handleLogout} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Logout</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -949,7 +965,7 @@ export default function ChatAppPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction handleRemoveAvatar={handleRemoveAvatar} className="h-12 flex-1 rounded-xl bg-red-500 text-white font-black uppercase text-[9px] shadow-xl shadow-red-500/20">Purge</AlertDialogAction>
+            <AlertDialogAction onClick={handleRemoveAvatar} className="h-12 flex-1 rounded-xl bg-red-500 text-white font-black uppercase text-[9px] shadow-xl shadow-red-500/20">Purge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
