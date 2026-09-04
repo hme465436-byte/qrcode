@@ -26,14 +26,13 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Camera,
+  Camera as CameraIcon,
   MoreHorizontal,
   ChevronRight,
   Archive,
   Star,
   Pin,
   PinOff,
-  Circle,
   Edit3,
   Phone,
   Video,
@@ -42,30 +41,13 @@ import {
   Reply,
   VolumeX,
   Volume2,
-  Ban,
-  UserMinus,
-  Bell,
-  BellOff,
-  UserCheck,
-  History,
-  CornerDownLeft,
-  ChevronLeft,
-  Copy,
-  Maximize2,
-  Play,
   Activity,
-  Forward,
-  FileText,
-  FileVideo,
-  FileArchive,
-  ChevronDown,
-  MoreHorizontal as MoreIcon,
-  Heart,
   Paperclip,
   Users,
-  CameraIcon,
   Eraser,
-  Upload as UploadIcon
+  Upload as UploadIcon,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -223,6 +205,7 @@ export default function ChatAppPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isCopied, setIsCopied] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -233,10 +216,14 @@ export default function ChatAppPage() {
 
   // --- 1. Identity & Presence Logic ---
   const updatePresence = useCallback(async (isOnline: boolean, force = false) => {
-    if (!db || !user) return;
+    if (!db || !user?.uid) return;
     const now = Date.now();
-    // Throttle presence updates to once every 2 minutes unless it's a critical state flip
-    if (!force && isOnline && now - lastPresenceUpdate.current < 120000) return;
+    
+    // Throttled: Update Online pulse at most once every 2 minutes
+    const throttleTime = 120000;
+    const shouldUpdate = force || !isOnline || (now - lastPresenceUpdate.current > throttleTime);
+    
+    if (!shouldUpdate) return;
     
     const userRef = doc(db, 'chat_users', user.uid);
     try {
@@ -246,10 +233,10 @@ export default function ChatAppPage() {
         lastSeen: serverTimestamp() 
       });
     } catch (e) {}
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   useEffect(() => {
-    if (!db || !user) return;
+    if (!db || !user?.uid) return;
     const userRef = doc(db, 'chat_users', user.uid);
     let isMounted = true;
     
@@ -259,7 +246,7 @@ export default function ChatAppPage() {
       }
     });
 
-    updatePresence(true, true);
+    updatePresence(true);
 
     const handleVisibility = () => {
       if (!isMounted) return;
@@ -273,7 +260,7 @@ export default function ChatAppPage() {
       if (db && user) updatePresence(false, true);
       unsub();
     };
-  }, [db, user, updatePresence]);
+  }, [db, user?.uid, updatePresence]);
 
   const handleSetupProfile = async () => {
     if (!db || !user || !setupUsername.trim()) return;
@@ -284,7 +271,7 @@ export default function ChatAppPage() {
       const q = query(collection(db, 'chat_users'), where('username_lowercase', '==', cleanUsername));
       const snap = await getDocs(q);
       if (!snap.empty) {
-        toast({ variant: "destructive", title: "Identity Conflict", description: "Username is already occupied in the matrix." });
+        toast({ variant: "destructive", title: "Identity Conflict", description: "Username is already occupied." });
         setIsSettingUp(false);
         return;
       }
@@ -302,7 +289,7 @@ export default function ChatAppPage() {
       };
 
       await setDoc(doc(db, 'chat_users', user.uid), payload);
-      toast({ title: "Signal Established", description: "Your chat identity is now live." });
+      toast({ title: "Profile Linked" });
     } catch (e) {
       toast({ variant: "destructive", title: "Setup Error" });
     } finally {
@@ -323,16 +310,14 @@ export default function ChatAppPage() {
       });
 
       const res = await uploadAvatarAction(base64);
-      
       if (res.success && res.url) {
-        const userRef = doc(db, 'chat_users', user.uid);
-        await updateDoc(userRef, { photoURL: res.url });
-        toast({ title: "Identity Scaled", description: "Profile photo updated via ImgBB node." });
+        await updateDoc(doc(db, 'chat_users', user.uid), { photoURL: res.url });
+        toast({ title: "DP Updated" });
       } else {
-        throw new Error(res.error || "Handshake failed");
+        throw new Error(res.error);
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Uplink Failed", description: err.message });
+      toast({ variant: "destructive", title: "Upload Failed", description: err.message });
     } finally {
       setIsUploadingAvatar(false);
       if (e.target) e.target.value = '';
@@ -343,11 +328,10 @@ export default function ChatAppPage() {
     if (!user || !db) return;
     setIsUploadingAvatar(true);
     try {
-      const userRef = doc(db, 'chat_users', user.uid);
-      await updateDoc(userRef, { photoURL: null });
-      toast({ title: "Identity Sanitized", description: "Profile photo purged from matrix." });
+      await updateDoc(doc(db, 'chat_users', user.uid), { photoURL: null });
+      toast({ title: "DP Removed" });
     } catch (err) {
-      toast({ variant: "destructive", title: "Protocol Failed" });
+      toast({ variant: "destructive", title: "Action Failed" });
     } finally {
       setIsUploadingAvatar(false);
       setShowRemoveAvatarConfirm(false);
@@ -356,15 +340,15 @@ export default function ChatAppPage() {
 
   // --- 2. Data Stream Matrix ---
   const chatsQuery = useMemo(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return query(collection(db, 'chats'), where('participants', 'array-contains', user.uid));
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: rawChats, loading: chatsLoading } = useCollection<Chat>(chatsQuery);
   const [chatPeers, setChatPeers] = useState<Record<string, ChatUser>>({});
 
   useEffect(() => {
-    if (!db || !rawChats || !user) return;
+    if (!db || !rawChats || !user?.uid) return;
     
     const activePeerIds = new Set<string>();
     rawChats.forEach(chat => {
@@ -395,10 +379,10 @@ export default function ChatAppPage() {
       peerUnsubs.current.forEach(u => u());
       peerUnsubs.current.clear();
     };
-  }, [db, rawChats, user]);
+  }, [db, rawChats, user?.uid]);
 
   const chats = useMemo(() => {
-    if (!rawChats || !user) return [];
+    if (!rawChats || !user?.uid) return [];
     return rawChats
       .filter(c => !profile?.archivedChats?.includes(c.id))
       .map(c => ({
@@ -412,12 +396,12 @@ export default function ChatAppPage() {
         if (!aPinned && bPinned) return 1;
         return (b.lastMessage?.timestamp?.toMillis?.() || 0) - (a.lastMessage?.timestamp?.toMillis?.() || 0);
       });
-  }, [rawChats, chatPeers, user, profile?.archivedChats]);
+  }, [rawChats, chatPeers, user?.uid, profile?.archivedChats]);
 
   const unreadCount = useMemo(() => {
-    if (!chats || !user) return 0;
+    if (!chats || !user?.uid) return 0;
     return chats.reduce((acc, chat) => acc + (chat.unreadCount?.[user.uid] || 0), 0);
-  }, [chats, user]);
+  }, [chats, user?.uid]);
 
   const activeChat = useMemo(() => chats.find(c => c.id === activeChatId), [chats, activeChatId]);
 
@@ -428,14 +412,14 @@ export default function ChatAppPage() {
   
   const { data: rawMessages } = useCollection<Message>(messagesQuery);
   const messages = useMemo(() => {
-    if (!rawMessages || !user) return [];
+    if (!rawMessages || !user?.uid) return [];
     return rawMessages.filter(m => !m.deletedFor?.includes(user.uid));
-  }, [rawMessages, user]);
+  }, [rawMessages, user?.uid]);
 
   const requestsQuery = useMemo(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return query(collection(db, 'friend_requests'), where('to', '==', user.uid), where('status', '==', 'pending'));
-  }, [db, user]);
+  }, [db, user?.uid]);
   const { data: incomingRequests } = useCollection<FriendRequest>(requestsQuery);
 
   // --- 3. Communication Protocols ---
@@ -474,7 +458,7 @@ export default function ChatAppPage() {
       setMessageInput('');
       setReplyingTo(null);
     } catch (e) {
-      toast({ variant: "destructive", title: "Signal Lost" });
+      toast({ variant: "destructive", title: "Transmission Failed" });
     }
   };
 
@@ -493,7 +477,7 @@ export default function ChatAppPage() {
         await handleSendMessage({ imageUrl: res.url });
       }
     } catch (err) {
-      toast({ variant: "destructive", title: "Transmission Failed" });
+      toast({ variant: "destructive", title: "Upload Failed" });
     } finally {
       setIsUploading(false);
     }
@@ -501,7 +485,7 @@ export default function ChatAppPage() {
 
   const handleChatInputChange = (val: string) => {
     setMessageInput(val);
-    if (!db || !activeChatId || !user) return;
+    if (!db || !activeChatId || !user?.uid) return;
     
     const isTyping = val.length > 0;
     if (isTyping !== lastTypingStatus.current) {
@@ -511,65 +495,19 @@ export default function ChatAppPage() {
   };
 
   const handlePinChat = (id: string, isPinned: boolean) => {
-    if (!db || !user) return;
+    if (!db || !user?.uid) return;
     updateDoc(doc(db, 'chats', id), {
       pinnedBy: isPinned ? arrayRemove(user.uid) : arrayUnion(user.uid)
     });
   };
 
   const handleArchiveChat = (id: string) => {
-    if (!db || !user) return;
+    if (!db || !user?.uid) return;
     updateDoc(doc(db, 'chat_users', user.uid), {
       archivedChats: arrayUnion(id)
     });
     setActiveChatId(null);
-    toast({ title: "Stream Archived" });
-  };
-
-  const searchUsers = async () => {
-    if (!db || !searchQuery.trim()) return;
-    setIsSearching(true);
-    try {
-      const q = query(
-        collection(db, 'chat_users'), 
-        where('username_lowercase', '>=', searchQuery.toLowerCase()), 
-        where('username_lowercase', '<=', searchQuery.toLowerCase() + '\uf8ff'),
-        limit(5)
-      );
-      const snap = await getDocs(q);
-      setUserSearchResults(snap.docs.map(d => d.data() as ChatUser).filter(u => u.uid !== user?.uid));
-    } catch (e) {
-      toast({ variant: "destructive", title: "Search Error" });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const acceptRequest = async (req: FriendRequest) => {
-    if (!db || !user) return;
-    try {
-      const chatId = user.uid < req.from ? `${user.uid}_${req.from}` : `${req.from}_${user.uid}`;
-      await setDoc(doc(db, 'chats', chatId), {
-        id: chatId,
-        participants: [user.uid, req.from],
-        timestamp: serverTimestamp(),
-        lastMessage: { text: "Protocol Linked.", senderId: 'system', timestamp: serverTimestamp() },
-        unreadCount: { [user.uid]: 0, [req.from]: 0 },
-        pinnedBy: [],
-        mutedBy: []
-      });
-      await deleteDoc(doc(db, 'friend_requests', req.id));
-      toast({ title: "Linked" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Sync Failure" });
-    }
-  };
-
-  const handleLogout = async () => {
-    if (auth) {
-      await signOut(auth);
-      router.push('/');
-    }
+    toast({ title: "Chat Archived" });
   };
 
   const handleCopyText = (text: string, label: string) => {
@@ -580,20 +518,17 @@ export default function ChatAppPage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/');
+    }
+  };
+
   const formatTime = (ts: any) => {
     if (!ts) return '';
     const date = ts.toDate ? ts.toDate() : new Date(ts);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getMessageDateLabel = (ts: any) => {
-    if (!ts) return '';
-    const date = ts.toDate ? ts.toDate() : new Date(ts);
-    const today = new Date();
-    if (date.toDateString() === today.toDateString()) return 'TODAY';
-    const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) return 'YESTERDAY';
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   if (authLoading) return <div className="h-screen flex items-center justify-center bg-[#0a0a0c]"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
@@ -640,12 +575,7 @@ export default function ChatAppPage() {
       )}>
         <header className="h-20 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/40">
            <div className="flex items-center gap-4 cursor-pointer" onClick={() => setShowSettings(true)}>
-              <div className="relative group/nav-avatar">
-                <ChatAvatar src={profile.photoURL} className="w-12 h-12 rounded-2xl shadow-lg" />
-                <div className="absolute inset-0 bg-primary/20 rounded-2xl opacity-0 group-hover/nav-avatar:opacity-100 transition-opacity flex items-center justify-center">
-                   <Settings2 className="w-5 h-5 text-white" />
-                </div>
-              </div>
+              <ChatAvatar src={profile.photoURL} className="w-12 h-12 rounded-2xl shadow-lg" />
               <div className="min-w-0">
                  <h2 className="text-sm font-black text-white uppercase tracking-widest truncate">{profile.username}</h2>
                  <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Linked</p>
@@ -777,49 +707,32 @@ export default function ChatAppPage() {
                          <DropdownMenuItem onClick={() => handlePinChat(activeChat.id, activeChat.pinnedBy?.includes(user.uid) || false)} className="text-[9px] font-black uppercase"><Pin className="w-3.5 h-3.5 mr-2" /> Pin</DropdownMenuItem>
                          <DropdownMenuItem onClick={() => handleArchiveChat(activeChat.id)} className="text-[9px] font-black uppercase"><Archive className="w-3.5 h-3.5 mr-2" /> Archive</DropdownMenuItem>
                          <DropdownMenuSeparator className="bg-white/5" />
-                         <DropdownMenuItem onClick={() => { setActiveChatId(null); toast({title: "Stream Decoupled"}); }} className="text-[9px] font-black uppercase text-red-500"><X className="w-3.5 h-3.5 mr-2" /> Close Chat</DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => setActiveChatId(null)} className="text-[9px] font-black uppercase text-red-500"><X className="w-3.5 h-3.5 mr-2" /> Close Chat</DropdownMenuItem>
                       </DropdownMenuContent>
                    </DropdownMenu>
                 </div>
              </header>
 
-             <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-[#060608]">
-                {messages.map((msg, i) => {
+             <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-[#060608]">
+                {messages.map((msg) => {
                   const isMe = msg.senderId === user.uid;
-                  const showDate = i === 0 || getMessageDateLabel(msg.timestamp) !== getMessageDateLabel(messages[i-1].timestamp);
                   return (
-                    <React.Fragment key={msg.id}>
-                       {showDate && (
-                         <div className="flex justify-center my-8">
-                            <Badge variant="outline" className="bg-white/5 text-[8px] font-black uppercase tracking-[0.3em] border-white/10 px-4 py-1 rounded-full text-foreground/40">{getMessageDateLabel(msg.timestamp)}</Badge>
-                         </div>
-                       )}
-                       <div className={cn("flex flex-col gap-1.5", isMe ? "ml-auto items-end" : "mr-auto items-start animate-in slide-in-from-left-2")}>
-                          <div className={cn("p-4 rounded-3xl shadow-xl relative group/msg transition-all border", isMe ? "bg-primary text-white rounded-tr-none border-primary/20" : "bg-secondary text-foreground rounded-tl-none border-white/5")}>
-                             {msg.replyTo && (
-                               <div className="mb-3 p-2 rounded-xl bg-black/20 border-l-4 border-white/40 text-[10px] opacity-70"><p className="font-black uppercase text-[8px] mb-1">{msg.replyTo.sender}</p><p className="truncate line-clamp-1">{msg.replyTo.text}</p></div>
-                             )}
-                             {msg.imageUrl && <div onClick={() => setShowMediaPreview({url: msg.imageUrl!, type: 'image'})} className="cursor-zoom-in mb-2"><img src={msg.imageUrl} className="max-h-[350px] w-auto rounded-2xl border border-white/10" alt="" /></div>}
-                             {msg.text && <p className="text-[14px] font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
-                             <div className={cn("flex items-center gap-2 mt-2", isMe ? "justify-end text-white/40" : "justify-start text-foreground/20")}>
-                                <span className="text-[8px] font-black uppercase">{formatTime(msg.timestamp)}</span>
-                                {isMe && (msg.status === 'seen' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Check className="w-3.5 h-3.5" />)}
-                             </div>
+                    <div key={msg.id} className={cn("flex flex-col gap-1.5", isMe ? "ml-auto items-end" : "mr-auto items-start animate-in slide-in-from-left-2")}>
+                       <div className={cn("p-4 rounded-3xl shadow-xl relative group/msg transition-all border", isMe ? "bg-primary text-white rounded-tr-none border-primary/20" : "bg-secondary text-foreground rounded-tl-none border-white/5")}>
+                          {msg.imageUrl && <div onClick={() => setShowMediaPreview({url: msg.imageUrl!, type: 'image'})} className="cursor-zoom-in mb-2"><img src={msg.imageUrl} className="max-h-[350px] w-auto rounded-2xl border border-white/10" alt="" /></div>}
+                          {msg.text && <p className="text-[14px] font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
+                          <div className={cn("flex items-center gap-2 mt-2", isMe ? "justify-end text-white/40" : "justify-start text-foreground/20")}>
+                             <span className="text-[8px] font-black uppercase">{formatTime(msg.timestamp)}</span>
+                             {isMe && (msg.status === 'seen' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Check className="w-3.5 h-3.5" />)}
                           </div>
                        </div>
-                    </React.Fragment>
+                    </div>
                   );
                 })}
              </div>
 
              <footer className="p-4 sm:p-6 bg-[#0a0a0c] border-t border-white/5 shrink-0 z-20">
                 <div className="max-w-4xl mx-auto space-y-4">
-                   {replyingTo && (
-                     <div className="bg-primary/5 border border-primary/20 p-3 rounded-2xl flex items-center justify-between animate-in slide-in-from-bottom-2">
-                        <div className="flex items-center gap-3 min-w-0"><Reply className="w-4 h-4 text-primary" /><div className="min-w-0"><p className="text-[8px] font-black text-primary uppercase">Replying to {replyingTo.senderName}</p><p className="text-[11px] text-foreground/60 truncate">{replyingTo.text || 'Media'}</p></div></div>
-                        <button onClick={() => setReplyingTo(null)} className="p-1.5 text-foreground/20 hover:text-primary"><X className="w-4 h-4" /></button>
-                     </div>
-                   )}
                    <div className="flex items-end gap-3 relative">
                       <div className="flex gap-1.5 mb-1.5">
                          <button className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-foreground/40 hover:text-primary transition-all"><Smile className="w-5 h-5" /></button>
@@ -945,7 +858,7 @@ export default function ChatAppPage() {
                <LogOut className="w-8 h-8" />
             </div>
             <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Terminate Session</AlertDialogTitle>
-            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">Are you sure you want to log out? Your identity will be preserved in the matrix but you will be disconnected from active streams.</AlertDialogDescription>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">Are you sure you want to log out? Your identity will be preserved but you will be disconnected from active streams.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
@@ -961,7 +874,7 @@ export default function ChatAppPage() {
                <Trash2 className="w-8 h-8" />
             </div>
             <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Remove Photo</AlertDialogTitle>
-            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">This will definitively purge your custom profile photo from the identity matrix. The circle will remain plain.</AlertDialogDescription>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">This will definitively purge your custom profile photo from the identity matrix.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { useAuth } from '../provider';
 
@@ -8,8 +8,7 @@ import { useAuth } from '../provider';
  * User Identity Hook
  * Tracks the current authentication matrix of the hardware session.
  * 
- * Added safety guard to prevent initialization errors if the 
- * auth instance is null (e.g., missing configuration).
+ * Memoized return prevents downstream effect loops in complex app views.
  */
 export function useUser() {
   const auth = useAuth();
@@ -28,5 +27,5 @@ export function useUser() {
     });
   }, [auth]);
 
-  return { user, loading };
+  return useMemo(() => ({ user, loading }), [user, loading]);
 }
