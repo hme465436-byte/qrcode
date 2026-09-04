@@ -43,6 +43,18 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection } from '@/firebase';
@@ -61,6 +73,12 @@ interface Session {
 }
 
 const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v2';
+const INITIAL_CONFIG: ChatConfig = {
+  node: 'auto',
+  temperature: 0.7,
+  systemPrompt: 'You are a professional AI assistant in the MY KIT TOOL digital studio. Your tone is helpful, concise, and technically accurate.',
+  maxTokens: 1024
+};
 
 export default function AIChatbotPage() {
   const { toast } = useToast();
@@ -74,14 +92,10 @@ export default function AIChatbotPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   
   // Config State
-  const [config, setConfig] = useState<ChatConfig>({
-    node: 'auto',
-    temperature: 0.7,
-    systemPrompt: 'You are a professional AI assistant in the MY KIT TOOL digital studio. Your tone is helpful, concise, and technically accurate.',
-    maxTokens: 1024
-  });
+  const [config, setConfig] = useState<ChatConfig>(INITIAL_CONFIG);
 
   // UI Meta
   const [isCopied, setIsCopied] = useState<string | null>(null);
@@ -119,7 +133,6 @@ export default function AIChatbotPage() {
   useEffect(() => {
     if (cloudSessions && cloudSessions.length > 0) {
       // Logic to merge cloud sessions into local state would go here for a production app
-      // For this MVP, we prioritize local state for zero-latency, then cloud for persistence
     }
   }, [cloudSessions]);
 
@@ -153,7 +166,7 @@ export default function AIChatbotPage() {
     };
     setSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newId);
-    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) setIsSidebarOpen(false);
   };
 
   const saveToCloud = (sessionId: string, session: Session) => {
@@ -230,10 +243,6 @@ export default function AIChatbotPage() {
     toast({ title: "Session Purged" });
   };
 
-  const renameSession = (id: string, newTitle: string) => {
-    setSessions(prev => prev.map(s => s.id === id ? { ...s, title: newTitle } : s));
-  };
-
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(id);
@@ -269,7 +278,7 @@ export default function AIChatbotPage() {
              sessions.map(s => (
                <div key={s.id} className="group relative">
                   <button
-                    onClick={() => { setActiveSessionId(s.id); if(window.innerWidth < 1024) setIsSidebarOpen(false); }}
+                    onClick={() => { setActiveSessionId(s.id); if(typeof window !== 'undefined' && window.innerWidth < 1024) setIsSidebarOpen(false); }}
                     className={cn(
                       "w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all border border-transparent",
                       activeSessionId === s.id ? "bg-primary/10 border-primary/20 text-primary shadow-inner" : "text-foreground/40 hover:bg-white/5"
@@ -447,7 +456,7 @@ export default function AIChatbotPage() {
                     />
                  </div>
 
-                 <Button onClick={() => setConfig(INITIAL_STATE)} variant="ghost" className="w-full h-8 text-[8px] font-black uppercase text-foreground/20 hover:text-primary">Reset to Factory</Button>
+                 <Button onClick={() => setConfig(INITIAL_CONFIG)} variant="ghost" className="w-full h-8 text-[8px] font-black uppercase text-foreground/20 hover:text-primary">Reset to Factory</Button>
               </CardContent>
            </Card>
          )}
