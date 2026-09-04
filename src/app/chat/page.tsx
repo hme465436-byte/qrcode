@@ -45,9 +45,10 @@ import {
   Paperclip,
   Users,
   Eraser,
-  Upload as UploadIcon,
+  Upload,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  ChevronLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -518,6 +519,52 @@ export default function ChatAppPage() {
     setTimeout(() => setIsCopied(null), 2000);
   };
 
+  const searchUsers = async () => {
+    if (!searchQuery.trim() || !db) return;
+    setIsSearching(true);
+    try {
+      const q = query(
+        collection(db, 'chat_users'), 
+        where('username_lowercase', '>=', searchQuery.toLowerCase()),
+        where('username_lowercase', '<=', searchQuery.toLowerCase() + '\uf8ff'),
+        limit(10)
+      );
+      const snap = await getDocs(q);
+      const users = snap.docs
+        .map(d => d.data() as ChatUser)
+        .filter(u => u.uid !== user?.uid);
+      setUserSearchResults(users);
+      if (users.length === 0) toast({ title: "Zero Signal", description: "No users identified." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Search Failed" });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const acceptRequest = async (req: FriendRequest) => {
+    if (!db || !user) return;
+    const batch = writeBatch(db);
+    
+    const chatRef = doc(collection(db, 'chats'));
+    batch.set(chatRef, {
+      id: chatRef.id,
+      participants: [req.from, req.to],
+      createdAt: serverTimestamp(),
+      unreadCount: { [req.from]: 0, [req.to]: 0 }
+    });
+
+    batch.delete(doc(db, 'friend_requests', req.id));
+
+    try {
+      await batch.commit();
+      toast({ title: "Uplink Established", description: "Chat room synthesized." });
+      setActiveChatId(chatRef.id);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Protocol Error" });
+    }
+  };
+
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
@@ -798,7 +845,7 @@ export default function ChatAppPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-3 pt-2">
                      <Button variant="outline" onClick={() => avatarInputRef.current?.click()} className="h-11 rounded-xl bg-white/5 border-white/10 text-[9px] font-black uppercase">
-                        <UploadIcon className="w-3.5 h-3.5 mr-2" /> Upload DP
+                        <Upload className="w-3.5 h-3.5 mr-2" /> Upload DP
                      </Button>
                      <Button variant="outline" onClick={() => setShowRemoveAvatarConfirm(true)} className="h-11 rounded-xl bg-white/5 border-white/10 text-red-500/60 hover:text-red-500 text-[9px] font-black uppercase">
                         <Eraser className="w-3.5 h-3.5 mr-2" /> Remove
