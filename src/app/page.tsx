@@ -128,7 +128,6 @@ import { SpaceBackground } from '@/components/qr-canvas/space-background';
 import { Card, CardContent } from '@/components/ui/card';
 
 const VIEW_MODE_KEY = 'mykit_view_mode';
-const SESSION_SCROLL_KEY = 'mykit_home_scroll';
 const SESSION_COUNT_KEY = 'mykit_home_count';
 const SESSION_CAT_KEY = 'mykit_home_cat';
 const SESSION_SEARCH_KEY = 'mykit_home_search';
@@ -1385,9 +1384,6 @@ const ToolItem = React.memo(({ item, mode }: { item: Tool, mode: 'grid' | 'list'
   return (
     <Link 
       href={item.href} 
-      onClick={() => {
-        sessionStorage.setItem(SESSION_SCROLL_KEY, window.scrollY.toString());
-      }}
       className={cn(
         "group relative flex transition-all duration-300 min-w-0",
         isGrid ? "h-full w-full" : "w-full"
@@ -1496,17 +1492,10 @@ export default function Home() {
     const savedCount = sessionStorage.getItem(SESSION_COUNT_KEY);
     const savedCat = sessionStorage.getItem(SESSION_CAT_KEY);
     const savedSearch = sessionStorage.getItem(SESSION_SEARCH_KEY);
-    const savedScroll = sessionStorage.getItem(SESSION_SCROLL_KEY);
 
     if (savedCount) setVisibleCount(parseInt(savedCount));
     if (savedCat) setSelectedCategory(savedCat as ToolCategory);
     if (savedSearch) setSearchQuery(savedSearch);
-
-    if (savedScroll) {
-      setTimeout(() => {
-        window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
-      }, 50);
-    }
   }, []);
 
   useEffect(() => {
