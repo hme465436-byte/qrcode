@@ -98,11 +98,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useUser, useFirestore, useCollection, useStorage, useAuth } from '@/firebase';
+import { useUser, useFirestore, useCollection, useAuth } from '@/firebase';
 import { 
   doc, 
   setDoc, 
-  getDoc, 
   collection, 
   query, 
   where, 
@@ -119,11 +118,11 @@ import {
   arrayRemove,
   increment
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
+import { uploadAvatarAction } from './actions';
 
 // --- Types ---
 interface ChatUser {
@@ -191,10 +190,23 @@ interface FriendRequest {
   timestamp: any;
 }
 
+/**
+ * Standardized Chat Avatar Component
+ * Handles the "empty" state requested for removed DPs
+ */
+const ChatAvatar = ({ src, className }: { src?: string, className?: string }) => (
+  <div className={cn("relative shrink-0 overflow-hidden bg-secondary border border-white/5 flex items-center justify-center", className)}>
+    {src ? (
+      <img src={src} className="w-full h-full object-cover" alt="" />
+    ) : (
+      <div className="w-full h-full bg-secondary" />
+    )}
+  </div>
+);
+
 export default function ChatAppPage() {
   const { toast } = useToast();
   const db = useFirestore();
-  const storage = useStorage();
   const auth = useAuth();
   const { user, loading: authLoading } = useUser();
   const router = useRouter();
@@ -279,8 +291,6 @@ export default function ChatAppPage() {
         username: setupUsername.trim(),
         username_lowercase: cleanUsername,
         displayName: user.displayName || setupUsername.trim(),
-        photoURL: `https://picsum.photos/seed/${user.uid}/300/300`,
-        about: "Identity active in My Kit Tool.",
         isOnline: true,
         lastSeen: serverTimestamp(),
         blockedUsers: [],
@@ -297,37 +307,51 @@ export default function ChatAppPage() {
     }
   };
 
+  /**
+   * ImgBB Avatar Upload Protocol
+   * Bypasses Firebase Storage for visual hosting
+   */
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !storage || !user || !db) return;
+    if (!file || !user || !db) return;
 
     setIsUploadingAvatar(true);
     try {
-      const storageRef = ref(storage, `chat-profiles/${user.uid}/avatar`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      const res = await uploadAvatarAction(base64);
       
-      const userRef = doc(db, 'chat_users', user.uid);
-      await updateDoc(userRef, { photoURL: url });
-      
-      toast({ title: "Identity Scaled", description: "Profile photo updated successfully." });
-    } catch (err) {
-      toast({ variant: "destructive", title: "Uplink Failed", description: "Failed to transmit visual data." });
+      if (res.success && res.url) {
+        const userRef = doc(db, 'chat_users', user.uid);
+        await updateDoc(userRef, { photoURL: res.url });
+        toast({ title: "Identity Scaled", description: "Profile photo updated via ImgBB node." });
+      } else {
+        throw new Error(res.error || "Handshake failed");
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Uplink Failed", description: err.message });
     } finally {
       setIsUploadingAvatar(false);
       if (e.target) e.target.value = '';
     }
   };
 
+  /**
+   * Remove Avatar Protocol
+   * Definitively purges the link to leave the circle empty
+   */
   const handleRemoveAvatar = async () => {
     if (!user || !db) return;
     setIsUploadingAvatar(true);
     try {
       const userRef = doc(db, 'chat_users', user.uid);
-      // Fallback to default Picsum avatar
-      const defaultUrl = `https://picsum.photos/seed/${user.uid}/300/300`;
-      await updateDoc(userRef, { photoURL: defaultUrl });
-      toast({ title: "Identity Sanitized", description: "Profile photo restored to default." });
+      // Neutralize field to leave circle empty/plain as requested
+      await updateDoc(userRef, { photoURL: null });
+      toast({ title: "Identity Sanitized", description: "Profile photo purged from matrix." });
     } catch (err) {
       toast({ variant: "destructive", title: "Protocol Failed" });
     } finally {
@@ -443,17 +467,25 @@ export default function ChatAppPage() {
 
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video' | 'file') => {
     const file = e.target.files?.[0];
-    if (!file || !storage || !activeChatId) return;
+    if (!file || !activeChatId) return;
     setIsUploading(true);
     toast({ title: "Transmitting Matrix..." });
     try {
-      const sRef = ref(storage, `chat-media/${activeChatId}/${Date.now()}_${file.name}`);
-      await uploadBytes(sRef, file);
-      const url = await getDownloadURL(sRef);
-      
-      if (type === 'image') await handleSendMessage({ imageUrl: url });
-      else if (type === 'video') await handleSendMessage({ videoUrl: url });
-      else await handleSendMessage({ fileUrl: url, fileName: file.name, fileSize: file.size });
+       // Using ImgBB for images as it's now preferred in the studio
+       if (type === 'image') {
+          const reader = new FileReader();
+          const base64 = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          const res = await uploadAvatarAction(base64);
+          if (res.success && res.url) {
+            await handleSendMessage({ imageUrl: res.url });
+          }
+       } else {
+          // Video/Files still require a direct link (Placeholder for direct binary send)
+          toast({ title: "Asset Node Restricted", description: "Use ImgBB for images only." });
+       }
     } catch (err) {
       toast({ variant: "destructive", title: "Transmission Failed" });
     } finally {
@@ -474,10 +506,8 @@ export default function ChatAppPage() {
         if (audioBlob.size < 1000) return; 
         
         setIsUploading(true);
-        const sRef = ref(storage!, `chat-media/${activeChatId}/${Date.now()}_voice.webm`);
-        await uploadBytes(sRef, audioBlob);
-        const url = await getDownloadURL(sRef);
-        await handleSendMessage({ voiceUrl: url });
+        // Placeholder for voice note hosting
+        toast({ title: "Acoustic Stream Blocked", description: "Voice hosting not yet available on ImgBB node." });
         setIsUploading(false);
       };
 
@@ -635,7 +665,7 @@ export default function ChatAppPage() {
         <header className="h-20 border-b border-white/5 flex items-center justify-between px-6 shrink-0 bg-black/40">
            <div className="flex items-center gap-4 cursor-pointer" onClick={() => setShowSettings(true)}>
               <div className="relative group/nav-avatar">
-                <img src={profile.photoURL} className="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-lg" alt="" />
+                <ChatAvatar src={profile.photoURL} className="w-12 h-12 rounded-2xl shadow-lg" />
                 <div className="absolute inset-0 bg-primary/20 rounded-2xl opacity-0 group-hover/nav-avatar:opacity-100 transition-opacity flex items-center justify-center">
                    <Settings2 className="w-5 h-5 text-white" />
                 </div>
@@ -688,7 +718,7 @@ export default function ChatAppPage() {
                ) : chats.map(chat => (
                  <button key={chat.id} onClick={() => { setActiveChatId(chat.id); if (chat.unreadCount?.[user.uid]) updateDoc(doc(db!, 'chats', chat.id), { [`unreadCount.${user.uid}`]: 0 }); }} className={cn("w-full p-4 rounded-[2rem] flex items-center gap-4 transition-all group relative", activeChatId === chat.id ? "bg-primary/10 border border-primary/20 shadow-inner" : "hover:bg-white/5 border border-transparent")}>
                     <div className="relative shrink-0">
-                       <img src={chat.isGroup ? chat.groupAvatar || 'https://picsum.photos/seed/group/200/200' : chat.peer?.photoURL} className="w-14 h-14 rounded-2xl object-cover border border-white/10" alt="" />
+                       <ChatAvatar src={chat.isGroup ? chat.groupAvatar : chat.peer?.photoURL} className="w-14 h-14 rounded-2xl shadow-md" />
                        {!chat.isGroup && chat.peer?.isOnline && <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-[3px] border-[#0d0d0f]" />}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
@@ -728,7 +758,7 @@ export default function ChatAppPage() {
                  {chats.filter(c => !c.isGroup).map(chat => (
                    <div key={chat.id} className="flex items-center justify-between p-4 rounded-3xl bg-white/5 border border-white/5 hover:border-primary/20 transition-all group">
                       <div className="flex items-center gap-4 min-w-0">
-                         <img src={chat.peer?.photoURL} className="w-10 h-10 rounded-xl object-cover border border-white/10" alt="" />
+                         <ChatAvatar src={chat.peer?.photoURL} className="w-10 h-10 rounded-xl" />
                          <div className="min-w-0">
                             <p className="text-[11px] font-bold text-white truncate uppercase">{chat.peer?.username}</p>
                             <p className="text-[9px] text-foreground/30 truncate uppercase">{chat.peer?.about}</p>
@@ -772,7 +802,7 @@ export default function ChatAppPage() {
              <header className="h-20 border-b border-white/5 bg-black/40 backdrop-blur-2xl flex items-center justify-between px-6 shrink-0 z-10">
                 <div className="flex items-center gap-4 min-w-0">
                    <button onClick={() => setActiveChatId(null)} className="lg:hidden p-2 text-white/40 hover:text-white"><ChevronLeft className="w-6 h-6" /></button>
-                   <img src={activeChat.isGroup ? activeChat.groupAvatar || 'https://picsum.photos/seed/group/200/200' : activeChat.peer?.photoURL} className="w-12 h-12 rounded-2xl object-cover border border-white/10" alt="" />
+                   <ChatAvatar src={activeChat.isGroup ? activeChat.groupAvatar : activeChat.peer?.photoURL} className="w-12 h-12 rounded-2xl" />
                    <div className="min-w-0">
                       <h2 className="text-base font-black text-white uppercase tracking-tight truncate">{activeChat.isGroup ? activeChat.groupName : activeChat.peer?.username}</h2>
                       <p className="text-[9px] font-bold text-foreground/20 uppercase tracking-widest mt-1">
@@ -812,13 +842,6 @@ export default function ChatAppPage() {
                                <div className="mb-3 p-2 rounded-xl bg-black/20 border-l-4 border-white/40 text-[10px] opacity-70"><p className="font-black uppercase text-[8px] mb-1">{msg.replyTo.sender}</p><p className="truncate line-clamp-1">{msg.replyTo.text}</p></div>
                              )}
                              {msg.imageUrl && <div onClick={() => setShowMediaPreview({url: msg.imageUrl!, type: 'image'})} className="cursor-zoom-in mb-2"><img src={msg.imageUrl} className="max-h-[350px] w-auto rounded-2xl border border-white/10" alt="" /></div>}
-                             {msg.voiceUrl && (
-                                <div className="flex items-center gap-3 p-3 bg-black/10 rounded-2xl min-w-[220px]">
-                                   <button onClick={() => { if(audioPlaybackRef.current) { audioPlaybackRef.current.src = msg.voiceUrl!; audioPlaybackRef.current.play(); } }} className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white"><Play className="w-4 h-4 fill-current" /></button>
-                                   <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden"><div className="w-[40%] h-full bg-white/40" /></div>
-                                   <span className="text-[8px] font-bold text-white/40 uppercase">Voice</span>
-                                </div>
-                             )}
                              {msg.text && <p className="text-[14px] font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
                              <div className={cn("flex items-center gap-2 mt-2", isMe ? "justify-end text-white/40" : "justify-start text-foreground/20")}>
                                 <span className="text-[8px] font-black uppercase">{formatTime(msg.timestamp)}</span>
@@ -887,7 +910,7 @@ export default function ChatAppPage() {
                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
                <div className="flex flex-col items-center gap-6 relative z-10">
                   <div className="relative group/avatar-edit">
-                    <img src={profile.photoURL} className={cn("w-32 h-32 rounded-[2.5rem] object-cover border-4 border-white/10 shadow-2xl transition-all", isUploadingAvatar && "opacity-50 blur-sm")} alt="" />
+                    <ChatAvatar src={profile.photoURL} className={cn("w-32 h-32 rounded-[2.5rem] border-4 border-white/10 shadow-2xl transition-all", isUploadingAvatar && "opacity-50 blur-sm")} />
                     <div className="absolute inset-0 bg-black/60 rounded-[2.5rem] opacity-0 group-hover/avatar-edit:opacity-100 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
                        <CameraIcon className="w-8 h-8 text-white" />
                        <span className="text-[8px] font-black uppercase text-white tracking-widest">Update DP</span>
@@ -949,7 +972,10 @@ export default function ChatAppPage() {
                <div className="space-y-2 max-h-[300px] overflow-auto custom-scrollbar">
                   {userSearchResults.map(u => (
                     <div key={u.uid} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between group hover:border-primary/20">
-                       <div className="flex items-center gap-4"><img src={u.photoURL} className="w-10 h-10 rounded-xl object-cover" alt="" /><span className="text-[11px] font-bold text-white uppercase">{u.username}</span></div>
+                       <div className="flex items-center gap-4">
+                          <ChatAvatar src={u.photoURL} className="w-10 h-10 rounded-xl" />
+                          <span className="text-[11px] font-bold text-white uppercase">{u.username}</span>
+                       </div>
                        <Button onClick={async () => { await addDoc(collection(db!, 'friend_requests'), { from: user.uid, fromName: profile.username, to: u.uid, status: 'pending', timestamp: serverTimestamp() }); setShowAddFriend(false); toast({title: "Uplink Sent"}); }} size="sm" variant="ghost" className="h-10 px-5 rounded-xl bg-primary/10 text-primary uppercase text-[9px] font-black">Link</Button>
                     </div>
                   ))}
@@ -981,7 +1007,7 @@ export default function ChatAppPage() {
                <Trash2 className="w-8 h-8" />
             </div>
             <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Remove Photo</AlertDialogTitle>
-            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">This will definitively purge your custom profile photo and restore the studio's default identity signal.</AlertDialogDescription>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">This will definitively purge your custom profile photo from the identity matrix. The circle will remain plain.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
