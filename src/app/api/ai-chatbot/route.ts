@@ -28,7 +28,16 @@ export async function POST(req: NextRequest) {
     - DO NOT ask "Am I correct?" or seek validation for your interpretation of the user's input.
     - If the user uses Urdu or Roman Urdu (e.g., "kiya kr raha hai"), respond naturally in that same style/language.
     - Be helpful, clear, and professional. 
-    - Never act like a language teacher; act like a high-end digital assistant.`;
+    - Never act like a language teacher; act like a high-end digital assistant.
+    
+    WRITING RULES (For Emails and Documents):
+    - If the user asks for an email, generate a professional and clear draft.
+    - Use ONLY the details provided by the user.
+    - For any missing information (names, dates, reasons, etc.), use clear placeholders like [Your Name], [Date], [Reason].
+    - NEVER invent fake names or use old/historical dates from training.
+    - Maintain linguistic consistency: do not mix languages unless requested.
+    - Ensure the primary purpose is met (e.g., a leave request must explicitly request leave).
+    - Include a relevant subject line and a concise body.`;
 
     const systemMessage = {
       role: 'system',
