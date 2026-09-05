@@ -43,7 +43,7 @@ export default function AiImageGeneratorPage() {
   const [prompt, setPrompt] = useState('');
   const [aspect, setAspect] = useState<AspectRatio>('1:1');
   const [resultUrl, setResultUrl] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [recentPrompts, setRecentPrompts] = useState<RecentPrompt[]>([]);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -63,7 +63,7 @@ export default function AiImageGeneratorPage() {
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     
-    setIsGenerating(true);
+    setIsProcessing(true);
     setResultUrl(null);
 
     const dims = {
@@ -86,9 +86,9 @@ export default function AiImageGeneratorPage() {
       toast({ title: "Synthesis Complete", description: "Visual identity isolated." });
     } catch (err) {
       toast({ variant: "destructive", title: "Protocol Failure", description: "Try again. The node is busy." });
+      setIsProcessing(false);
     } finally {
-      setIsGenerating(true); // Keep true for image onLoad trigger
-      // Note: We actually set isGenerating false in the image onLoad event in the render
+      // isProcessing is set to false in the img onLoad event
     }
   };
 
@@ -121,7 +121,7 @@ export default function AiImageGeneratorPage() {
   const handleClear = () => {
     setPrompt('');
     setResultUrl(null);
-    setIsGenerating(false);
+    setIsProcessing(false);
     toast({ title: "Studio Reset" });
   };
 
