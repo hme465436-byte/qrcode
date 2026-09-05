@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -659,8 +658,8 @@ export default function AIChatbotPage() {
                     <Activity className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-primary animate-pulse" />
                  </div>
                  <div className="text-center space-y-2">
-                    <p className="text-xl font-headline font-black uppercase tracking-[0.4em]">Awaiting Signal</p>
-                    <p className="text-[10px] font-bold uppercase tracking-widest">Identify your request to initialize</p>
+                    <p className="text-xl font-headline font-black uppercase tracking-[0.4em]">Ready</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Write what you need</p>
                  </div>
               </div>
             ) : (
