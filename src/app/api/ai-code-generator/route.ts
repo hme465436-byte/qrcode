@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * @fileOverview Secure Server Node for AI Code Generation.
- * Accesses specialized environment keys: AI_CODE_API_1 (Gemini) and AI_CODE_API_2 (Groq).
- * Failover Hierarchy: Gemini (Primary) -> Groq (Fallback).
+ * Exclusively handles AI_CODE_API_1 (Gemini) and AI_CODE_API_2 (Groq).
+ * Failover Hierarchy: Gemini (2.5 -> 2.0) -> Groq (Llama 3.1).
  */
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +14,10 @@ export async function POST(req: NextRequest) {
     
     const geminiKey = (process.env.AI_CODE_API_1 || '').trim();
     const groqKey = (process.env.AI_CODE_API_2 || '').trim();
+
+    if (!geminiKey && !groqKey) {
+      return NextResponse.json({ ok: false, error: "Key missing" });
+    }
 
     const isImprove = mode === 'improve';
 
@@ -98,9 +102,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: false, error: "Try again." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "Model failed" });
 
   } catch (err: any) {
-    return NextResponse.json({ ok: false, error: "Try again." }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Protocol Error" });
   }
 }
