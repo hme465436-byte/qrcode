@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   FileText, 
   Sparkles, 
@@ -23,7 +23,23 @@ import {
   Undo2,
   List,
   Type,
-  RotateCcw
+  RotateCcw,
+  Languages,
+  BookOpen,
+  Code2,
+  Target,
+  ArrowRight,
+  History,
+  FileDown,
+  X,
+  Plus,
+  Check,
+  Smartphone,
+  Layout,
+  Star,
+  ChevronRight,
+  Save,
+  PenTool
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,11 +47,30 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 
-const PERSIST_KEY = 'mykit_ai_resume_last';
+const PERSIST_HISTORY_KEY = 'mykit_ai_resume_history_v2';
+
+interface ResumeArchive {
+  id: string;
+  name: string;
+  date: number;
+  content: string;
+  formData: any;
+}
 
 export default function AIResumeBuilderPage() {
   const { toast } = useToast();
@@ -49,34 +84,65 @@ export default function AIResumeBuilderPage() {
     skills: '',
     experience: '',
     education: '',
+    projects: '',
+    languages: '',
     target: ''
   });
 
-  // Results State
+  // Options State
+  const [tone, setTone] = useState<'Professional' | 'Simple' | 'Strong'>('Professional');
+  const [length, setLength] = useState<'One-page' | 'Detailed'>('Detailed');
+
+  // Results & History State
   const [result, setResult] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [history, setHistory] = useState<ResumeArchive[]>([]);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  // --- Persistence ---
+  // --- Persistence Matrix ---
   useEffect(() => {
-    const saved = localStorage.getItem(PERSIST_KEY);
+    const saved = localStorage.getItem(PERSIST_HISTORY_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (typeof parsed === 'string') setResult(parsed);
-        else if (parsed.formData) {
-          setFormData(parsed.formData);
-          if (parsed.result) setResult(parsed.result);
+        if (Array.isArray(parsed)) {
+          setHistory(parsed);
+          if (parsed.length > 0) {
+            setResult(parsed[0].content);
+            setFormData(parsed[0].formData);
+          }
         }
       } catch (e) {}
     }
   }, []);
 
-  useEffect(() => {
-    if (result || formData.name) {
-      localStorage.setItem(PERSIST_KEY, JSON.stringify({ result, formData }));
-    }
-  }, [result, formData]);
+  const saveToArchive = (content: string) => {
+    const newEntry: ResumeArchive = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: formData.name || 'Untitled',
+      date: Date.now(),
+      content,
+      formData: { ...formData }
+    };
+    const nextHistory = [newEntry, ...history.filter(h => h.name !== newEntry.name || h.content !== content)].slice(0, 10);
+    setHistory(nextHistory);
+    localStorage.setItem(PERSIST_HISTORY_KEY, JSON.stringify(nextHistory));
+  };
+
+  const handleRestore = (item: ResumeArchive) => {
+    setResult(item.content);
+    setFormData(item.formData);
+    toast({ title: "Draft Restored", description: "Linguistic matrix synchronized." });
+  };
+
+  const handleDelete = (id: string) => {
+    const next = history.filter(h => h.id !== id);
+    setHistory(next);
+    localStorage.setItem(PERSIST_HISTORY_KEY, JSON.stringify(next));
+    setItemToDelete(null);
+    toast({ title: "Entry Purged" });
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -84,7 +150,7 @@ export default function AIResumeBuilderPage() {
 
   const executeSynthesis = async () => {
     if (!formData.name || !formData.email || !formData.experience) {
-      toast({ variant: "destructive", title: "Incomplete Matrix", description: "Name, Email, and Experience are mandatory for synthesis." });
+      toast({ variant: "destructive", title: "Incomplete Matrix", description: "Name, Email, and Experience are mandatory." });
       return;
     }
 
@@ -95,14 +161,18 @@ export default function AIResumeBuilderPage() {
       const response = await fetch('/api/ai-resume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: formData })
+        body: JSON.stringify({ 
+          data: formData,
+          options: { tone, length }
+        })
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
         setResult(data.text);
-        toast({ title: "Synthesis Complete", description: "Professional resume isolated." });
+        saveToArchive(data.text);
+        toast({ title: "Synthesis Complete", description: "Identity isolated successfully." });
       } else {
         throw new Error(data.message || "Node handshake failed.");
       }
@@ -110,19 +180,10 @@ export default function AIResumeBuilderPage() {
       toast({ 
         variant: "destructive", 
         title: "Protocol Failure", 
-        description: err.message || "Service unavailable. Try again later." 
+        description: err.message || "Service unavailable." 
       });
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const handleCopy = () => {
-    if (result) {
-      navigator.clipboard.writeText(result);
-      setIsCopied(true);
-      toast({ title: "Identity Isolated", description: "Resume copied to clipboard." });
-      setTimeout(() => setIsCopied(false), 2000);
     }
   };
 
@@ -137,7 +198,9 @@ export default function AIResumeBuilderPage() {
             <head>
               <title>Resume - ${formData.name}</title>
               <style>
-                body { font-family: sans-serif; line-height: 1.6; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; white-space: pre-wrap; }
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+                body { font-family: 'Inter', sans-serif; line-height: 1.5; padding: 50px; color: #1a1a1a; max-width: 800px; margin: 0 auto; white-space: pre-wrap; font-size: 11pt; }
+                h1, h2, h3 { border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 25px; text-transform: uppercase; letter-spacing: 1px; }
                 @media print { body { padding: 0; } }
               </style>
             </head>
@@ -161,94 +224,120 @@ export default function AIResumeBuilderPage() {
   };
 
   const handleReset = () => {
-    setFormData({ name: '', email: '', phone: '', title: '', skills: '', experience: '', education: '', target: '' });
+    setFormData({ name: '', email: '', phone: '', title: '', skills: '', experience: '', education: '', projects: '', languages: '', target: '' });
     setResult('');
-    localStorage.removeItem(PERSIST_KEY);
     toast({ title: "Studio Reset" });
   };
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full overflow-hidden">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <FileText className="w-3.5 h-3.5" /> Identity Suite
+            <FileText className="w-3.5 h-3.5" /> Career Studio Pro
           </div>
-          <h1 className="text-3xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+          <h1 className="text-3xl md:text-5xl lg:text-7xl font-headline font-black text-foreground uppercase tracking-tight leading-none overflow-wrap-anywhere">
             AI Resume <span className="text-primary italic">Builder</span>
           </h1>
-          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional high-fidelity career synthesis. Generate clean, achievement-oriented resumes locally using advanced linguistic nodes.
-          </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="ai-resume" />
-           {(result || formData.name) && (
-             <Button variant="outline" size="sm" onClick={handleReset} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
-                <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
-             </Button>
-           )}
+           <Button variant="outline" size="sm" onClick={handleReset} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
+              <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
+           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Left: Input Form */}
-        <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        
+        {/* Left Column: Form & History */}
+        <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-1000">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Settings2 className="w-5 h-5 text-primary" /> Career Matrix
+                    <Settings2 className="w-5 h-5 text-primary" /> Identity Matrix
                  </CardTitle>
               </CardHeader>
-              <CardContent className="pt-10 space-y-8">
+              <CardContent className="pt-8 space-y-8">
                  <div className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <div className="space-y-2">
                           <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Full Name</Label>
-                          <Input value={formData.name} onChange={e => handleInputChange('name', e.target.value)} placeholder="e.g. John Doe" className="h-12 bg-secondary/50 border-border rounded-xl font-bold" />
+                          <Input value={formData.name} onChange={e => handleInputChange('name', e.target.value)} placeholder="e.g. John Doe" className="h-11 bg-secondary/50 border-border rounded-xl font-bold" />
                        </div>
                        <div className="space-y-2">
                           <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Job Title</Label>
-                          <Input value={formData.title} onChange={e => handleInputChange('title', e.target.value)} placeholder="e.g. Senior Developer" className="h-12 bg-secondary/50 border-border rounded-xl font-bold" />
+                          <Input value={formData.title} onChange={e => handleInputChange('title', e.target.value)} placeholder="e.g. Senior Architect" className="h-11 bg-secondary/50 border-border rounded-xl font-bold" />
                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <div className="space-y-2">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Email Address</Label>
-                          <Input value={formData.email} onChange={e => handleInputChange('email', e.target.value)} placeholder="user@example.com" className="h-12 bg-secondary/50 border-border rounded-xl font-medium" />
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Email Node</Label>
+                          <Input value={formData.email} onChange={e => handleInputChange('email', e.target.value)} placeholder="user@identity.io" className="h-11 bg-secondary/50 border-border rounded-xl text-xs" />
                        </div>
                        <div className="space-y-2">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Phone Node</Label>
-                          <Input value={formData.phone} onChange={e => handleInputChange('phone', e.target.value)} placeholder="+1 234..." className="h-12 bg-secondary/50 border-border rounded-xl font-medium" />
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Phone Protocol</Label>
+                          <Input value={formData.phone} onChange={e => handleInputChange('phone', e.target.value)} placeholder="+1 234..." className="h-11 bg-secondary/50 border-border rounded-xl text-xs" />
                        </div>
                     </div>
 
                     <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Professional Experience</Label>
-                       <Textarea 
-                        value={formData.experience} 
-                        onChange={e => handleInputChange('experience', e.target.value)} 
-                        placeholder="Detail your roles, achievements, and impact..." 
-                        className="h-32 bg-secondary/30 border-border rounded-2xl text-xs font-medium resize-none p-4"
-                       />
+                       <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Experience Matrix</Label>
+                       <Textarea value={formData.experience} onChange={e => handleInputChange('experience', e.target.value)} placeholder="Detailed work history, achievements, and impact..." className="h-32 bg-secondary/30 border-border rounded-2xl text-xs resize-none p-4" />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Skills Matrix</Label>
-                          <Textarea value={formData.skills} onChange={e => handleInputChange('skills', e.target.value)} placeholder="React, Node, Project Lead..." className="h-24 bg-secondary/30 border-border rounded-2xl text-xs resize-none p-4" />
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Skills Array</Label>
+                          <Textarea value={formData.skills} onChange={e => handleInputChange('skills', e.target.value)} placeholder="React, Python..." className="h-24 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
                        </div>
                        <div className="space-y-2">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Education Registry</Label>
-                          <Textarea value={formData.education} onChange={e => handleInputChange('education', e.target.value)} placeholder="Degree, Institution, Year..." className="h-24 bg-secondary/30 border-border rounded-2xl text-xs resize-none p-4" />
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Education</Label>
+                          <Textarea value={formData.education} onChange={e => handleInputChange('education', e.target.value)} placeholder="Degree, Uni..." className="h-24 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
                        </div>
                     </div>
 
-                    <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Target Goal (Optional)</Label>
-                       <Input value={formData.target} onChange={e => handleInputChange('target', e.target.value)} placeholder="Specific job or industry target..." className="h-12 bg-secondary/50 border-border rounded-xl text-xs font-medium" />
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Project Nodes</Label>
+                          <Textarea value={formData.projects} onChange={e => handleInputChange('projects', e.target.value)} placeholder="Key accomplishments..." className="h-20 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
+                       </div>
+                       <div className="space-y-2">
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Linguistic Stream</Label>
+                          <Textarea value={formData.languages} onChange={e => handleInputChange('languages', e.target.value)} placeholder="English, Urdu..." className="h-20 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
+                       </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-white/5">
+                       <Label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-1">Synthesis Options</Label>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                             <Label className="text-[8px] font-bold text-foreground/20 uppercase">Tone Protocol</Label>
+                             <Select value={tone} onValueChange={(v: any) => setTone(v)}>
+                                <SelectTrigger className="h-10 bg-secondary/50 border-border text-[9px] font-black uppercase">
+                                   <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="glass-card">
+                                   <SelectItem value="Professional" className="text-[9px] uppercase">Professional</SelectItem>
+                                   <SelectItem value="Simple" className="text-[9px] uppercase">Simple / Minimal</SelectItem>
+                                   <SelectItem value="Strong" className="text-[9px] uppercase">Strong / Impact</SelectItem>
+                                </SelectContent>
+                             </Select>
+                          </div>
+                          <div className="space-y-2">
+                             <Label className="text-[8px] font-bold text-foreground/20 uppercase">Volume (Length)</Label>
+                             <Select value={length} onValueChange={(v: any) => setLength(v)}>
+                                <SelectTrigger className="h-10 bg-secondary/50 border-border text-[9px] font-black uppercase">
+                                   <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="glass-card">
+                                   <SelectItem value="One-page" className="text-[9px] uppercase">One Page</SelectItem>
+                                   <SelectItem value="Detailed" className="text-[9px] uppercase">Detailed</SelectItem>
+                                </SelectContent>
+                             </Select>
+                          </div>
+                       </div>
                     </div>
                  </div>
 
@@ -258,37 +347,58 @@ export default function AIResumeBuilderPage() {
                    className="h-16 w-full bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 text-xs uppercase tracking-widest active:scale-95 transition-all"
                  >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                    Synthesize Identity
+                    Synthesize Professional Identity
                  </Button>
               </CardContent>
            </Card>
 
-           <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-             <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <ShieldCheck className="w-7 h-7" />
-             </div>
-             <div className="space-y-2">
-               <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-               <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                 Identity synthesis is executed via secure server action. Your personal data is processed in-flight and held strictly in local browser memory.
-               </p>
-             </div>
-          </div>
+           {/* History Module */}
+           <Card className="glass-card border-border shadow-xl flex flex-col max-h-[400px] overflow-hidden">
+              <CardHeader className="py-4 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
+                 <div className="flex items-center gap-3">
+                    <History className="w-4 h-4 text-primary" />
+                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-foreground">Archive Registry</CardTitle>
+                 </div>
+              </CardHeader>
+              <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1 bg-black/10">
+                 {history.length === 0 ? (
+                    <div className="py-20 text-center opacity-10 space-y-2">
+                       <Activity className="w-10 h-10 mx-auto" />
+                       <p className="text-[10px] font-black uppercase tracking-widest">Zero Matrix History</p>
+                    </div>
+                 ) : (
+                    <div className="divide-y divide-white/5">
+                       {history.map(item => (
+                         <div key={item.id} className="p-5 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => handleRestore(item)}>
+                            <div className="min-w-0 flex-1">
+                               <p className="text-sm font-bold text-foreground truncate uppercase">{item.name}</p>
+                               <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.date).toLocaleDateString()}</p>
+                            </div>
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                               <button onClick={(e) => { e.stopPropagation(); setItemToDelete(item.id); }} className="p-2 text-foreground/10 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                               <ChevronRight className="w-4 h-4 text-foreground/10" />
+                            </div>
+                         </div>
+                       ))}
+                    </div>
+                 )}
+              </CardContent>
+           </Card>
         </div>
 
-        {/* Right: Preview & Editor */}
+        {/* Right Column: Preview & Editor */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[700px] bg-black/10">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[800px] bg-black/40">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
+              <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <Activity className="w-5 h-5" />
                     </div>
                     <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Output</CardTitle>
                  </div>
                  {result && (
-                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1 animate-pulse">MASTER READY</Badge>
+                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">MASTER READY</Badge>
                  )}
               </CardHeader>
               
@@ -304,10 +414,20 @@ export default function AIResumeBuilderPage() {
                       </div>
                     ) : result ? (
                       <div className="h-full flex flex-col animate-in fade-in duration-500">
-                         <Textarea 
+                         <div className="p-4 bg-secondary/20 border-b border-white/5 flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-4 px-2">
+                               <PenTool className="w-3.5 h-3.5 text-primary/40" />
+                               <span className="text-[9px] font-black uppercase text-foreground/40">Visual Editor Active</span>
+                            </div>
+                            <div className="flex gap-2">
+                               <button onClick={() => handleDownload('print')} className="h-8 px-4 rounded-lg bg-primary/10 text-primary text-[8px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">Print Protocol</button>
+                            </div>
+                         </div>
+                         <textarea 
                           value={result}
                           onChange={e => setResult(e.target.value)}
-                          className="flex-1 p-8 sm:p-12 bg-white dark:bg-black/20 text-foreground font-mono text-xs sm:text-sm leading-relaxed resize-none focus:ring-0 border-none scrollbar-hide"
+                          spellCheck={false}
+                          className="flex-1 p-8 sm:p-16 bg-white dark:bg-black/20 text-foreground font-mono text-sm leading-relaxed resize-none focus:ring-0 border-none custom-scrollbar"
                          />
                       </div>
                     ) : (
@@ -321,9 +441,8 @@ export default function AIResumeBuilderPage() {
                  {result && !isProcessing && (
                     <div className="p-8 border-t border-white/5 bg-[#0a0a0c] flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0">
                        <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Button onClick={handleCopy} className="h-14 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-xl active:scale-95">
-                             {isCopied ? <CheckCircle2 className="w-5 h-5 mr-1" /> : <Copy className="w-5 h-5 mr-1" />} 
-                             Copy text
+                          <Button onClick={() => { navigator.clipboard.writeText(result); toast({ title: "Copied" }); }} className="h-14 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                             <Copy className="w-5 h-5 mr-1" /> Copy text
                           </Button>
                           <Button onClick={() => handleDownload('print')} className="h-14 bg-primary text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs uppercase tracking-widest shadow-xl">
                              <Printer className="w-5 h-5 mr-1" /> Print / PDF
@@ -338,27 +457,50 @@ export default function AIResumeBuilderPage() {
            </Card>
 
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all shadow-inner">
-                   <Type className="w-5 h-5" />
+              <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <ShieldCheck className="w-7 h-7" />
                 </div>
-                <div className="space-y-1">
-                   <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Master Integrity</h4>
-                   <p className="text-[10px] text-foreground/40 font-medium uppercase">Using high-fidelity executive standard formatting for peak employer response.</p>
+                <div className="space-y-2">
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                    Linguistic processing occurs via secure server handshakes. Personal data is never stored on our nodes and resides strictly in local session memory.
+                  </p>
                 </div>
              </div>
-             <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary/40 group-hover:text-primary transition-all shadow-inner">
-                   <Zap className="w-5 h-5" />
+             <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <Zap className="w-7 h-7" />
                 </div>
-                <div className="space-y-1">
-                   <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">WASM Editor</h4>
-                   <p className="text-[10px] text-foreground/40 font-medium uppercase">Edit results instantly in-studio before final production commitment.</p>
+                <div className="space-y-2">
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Executive Format</h4>
+                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                    Our synthesis logic follows 2024 hiring standards, prioritizing achievement-based metrics and high-entropy professional descriptors.
+                  </p>
                 </div>
              </div>
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Overlay */}
+      <AlertDialog open={!!itemToDelete} onOpenChange={() => setItemToDelete(null)}>
+        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
+          <AlertDialogHeader className="space-y-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
+               <Trash2 className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Delete Draft</AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
+               This will definitively purge this identity record from your local archive.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex gap-3">
+            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Abort</AlertDialogCancel>
+            <AlertDialogAction onClick={() => itemToDelete && handleDelete(itemToDelete)} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl">Purge</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }

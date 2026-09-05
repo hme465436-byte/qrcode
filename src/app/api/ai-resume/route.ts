@@ -1,18 +1,15 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * @fileOverview Secure Server Node for AI Resume Synthesis.
- * Accesses private API keys to interface with Gemini.
- * Sanitizes output to provide clean, professional text structures.
- * Implements multi-model failover for protocol stability.
+ * Handles complex professional profiles with tone and length parameters.
  */
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { data } = await req.json();
+    const { data, options } = await req.json();
     const apiKey = (process.env.GEMINI_API_KEY || '').trim();
 
     if (!apiKey) {
@@ -26,25 +23,34 @@ export async function POST(req: NextRequest) {
       You are a professional executive resume writer. 
       Generate a clean, professional, and impact-oriented resume based on the following identity matrix.
       
-      NAME: ${data.name}
-      EMAIL: ${data.email}
-      PHONE: ${data.phone}
-      TITLE: ${data.title}
-      SKILLS: ${data.skills}
-      EXPERIENCE: ${data.experience}
-      EDUCATION: ${data.education}
-      TARGET ROLE: ${data.target || 'Professional Growth'}
+      PERSONAL IDENTITY:
+      - NAME: ${data.name}
+      - EMAIL: ${data.email}
+      - PHONE: ${data.phone}
+      - CURRENT TITLE: ${data.title}
+      
+      EXPERIENCE MATRIX:
+      - SKILLS: ${data.skills}
+      - WORK HISTORY: ${data.experience}
+      - EDUCATION: ${data.education}
+      - PROJECTS: ${data.projects || 'None provided'}
+      - LANGUAGES: ${data.languages || 'None provided'}
+      
+      TARGETING & STYLE:
+      - TARGET ROLE: ${data.target || 'Professional Growth'}
+      - TONE: ${options.tone || 'Professional'} (Ensure the language reflects this tone)
+      - LENGTH: ${options.length || 'Detailed'} (Adjust the depth of bullet points accordingly)
 
       Rules:
-      1. Use a standard professional structure (Summary, Experience, Skills, Education).
-      2. Use bullet points for achievements.
-      3. Focus on action verbs and quantifiable results.
-      4. Ensure the layout is clean for a text-based or print-friendly document.
-      5. Output ONLY the resume text without any conversational filler or meta-commentary.
+      1. Use a standard executive structure: Summary, Skills, Experience, Projects (if provided), Education, and Languages.
+      2. Use action verbs and quantifiable results for all bullet points.
+      3. Format with clear headings and readable spacing.
+      4. Avoid conversational filler or meta-commentary.
+      5. Output ONLY the resume text.
     `;
 
     // Model Failover Matrix
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.5-flash', 'gemini-3.8-flash'];
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
     
     for (const model of models) {
       try {
@@ -57,7 +63,7 @@ export async function POST(req: NextRequest) {
               temperature: 0.7,
               topK: 40,
               topP: 0.95,
-              maxOutputTokens: 2048,
+              maxOutputTokens: 3000,
             }
           })
         });
@@ -74,7 +80,6 @@ export async function POST(req: NextRequest) {
           }
         }
       } catch (e) {
-        // Continue to next model in matrix
         continue;
       }
     }
