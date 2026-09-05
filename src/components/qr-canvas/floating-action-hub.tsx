@@ -225,8 +225,8 @@ export function FloatingActionHub() {
         />
       )}
 
-      {/* Recalibrated Position: bottom-28 right-6 */}
-      <div className="fixed bottom-28 right-6 z-[9999] flex flex-col items-center gap-4">
+      {/* Recalibrated Position: bottom-20 right-6 */}
+      <div className="fixed bottom-20 right-6 z-[9999] flex flex-col items-center gap-4">
         
         {/* SLOTS MATRIX */}
         <div className={cn(
@@ -342,7 +342,7 @@ export function FloatingActionHub() {
                    onClick={() => pickTool(t.id)}
                    className="p-5 rounded-[2rem] bg-white/[0.03] border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all text-left group/item flex flex-col gap-4"
                  >
-                    <div className="w-10 h-10 rounded-xl bg-secondary border border-white/5 flex items-center justify-center text-primary/30 group-hover/item:text-primary transition-all shadow-inner">
+                    <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-primary/30 group-hover/item:text-primary transition-all shadow-inner">
                        <t.icon className="w-5 h-5" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-foreground/50 group-hover/item:text-white transition-colors">{t.label}</span>
