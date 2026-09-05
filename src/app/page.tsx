@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react';
@@ -178,6 +179,17 @@ const TOOLS: Tool[] = [
     color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
     glowClass: 'bg-emerald-400/10',
     keywords: ['resume', 'cv', 'builder', 'jobs', 'professional', 'career', 'ai resume'],
+    category: 'generators'
+  },
+  { 
+    href: '/ai-email-writer', 
+    icon: Mail, 
+    title: 'AI Email Writer', 
+    desc: 'Write a clean email in seconds.', 
+    label: 'AI STUDIO', 
+    color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    glowClass: 'bg-blue-400/10',
+    keywords: ['email', 'writer', 'ai email', 'professional email', 'llama'],
     category: 'generators'
   },
   { 
@@ -1457,7 +1469,7 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: any }[] = [
 
 const PHRASES = [
   'AI Chatbot', 'Llama 3', 'Free AI', 'Assistant', 'AI Resume Builder', 'Job Matrix', 'CV Maker',
-  'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
+  'AI Email Writer', 'Write email', 'Auto draft', 'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
   'Word to PDF', 'Photo Enhance', 'Age Calculator', 'Photo to Text', 
   'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
   'Video to MP3', 'Image to PDF', 'AOB Converter', 'Nickname Studio',
