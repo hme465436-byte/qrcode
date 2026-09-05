@@ -14,26 +14,11 @@ import {
   Settings2, 
   Zap, 
   History,
-  Maximize,
-  Smartphone,
-  Monitor,
-  Share2,
-  AlertCircle,
-  ShieldCheck,
   Activity,
   Dices,
-  Layers,
-  FileImage,
-  ArrowRight,
-  ChevronRight,
+  ShieldCheck,
   X,
-  Palette,
-  LayoutGrid,
-  FileText,
   Star,
-  Eye,
-  EyeOff,
-  Crosshair,
   Hash,
   Wand2
 } from 'lucide-react';
@@ -42,7 +27,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -61,8 +45,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { enhanceImagePrompt } from '@/ai/flows/image-prompt-enhancer-flow';
 
-// --- Constants & Matrix Data ---
-
+// --- Constants ---
 type AspectRatio = '1:1' | '16:9' | '9:16' | '4:5';
 type ImageStyle = 'normal' | 'realistic' | 'anime' | '3d' | 'logo' | 'poster';
 
@@ -97,8 +80,8 @@ const RANDOM_PROMPTS = [
   "A high-tech laboratory with floating holographic interfaces",
 ];
 
-const ARCHIVE_KEY = 'mykit_ai_image_archive_v3';
-const FAVS_KEY = 'mykit_ai_image_favs_v3';
+const ARCHIVE_KEY = 'mykit_ai_image_archive_v4';
+const FAVS_KEY = 'mykit_ai_image_favs_v4';
 
 export default function AiImageGeneratorPage() {
   const { toast } = useToast();
@@ -112,10 +95,10 @@ export default function AiImageGeneratorPage() {
   const [prevResultUrl, setPrevResultUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
   
   // Visual Meta
   const [showComparison, setShowComparison] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
   
   // Registry State
   const [archive, setArchive] = useState<ArchiveItem[]>([]);
@@ -143,7 +126,7 @@ export default function AiImageGeneratorPage() {
   const handleSurprise = () => {
     const pick = RANDOM_PROMPTS[Math.floor(Math.random() * RANDOM_PROMPTS.length)];
     setPrompt(pick);
-    toast({ title: "Linguistic Signal Injected" });
+    toast({ title: "Prompt Injected" });
   };
 
   const handleEnhance = async () => {
@@ -152,7 +135,7 @@ export default function AiImageGeneratorPage() {
     try {
       const enhanced = await enhanceImagePrompt({ text: prompt });
       setPrompt(enhanced);
-      toast({ title: "Prompt Optimized", description: "Linguistic matrix expanded." });
+      toast({ title: "Prompt Optimized" });
     } catch (e) {
       toast({ variant: "destructive", title: "Enhancement Failed" });
     } finally {
@@ -164,9 +147,8 @@ export default function AiImageGeneratorPage() {
     if (!prompt.trim()) return;
     
     setIsProcessing(true);
-    if (resultUrl) setPrevResultUrl(resultUrl);
-    setResultUrl(null);
-
+    setStatusMessage('Creating image...');
+    
     const dims = {
       '1:1': { w: 1024, h: 1024 },
       '16:9': { w: 1280, h: 720 },
@@ -178,11 +160,14 @@ export default function AiImageGeneratorPage() {
     const fullPrompt = `${prompt.trim()}${STYLE_PRESETS[activeStyle].suffix}`;
     const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&seed=${currentSeed}&nologo=true`;
 
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Node restricted");
-      
+    // High-Fidelity Loading Protocol: Wait for image bits to actually load in a background object
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    
+    img.onload = () => {
+      if (resultUrl) setPrevResultUrl(resultUrl);
       setResultUrl(url);
+      
       const newItem: ArchiveItem = {
         id: Math.random().toString(36).substr(2, 9),
         prompt: prompt.trim(),
@@ -193,11 +178,19 @@ export default function AiImageGeneratorPage() {
         timestamp: Date.now()
       };
       saveArchive([newItem, ...archive].slice(0, 12));
-      toast({ title: "Master Synthesized", description: "Visual identity isolated." });
-    } catch (err) {
-      toast({ variant: "destructive", title: "Protocol Failure", description: "Discovery node busy." });
+      
       setIsProcessing(false);
-    }
+      setStatusMessage('Done');
+      toast({ title: "Image Ready" });
+    };
+
+    img.onerror = () => {
+      setIsProcessing(false);
+      setStatusMessage('Image failed, try again');
+      toast({ variant: "destructive", title: "Synthesis Error", description: "The image node failed to respond. Please try again." });
+    };
+
+    img.src = url;
   };
 
   const handleDownload = async (fmt: 'png' | 'jpg') => {
@@ -211,7 +204,6 @@ export default function AiImageGeneratorPage() {
       a.download = `ai-master-${Date.now()}.${fmt}`;
       a.click();
       URL.revokeObjectURL(url);
-      toast({ title: "Master Exported" });
     } catch (e) {
       window.open(resultUrl, '_blank');
     }
@@ -221,10 +213,8 @@ export default function AiImageGeneratorPage() {
     const isFav = favorites.some(f => f.id === item.id || f.url === item.url);
     if (isFav) {
       saveFavs(favorites.filter(f => f.url !== item.url));
-      toast({ title: "Removed from Favorites" });
     } else {
       saveFavs([{ ...item, isFavorite: true }, ...favorites].slice(0, 20));
-      toast({ title: "Added to Shortlist" });
     }
   };
 
@@ -242,7 +232,7 @@ export default function AiImageGeneratorPage() {
     setPrevResultUrl(null);
     setSeed('');
     setIsProcessing(false);
-    toast({ title: "Studio Reset" });
+    setStatusMessage('');
   };
 
   return (
@@ -257,7 +247,7 @@ export default function AiImageGeneratorPage() {
                 AI Image <span className="text-primary italic">Generator</span>
               </h1>
               <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-                Professional high-fidelity image synthesis. Create unique visual identities from linguistic signals locally and securely using the Pollinations matrix.
+                Create images from text for free. Professional high-fidelity image synthesis using the Pollinations matrix.
               </p>
            </div>
            <div className="flex items-center gap-3">
@@ -279,13 +269,13 @@ export default function AiImageGeneratorPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Settings2 className="w-5 h-5 text-primary" /> Matrix Parameters
+                    <Settings2 className="w-5 h-5 text-primary" /> Parameters
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-8">
                  <div className="space-y-4">
                     <div className="flex justify-between items-center px-1">
-                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Linguistic Prompt</Label>
+                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Prompt</Label>
                        <div className="flex gap-4">
                           <button onClick={handleEnhance} disabled={isEnhancing || !prompt} className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2 hover:opacity-70 transition-all disabled:opacity-20">
                             {isEnhancing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />} AI Enhance
@@ -296,7 +286,7 @@ export default function AiImageGeneratorPage() {
                        </div>
                     </div>
                     <Textarea 
-                      placeholder="e.g. Cyberpunk city with neon lights, 8k, detailed architecture..."
+                      placeholder="e.g. A futuristic cyberpunk city with neon lights..."
                       value={prompt}
                       onChange={e => setPrompt(e.target.value)}
                       className="h-32 bg-secondary/50 border-border rounded-2xl text-sm font-medium p-6 resize-none focus:ring-primary/40 shadow-inner"
@@ -305,7 +295,7 @@ export default function AiImageGeneratorPage() {
 
                  <div className="space-y-6">
                     <div className="space-y-3">
-                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Style DNA</Label>
+                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Style</Label>
                        <div className="flex flex-wrap gap-2">
                           {Object.entries(STYLE_PRESETS).map(([id, s]) => (
                             <button
@@ -341,7 +331,7 @@ export default function AiImageGeneratorPage() {
                           </div>
                        </div>
                        <div className="space-y-3">
-                          <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Hardware Seed</Label>
+                          <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Seed</Label>
                           <div className="relative group/seed">
                              <Input 
                                type="number"
@@ -352,7 +342,6 @@ export default function AiImageGeneratorPage() {
                              />
                              <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20 group-focus-within/seed:text-primary" />
                           </div>
-                          <p className="text-[8px] font-black uppercase text-foreground/20 tracking-widest text-right">0 = Randomized</p>
                        </div>
                     </div>
                  </div>
@@ -363,17 +352,22 @@ export default function AiImageGeneratorPage() {
                     className="h-16 w-full bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 text-xs uppercase tracking-widest active:scale-95 transition-all"
                  >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                    Synthesize Image
+                    {isProcessing ? 'Synthesizing...' : 'Generate Image'}
                  </Button>
+                 
+                 {statusMessage && (
+                   <p className="text-center text-[9px] font-black uppercase text-foreground/30 tracking-widest animate-pulse">
+                     {statusMessage}
+                   </p>
+                 )}
               </CardContent>
            </Card>
 
-           {/* Favorites / History Tabs */}
            <Card className="glass-card border-border shadow-xl flex flex-col max-h-[500px]">
               <Tabs defaultValue="archive" className="w-full h-full flex flex-col">
                  <TabsList className="bg-secondary/30 border-b border-border p-1 h-12 rounded-none grid grid-cols-2">
                     <TabsTrigger value="archive" className="text-[9px] font-black uppercase rounded-lg">History</TabsTrigger>
-                    <TabsTrigger value="favs" className="text-[9px] font-black uppercase rounded-lg">Shortlist</TabsTrigger>
+                    <TabsTrigger value="favs" className="text-[9px] font-black uppercase rounded-lg">Favorites</TabsTrigger>
                  </TabsList>
                  
                  <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/10">
@@ -381,7 +375,7 @@ export default function AiImageGeneratorPage() {
                        {archive.length === 0 ? (
                           <div className="py-20 text-center opacity-10 space-y-2">
                              <History className="w-8 h-8 mx-auto" />
-                             <p className="text-[10px] font-black uppercase tracking-widest">Zero Matrix History</p>
+                             <p className="text-[10px] font-black uppercase tracking-widest">No History</p>
                           </div>
                        ) : (
                           archive.map(item => (
@@ -392,7 +386,7 @@ export default function AiImageGeneratorPage() {
                                   </div>
                                   <div className="min-w-0">
                                      <p className="text-[11px] font-bold text-foreground truncate uppercase">{item.prompt}</p>
-                                     <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{item.style} • {item.aspect}</p>
+                                     <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{item.style}</p>
                                   </div>
                                </div>
                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -408,7 +402,7 @@ export default function AiImageGeneratorPage() {
                        {favorites.length === 0 ? (
                           <div className="py-20 text-center opacity-10 space-y-2">
                              <Star className="w-8 h-8 mx-auto" />
-                             <p className="text-[10px] font-black uppercase tracking-widest">No Favorites Identified</p>
+                             <p className="text-[10px] font-black uppercase tracking-widest">No Favorites</p>
                           </div>
                        ) : (
                           favorites.map(item => (
@@ -419,7 +413,7 @@ export default function AiImageGeneratorPage() {
                                   </div>
                                   <div className="min-w-0">
                                      <p className="text-[11px] font-bold text-foreground truncate uppercase">{item.prompt}</p>
-                                     <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{item.style} • seed:{item.seed}</p>
+                                     <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">seed:{item.seed}</p>
                                   </div>
                                </div>
                                <button onClick={(e) => { e.stopPropagation(); toggleFavorite(item); }} className="p-2 text-yellow-500 hover:text-red-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
@@ -433,7 +427,7 @@ export default function AiImageGeneratorPage() {
         </aside>
 
         {/* Results Column */}
-        <main className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-1">
+        <main className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/40">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               <CardHeader className="py-8 border-b border-border bg-secondary/30">
@@ -442,7 +436,7 @@ export default function AiImageGeneratorPage() {
                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                           <Activity className="w-5 h-5" />
                        </div>
-                       <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Output</CardTitle>
+                       <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Result</CardTitle>
                     </div>
                     <div className="flex items-center gap-4">
                        {resultUrl && prevResultUrl && (
@@ -452,7 +446,7 @@ export default function AiImageGeneratorPage() {
                          </div>
                        )}
                        {resultUrl && !isProcessing && (
-                           <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">MASTER SYNTHESIZED</Badge>
+                           <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">DONE</Badge>
                        )}
                     </div>
                  </div>
@@ -462,7 +456,7 @@ export default function AiImageGeneratorPage() {
                  {!resultUrl && !isProcessing ? (
                    <div className="flex flex-col items-center justify-center opacity-10 gap-6 py-20">
                       <ImageIcon className="w-24 h-24 text-primary" />
-                      <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Linguistic Signal</p>
+                      <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Prompt</p>
                    </div>
                  ) : (
                    <div className="relative w-full h-full flex flex-col items-center justify-center">
@@ -472,7 +466,7 @@ export default function AiImageGeneratorPage() {
                               <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                               <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                            </div>
-                           <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Decoding Visual Matrix...</p>
+                           <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Creating image...</p>
                         </div>
                       )}
                       
@@ -481,16 +475,12 @@ export default function AiImageGeneratorPage() {
                            <div className="relative max-w-full rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ring-white/10 transition-all duration-700">
                              <img 
                               src={showComparison ? prevResultUrl || resultUrl : resultUrl} 
-                              alt="Generated AI Master" 
+                              alt="AI Result" 
                               className={cn(
                                 "max-w-full max-h-[65vh] object-contain transition-all duration-700",
                                 isProcessing ? "opacity-0 scale-95" : "opacity-100 scale-100"
                               )}
-                              onLoad={() => setIsProcessing(false)}
                              />
-                             <div className="absolute top-6 left-6 flex gap-2">
-                                <Badge className="bg-black/60 backdrop-blur-md text-[8px] font-black uppercase px-3 border-white/10">{showComparison ? 'PREVIOUS' : 'CURRENT'}</Badge>
-                             </div>
                            </div>
                            
                            {!isProcessing && (
@@ -502,23 +492,13 @@ export default function AiImageGeneratorPage() {
                                     >
                                       <Download className="w-6 h-6" /> Save PNG
                                     </Button>
-                                    <Button 
-                                      variant="outline"
-                                      onClick={() => handleDownload('jpg')} 
-                                      className="h-16 px-6 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[10px] rounded-2xl"
-                                    >
-                                      JPG
-                                    </Button>
                                  </div>
                                  <div className="flex gap-2">
                                     <Button onClick={() => executeSynthesis()} variant="outline" className="h-16 px-8 border-white/10 bg-white/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-white transition-all">
-                                       <RefreshCcw className="w-5 h-5 mr-2" /> Re-Sync
+                                       <RefreshCcw className="w-5 h-5 mr-2" /> Try again
                                     </Button>
                                     <Button onClick={() => toggleFavorite({ id: 'temp', prompt, url: resultUrl!, style: activeStyle, aspect, seed: parseInt(seed) || 0, timestamp: Date.now() })} variant="outline" className={cn("h-16 px-6 border-white/10 bg-white/5 rounded-2xl transition-all", favorites.some(f => f.url === resultUrl) ? "text-yellow-500 bg-yellow-500/10 border-yellow-500/20" : "text-white")}>
                                        <Star className={cn("w-5 h-5", favorites.some(f => f.id === resultUrl) && "fill-current")} />
-                                    </Button>
-                                    <Button onClick={() => window.open(resultUrl, '_blank')} variant="outline" className="h-16 px-6 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] rounded-2xl">
-                                       <Maximize2 className="w-5 h-5" />
                                     </Button>
                                  </div>
                               </div>
@@ -530,52 +510,33 @@ export default function AiImageGeneratorPage() {
               </CardContent>
            </Card>
 
-           {/* Performance Row */}
+           {/* Info Row */}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Private</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Image generation is anonymous. Prompts are volatile and held strictly in local memory. The studio does not log or persist your creative signals.
+                    All generation happens via secure nodes. Your data is not stored or shared.
                   </p>
                 </div>
              </div>
              <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <Activity className="w-7 h-7" />
+                   <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Node Reliability</h4>
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Fast</h4>
                   <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Synthesis is performed via global hardware-accelerated nodes. High-volume requests may take 5-10 seconds for full buffer synchronization.
+                    Utilizing high-performance global nodes for rapid image synthesis.
                   </p>
                 </div>
              </div>
           </div>
         </main>
       </div>
-
-      {/* Confirmation Overlays */}
-      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearAllConfirm}>
-        <AlertDialogContent className="glass-card border-white/10 rounded-[2.5rem] p-8 max-w-sm">
-          <AlertDialogHeader className="space-y-4">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mx-auto">
-               <Trash2 className="w-8 h-8" />
-            </div>
-            <AlertDialogTitle className="text-xl font-headline font-black text-foreground uppercase tracking-tight text-center">Purge Archive</AlertDialogTitle>
-            <AlertDialogDescription className="text-[11px] font-medium text-foreground/40 uppercase tracking-widest leading-relaxed text-center">
-              This will definitively clear your visual history registry. This action cannot be reversed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-8 flex gap-3">
-            <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setArchive([]); localStorage.removeItem(ARCHIVE_KEY); setShowClearAllConfirm(false); toast({ title: "Archive Purged" }); }} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Purge All</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
