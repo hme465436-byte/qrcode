@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Plus, 
@@ -52,7 +51,8 @@ import {
   CloudUpload,
   Globe2,
   PanelLeft,
-  ArrowRight
+  ArrowRight,
+  ShieldAlert
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -64,6 +64,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 // --- Tool Registry ---
 const TOOL_MAP = [
@@ -174,6 +175,8 @@ export function FloatingActionHub() {
   };
 
   const startSlotLongPress = (idx: number) => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    isLongPressActive.current = false;
     longPressTimer.current = setTimeout(() => {
       isLongPressActive.current = true;
       handleSlotLongPress(idx);
@@ -247,9 +250,9 @@ export function FloatingActionHub() {
                 )}
 
                 <button
-                  onMouseDown={handleStart}
+                  onMouseDown={(e) => !isOpen ? handleStart(e) : startSlotLongPress(i)}
                   onMouseUp={(e) => handleEnd(e, false, s, i)}
-                  onTouchStart={() => startSlotLongPress(i)}
+                  onTouchStart={(e) => !isOpen ? handleStart(e) : startSlotLongPress(i)}
                   onTouchEnd={(e) => handleEnd(e, false, s, i)}
                   className={cn(
                     "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-2xl border active:scale-90",
@@ -298,18 +301,18 @@ export function FloatingActionHub() {
          <DialogContent className="glass-card max-w-2xl w-[calc(100%-32px)] border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
             <DialogHeader className="p-6 sm:p-8 border-b border-white/5 bg-secondary/30 shrink-0">
                <div className="flex items-center gap-5">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/20">
                      <Settings2 className="w-6 h-6" />
                   </div>
                   <div className="space-y-1">
                      <DialogTitle className="text-2xl font-headline font-black uppercase tracking-tight text-white leading-none">Map Studio Unit</DialogTitle>
-                     <DialogDescription className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.3em]">Hardware slot 0{activeSlotIdx! + 1} integration</DialogDescription>
+                     <DialogDescription className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.3em]">Hardware slot 0{activeSlotIdx! + 1} integration • Long press to remove</DialogDescription>
                   </div>
                </div>
             </DialogHeader>
             
-            <div className="p-4 sm:p-6 border-b border-white/5 bg-black/20">
-               <div className="relative group/search">
+            <div className="p-4 sm:p-6 border-b border-white/5 bg-black/20 flex flex-col sm:flex-row gap-4">
+               <div className="relative group/search flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
                   <Input 
                     value={searchQuery}
@@ -319,6 +322,15 @@ export function FloatingActionHub() {
                     autoFocus
                   />
                </div>
+               {activeSlotIdx !== null && slots[activeSlotIdx] && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => removeTool(activeSlotIdx)}
+                    className="h-14 px-6 border-red-500/20 bg-red-500/5 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all font-black text-[9px] uppercase tracking-widest"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" /> Clear Slot
+                  </Button>
+               )}
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 grid grid-cols-2 sm:grid-cols-3 gap-3 bg-black/40">
@@ -350,7 +362,7 @@ export function FloatingActionHub() {
 
       <style jsx global>{`
         .icon-3d { filter: drop-shadow(1px 1px 0px rgba(0,0,0,0.2)); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
