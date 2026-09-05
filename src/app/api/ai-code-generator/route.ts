@@ -1,9 +1,8 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * @fileOverview Secure Server Node for AI Code Generation.
- * Multi-node failover: Gemini (Primary) -> Groq (Fallback).
+ * Multi-node failover: Gemini (Primary 2.5/2.0/3.5) -> Groq (Fallback 3.1).
  * Ensures output is ALWAYS a valid JSON object to prevent client-side parsing errors.
  */
 
@@ -41,9 +40,10 @@ export async function POST(req: NextRequest) {
       ? `INSTRUCTION: ${instruction}\n\nCURRENT_CODE:\n${currentCode}`
       : `TASK: ${prompt}\nMODE: ${mode}\nLANGUAGE: ${language}\nEXTRA NOTES: ${extra || 'None'}`;
 
-    // --- 1. Primary Node: Gemini Matrix ---
+    // --- 1. Primary Node Cluster: Gemini ---
     if (geminiKey) {
-      const geminiModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.5-flash'];
+      // User specified models + 1.5-flash as the most reliable current production fallback
+      const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash'];
       
       for (const model of geminiModels) {
         try {
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
                 });
               }
             } catch (e) {
-              continue;
+              continue; // Try next model if JSON parsing failed
             }
           }
         } catch (e) {
@@ -108,13 +108,16 @@ export async function POST(req: NextRequest) {
 
         if (response.ok) {
           const data = await response.json();
-          const content = JSON.parse(data.choices?.[0]?.message?.content || '{}');
-          if (content.code) {
-            return NextResponse.json({ 
-              success: true, 
-              code: content.code,
-              explanation: content.explanation || ''
-            });
+          const contentStr = data.choices?.[0]?.message?.content;
+          if (contentStr) {
+            const content = JSON.parse(contentStr);
+            if (content.code) {
+              return NextResponse.json({ 
+                success: true, 
+                code: content.code,
+                explanation: content.explanation || ''
+              });
+            }
           }
         }
       } catch (e) {}
