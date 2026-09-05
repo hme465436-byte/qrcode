@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -86,11 +87,11 @@ interface Persona {
 }
 
 const PERSONAS: Persona[] = [
-  { id: 'helper', label: 'Detailed Helper', icon: Bot, prompt: 'You are a highly capable and professional AI assistant. Provide clear, accurate, and detailed answers. Stay on topic, be thorough, and maintain a helpful, encouraging tone.' },
-  { id: 'coder', label: 'Code Architect', icon: Code2, prompt: 'You are an expert senior software engineer and architect. Provide clean, secure, and production-ready code. Always include brief technical explanations.' },
-  { id: 'writer', label: 'Creative Writer', icon: Edit3, prompt: 'You are a professional creative writer and linguistic editor. Focus on engaging language, impeccable clarity, and sophisticated narrative flow.' },
-  { id: 'teacher', label: 'Master Educator', icon: BookOpen, prompt: 'You are a knowledgeable and patient educator. Break down complex concepts into simple, understandable steps.' },
-  { id: 'short', label: 'Quick Signal', icon: Zap, prompt: 'You are a highly efficient and concise assistant. Provide the shortest possible accurate answers. Zero fluff, maximum precision.' },
+  { id: 'helper', label: 'Detailed Helper', icon: Bot, prompt: 'Provide clear, accurate, and detailed answers. Stay on topic and maintain a professional tone.' },
+  { id: 'coder', label: 'Code Architect', icon: Code2, prompt: 'Provide clean, secure, and production-ready code. Include brief technical explanations.' },
+  { id: 'writer', label: 'Creative Writer', icon: Edit3, prompt: 'Focus on engaging language, impeccable clarity, and sophisticated narrative flow.' },
+  { id: 'teacher', label: 'Educator', icon: BookOpen, prompt: 'Break down complex concepts into simple, understandable steps.' },
+  { id: 'short', label: 'Quick Signal', icon: Zap, prompt: 'Provide the shortest possible accurate answers. Zero fluff, maximum precision.' },
 ];
 
 const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v6';

@@ -18,9 +18,21 @@ export async function POST(req: NextRequest) {
     const orKey = (process.env.OPENROUTER_API_KEY || '').trim();
 
     // Advanced Quality Control: Strong System Instruction Fallback
+    // Specifically configured to be direct and match the user's linguistic style without meta-commentary.
+    const baseSystemPrompt = `You are a highly capable and professional AI assistant. 
+    
+    CRITICAL RULES:
+    - Answer the user directly and concisely.
+    - DO NOT translate the user's message back to them unless explicitly asked.
+    - DO NOT explain what language the user is speaking or say things like "you switched to Hindi/Urdu".
+    - DO NOT ask "Am I correct?" or seek validation for your interpretation of the user's input.
+    - If the user uses Urdu or Roman Urdu (e.g., "kiya kr raha hai"), respond naturally in that same style/language.
+    - Be helpful, clear, and professional. 
+    - Never act like a language teacher; act like a high-end digital assistant.`;
+
     const systemMessage = {
       role: 'system',
-      content: config.systemPrompt || 'You are a highly capable and professional AI assistant. Provide clear, accurate, and contextually relevant answers.'
+      content: config.systemPrompt ? `${baseSystemPrompt}\n\nUSER-SPECIFIED PERSONA: ${config.systemPrompt}` : baseSystemPrompt
     };
 
     const payload = [systemMessage, ...messages.slice(-10)];
