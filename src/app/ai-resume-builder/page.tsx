@@ -301,7 +301,7 @@ export default function AIResumeBuilderPage() {
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
                           <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Projects</Label>
-                          <Textarea value={formData.projects} onChange={e => handleInputChange('projects', e.target.value)} placeholder="Key accomplishments..." className="h-20 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
+                          <Textarea value={formData.projects} onChange={e => handleInputChange('projects', e.target.value)} placeholder="Key accomplishments..." className="h-20 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4 no-scrollbar" />
                        </div>
                        <div className="space-y-2">
                           <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Languages</Label>
@@ -388,7 +388,7 @@ export default function AIResumeBuilderPage() {
 
         {/* Right Column: Preview & Editor */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[800px] bg-black/40">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[1000px] bg-black/40">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
                  <div className="flex items-center gap-4">
@@ -427,7 +427,7 @@ export default function AIResumeBuilderPage() {
                           value={result}
                           onChange={e => setResult(e.target.value)}
                           spellCheck={false}
-                          className="flex-1 p-8 sm:p-16 bg-white dark:bg-black/20 text-foreground font-mono text-sm leading-relaxed resize-none focus:ring-0 border-none custom-scrollbar"
+                          className="flex-1 p-8 sm:p-16 bg-white dark:bg-black/20 text-foreground font-mono text-base leading-relaxed resize-none focus:ring-0 border-none custom-scrollbar"
                          />
                       </div>
                     ) : (
@@ -486,7 +486,7 @@ export default function AIResumeBuilderPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Abort</AlertDialogCancel>
-            <AlertDialogAction onClick={() => itemToDelete && handleDelete(itemToDelete)} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl">Purge</AlertDialogAction>
+            <AlertDialogAction onClick={() => itemToDelete && handleDelete(itemToDelete)} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Purge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
