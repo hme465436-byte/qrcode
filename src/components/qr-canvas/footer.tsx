@@ -76,7 +76,6 @@ export function Footer() {
               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Knowledge</h4>
               <nav className="flex flex-col gap-4">
                 {[
-                  { label: 'FAQ', href: '/faq' },
                   { label: 'Help Center', href: '/faq' },
                   { label: 'Buy me a coffee', href: '/donate' },
                   { label: 'About & My Work', href: '/about' },
