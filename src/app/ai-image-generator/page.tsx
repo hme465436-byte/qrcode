@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -297,10 +298,10 @@ export default function AiImageGeneratorPage() {
                                     <Download className="w-6 h-6" /> Save Master PNG
                                  </Button>
                                  <div className="flex gap-2">
-                                    <Button onClick={handleCopy} variant="outline" className="h-16 px-6 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[10px] rounded-2xl">
+                                    <Button onClick={handleCopy} variant="outline" className="h-16 px-6 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] rounded-2xl">
                                        {isCopied ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />} Copy Prompt
                                     </Button>
-                                    <Button onClick={() => window.open(resultUrl, '_blank')} variant="outline" className="h-16 w-16 border-white/10 bg-white/5 text-white/40 rounded-2xl">
+                                    <Button onClick={() => window.open(resultUrl, '_blank')} variant="outline" className="h-16 w-16 border-white/10 bg-white/5 text-white font-black rounded-2xl">
                                        <Maximize2 className="w-5 h-5" />
                                     </Button>
                                  </div>
