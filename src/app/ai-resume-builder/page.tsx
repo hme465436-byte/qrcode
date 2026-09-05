@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -22,7 +21,9 @@ import {
   Settings2,
   Info,
   Undo2,
-  List
+  List,
+  Type,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,7 +63,10 @@ export default function AIResumeBuilderPage() {
       try {
         const parsed = JSON.parse(saved);
         if (typeof parsed === 'string') setResult(parsed);
-        else if (parsed.formData) setFormData(parsed.formData);
+        else if (parsed.formData) {
+          setFormData(parsed.formData);
+          if (parsed.result) setResult(parsed.result);
+        }
       } catch (e) {}
     }
   }, []);
