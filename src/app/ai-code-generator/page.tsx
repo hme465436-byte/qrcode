@@ -441,7 +441,7 @@ export default function AiCodeGeneratorPage() {
 
         {/* Workspace Column */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/40">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col max-h-[850px] bg-black/40">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
                  <div className="flex items-center gap-4">
@@ -454,7 +454,7 @@ export default function AiCodeGeneratorPage() {
               </CardHeader>
               
               <CardContent className="flex-1 p-0 flex flex-col overflow-hidden">
-                 <div className="flex-1 relative group/output flex flex-col min-h-[400px]">
+                 <div className="flex-1 relative group/output flex flex-col min-h-0">
                     {isProcessing && !code ? (
                       <div className="flex-1 flex flex-col items-center justify-center py-40 gap-8">
                          <div className="relative">
@@ -464,7 +464,7 @@ export default function AiCodeGeneratorPage() {
                          <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Synthesizing Code Matrix...</p>
                       </div>
                     ) : code ? (
-                      <div className="flex-1 flex flex-col animate-in fade-in duration-500">
+                      <div className="flex-1 flex flex-col min-h-0 animate-in fade-in duration-500 overflow-hidden">
                          {/* Header Info */}
                          <div className="p-6 bg-secondary/20 border-b border-white/5 flex items-center justify-between shrink-0">
                             <div className="flex items-center gap-6">
@@ -478,14 +478,14 @@ export default function AiCodeGeneratorPage() {
                             </div>
                          </div>
                          
-                         {/* Code Area */}
-                         <div className="flex-1 p-0 bg-[#060608] relative overflow-hidden flex flex-col min-h-[300px]">
+                         {/* Code Area - Constrained and Scrollable */}
+                         <div className="flex-1 p-0 bg-[#060608] relative overflow-hidden flex flex-col min-h-0">
                             <pre className="flex-1 p-8 sm:p-12 font-mono text-xs sm:text-sm leading-relaxed overflow-auto custom-scrollbar text-emerald-500/90 whitespace-pre selection:bg-primary/20">
                                <code>{code}</code>
                             </pre>
                             
                             {explanation && (
-                              <div className="p-8 border-t border-white/5 bg-secondary/30 relative overflow-hidden group/exp">
+                              <div className="p-8 border-t border-white/5 bg-secondary/30 relative overflow-hidden group/exp shrink-0">
                                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-4">Protocol Explanation</p>
                                  <p className="text-[13px] text-white/60 leading-relaxed font-medium relative z-10">{explanation}</p>
                               </div>
