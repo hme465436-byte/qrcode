@@ -193,6 +193,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/ai-code-generator', 
+    icon: Code2, 
+    title: 'AI Code Generator', 
+    desc: 'Create code from a simple request.', 
+    label: 'AI STUDIO', 
+    color: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
+    glowClass: 'bg-cyan-400/10',
+    keywords: ['code', 'generator', 'ai code', 'javascript', 'python', 'react', 'llama'],
+    category: 'generators'
+  },
+  { 
     href: '/ai-image-generator', 
     icon: Sparkles, 
     title: 'AI Image Generator', 
@@ -1495,7 +1506,7 @@ const PHRASES = [
   'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
   'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain',
   'Mouse Cursor Maker', 'Windows cursor', '.cur maker', 'pointer', 'Speech to Text', 'Voice typing', 'Transcribe', 'Text to Speech', 'Voice', 'Read aloud',
-  'Voice Changer', 'Voice effect', 'Robot voice', 'Helium voice', 'deep voice', 'Reverse Video', 'Rewind clip', 'AI Image Generator', 'Text to Image', 'Pollinations'
+  'Voice Changer', 'Voice effect', 'Robot voice', 'Helium voice', 'deep voice', 'Reverse Video', 'Rewind clip', 'AI Image Generator', 'Text to Image', 'Pollinations', 'AI Code Generator', 'Write code', 'Programming assistant'
 ];
 
 const ToolItem = React.memo(({ item, mode, onNavigate }: { item: Tool, mode: 'grid' | 'list', onNavigate: () => void }) => {
