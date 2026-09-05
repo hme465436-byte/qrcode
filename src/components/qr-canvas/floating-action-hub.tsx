@@ -225,7 +225,8 @@ export function FloatingActionHub() {
         />
       )}
 
-      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-center gap-4">
+      {/* Recalibrated Position: bottom-28 right-6 */}
+      <div className="fixed bottom-28 right-6 z-[9999] flex flex-col items-center gap-4">
         
         {/* SLOTS MATRIX */}
         <div className={cn(
