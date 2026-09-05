@@ -4,13 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * @fileOverview Secure Server Node for AI Email Writing.
  * Connects to Groq API with multi-model failover.
+ * Supports purpose, recipient, tone, length, and language parameters.
  */
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { purpose, recipient, tone, extra } = await req.json();
+    const { purpose, recipient, tone, length, language, extra } = await req.json();
     const apiKey = (process.env.GROQ_API_KEY || '').trim();
 
     if (!apiKey) {
@@ -26,17 +27,19 @@ export async function POST(req: NextRequest) {
       PURPOSE: ${purpose}
       RECIPIENT: ${recipient}
       TONE: ${tone}
+      LENGTH: ${length}
+      LANGUAGE: ${language}
       EXTRA DETAILS: ${extra || 'None'}
 
       Rules:
-      1. Provide a concise, relevant subject line.
-      2. Format the body with clear paragraphs and a professional sign-off.
+      1. Provide a concise, relevant subject line in ${language}.
+      2. Format the body with clear paragraphs and a professional sign-off in ${language}.
       3. Do not include any conversational filler or meta-commentary.
       4. Output the result strictly as a JSON object with keys "subject" and "body".
       5. The "body" text should use standard newlines for formatting.
     `;
 
-    // Multi-Model Failover Matrix
+    // Multi-Model Failover Matrix - Prioritizing llama-3.1-8b-instant
     const models = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'openai/gpt-oss-20b'];
     let lastError = null;
 
@@ -51,7 +54,7 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             model: model,
             messages: [
-              { role: 'system', content: 'You are an expert executive communications assistant. Output JSON only.' },
+              { role: 'system', content: `You are an expert executive communications assistant. Output JSON only in ${language}.` },
               { role: 'user', content: prompt }
             ],
             temperature: 0.7,

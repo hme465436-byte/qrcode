@@ -22,7 +22,12 @@ import {
   Sparkles,
   AlignLeft,
   ArrowRight,
-  Check
+  Check,
+  Languages,
+  Clock,
+  Smartphone,
+  Save,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +40,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { Badge } from '@/components/ui/badge';
 
-const HISTORY_KEY = 'mykit_email_writer_history_v1';
+const HISTORY_KEY = 'mykit_email_writer_history_v2';
 
 interface EmailHistory {
   id: string;
@@ -43,6 +48,9 @@ interface EmailHistory {
   body: string;
   timestamp: number;
   purpose: string;
+  recipient: string;
+  tone: string;
+  language: string;
 }
 
 export default function AiEmailWriterPage() {
@@ -52,6 +60,8 @@ export default function AiEmailWriterPage() {
   const [purpose, setPurpose] = useState('');
   const [recipient, setRecipient] = useState('');
   const [tone, setTone] = useState('Professional');
+  const [length, setLength] = useState('Normal');
+  const [language, setLanguage] = useState('English');
   const [extra, setExtra] = useState('');
   
   // Results State
@@ -69,14 +79,17 @@ export default function AiEmailWriterPage() {
     }
   }, []);
 
-  const saveToHistory = (s: string, b: string, p: string) => {
+  const saveToHistory = (s: string, b: string) => {
     const next = [{
       id: Math.random().toString(36).substr(2, 9),
       subject: s,
       body: b,
-      purpose: p,
+      purpose,
+      recipient,
+      tone,
+      language,
       timestamp: Date.now()
-    }, ...history].slice(0, 10);
+    }, ...history].slice(0, 20);
     setHistory(next);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
   };
@@ -95,7 +108,7 @@ export default function AiEmailWriterPage() {
       const response = await fetch('/api/ai-email-writer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ purpose, recipient, tone, extra })
+        body: JSON.stringify({ purpose, recipient, tone, length, language, extra })
       });
 
       const data = await response.json();
@@ -103,8 +116,8 @@ export default function AiEmailWriterPage() {
       if (response.ok && data.success) {
         setSubject(data.subject);
         setBody(data.body);
-        saveToHistory(data.subject, data.body, purpose);
-        toast({ title: "Synthesis Complete", description: "Email draft is ready." });
+        saveToHistory(data.subject, data.body);
+        toast({ title: "Email Created", description: "Your draft is ready." });
       } else {
         throw new Error(data.message || "Service unavailable. Try again.");
       }
@@ -126,26 +139,46 @@ export default function AiEmailWriterPage() {
     setSubject(item.subject);
     setBody(item.body);
     setPurpose(item.purpose);
+    setRecipient(item.recipient);
+    setTone(item.tone);
+    setLanguage(item.language);
     toast({ title: "Draft Restored" });
   };
 
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const next = history.filter(h => h.id !== id);
+    setHistory(next);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+    toast({ title: "Removed from history" });
+  };
+
+  const handleReset = () => {
+    setPurpose('');
+    setRecipient('');
+    setExtra('');
+    setSubject('');
+    setBody('');
+    toast({ title: "Reset complete" });
+  };
+
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-full bg-[#0a0a0c] min-h-screen">
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <Mail className="w-3.5 h-3.5" /> Linguistic Suite Pro
+            <Mail className="w-3.5 h-3.5" /> Linguistic Studio
           </div>
-          <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+          <h1 className="text-3xl md:text-6xl font-headline font-black text-white uppercase tracking-tight leading-none">
             AI Email <span className="text-primary italic">Writer</span>
           </h1>
-          <p className="text-foreground/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Write clean, professional emails in seconds. High-fidelity linguistic synthesis with custom tone protocols and hardware-native privacy.
+          <p className="text-white/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
+            Write professional emails in seconds. Local-only processing with precision tone controls and multi-language support.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="ai-email" />
-           <Button variant="outline" size="sm" onClick={() => { setPurpose(''); setRecipient(''); setExtra(''); setSubject(''); setBody(''); }} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive">
+           <Button variant="outline" size="sm" onClick={handleReset} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
               <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
            </Button>
         </div>
@@ -153,39 +186,70 @@ export default function AiEmailWriterPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
         {/* Settings Column */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-1000">
+        <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
-                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
+                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-white">
                     <Settings2 className="w-5 h-5 text-primary" /> Email Details
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-8">
                  <div className="space-y-6">
                     <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Purpose of writing</Label>
-                       <Input value={purpose} onChange={e => setPurpose(e.target.value)} placeholder="e.g. Resignation, Meeting Request, Follow up" className="h-12 bg-secondary/50 border-border rounded-xl font-bold" />
+                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Purpose of writing</Label>
+                       <Input value={purpose} onChange={e => setPurpose(e.target.value)} placeholder="e.g. Meeting Request, Job Application" className="h-12 bg-secondary/50 border-border rounded-xl font-bold uppercase" />
                     </div>
                     <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Recipient</Label>
-                       <Input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="e.g. Hiring Manager, Client, Team" className="h-12 bg-secondary/50 border-border rounded-xl font-bold" />
+                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Recipient</Label>
+                       <Input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="e.g. Hiring Manager, Client" className="h-12 bg-secondary/50 border-border rounded-xl font-bold uppercase" />
                     </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Tone</Label>
+                          <Select value={tone} onValueChange={setTone}>
+                             <SelectTrigger className="h-11 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px]">
+                                <SelectValue />
+                             </SelectTrigger>
+                             <SelectContent className="glass-card">
+                                {['Professional', 'Friendly', 'Simple', 'Short'].map(t => (
+                                  <SelectItem key={t} value={t} className="text-[10px] font-black uppercase">{t}</SelectItem>
+                                ))}
+                             </SelectContent>
+                          </Select>
+                       </div>
+                       <div className="space-y-2">
+                          <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Length</Label>
+                          <Select value={length} onValueChange={setLength}>
+                             <SelectTrigger className="h-11 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px]">
+                                <SelectValue />
+                             </SelectTrigger>
+                             <SelectContent className="glass-card">
+                                {['Short', 'Normal', 'Long'].map(l => (
+                                  <SelectItem key={l} value={l} className="text-[10px] font-black uppercase">{l}</SelectItem>
+                                ))}
+                             </SelectContent>
+                          </Select>
+                       </div>
+                    </div>
+
                     <div className="space-y-2">
-                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Tone Profile</Label>
-                       <Select value={tone} onValueChange={setTone}>
-                          <SelectTrigger className="h-12 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px]">
+                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Language</Label>
+                       <Select value={language} onValueChange={setLanguage}>
+                          <SelectTrigger className="h-11 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px]">
                              <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="glass-card">
-                             {['Professional', 'Friendly', 'Simple', 'Short'].map(t => (
-                               <SelectItem key={t} value={t} className="text-[10px] font-black uppercase">{t}</SelectItem>
+                             {['English', 'Urdu'].map(l => (
+                               <SelectItem key={l} value={l} className="text-[10px] font-black uppercase">{l}</SelectItem>
                              ))}
                           </SelectContent>
                        </Select>
                     </div>
+
                     <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Extra Points (Optional)</Label>
-                       <Textarea value={extra} onChange={e => setExtra(e.target.value)} placeholder="Specific details or names to include..." className="h-24 bg-secondary/30 border-border rounded-2xl text-xs resize-none p-4" />
+                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Extra Points (Optional)</Label>
+                       <Textarea value={extra} onChange={e => setExtra(e.target.value)} placeholder="Specific details to include..." className="h-24 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
                     </div>
                  </div>
 
@@ -205,7 +269,7 @@ export default function AiEmailWriterPage() {
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
                     <History className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-foreground">Saved Emails</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-white">Saved Emails</CardTitle>
                  </div>
               </CardHeader>
               <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1 bg-black/10">
@@ -219,10 +283,16 @@ export default function AiEmailWriterPage() {
                        {history.map(item => (
                          <div key={item.id} className="p-4 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => handleRestore(item)}>
                             <div className="min-w-0 flex-1">
-                               <p className="text-xs font-bold text-foreground truncate uppercase">{item.purpose}</p>
-                               <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
+                               <p className="text-xs font-bold text-white truncate uppercase">{item.purpose}</p>
+                               <div className="flex items-center gap-2 mt-0.5">
+                                  <p className="text-[8px] font-black text-white/20 uppercase">{new Date(item.timestamp).toLocaleDateString()}</p>
+                                  <Badge variant="outline" className="text-[6px] py-0 px-1 border-white/10 uppercase opacity-50">{item.language}</Badge>
+                               </div>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-primary transition-all" />
+                            <div className="flex items-center gap-2">
+                               <button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-white/10 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+                               <ChevronRight className="w-4 h-4 text-white/10 group-hover:text-primary transition-all" />
+                            </div>
                          </div>
                        ))}
                     </div>
@@ -253,7 +323,7 @@ export default function AiEmailWriterPage() {
                             <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                             <Mail className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
                           </div>
-                         <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Synthesizing draft...</p>
+                         <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Creating email...</p>
                       </div>
                     ) : subject ? (
                       <div className="flex-1 flex flex-col animate-in fade-in duration-500">
@@ -263,9 +333,9 @@ export default function AiEmailWriterPage() {
                             <Input 
                               value={subject} 
                               onChange={e => setSubject(e.target.value)}
-                              className="bg-transparent border-none p-0 h-auto font-bold text-sm focus-visible:ring-0"
+                              className="bg-transparent border-none p-0 h-auto font-bold text-sm focus-visible:ring-0 text-white"
                             />
-                            <button onClick={() => handleCopy(subject, 'sub')} className="text-foreground/10 hover:text-primary transition-all">
+                            <button onClick={() => handleCopy(subject, 'sub')} className="text-white/10 hover:text-primary transition-all">
                                {isCopied === 'sub' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                             </button>
                          </div>
@@ -273,7 +343,7 @@ export default function AiEmailWriterPage() {
                          <textarea 
                           value={body}
                           onChange={e => setBody(e.target.value)}
-                          className="flex-1 p-10 bg-transparent text-foreground font-medium text-base leading-relaxed resize-none focus:outline-none custom-scrollbar whitespace-pre-wrap"
+                          className="flex-1 p-10 bg-transparent text-white/80 font-medium text-base leading-relaxed resize-none focus:outline-none custom-scrollbar whitespace-pre-wrap"
                          />
                       </div>
                     ) : (
@@ -296,6 +366,31 @@ export default function AiEmailWriterPage() {
                  )}
               </CardContent>
            </Card>
+
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-20">
+             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-[12px] font-black text-white uppercase tracking-widest leading-none">Privacy Safe</h4>
+                  <p className="text-[10px] text-white/40 leading-relaxed font-medium uppercase">
+                    Linguistic synthesis occurs via secure server nodes. No data is stored or logged on remote servers.
+                  </p>
+                </div>
+             </div>
+             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <Zap className="w-6 h-6" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-[12px] font-black text-white uppercase tracking-widest leading-none">Instant Handshake</h4>
+                  <p className="text-[10px] text-white/40 leading-relaxed font-medium uppercase">
+                    Utilizing high-performance Llama 3 models for zero-latency communication production.
+                  </p>
+                </div>
+             </div>
+          </div>
         </div>
       </div>
       
@@ -309,3 +404,4 @@ export default function AiEmailWriterPage() {
     </div>
   );
 }
+
