@@ -30,6 +30,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
@@ -343,7 +344,7 @@ export default function AIResumeBuilderPage() {
                 </div>
                 <div className="space-y-1">
                    <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">Master Integrity</h4>
-                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Using high-fidelity executive standard formatting for peak employer response.</p>
+                   <p className="text-[10px] text-foreground/40 font-medium uppercase">Using high-fidelity executive standard formatting for peak employer response.</p>
                 </div>
              </div>
              <div className="p-6 rounded-[2.5rem] bg-secondary/50 border border-border flex items-start gap-5 group hover:border-primary/20 transition-all">
@@ -352,7 +353,7 @@ export default function AIResumeBuilderPage() {
                 </div>
                 <div className="space-y-1">
                    <h4 className="text-[10px] font-black text-foreground uppercase tracking-widest">WASM Editor</h4>
-                   <p className="text-[10px] text-foreground/40 leading-relaxed font-medium uppercase">Edit results instantly in-studio before final production commitment.</p>
+                   <p className="text-[10px] text-foreground/40 font-medium uppercase">Edit results instantly in-studio before final production commitment.</p>
                 </div>
              </div>
           </div>
