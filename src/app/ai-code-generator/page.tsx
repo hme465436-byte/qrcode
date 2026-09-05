@@ -445,7 +445,7 @@ export default function AiCodeGeneratorPage() {
                              {isCopied === 'all' ? <CheckCircle2 className="w-6 h-6 mr-1" /> : <Copy className="w-6 h-6 mr-1" />} Copy Full Logic
                           </Button>
                           <div className="flex gap-3">
-                             <Button variant="outline" onClick={handleDownloadCode} className="h-16 px-8 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                             <Button variant="outline" onClick={handleDownloadCode} className="h-16 px-8 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
                                 <FileDown className="w-5 h-5" />
                              </Button>
                              <Button variant="outline" onClick={() => handleGenerate()} className="h-16 px-10 border-white/10 bg-white/5 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary/10 transition-all">
@@ -472,7 +472,7 @@ export default function AiCodeGeneratorPage() {
              </div>
              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <Zap className="w-6 h-6" />
+                   <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
                   <h4 className="text-[12px] font-black text-white uppercase tracking-widest leading-none">Hybrid Intelligence</h4>
