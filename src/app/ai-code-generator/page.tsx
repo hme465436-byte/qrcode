@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -20,7 +21,9 @@ import {
   Database,
   ChevronRight,
   Braces,
-  ShieldCheck
+  ShieldCheck,
+  FileDown,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,7 +36,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { Badge } from '@/components/ui/badge';
 
-const HISTORY_KEY = 'mykit_code_generator_history_v1';
+const HISTORY_KEY = 'mykit_code_generator_history_v2';
 
 interface CodeHistory {
   id: string;
@@ -43,6 +46,10 @@ interface CodeHistory {
   timestamp: number;
   language: string;
 }
+
+const LANGUAGES = [
+  'React', 'TypeScript', 'JavaScript', 'Python', 'HTML', 'CSS', 'C++', 'Java', 'SQL', 'PHP'
+];
 
 export default function AiCodeGeneratorPage() {
   const { toast } = useToast();
@@ -70,19 +77,19 @@ export default function AiCodeGeneratorPage() {
   const saveToHistory = (c: string, exp: string) => {
     const next = [{
       id: Math.random().toString(36).substr(2, 9),
-      name: prompt.substring(0, 30) || 'New Snippet',
+      name: prompt.substring(0, 40) || 'New Snippet',
       code: c,
       explanation: exp,
       language,
       timestamp: Date.now()
-    }, ...history].slice(0, 20);
+    }, ...history.filter(h => h.code !== c)].slice(0, 20);
     setHistory(next);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
   };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      toast({ variant: "destructive", title: "Missing Input", description: "Please describe what you want to build." });
+      toast({ variant: "destructive", title: "Missing Input", description: "Describe your requirement to begin." });
       return;
     }
 
@@ -129,12 +136,12 @@ export default function AiCodeGeneratorPage() {
     toast({ title: "Snippet Restored" });
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const handleDeleteHistory = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const next = history.filter(h => h.id !== id);
     setHistory(next);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-    toast({ title: "Removed from history" });
+    toast({ title: "Identity Purged" });
   };
 
   const handleReset = () => {
@@ -142,7 +149,19 @@ export default function AiCodeGeneratorPage() {
     setExtra('');
     setCode('');
     setExplanation('');
-    toast({ title: "Reset complete" });
+    toast({ title: "Studio Reset" });
+  };
+
+  const handleDownloadCode = () => {
+    if (!code) return;
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `code_export_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "File Saved" });
   };
 
   return (
@@ -150,13 +169,13 @@ export default function AiCodeGeneratorPage() {
       <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <Code2 className="w-3.5 h-3.5" /> Dev Studio Pro
+            <Code2 className="w-3.5 h-3.5" /> Intelligence Suite Pro
           </div>
           <h1 className="text-3xl md:text-6xl font-headline font-black text-white uppercase tracking-tight leading-none">
             AI Code <span className="text-primary italic">Generator</span>
           </h1>
           <p className="text-white/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Create professional code from simple linguistic requests. Multi-language support with high-fidelity architectural synthesis.
+            Professional high-fidelity code synthesis. Generate clean, documented logic across multiple languages using secure multi-node processing.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
@@ -171,31 +190,32 @@ export default function AiCodeGeneratorPage() {
         {/* Settings Column */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-white">
-                    <Settings2 className="w-5 h-5 text-primary" /> Matrix Config
+                    <Settings2 className="w-5 h-5 text-primary" /> Matrix Parameters
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-8">
                  <div className="space-y-6">
                     <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">What to build</Label>
+                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Linguistic Request (Task)</Label>
                        <Textarea 
                         value={prompt} 
                         onChange={e => setPrompt(e.target.value)} 
-                        placeholder="e.g. A React hook for local storage, a Python script to sort files..." 
-                        className="h-32 bg-secondary/50 border-border rounded-2xl text-xs font-bold p-4 resize-none" 
+                        placeholder="e.g. Build a secure password hash utility in Node.js..." 
+                        className="h-32 bg-secondary/50 border-border rounded-2xl text-xs font-bold p-6 resize-none focus:ring-primary/40" 
                        />
                     </div>
                     
                     <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Linguistic Target (Language)</Label>
+                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Target Language</Label>
                        <Select value={language} onValueChange={setLanguage}>
-                          <SelectTrigger className="h-12 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px]">
+                          <SelectTrigger className="h-12 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px] tracking-widest">
                              <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="glass-card">
-                             {['JavaScript', 'Python', 'HTML', 'CSS', 'React', 'TypeScript', 'C++', 'Java'].map(l => (
+                             {LANGUAGES.map(l => (
                                <SelectItem key={l} value={l} className="text-[10px] font-black uppercase">{l}</SelectItem>
                              ))}
                           </SelectContent>
@@ -204,49 +224,54 @@ export default function AiCodeGeneratorPage() {
 
                     <div className="space-y-2">
                        <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Extra Details (Optional)</Label>
-                       <Textarea value={extra} onChange={e => setExtra(e.target.value)} placeholder="Specific frameworks, error handling, comments..." className="h-24 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
+                       <Textarea value={extra} onChange={e => setExtra(e.target.value)} placeholder="Specific frameworks, comments, error handling..." className="h-24 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
                     </div>
                  </div>
 
                  <Button 
                    onClick={handleGenerate} 
-                   disabled={isProcessing}
+                   disabled={isProcessing || !prompt.trim()}
                    className="h-16 w-full bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 text-xs uppercase tracking-widest active:scale-95 transition-all"
                  >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                    Generate Code
+                    Synthesize Logic
                  </Button>
               </CardContent>
            </Card>
 
            {/* History Module */}
-           <Card className="glass-card border-border shadow-xl flex flex-col max-h-[300px]">
+           <Card className="glass-card border-border shadow-xl flex flex-col max-h-[400px]">
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
                     <History className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-white">Saved Snippets</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-white">Identity Registry</CardTitle>
                  </div>
+                 {history.length > 0 && (
+                   <button onClick={() => setHistory([])} className="text-[9px] font-black text-foreground/20 hover:text-red-500 uppercase transition-colors">Clear All</button>
+                 )}
               </CardHeader>
               <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1 bg-black/10">
                  {history.length === 0 ? (
-                    <div className="py-12 text-center opacity-10 space-y-2">
-                       <Activity className="w-8 h-8 mx-auto" />
-                       <p className="text-[10px] font-black uppercase tracking-widest">No history</p>
+                    <div className="py-20 text-center opacity-10 space-y-4">
+                       <Activity className="w-10 h-10 mx-auto" />
+                       <p className="text-[10px] font-black uppercase tracking-widest">Zero Matrix history</p>
                     </div>
                  ) : (
                     <div className="divide-y divide-white/5">
                        {history.map(item => (
-                         <div key={item.id} className="p-4 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => handleRestore(item)}>
+                         <div key={item.id} className="p-5 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => handleRestore(item)}>
                             <div className="min-w-0 flex-1">
-                               <p className="text-xs font-bold text-white truncate uppercase">{item.name}</p>
-                               <div className="flex items-center gap-2 mt-0.5">
-                                  <p className="text-[8px] font-black text-white/20 uppercase">{new Date(item.timestamp).toLocaleDateString()}</p>
-                                  <Badge variant="outline" className="text-[6px] py-0 px-1 border-white/10 uppercase opacity-50">{item.language}</Badge>
+                               <p className="text-xs font-bold text-white truncate uppercase tracking-tight">{item.name}</p>
+                               <div className="flex items-center gap-3 mt-1">
+                                  <Badge variant="outline" className="text-[6px] py-0 px-2 border-primary/20 text-primary uppercase">{item.language}</Badge>
+                                  <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
                                </div>
                             </div>
                             <div className="flex items-center gap-2">
-                               <button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-white/10 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
-                               <ChevronRight className="w-4 h-4 text-white/10 group-hover:text-primary transition-all" />
+                               <button onClick={(e) => handleDeleteHistory(e, item.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                               </button>
+                               <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-primary transition-all" />
                             </div>
                          </div>
                        ))}
@@ -265,7 +290,7 @@ export default function AiCodeGeneratorPage() {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <Activity className="w-5 h-5" />
                     </div>
-                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Code Preview</CardTitle>
+                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Linguistic Visualizer</CardTitle>
                  </div>
                  {code && <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">MASTER READY</Badge>}
               </CardHeader>
@@ -275,43 +300,47 @@ export default function AiCodeGeneratorPage() {
                     {isProcessing ? (
                       <div className="flex-1 flex flex-col items-center justify-center py-40 gap-8">
                          <div className="relative">
-                            <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
-                            <Terminal className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
+                            <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
+                            <Terminal className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-pulse" />
                           </div>
-                         <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Synthesizing code...</p>
+                         <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Synthesizing Code Matrix...</p>
                       </div>
                     ) : code ? (
                       <div className="flex-1 flex flex-col animate-in fade-in duration-500">
                          {/* Header Info */}
                          <div className="p-6 bg-secondary/20 border-b border-white/5 flex items-center justify-between shrink-0">
-                            <div className="flex items-center gap-4">
-                               <Label className="text-[9px] font-black text-primary uppercase tracking-widest">Language: {language}</Label>
+                            <div className="flex items-center gap-6">
+                               <Label className="text-[9px] font-black text-primary uppercase tracking-widest">{language} Logic</Label>
+                               <span className="text-[8px] font-mono text-white/20 uppercase">{code.length} bytes isolated</span>
                             </div>
                             <div className="flex gap-2">
-                               <button onClick={() => handleCopy(code, 'code')} className="text-white/10 hover:text-primary transition-all">
-                                  {isCopied === 'code' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                               <button onClick={() => handleCopy(code, 'code')} className="p-2 rounded-lg bg-background border border-border text-foreground/20 hover:text-primary transition-all">
+                                  {isCopied === 'code' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                                </button>
                             </div>
                          </div>
                          
                          {/* Code Area */}
-                         <div className="flex-1 p-0 bg-[#060608] relative overflow-hidden flex flex-col">
-                            <pre className="flex-1 p-8 sm:p-10 font-mono text-sm leading-relaxed overflow-auto custom-scrollbar text-emerald-500/90 whitespace-pre scrollbar-hide">
+                         <div className="flex-1 p-0 bg-[#060608] relative overflow-hidden flex flex-col min-h-[300px]">
+                            <pre className="flex-1 p-8 sm:p-12 font-mono text-xs sm:text-sm leading-relaxed overflow-auto custom-scrollbar text-emerald-500/90 whitespace-pre selection:bg-primary/20">
                                <code>{code}</code>
                             </pre>
                             
                             {explanation && (
-                              <div className="p-6 border-t border-white/5 bg-secondary/20 max-h-[150px] overflow-y-auto custom-scrollbar">
-                                 <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Protocol Explanation</p>
-                                 <p className="text-xs text-white/50 leading-relaxed">{explanation}</p>
+                              <div className="p-8 border-t border-white/5 bg-secondary/30 relative overflow-hidden group/exp">
+                                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover/exp:opacity-10 transition-opacity">
+                                    <Braces className="w-12 h-12 text-primary" />
+                                 </div>
+                                 <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-4">Protocol Explanation</p>
+                                 <p className="text-[13px] text-white/60 leading-relaxed font-medium relative z-10">{explanation}</p>
                               </div>
                             )}
                          </div>
                       </div>
                     ) : (
-                      <div className="flex-1 flex flex-col items-center justify-center opacity-10 gap-6 py-40 grayscale pointer-events-none">
+                      <div className="flex-1 flex flex-col items-center justify-center opacity-10 gap-8 py-40 grayscale pointer-events-none">
                          <Terminal className="w-24 h-24 text-primary" />
-                         <p className="text-sm font-black uppercase tracking-[0.3em]">Your code will show here</p>
+                         <p className="text-xl font-headline font-black uppercase tracking-[0.4em]">Awaiting Identity Signal</p>
                       </div>
                     )}
                  </div>
@@ -319,36 +348,41 @@ export default function AiCodeGeneratorPage() {
                  {code && (
                     <div className="p-8 border-t border-white/5 bg-[#0a0a0c] flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0">
                        <Button onClick={() => handleCopy(code, 'all')} className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                          {isCopied === 'all' ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />} Copy full logic
+                          {isCopied === 'all' ? <CheckCircle2 className="w-6 h-6 mr-1" /> : <Copy className="w-6 h-6 mr-1" />} Copy Full Logic
                        </Button>
-                       <Button variant="outline" onClick={handleGenerate} className="h-16 px-8 border-white/10 bg-white/5 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/10">
-                          <RefreshCcw className="w-4 h-4 mr-2" /> Regenerate
-                       </Button>
+                       <div className="flex gap-3">
+                          <Button variant="outline" onClick={handleDownloadCode} className="h-16 px-8 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                             <FileDown className="w-5 h-5" />
+                          </Button>
+                          <Button variant="outline" onClick={handleGenerate} className="h-16 px-10 border-white/10 bg-white/5 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary/10 transition-all">
+                             <RefreshCcw className="w-5 h-5 mr-2" /> Re-Forge
+                          </Button>
+                       </div>
                     </div>
                  )}
               </CardContent>
            </Card>
 
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-20">
-             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-6 h-6" />
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[12px] font-black text-white uppercase tracking-widest leading-none">Privacy Safe</h4>
-                  <p className="text-[10px] text-white/40 leading-relaxed font-medium uppercase">
-                    All code requests are processed locally in your browser memory via secure server nodes.
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Safe</h4>
+                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                    All code requests are processed locally in your browser memory via secure server nodes. Hardware identifiers are never logged.
                   </p>
                 </div>
              </div>
              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <Zap className="w-6 h-6" />
+                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <Zap className="w-7 h-7" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[12px] font-black text-white uppercase tracking-widest leading-none">Instant Handshake</h4>
-                  <p className="text-[10px] text-white/40 leading-relaxed font-medium uppercase">
-                    High-performance Llama 3 models provide architectural precision with zero-latency production.
+                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Hybrid Intelligence</h4>
+                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                    Utilizing high-performance Gemini and Llama 3 models for architectural precision and clinical data translation.
                   </p>
                 </div>
              </div>
@@ -357,12 +391,11 @@ export default function AiCodeGeneratorPage() {
       </div>
       
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
