@@ -332,13 +332,13 @@ export default function AiCodeGeneratorPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-white">
-                    <Settings2 className="w-5 h-5 text-primary" /> Parameters
+                    <Settings2 className="w-5 h-5 text-primary" /> Details
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-8">
                  <div className="space-y-6">
                     <div className="space-y-4">
-                       <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Studio Mode</Label>
+                       <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Mode</Label>
                        <div className="grid grid-cols-3 gap-2">
                           {MODES.map(m => (
                             <button
@@ -358,7 +358,7 @@ export default function AiCodeGeneratorPage() {
 
                     <div className="space-y-2">
                        <Label className="text-[9px] font-black text-white/40 uppercase ml-1">
-                          {mode === 'fix' ? 'Code to Fix' : mode === 'explain' ? 'Concept to Explain' : 'Linguistic Request'}
+                          {mode === 'fix' ? 'Code to Fix' : mode === 'explain' ? 'Concept to Explain' : 'What to make'}
                        </Label>
                        <Textarea 
                         value={prompt} 
@@ -369,7 +369,7 @@ export default function AiCodeGeneratorPage() {
                     </div>
                     
                     <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Target Language</Label>
+                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Language</Label>
                        <Select value={language} onValueChange={setLanguage}>
                           <SelectTrigger className="h-12 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px] tracking-widest">
                              <SelectValue />
@@ -394,7 +394,7 @@ export default function AiCodeGeneratorPage() {
                    className="h-16 w-full bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 text-xs uppercase tracking-widest active:scale-95 transition-all"
                  >
                     {isProcessing && !code ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                    Synthesize Logic
+                    Generate
                  </Button>
               </CardContent>
            </Card>
@@ -404,7 +404,7 @@ export default function AiCodeGeneratorPage() {
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
                     <History className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-white">Identity Registry</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-white">Saved Codes</CardTitle>
                  </div>
               </CardHeader>
               <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1 bg-black/10">
@@ -448,7 +448,7 @@ export default function AiCodeGeneratorPage() {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <Activity className="w-5 h-5" />
                     </div>
-                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Linguistic Visualizer</CardTitle>
+                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Code Preview</CardTitle>
                  </div>
                  {code && <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">MASTER READY</Badge>}
               </CardHeader>
@@ -526,14 +526,14 @@ export default function AiCodeGeneratorPage() {
 
                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4 border-t border-white/5">
                           <Button onClick={() => handleCopy(code, 'all')} className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                             {isCopied === 'all' ? <CheckCircle2 className="w-6 h-6 mr-1" /> : <Copy className="w-6 h-6 mr-1" />} Copy Full Logic
+                             {isCopied === 'all' ? <CheckCircle2 className="w-6 h-6" /> : <Copy className="w-6 h-6" />} Copy Full Logic
                           </Button>
                           <div className="flex gap-3">
                              <Button variant="outline" onClick={handleDownloadCode} className="h-16 px-8 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">
                                 <FileDown className="w-5 h-5" />
                              </Button>
                              <Button variant="outline" onClick={() => handleGenerate()} className="h-16 px-10 border-white/10 bg-white/5 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary/10 transition-all">
-                                <RefreshCcw className="w-5 h-5 mr-2" /> Re-Forge
+                                <RefreshCcw className="w-5 h-5 mr-2" /> Improve
                              </Button>
                           </div>
                        </div>
