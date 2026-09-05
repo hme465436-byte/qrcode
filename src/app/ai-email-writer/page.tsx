@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -9,6 +8,7 @@ import {
   Copy, 
   CheckCircle2, 
   RefreshCcw, 
+  RotateCcw,
   Loader2, 
   Settings2, 
   Zap, 
@@ -32,6 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import { Badge } from '@/components/ui/badge';
 
 const HISTORY_KEY = 'mykit_email_writer_history_v1';
 
