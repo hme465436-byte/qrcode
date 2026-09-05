@@ -150,7 +150,7 @@ export default function AiCodeGeneratorPage() {
         throw new Error(data.message || "Service unavailable. Try again.");
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message });
+      toast({ variant: "destructive", title: "Error", description: "Service unavailable. Try again." });
     } finally {
       setIsProcessing(false);
     }

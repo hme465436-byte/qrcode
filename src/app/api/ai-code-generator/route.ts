@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (!geminiKey && !groqKey) {
       return NextResponse.json({ 
         success: false, 
-        message: "Node configuration missing. Please check server environment." 
+        message: "Service unavailable. Try again." 
       }, { status: 503 });
     }
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     // --- 1. Primary Node: Gemini Matrix ---
     if (geminiKey) {
-      const geminiModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      const geminiModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.5-flash'];
       
       for (const model of geminiModels) {
         try {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               contents: [{ parts: [{ text: `${systemPrompt}\n\nUSER REQUEST: ${userPrompt}` }] }],
               generationConfig: {
-                temperature: 0.1, // Near-deterministic for code
+                temperature: 0.1, 
                 responseMimeType: "application/json"
               }
             }),
@@ -76,12 +76,7 @@ export async function POST(req: NextRequest) {
                 });
               }
             } catch (e) {
-              // Manual Wrap Fallback
-              return NextResponse.json({ 
-                success: true, 
-                code: text, 
-                explanation: 'Direct response captured.' 
-              });
+              continue;
             }
           }
         } catch (e) {
@@ -127,13 +122,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ 
       success: false, 
-      message: "Service unavailable. All discovery nodes restricted. Please try again." 
+      message: "Service unavailable. Try again." 
     }, { status: 503 });
 
   } catch (err: any) {
     return NextResponse.json({ 
       success: false, 
-      message: "An error occurred during code synthesis. Please try again." 
+      message: "Service unavailable. Try again." 
     }, { status: 500 });
   }
 }
