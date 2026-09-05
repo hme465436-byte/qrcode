@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react';
@@ -120,7 +121,8 @@ import {
   Database,
   CloudUpload,
   MousePointer2,
-  Mic2
+  Mic2,
+  Contact2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -166,6 +168,17 @@ const TOOLS: Tool[] = [
     color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
     glowClass: 'bg-indigo-400/10',
     keywords: ['ai', 'chat', 'bot', 'assistant'],
+    category: 'generators'
+  },
+  { 
+    href: '/ai-resume-builder', 
+    icon: Contact2, 
+    title: 'AI Resume Builder', 
+    desc: 'Create a clean professional resume in minutes.', 
+    label: 'AI STUDIO', 
+    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    glowClass: 'bg-emerald-400/10',
+    keywords: ['resume', 'cv', 'builder', 'jobs', 'professional', 'career', 'ai resume'],
     category: 'generators'
   },
   { 
@@ -1444,7 +1457,7 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: any }[] = [
 ];
 
 const PHRASES = [
-  'AI Chatbot', 'Llama 3', 'Free AI', 'Assistant',
+  'AI Chatbot', 'Llama 3', 'Free AI', 'Assistant', 'AI Resume Builder', 'Job Matrix', 'CV Maker',
   'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
   'Word to PDF', 'Photo Enhance', 'Age Calculator', 'Photo to Text', 
   'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
@@ -1483,7 +1496,7 @@ const ToolItem = React.memo(({ item, mode, onNavigate }: { item: Tool, mode: 'gr
       onClick={onNavigate}
       className={cn(
         "group relative flex transition-all duration-300 min-w-0",
-        isGrid ? "h-full w-full" : "w-full"
+        isGrid ? "h-full w-full" : "full"
       )}
     >
       <Card className={cn(
