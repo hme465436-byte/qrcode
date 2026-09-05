@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { 
   User, 
   Mail, 
@@ -29,6 +28,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface Project {
   name: string;
@@ -246,11 +246,6 @@ export default function AboutPage() {
             </Card>
          </div>
       </section>
-
-      <div className="text-center opacity-10 flex flex-col items-center gap-4">
-         <Heart className="w-10 h-10 text-primary" />
-         <p className="text-[10px] font-black uppercase tracking-[0.6em] text-foreground">Built by Umar Farooq — My Kit Tool</p>
-      </div>
     </div>
   );
 }

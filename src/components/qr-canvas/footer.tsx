@@ -29,8 +29,8 @@ const Logo = ({ className = "h-8" }: { className?: string }) => (
 export function Footer() {
   const pathname = usePathname();
 
-  // Suppress footer on chatbot page for focused layout
-  if (pathname === '/ai-chatbot') return null;
+  // Only show footer on the homepage for a clean tool environment
+  if (pathname !== '/') return null;
 
   return (
     <footer className="border-t border-white/5 bg-[#060608] py-24 md:py-32 relative overflow-hidden">
