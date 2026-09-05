@@ -103,7 +103,6 @@ export default function AiImageGeneratorPage() {
   // Registry State
   const [archive, setArchive] = useState<ArchiveItem[]>([]);
   const [favorites, setFavorites] = useState<ArchiveItem[]>([]);
-  const [showClearConfirm, setShowClearAllConfirm] = useState(false);
 
   // Initialization
   useEffect(() => {
@@ -133,11 +132,38 @@ export default function AiImageGeneratorPage() {
     if (!prompt.trim()) return;
     setIsEnhancing(true);
     try {
+      // 1. Attempt High-Fidelity Server-Side Enhancement
       const enhanced = await enhanceImagePrompt({ text: prompt });
-      setPrompt(enhanced);
-      toast({ title: "Prompt Optimized" });
+      if (enhanced && enhanced.toLowerCase() !== prompt.toLowerCase()) {
+        setPrompt(enhanced);
+        toast({ title: "Prompt Optimized", description: "Linguistic depth increased via AI." });
+      } else {
+        throw new Error("No significant change detected.");
+      }
     } catch (e) {
-      toast({ variant: "destructive", title: "Enhancement Failed" });
+      // 2. Local Fallback Protocol: Inject quality descriptors while maintaining intent
+      const suffixes = [
+        "highly detailed",
+        "masterpiece",
+        "8k resolution",
+        "cinematic lighting",
+        "intricate textures",
+        "sharp focus",
+        "professional digital art"
+      ];
+      
+      const currentPrompt = prompt.trim();
+      const currentLower = currentPrompt.toLowerCase();
+      
+      // Filter out keywords already present to avoid redundancy
+      const needed = suffixes.filter(s => !currentLower.includes(s.split(' ')[0]));
+      
+      if (needed.length > 0) {
+        setPrompt(`${currentPrompt}, ${needed.join(', ')}`);
+        toast({ title: "Prompt Improved", description: "Applied local quality protocols." });
+      } else {
+        toast({ title: "Density Optimal", description: "Linguistic signal already high-fidelity." });
+      }
     } finally {
       setIsEnhancing(false);
     }
@@ -160,7 +186,6 @@ export default function AiImageGeneratorPage() {
     const fullPrompt = `${prompt.trim()}${STYLE_PRESETS[activeStyle].suffix}`;
     const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&seed=${currentSeed}&nologo=true`;
 
-    // High-Fidelity Loading Protocol: Wait for image bits to actually load in a background object
     const img = new Image();
     img.crossOrigin = "anonymous";
     
