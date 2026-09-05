@@ -1,4 +1,3 @@
-
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
@@ -7,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://qrcanvas.app/sitemap.xml',
+    sitemap: 'https://mykittool.app/sitemap.xml',
   };
 }

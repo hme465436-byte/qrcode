@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'MY KIT TOOL Professional Studio',
+    name: 'My Kit Tool',
     short_name: 'MY KIT TOOL',
-    description: 'Premium AI-Powered Digital Utility Studio. Professional assets and technical tools.',
+    description: 'Free online tools including AI chatbot, resume builder, image tools and more.',
     start_url: '/',
     display: 'standalone',
     background_color: '#060907',

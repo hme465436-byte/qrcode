@@ -17,14 +17,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'MY KIT TOOL | Professional AI-Powered Digital Studio',
-  description: 'The ultimate free professional utility suite. Create high-resolution branded QR codes, edit photos, extract text with OCR, and use advanced technical converters. 100% private and permanent.',
+  title: 'My Kit Tool',
+  description: 'Free online tools including AI chatbot, resume builder, image tools and more.',
   keywords: 'digital tools, free utilities, qr code generator, photo editor, ocr text extraction, hex converter, aob converter, professional studio, my kit tool',
   authors: [{ name: 'MY KIT TOOL Team' }],
   metadataBase: new URL('https://mykittool.app'), 
   openGraph: {
-    title: 'MY KIT TOOL | Premium Professional Utility Studio',
-    description: 'Design high-resolution assets and use technical utilities for your workflow. Support for QR, Photo Editing, OCR, and more.',
+    title: 'My Kit Tool',
+    description: 'Free online tools including AI chatbot, resume builder, image tools and more.',
     type: 'website',
     url: 'https://mykittool.app',
     siteName: 'MY KIT TOOL',
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MY KIT TOOL | Free Professional Utility Studio',
-    description: 'Create beautiful, branded QR codes and use professional digital tools for free.',
+    title: 'My Kit Tool',
+    description: 'Free online tools including AI chatbot, resume builder, image tools and more.',
     images: ['https://picsum.photos/seed/mykit-twitter/1200/630'],
   },
 };
