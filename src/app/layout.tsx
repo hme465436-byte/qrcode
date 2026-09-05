@@ -18,16 +18,19 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'My Kit Tool | Free Online Tools',
-  description: 'Free online tools for chat, resume, images, logos, code, email and more. Professional high-fidelity utilities with zero-storage local privacy.',
+  description: 'Free online tools for chat, resume, images, logos, code, email and more. Professional high-fidelity utilities with zero-storage local privacy at My Kit Tool.',
   keywords: 'free online tools, ai chatbot, resume builder, image editor, ocr, pdf tools, qr code generator, hex converter, developer tools, my kit tool, aob converter, background remover',
   authors: [{ name: 'MY KIT TOOL Team' }],
-  metadataBase: new URL('https://mykittool.vercel.app'), 
+  metadataBase: new URL('https://mykittool.vercel.app'),
+  alternates: {
+    canonical: '/',
+  },
   verification: {
     google: 'vMj1XN9ziXyU5kBso8wdA_OhZuzhD0o_BGSrSu9uiGU',
   },
   openGraph: {
     title: 'My Kit Tool | Free Online Tools',
-    description: 'Free online tools for chat, resume, images, logos, code, email and more.',
+    description: 'Free online tools for chat, resume, images, logos, code, email and more at My Kit Tool.',
     type: 'website',
     url: 'https://mykittool.vercel.app',
     siteName: 'MY KIT TOOL',
@@ -36,7 +39,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'My Kit Tool | Free Online Tools',
-    description: 'Free online tools for chat, resume, images, logos, code, email and more.',
+    description: 'Free online tools for chat, resume, images, logos, code, email and more at My Kit Tool.',
     images: ['https://picsum.photos/seed/mykit-twitter/1200/630'],
   },
 };
