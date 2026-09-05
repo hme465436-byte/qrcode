@@ -131,6 +131,7 @@ export default function AIChatbotPage() {
 
   // UI Meta
   const [isCopied, setIsCopied] = useState<string | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -155,7 +156,17 @@ export default function AIChatbotPage() {
     }
   }, []);
 
-  // --- 2. Cloud Sync ---
+  // --- 2. Typing Sync Protocol ---
+  useEffect(() => {
+    if (isFocused && window.innerWidth < 1024) {
+      document.body.classList.add('is-typing');
+    } else {
+      document.body.classList.remove('is-typing');
+    }
+    return () => document.body.classList.remove('is-typing');
+  }, [isFocused]);
+
+  // --- 3. Cloud Sync ---
   const cloudSessionsQuery = useMemo(() => {
     if (!db || !user) return null;
     return query(
@@ -203,9 +214,7 @@ export default function AIChatbotPage() {
     }
   }, [activeSessionId]);
 
-  // --- 3. Scroll Restoration Matrix ---
-  
-  // A. Gentle scroll on new message
+  // --- 4. Scroll Restoration Matrix ---
   useEffect(() => {
     if (isProcessing && scrollRef.current) {
       const timeout = setTimeout(() => {
@@ -218,7 +227,6 @@ export default function AIChatbotPage() {
     }
   }, [isProcessing]);
 
-  // B. Restore latest messages on session change or refresh
   useEffect(() => {
     if (activeSessionId && scrollRef.current) {
       const timer = setTimeout(() => {
@@ -233,7 +241,7 @@ export default function AIChatbotPage() {
     }
   }, [activeSessionId]);
 
-  // --- 4. Actions ---
+  // --- 5. Actions ---
 
   const createNewSession = (initialPrompt?: string) => {
     const newId = Math.random().toString(36).substr(2, 9);
@@ -290,7 +298,6 @@ export default function AIChatbotPage() {
     let updatedMessages: ChatMessage[];
     
     if (isRegenerate) {
-      // For regeneration, the caller (handleRegenerate) has already truncated the session
       updatedMessages = activeSession?.messages || [];
     } else {
       const userMsg: ChatMessage = { role: 'user', content: textToProcess };
@@ -360,7 +367,6 @@ export default function AIChatbotPage() {
   const handleRegenerate = async () => {
     if (!activeSession || isProcessing) return;
 
-    // Find the last user message to re-trigger
     let lastUserIdx = -1;
     for (let i = activeSession.messages.length - 1; i >= 0; i--) {
       if (activeSession.messages[i].role === 'user') {
@@ -374,14 +380,12 @@ export default function AIChatbotPage() {
     const userContent = activeSession.messages[lastUserIdx].content;
     const truncatedMessages = activeSession.messages.slice(0, lastUserIdx + 1);
 
-    // Truncate the UI state immediately
     setSessions(prev => prev.map(s => s.id === activeSessionId ? {
       ...s,
       messages: truncatedMessages,
       lastUpdated: Date.now()
     } : s));
 
-    // Execute synthesis using the specialized regenerate mode
     await handleSend(undefined, userContent, true);
   };
 
@@ -490,7 +494,7 @@ export default function AIChatbotPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#060608] selection:bg-primary/20 relative">
+    <div className="flex h-[calc(100dvh-64px)] w-full overflow-hidden bg-[#060608] selection:bg-primary/20 relative">
       
       {/* SIDEBAR OVERLAY */}
       {isSidebarOpen && (
@@ -894,6 +898,8 @@ export default function AIChatbotPage() {
                   <Textarea 
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         // Enter = New Line

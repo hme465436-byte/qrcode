@@ -47,10 +47,10 @@ export function FeedbackRow() {
   if (!isVisible) return null;
 
   return (
-    <div className="w-full py-12 px-6 flex justify-center animate-reveal">
+    <div className="w-full py-12 px-6 flex justify-center animate-reveal feedback-row">
       <div className="glass-card px-8 py-4 rounded-full border-primary/20 bg-primary/5 flex items-center gap-6 shadow-2xl relative overflow-hidden group">
         {/* Subtle Background Glow */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
         
         {!voted ? (
           <div className="flex items-center gap-6 relative z-10">
