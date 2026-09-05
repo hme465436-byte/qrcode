@@ -169,6 +169,17 @@ const TOOLS: Tool[] = [
     category: 'generators'
   },
   { 
+    href: '/ai-image-generator', 
+    icon: Sparkles, 
+    title: 'AI Image Generator', 
+    desc: 'Create images from text for free.', 
+    label: 'CREATIVE', 
+    color: 'text-rose-400 bg-rose-400/10 border-rose-400/20',
+    glowClass: 'bg-rose-400/10',
+    keywords: ['ai image', 'text to image', 'generator', 'pollinations', 'free ai', 'stable diffusion'],
+    category: 'generators'
+  },
+  { 
     href: '/reverse-video', 
     icon: RotateCcw, 
     title: 'Reverse Video', 
@@ -1460,7 +1471,7 @@ const PHRASES = [
   'All Units Converter', 'Length converter', 'Weight converter', 'Temp converter', 'WhatsApp Link', 'Send message link', 'WA.me', 'Gmail Alias Generator', 'Gmail dot trick',
   'Fake Data Generator', 'Dummy data', 'Identity maker', 'Mock data', 'Temp Upload', 'Cloudflare R2', 'ImgBB upload', 'GoFile share', 'Pixeldrain',
   'Mouse Cursor Maker', 'Windows cursor', '.cur maker', 'pointer', 'Speech to Text', 'Voice typing', 'Transcribe', 'Text to Speech', 'Voice', 'Read aloud',
-  'Voice Changer', 'Voice effect', 'Robot voice', 'Helium voice', 'deep voice', 'Reverse Video', 'Rewind clip'
+  'Voice Changer', 'Voice effect', 'Robot voice', 'Helium voice', 'deep voice', 'Reverse Video', 'Rewind clip', 'AI Image Generator', 'Text to Image', 'Pollinations'
 ];
 
 const ToolItem = React.memo(({ item, mode, onNavigate }: { item: Tool, mode: 'grid' | 'list', onNavigate: () => void }) => {

@@ -53,7 +53,8 @@ import {
   PanelLeft,
   ArrowRight,
   ShieldAlert,
-  Trash2
+  Trash2,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -72,6 +73,7 @@ const TOOL_MAP = [
   { id: 'single', label: 'Single QR', href: '/single', icon: QrCode },
   { id: 'bulk', label: 'Bulk QR', href: '/bulk', icon: Layers },
   { id: 'ai-chat', label: 'AI Chatbot', href: '/ai-chatbot', icon: MessageSquare },
+  { id: 'ai-image', label: 'AI Image Gen', href: '/ai-image-generator', icon: Sparkles },
   { id: 'logo', label: 'Logo Maker', href: '/logo-maker', icon: Type },
   { id: 'ocr', label: 'Photo to Text', href: '/ocr', icon: FileCode },
   { id: 'bg-remove', label: 'BG Remove', href: '/background-remove', icon: Eraser },
