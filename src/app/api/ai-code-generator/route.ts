@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * @fileOverview Secure Server Node for AI Code Generation.
  * Multi-node failover: Gemini (Primary) -> Groq (Fallback).
- * Supports specialized modes: New Code, Fix Logic, Technical Explanation, and Improve.
+ * Ensures output is ALWAYS a valid JSON object to prevent client-side parsing errors.
  */
 
 export const dynamic = 'force-dynamic';
@@ -28,17 +28,14 @@ export async function POST(req: NextRequest) {
     const systemPrompt = `You are an expert senior software engineer and architect. 
     Provide valid, clean, and professional code in ${language}.
     
-    Current Mode: ${mode || 'new'}
-    
-    Rules:
-    1. Output strictly as a JSON object with keys "code" and "explanation".
-    2. The "code" value should be the actual source code as a string.
-    3. The "explanation" should be a short summary of the logic and implementation strategy.
-    4. Do not include markdown code blocks (like \`\`\`json) in the response text.
+    CRITICAL RULES:
+    1. You MUST output your response as a valid JSON object.
+    2. The JSON MUST have two keys: "code" (the actual source code) and "explanation" (a brief summary).
+    3. Do NOT include markdown code blocks (like \`\`\`json) outside or inside the JSON string.
+    4. If the user asks for HTML, put the HTML string inside the "code" field.
     5. Maintain original intent of the request.
     6. If mode is "fix", identify the error and provide the corrected version.
-    7. If mode is "explain", provide the code but prioritize a detailed breakdown in the explanation field.
-    8. If mode is "improve", you will receive the CURRENT_CODE and an INSTRUCTION. Modify the code strictly following the instruction while keeping the rest of the logic intact.`;
+    7. If mode is "improve", you will receive the CURRENT_CODE and an INSTRUCTION. Modify the code strictly following the instruction.`;
 
     const userPrompt = isImprove 
       ? `INSTRUCTION: ${instruction}\n\nCURRENT_CODE:\n${currentCode}`
@@ -46,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     // --- 1. Primary Node: Gemini Matrix ---
     if (geminiKey) {
-      const geminiModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.5-flash'];
+      const geminiModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
       
       for (const model of geminiModels) {
         try {
@@ -56,12 +53,14 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               contents: [{ parts: [{ text: `${systemPrompt}\n\nUSER REQUEST: ${userPrompt}` }] }],
               generationConfig: {
-                temperature: 0.2, // Low temp for precise code
+                temperature: 0.1, // Near-deterministic for code
                 responseMimeType: "application/json"
               }
             }),
             cache: 'no-store'
           });
+
+          if (!response.ok) continue;
 
           const data = await response.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -77,9 +76,12 @@ export async function POST(req: NextRequest) {
                 });
               }
             } catch (e) {
-              if (text.length > 20) {
-                 return NextResponse.json({ success: true, code: text, explanation: 'Direct response generated.' });
-              }
+              // Manual Wrap Fallback
+              return NextResponse.json({ 
+                success: true, 
+                code: text, 
+                explanation: 'Direct response captured.' 
+              });
             }
           }
         } catch (e) {
@@ -103,34 +105,35 @@ export async function POST(req: NextRequest) {
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt }
             ],
-            temperature: 0.3,
+            temperature: 0.2,
             response_format: { type: 'json_object' }
           }),
           cache: 'no-store'
         });
 
-        const data = await response.json();
-        const content = JSON.parse(data.choices?.[0]?.message?.content || '{}');
-        
-        if (content.code) {
-          return NextResponse.json({ 
-            success: true, 
-            code: content.code,
-            explanation: content.explanation || ''
-          });
+        if (response.ok) {
+          const data = await response.json();
+          const content = JSON.parse(data.choices?.[0]?.message?.content || '{}');
+          if (content.code) {
+            return NextResponse.json({ 
+              success: true, 
+              code: content.code,
+              explanation: content.explanation || ''
+            });
+          }
         }
       } catch (e) {}
     }
 
     return NextResponse.json({ 
       success: false, 
-      message: "Service unavailable. All discovery nodes restricted. Try again." 
+      message: "Service unavailable. All discovery nodes restricted. Please try again." 
     }, { status: 503 });
 
   } catch (err: any) {
     return NextResponse.json({ 
       success: false, 
-      message: "An error occurred during code synthesis. Try again." 
+      message: "An error occurred during code synthesis. Please try again." 
     }, { status: 500 });
   }
 }

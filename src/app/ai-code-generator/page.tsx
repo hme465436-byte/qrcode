@@ -130,7 +130,7 @@ export default function AiCodeGeneratorPage() {
 
       const response = await fetch('/api/ai-code-generator', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -401,7 +401,7 @@ export default function AiCodeGeneratorPage() {
                     ) : (
                       <div className="flex-1 flex flex-col items-center justify-center opacity-10 gap-8 py-40 grayscale pointer-events-none">
                          <Terminal className="w-24 h-24 text-primary" />
-                         <p className="text-xl font-headline font-black uppercase tracking-[0.4em]">Awaiting Identity Signal</p>
+                         <p className="text-xl font-headline font-black uppercase tracking-[0.4em]">Your code will show here</p>
                       </div>
                     )}
                  </div>
@@ -461,23 +461,23 @@ export default function AiCodeGeneratorPage() {
 
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-7 h-7" />
+                <div className="w-12 h-12 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Safe</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                  <h4 className="text-[12px] font-black text-white uppercase tracking-widest leading-none">Privacy Safe</h4>
+                  <p className="text-[10px] text-white/40 leading-relaxed font-medium uppercase">
                     All code requests are processed locally in your browser memory via secure server nodes. Hardware identifiers are never logged.
                   </p>
                 </div>
              </div>
              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <Zap className="w-7 h-7" />
+                   <Zap className="w-6 h-6" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Hybrid Intelligence</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
+                  <h4 className="text-[12px] font-black text-white uppercase tracking-widest leading-none">Hybrid Intelligence</h4>
+                  <p className="text-[10px] text-white/40 leading-relaxed font-medium uppercase">
                     Utilizing high-performance Gemini and Llama 3 models for architectural precision and clinical data translation.
                   </p>
                 </div>
