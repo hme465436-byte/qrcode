@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react';
@@ -166,7 +165,7 @@ const TOOLS: Tool[] = [
     label: 'AI STUDIO', 
     color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
     glowClass: 'bg-indigo-400/10',
-    keywords: ['ai', 'chat', 'bot', 'gpt', 'llama', 'assistant'],
+    keywords: ['ai', 'chat', 'bot', 'assistant'],
     category: 'generators'
   },
   { 

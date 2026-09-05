@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -228,7 +227,7 @@ export default function AIChatbotPage() {
           behavior: 'smooth'
         });
       }, 100);
-      return () => clearTimeout(timeout);
+      return () => setTimeout(timeout);
     }
   }, [isProcessing]);
 
@@ -848,9 +847,9 @@ export default function AIChatbotPage() {
                           <SelectValue placeholder="Select Profile" />
                        </SelectTrigger>
                        <SelectContent className="glass-card">
-                          <SelectItem value="llama-3.1-8b-instant" className="text-[9px] uppercase font-bold">Llama 3.1 (Instant)</SelectItem>
-                          <SelectItem value="llama-3.3-70b-versatile" className="text-[9px] uppercase font-bold">Llama 3.3 (High Perf)</SelectItem>
-                          <SelectItem value="gemma2-9b-it" className="text-[9px] uppercase font-bold">Gemma 2 (Fast)</SelectItem>
+                          <SelectItem value="llama-3.1-8b-instant" className="text-[9px] uppercase font-bold">Standard (Fast)</SelectItem>
+                          <SelectItem value="llama-3.3-70b-versatile" className="text-[9px] uppercase font-bold">Advanced (Full Context)</SelectItem>
+                          <SelectItem value="gemma2-9b-it" className="text-[9px] uppercase font-bold">Turbo (Experimental)</SelectItem>
                        </SelectContent>
                     </Select>
                  </div>
@@ -949,15 +948,6 @@ export default function AIChatbotPage() {
                      )}
                   </div>
                </form>
-               
-               <div className="mt-3 flex items-center justify-between px-4 max-md:px-2">
-                  <div className="flex items-center gap-4 text-[8px] font-black uppercase tracking-[0.4em] text-foreground/20">
-                     <span className="flex items-center gap-1.5"><Globe className="w-2.5 h-2.5" /> Service: {config.node === 'custom' ? 'Private' : 'Active'}</span>
-                     <span className="hidden xs:inline">•</span>
-                     <span className="hidden xs:inline">Memory: {activeSession?.messages.length || 0} Blocks</span>
-                  </div>
-                  {isProcessing && <span className="text-[8px] font-bold text-primary animate-pulse uppercase tracking-widest">Processing...</span>}
-               </div>
             </div>
          </div>
       </main>

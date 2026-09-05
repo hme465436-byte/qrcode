@@ -52,7 +52,8 @@ import {
   Globe2,
   PanelLeft,
   ArrowRight,
-  ShieldAlert
+  ShieldAlert,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
