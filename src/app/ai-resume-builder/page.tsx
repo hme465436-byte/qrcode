@@ -133,7 +133,7 @@ export default function AIResumeBuilderPage() {
   const handleRestore = (item: ResumeArchive) => {
     setResult(item.content);
     setFormData(item.formData);
-    toast({ title: "Draft Restored", description: "Linguistic matrix synchronized." });
+    toast({ title: "Draft Restored", description: "Identity sync complete." });
   };
 
   const handleDelete = (id: string) => {
@@ -141,7 +141,7 @@ export default function AIResumeBuilderPage() {
     setHistory(next);
     localStorage.setItem(PERSIST_HISTORY_KEY, JSON.stringify(next));
     setItemToDelete(null);
-    toast({ title: "Entry Purged" });
+    toast({ title: "Entry Removed" });
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -150,7 +150,7 @@ export default function AIResumeBuilderPage() {
 
   const executeSynthesis = async () => {
     if (!formData.name || !formData.email || !formData.experience) {
-      toast({ variant: "destructive", title: "Incomplete Matrix", description: "Name, Email, and Experience are mandatory." });
+      toast({ variant: "destructive", title: "Missing Details", description: "Name, Email, and Experience are required." });
       return;
     }
 
@@ -172,14 +172,14 @@ export default function AIResumeBuilderPage() {
       if (response.ok && data.success) {
         setResult(data.text);
         saveToArchive(data.text);
-        toast({ title: "Synthesis Complete", description: "Identity isolated successfully." });
+        toast({ title: "Complete", description: "Resume created successfully." });
       } else {
         throw new Error(data.message || "Service unavailable. Try again later.");
       }
     } catch (err: any) {
       toast({ 
         variant: "destructive", 
-        title: "Synthesis Error", 
+        title: "Error", 
         description: err.message || "Service unavailable." 
       });
     } finally {
@@ -220,13 +220,13 @@ export default function AIResumeBuilderPage() {
     a.download = `resume_${formData.name.replace(/\s+/g, '_').toLowerCase()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Master Exported" });
+    toast({ title: "Saved" });
   };
 
   const handleReset = () => {
     setFormData({ name: '', email: '', phone: '', title: '', skills: '', experience: '', education: '', projects: '', languages: '', target: '' });
     setResult('');
-    toast({ title: "Studio Reset" });
+    toast({ title: "Reset" });
   };
 
   return (
@@ -255,7 +255,7 @@ export default function AIResumeBuilderPage() {
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-foreground">
-                    <Settings2 className="w-5 h-5 text-primary" /> Identity Matrix
+                    <Settings2 className="w-5 h-5 text-primary" /> Resume Details
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-8">
@@ -273,23 +273,23 @@ export default function AIResumeBuilderPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <div className="space-y-2">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Email Node</Label>
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Email</Label>
                           <Input value={formData.email} onChange={e => handleInputChange('email', e.target.value)} placeholder="user@identity.io" className="h-11 bg-secondary/50 border-border rounded-xl text-xs" />
                        </div>
                        <div className="space-y-2">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Phone Protocol</Label>
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Phone</Label>
                           <Input value={formData.phone} onChange={e => handleInputChange('phone', e.target.value)} placeholder="+1 234..." className="h-11 bg-secondary/50 border-border rounded-xl text-xs" />
                        </div>
                     </div>
 
                     <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Experience Matrix</Label>
+                       <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Experience</Label>
                        <Textarea value={formData.experience} onChange={e => handleInputChange('experience', e.target.value)} placeholder="Detailed work history, achievements, and impact..." className="h-32 bg-secondary/30 border-border rounded-2xl text-xs resize-none p-4" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Skills Array</Label>
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Skills</Label>
                           <Textarea value={formData.skills} onChange={e => handleInputChange('skills', e.target.value)} placeholder="React, Python..." className="h-24 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
                        </div>
                        <div className="space-y-2">
@@ -300,33 +300,33 @@ export default function AIResumeBuilderPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Project Nodes</Label>
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Projects</Label>
                           <Textarea value={formData.projects} onChange={e => handleInputChange('projects', e.target.value)} placeholder="Key accomplishments..." className="h-20 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
                        </div>
                        <div className="space-y-2">
-                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Linguistic Stream</Label>
+                          <Label className="text-[9px] font-black text-foreground/40 uppercase ml-1">Languages</Label>
                           <Textarea value={formData.languages} onChange={e => handleInputChange('languages', e.target.value)} placeholder="English, Urdu..." className="h-20 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
                        </div>
                     </div>
 
                     <div className="space-y-4 pt-4 border-t border-white/5">
-                       <Label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-1">Synthesis Options</Label>
+                       <Label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-1">Options</Label>
                        <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                             <Label className="text-[8px] font-bold text-foreground/20 uppercase">Tone Protocol</Label>
+                             <Label className="text-[8px] font-bold text-foreground/20 uppercase">Tone</Label>
                              <Select value={tone} onValueChange={(v: any) => setTone(v)}>
                                 <SelectTrigger className="h-10 bg-secondary/50 border-border text-[9px] font-black uppercase">
                                    <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="glass-card">
                                    <SelectItem value="Professional" className="text-[9px] uppercase">Professional</SelectItem>
-                                   <SelectItem value="Simple" className="text-[9px] uppercase">Simple / Minimal</SelectItem>
-                                   <SelectItem value="Strong" className="text-[9px] uppercase">Strong / Impact</SelectItem>
+                                   <SelectItem value="Simple" className="text-[9px] uppercase">Simple</SelectItem>
+                                   <SelectItem value="Strong" className="text-[9px] uppercase">Strong</SelectItem>
                                 </SelectContent>
                              </Select>
                           </div>
                           <div className="space-y-2">
-                             <Label className="text-[8px] font-bold text-foreground/20 uppercase">Volume (Length)</Label>
+                             <Label className="text-[8px] font-bold text-foreground/20 uppercase">Length</Label>
                              <Select value={length} onValueChange={(v: any) => setLength(v)}>
                                 <SelectTrigger className="h-10 bg-secondary/50 border-border text-[9px] font-black uppercase">
                                    <SelectValue />
@@ -347,7 +347,7 @@ export default function AIResumeBuilderPage() {
                    className="h-16 w-full bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 text-xs uppercase tracking-widest active:scale-95 transition-all"
                  >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
-                    Synthesize Professional Identity
+                    Create Resume
                  </Button>
               </CardContent>
            </Card>
@@ -357,14 +357,14 @@ export default function AIResumeBuilderPage() {
               <CardHeader className="py-4 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
                     <History className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-foreground">Archive Registry</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-widest text-foreground">Saved Resumes</CardTitle>
                  </div>
               </CardHeader>
               <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1 bg-black/10">
                  {history.length === 0 ? (
                     <div className="py-20 text-center opacity-10 space-y-2">
                        <Activity className="w-10 h-10 mx-auto" />
-                       <p className="text-[10px] font-black uppercase tracking-widest">Zero Matrix History</p>
+                       <p className="text-[10px] font-black uppercase tracking-widest">No history</p>
                     </div>
                  ) : (
                     <div className="divide-y divide-white/5">
@@ -395,10 +395,10 @@ export default function AIResumeBuilderPage() {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                        <Activity className="w-5 h-5" />
                     </div>
-                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Output</CardTitle>
+                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Resume Preview</CardTitle>
                  </div>
                  {result && (
-                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">MASTER READY</Badge>
+                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">READY</Badge>
                  )}
               </CardHeader>
               
@@ -410,17 +410,17 @@ export default function AIResumeBuilderPage() {
                             <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                             <FileText className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
                          </div>
-                         <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Synthesizing Professional Matrix...</p>
+                         <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Creating resume...</p>
                       </div>
                     ) : result ? (
                       <div className="h-full flex flex-col animate-in fade-in duration-500">
                          <div className="p-4 bg-secondary/20 border-b border-white/5 flex items-center justify-between shrink-0">
                             <div className="flex items-center gap-4 px-2">
                                <PenTool className="w-3.5 h-3.5 text-primary/40" />
-                               <span className="text-[9px] font-black uppercase text-foreground/40">Visual Editor Active</span>
+                               <span className="text-[9px] font-black uppercase text-foreground/40">Edit Resume</span>
                             </div>
                             <div className="flex gap-2">
-                               <button onClick={() => handleDownload('print')} className="h-8 px-4 rounded-lg bg-primary/10 text-primary text-[8px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">Print Protocol</button>
+                               <button onClick={() => handleDownload('print')} className="h-8 px-4 rounded-lg bg-primary/10 text-primary text-[8px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">Print</button>
                             </div>
                          </div>
                          <textarea 
@@ -457,17 +457,6 @@ export default function AIResumeBuilderPage() {
            </Card>
 
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-7 h-7" />
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Sovereign</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Linguistic processing occurs via secure server handshakes. Personal data is never stored on our nodes and resides strictly in local session memory.
-                  </p>
-                </div>
-             </div>
              <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
                    <Zap className="w-7 h-7" />
