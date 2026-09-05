@@ -364,7 +364,7 @@ export default function AiCodeGeneratorPage() {
                         value={prompt} 
                         onChange={e => setPrompt(e.target.value)} 
                         placeholder={mode === 'fix' ? "Paste the code containing the error..." : "e.g. Build a secure password hash utility in Node.js..."} 
-                        className="h-32 bg-secondary/50 border-border rounded-2xl text-xs font-bold p-6 resize-none focus:ring-primary/40" 
+                        className="h-32 bg-secondary/50 border-border rounded-2xl text-xs font-bold p-6 resize-none focus:ring-primary/40 no-scrollbar" 
                        />
                     </div>
                     
@@ -384,7 +384,7 @@ export default function AiCodeGeneratorPage() {
 
                     <div className="space-y-2">
                        <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Extra Details (Optional)</Label>
-                       <Textarea value={extra} onChange={e => setExtra(e.target.value)} placeholder="Specific frameworks, comments, error handling..." className="h-24 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4" />
+                       <Textarea value={extra} onChange={e => setExtra(e.target.value)} placeholder="Specific frameworks, comments, error handling..." className="h-24 bg-secondary/30 border-border rounded-2xl text-[10px] resize-none p-4 no-scrollbar" />
                     </div>
                  </div>
 
