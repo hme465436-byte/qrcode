@@ -108,7 +108,6 @@ export default function AiCodeGeneratorPage() {
     }
 
     setIsProcessing(true);
-    // If not improving, clear current output for clean UI
     if (!isImprove) {
       setCode('');
       setExplanation('');
@@ -135,7 +134,7 @@ export default function AiCodeGeneratorPage() {
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
+      if (response.ok && data.ok) {
         setCode(data.code);
         setExplanation(data.explanation);
         saveToHistory(data.code, data.explanation, isImprove ? 'improve' : mode);
@@ -146,10 +145,10 @@ export default function AiCodeGeneratorPage() {
           toast({ title: "Synthesis Complete", description: "Code matrix established." });
         }
       } else {
-        throw new Error(data.message || "Service unavailable. Try again.");
+        throw new Error(data.error || "Try again.");
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message || "Service unavailable. Try again." });
+      toast({ variant: "destructive", title: "Error", description: err.message || "Try again." });
     } finally {
       setIsProcessing(false);
     }
@@ -245,7 +244,7 @@ export default function AiCodeGeneratorPage() {
                               onClick={() => setMode(m.id)}
                               className={cn(
                                 "flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border transition-all h-20",
-                                mode === m.id ? "bg-primary text-white border-primary shadow-lg scale-105" : "bg-secondary/50 border-border text-foreground/40 hover:text-primary"
+                                mode === m.id ? "bg-primary text-white border-primary shadow-lg" : "bg-secondary/50 border-border text-foreground/40 hover:text-primary"
                               )}
                             >
                                <m.icon className="w-4 h-4" />
@@ -305,9 +304,6 @@ export default function AiCodeGeneratorPage() {
                     <History className="w-4 h-4 text-primary" />
                     <CardTitle className="text-[10px] font-black uppercase tracking-widest text-white">Identity Registry</CardTitle>
                  </div>
-                 {history.length > 0 && (
-                   <button onClick={() => setHistory([])} className="text-[9px] font-black text-foreground/20 hover:text-red-500 uppercase transition-colors">Clear All</button>
-                 )}
               </CardHeader>
               <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1 bg-black/10">
                  {history.length === 0 ? (
@@ -388,9 +384,6 @@ export default function AiCodeGeneratorPage() {
                             
                             {explanation && (
                               <div className="p-8 border-t border-white/5 bg-secondary/30 relative overflow-hidden group/exp">
-                                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover/exp:opacity-10 transition-opacity">
-                                    <Braces className="w-12 h-12 text-primary" />
-                                 </div>
                                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-4">Protocol Explanation</p>
                                  <p className="text-[13px] text-white/60 leading-relaxed font-medium relative z-10">{explanation}</p>
                               </div>
@@ -426,17 +419,6 @@ export default function AiCodeGeneratorPage() {
                                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />}
                                Improve
                              </Button>
-                          </div>
-                          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                             {['shorter', 'add comments', 'handle errors', 'make responsive'].map(s => (
-                               <button 
-                                key={s} 
-                                onClick={() => setImproveInput(s)}
-                                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[8px] font-black uppercase text-white/30 hover:text-primary transition-all whitespace-nowrap"
-                               >
-                                 {s}
-                               </button>
-                             ))}
                           </div>
                        </div>
 
