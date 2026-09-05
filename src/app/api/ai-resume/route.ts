@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * @fileOverview Secure Server Node for AI Resume Synthesis.
  * Handles complex professional profiles with tone and length parameters.
+ * Implements multi-model failover for peak reliability.
  */
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (!apiKey) {
       return NextResponse.json({ 
         success: false, 
-        message: "Service unavailable. Try again." 
+        message: "Service unavailable. API key missing." 
       }, { status: 503 });
     }
 
@@ -49,9 +50,10 @@ export async function POST(req: NextRequest) {
       5. Output ONLY the resume text.
     `;
 
-    // Model Failover Matrix
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
-    
+    // High-Fidelity Model Failover Matrix
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-3.5-flash'];
+    let lastError = null;
+
     for (const model of models) {
       try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
@@ -68,25 +70,33 @@ export async function POST(req: NextRequest) {
           })
         });
 
-        if (response.ok) {
-          const result = await response.json();
-          const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        const result = await response.json();
 
+        if (response.ok) {
+          const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
           if (generatedText) {
             return NextResponse.json({ 
               success: true, 
               text: generatedText 
             });
           }
+        } else {
+          // Specific Rate Limit Capture
+          if (response.status === 429) {
+            lastError = "Rate limit reached. Please try again later.";
+          } else {
+            lastError = result.error?.message || `Node Error: ${response.status}`;
+          }
         }
-      } catch (e) {
+      } catch (e: any) {
+        lastError = e.message;
         continue;
       }
     }
 
     return NextResponse.json({ 
       success: false, 
-      message: "Service unavailable. Try again." 
+      message: lastError || "Service unavailable. Please try again later." 
     }, { status: 500 });
 
   } catch (err: any) {

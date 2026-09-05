@@ -174,12 +174,12 @@ export default function AIResumeBuilderPage() {
         saveToArchive(data.text);
         toast({ title: "Synthesis Complete", description: "Identity isolated successfully." });
       } else {
-        throw new Error(data.message || "Node handshake failed.");
+        throw new Error(data.message || "Service unavailable. Try again later.");
       }
     } catch (err: any) {
       toast({ 
         variant: "destructive", 
-        title: "Protocol Failure", 
+        title: "Synthesis Error", 
         description: err.message || "Service unavailable." 
       });
     } finally {
