@@ -26,7 +26,11 @@ import {
   Wand2,
   FileEdit,
   Info,
-  Sparkles
+  Sparkles,
+  KeyRound,
+  Globe,
+  Unplug,
+  Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +44,7 @@ import { GetHelp } from '@/components/qr-canvas/get-help';
 import { Badge } from '@/components/ui/badge';
 
 const HISTORY_KEY = 'mykit_code_generator_history_v3';
+const CUSTOM_API_KEY = 'mykit_code_custom_api_v1';
 
 interface CodeHistory {
   id: string;
@@ -71,6 +76,11 @@ export default function AiCodeGeneratorPage() {
   const [extra, setExtra] = useState('');
   const [improveInput, setImproveInput] = useState('');
   
+  // Custom API State
+  const [customApi, setCustomApi] = useState({ url: '', key: '', model: '' });
+  const [isCustomConnected, setIsCustomConnected] = useState(false);
+  const [showCustomConfig, setShowCustomConfig] = useState(false);
+
   // Results State
   const [code, setCode] = useState('');
   const [explanation, setExplanation] = useState('');
@@ -84,7 +94,32 @@ export default function AiCodeGeneratorPage() {
     if (saved) {
       try { setHistory(JSON.parse(saved)); } catch (e) {}
     }
+    const savedApi = localStorage.getItem(CUSTOM_API_KEY);
+    if (savedApi) {
+      try {
+        setCustomApi(JSON.parse(savedApi));
+        setIsCustomConnected(true);
+      } catch (e) {}
+    }
   }, []);
+
+  const handleConnectCustom = () => {
+    if (!customApi.key) {
+      toast({ variant: "destructive", title: "Key Required", description: "Enter an API key to initialize node." });
+      return;
+    }
+    localStorage.setItem(CUSTOM_API_KEY, JSON.stringify(customApi));
+    setIsCustomConnected(true);
+    setShowCustomConfig(false);
+    toast({ title: "Node Integrated", description: "Custom identity matrix active." });
+  };
+
+  const handleDisconnectCustom = () => {
+    localStorage.removeItem(CUSTOM_API_KEY);
+    setCustomApi({ url: '', key: '', model: '' });
+    setIsCustomConnected(false);
+    toast({ title: "Node Decoupled" });
+  };
 
   const saveToHistory = (c: string, exp: string, m: string = mode) => {
     const next = [{
@@ -118,12 +153,14 @@ export default function AiCodeGeneratorPage() {
         mode: 'improve',
         language,
         currentCode: code,
-        instruction: improveInput
+        instruction: improveInput,
+        customApi: isCustomConnected ? customApi : undefined
       } : {
         prompt,
         language,
         mode,
-        extra
+        extra,
+        customApi: isCustomConnected ? customApi : undefined
       };
 
       const response = await fetch('/api/ai-code-generator', {
@@ -136,8 +173,8 @@ export default function AiCodeGeneratorPage() {
 
       if (response.ok && data.ok) {
         setCode(data.code);
-        setExplanation(data.explanation);
-        saveToHistory(data.code, data.explanation, isImprove ? 'improve' : mode);
+        setExplanation(data.explanation || '');
+        saveToHistory(data.code, data.explanation || '', isImprove ? 'improve' : mode);
         if (isImprove) {
           setImproveInput('');
           toast({ title: "Improvement Synthesized" });
@@ -217,6 +254,18 @@ export default function AiCodeGeneratorPage() {
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
            <GetHelp toolId="ai-code" />
+           <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowCustomConfig(!showCustomConfig)}
+            className={cn(
+              "h-10 px-4 rounded-xl border-border text-[8px] font-black uppercase tracking-widest transition-all",
+              isCustomConnected ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-secondary text-white/40"
+            )}
+           >
+              {isCustomConnected ? <ShieldCheck className="w-3.5 h-3.5 mr-2" /> : <Zap className="w-3.5 h-3.5 mr-2" />}
+              {isCustomConnected ? 'NODE LINKED' : 'CUSTOM NODE'}
+           </Button>
            <Button variant="outline" size="sm" onClick={handleReset} className="h-10 px-4 rounded-xl border-border bg-secondary text-[8px] font-black uppercase tracking-widest hover:text-destructive transition-all">
               <RotateCcw className="w-3.5 h-3.5 mr-2" /> Reset
            </Button>
@@ -226,6 +275,58 @@ export default function AiCodeGeneratorPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
         {/* Settings Column */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+           
+           {/* Custom API Config */}
+           {showCustomConfig && (
+             <Card className="glass-card border-primary/40 bg-primary/[0.03] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                <CardHeader className="py-4 border-b border-primary/10 flex flex-row items-center justify-between">
+                   <div className="flex items-center gap-3">
+                      <KeyRound className="w-4 h-4 text-primary" />
+                      <span className="text-[9px] font-black uppercase tracking-widest text-primary">Custom Node Access</span>
+                   </div>
+                   <button onClick={() => setShowCustomConfig(false)} className="text-primary/40 hover:text-primary"><X className="w-4 h-4" /></button>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                   <div className="space-y-3">
+                      <div className="space-y-1.5">
+                         <Label className="text-[8px] font-black uppercase text-foreground/40">API URL (Optional)</Label>
+                         <Input 
+                          value={customApi.url} 
+                          onChange={e => setCustomApi({...customApi, url: e.target.value})} 
+                          placeholder="Auto-detect from key" 
+                          className="h-9 bg-background border-border text-[10px] font-mono"
+                         />
+                      </div>
+                      <div className="space-y-1.5">
+                         <Label className="text-[8px] font-black uppercase text-foreground/40">API Key</Label>
+                         <Input 
+                          type="password"
+                          value={customApi.key} 
+                          onChange={e => setCustomApi({...customApi, key: e.target.value})} 
+                          placeholder="sk-..." 
+                          className="h-9 bg-background border-border text-[10px] font-mono"
+                         />
+                      </div>
+                      <div className="space-y-1.5">
+                         <Label className="text-[8px] font-black uppercase text-foreground/40">Model ID (Optional)</Label>
+                         <Input 
+                          value={customApi.model} 
+                          onChange={e => setCustomApi({...customApi, model: e.target.value})} 
+                          placeholder="Auto-detect from key" 
+                          className="h-9 bg-background border-border text-[10px] font-mono"
+                         />
+                      </div>
+                   </div>
+                   <div className="flex gap-2 pt-2">
+                      <Button onClick={handleConnectCustom} className="flex-1 h-10 bg-primary text-white text-[9px] font-black uppercase rounded-xl">Connect Node</Button>
+                      {isCustomConnected && (
+                         <Button variant="outline" onClick={handleDisconnectCustom} className="w-10 h-10 border-red-500/20 text-red-500 hover:bg-red-500/10"><Unplug className="w-4 h-4" /></Button>
+                      )}
+                   </div>
+                </CardContent>
+             </Card>
+           )}
+
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
