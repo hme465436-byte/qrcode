@@ -22,8 +22,8 @@ export function FeedbackRow() {
       return;
     }
 
-    // Informational Route Check - Skip feedback on legal/about pages
-    const excluded = ['/about', '/faq', '/privacy', '/terms', '/cookies'];
+    // Informational Route Check - Skip feedback on legal/about/chatbot pages
+    const excluded = ['/about', '/faq', '/privacy', '/terms', '/cookies', '/ai-chatbot'];
     if (excluded.includes(pathname)) {
       setIsVisible(false);
       return;

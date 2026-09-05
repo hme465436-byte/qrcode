@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { Shield, Lock, Zap, Heart, Coffee } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -26,6 +27,11 @@ const Logo = ({ className = "h-8" }: { className?: string }) => (
 );
 
 export function Footer() {
+  const pathname = usePathname();
+
+  // Suppress footer on chatbot page for focused layout
+  if (pathname === '/ai-chatbot') return null;
+
   return (
     <footer className="border-t border-white/5 bg-[#060608] py-24 md:py-32 relative overflow-hidden">
       <div className="container mx-auto px-6">
