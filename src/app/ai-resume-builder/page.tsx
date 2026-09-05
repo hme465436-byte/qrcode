@@ -403,9 +403,9 @@ export default function AIResumeBuilderPage() {
               </CardHeader>
               
               <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
-                 <div className="flex-1 relative group/output">
+                 <div className="flex-1 relative group/output flex flex-col">
                     {isProcessing ? (
-                      <div className="h-full flex flex-col items-center justify-center py-40 gap-8">
+                      <div className="flex-1 flex flex-col items-center justify-center py-40 gap-8">
                          <div className="relative">
                             <div className="w-24 h-24 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
                             <FileText className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary animate-pulse" />
@@ -413,7 +413,7 @@ export default function AIResumeBuilderPage() {
                          <p className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Creating resume...</p>
                       </div>
                     ) : result ? (
-                      <div className="h-full flex flex-col animate-in fade-in duration-500">
+                      <div className="flex-1 flex flex-col animate-in fade-in duration-500">
                          <div className="p-4 bg-secondary/20 border-b border-white/5 flex items-center justify-between shrink-0">
                             <div className="flex items-center gap-4 px-2">
                                <PenTool className="w-3.5 h-3.5 text-primary/40" />
@@ -427,11 +427,11 @@ export default function AIResumeBuilderPage() {
                           value={result}
                           onChange={e => setResult(e.target.value)}
                           spellCheck={false}
-                          className="flex-1 p-8 sm:p-16 bg-white dark:bg-black/20 text-foreground font-mono text-base leading-relaxed resize-none focus:ring-0 border-none custom-scrollbar"
+                          className="flex-1 p-8 sm:p-12 bg-white dark:bg-black/20 text-foreground font-mono text-base leading-relaxed resize-none focus:ring-0 border-none custom-scrollbar"
                          />
                       </div>
                     ) : (
-                      <div className="h-full flex flex-col items-center justify-center opacity-10 space-y-6 py-40 grayscale pointer-events-none">
+                      <div className="flex-1 flex flex-col items-center justify-center opacity-10 space-y-6 py-40 grayscale pointer-events-none">
                          <FileText className="w-24 h-24 text-primary" />
                          <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Identity Signal</p>
                       </div>
