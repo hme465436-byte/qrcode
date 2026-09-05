@@ -871,7 +871,7 @@ export default function AIChatbotPage() {
          )}
 
          {/* Input Matrix */}
-         <div className="p-4 sm:p-5 border-t border-white/5 bg-[#0a0a0c] shrink-0">
+         <div className="p-4 sm:p-5 border-t border-white/5 bg-[#0a0a0c] shrink-0 max-md:pb-2 max-md:px-2">
             <div className="max-w-4xl mx-auto w-full relative group/input">
                {/* Quick Templates */}
                <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1 px-1">
@@ -909,7 +909,7 @@ export default function AIChatbotPage() {
                         handleSend();
                       }
                     }}
-                    placeholder="Type your message... (Shift+Enter to send)"
+                    placeholder="Type message... (Shift+Enter to send)"
                     className="min-h-[44px] max-h-40 w-full pl-12 pr-14 bg-white/[0.02] border-white/10 rounded-2xl text-sm font-medium py-2.5 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-inner custom-scrollbar"
                   />
                   <div className="absolute right-1.5 bottom-1.5">
@@ -933,11 +933,11 @@ export default function AIChatbotPage() {
                   </div>
                </form>
                
-               <div className="mt-3 flex items-center justify-between px-4">
+               <div className="mt-3 flex items-center justify-between px-4 max-md:px-2">
                   <div className="flex items-center gap-4 text-[8px] font-black uppercase tracking-[0.4em] text-foreground/20">
                      <span className="flex items-center gap-1.5"><Globe className="w-2.5 h-2.5" /> Node: {config.node === 'custom' ? (customApi.providerName || 'CUSTOM') : config.node?.toUpperCase()}</span>
-                     <span>•</span>
-                     <span>Memory: {activeSession?.messages.length || 0} Blocks</span>
+                     <span className="hidden xs:inline">•</span>
+                     <span className="hidden xs:inline">Memory: {activeSession?.messages.length || 0} Blocks</span>
                   </div>
                   {isProcessing && <span className="text-[8px] font-bold text-primary animate-pulse uppercase tracking-widest">Processing...</span>}
                </div>
