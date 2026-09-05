@@ -20,14 +20,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/bmi-calculator', '/bio-maker', '/image-size-increaser', '/wps-sheets', '/speed-test', '/ip-finder',
     '/currency-converter', '/weather', '/namaz-times', '/quran-ayah', '/crypto-prices', '/country', 
     '/pets', '/facts', '/pokemon', '/holidays', '/image-gallery', '/translate',
-    '/free-games', '/coding-resources', '/wikipedia', '/github-user', '/website-trust-checker',
-    '/password-breach-checker', '/dns-lookup', '/wallpapers', '/image-to-link', '/telegram-file-host',
-    '/background-remove', '/temp-mail', '/link-safety-checker', '/username-checker', '/domain-whois', '/site-backup-cloner',
-    '/all-units-converter', '/whatsapp-link-generator', '/gmail-alias', '/fake-data', '/mouse-cursor-maker', '/ai-image-generator'
+    '/free-games', '/coding-resources', '/github-user', '/website-trust-checker',
+    '/password-breach-checker', '/dns-lookup', '/image-to-link', '/telegram-file-host',
+    '/background-remove', '/temp-mail', '/link-safety-checker', '/username-checker', '/site-backup-cloner',
+    '/all-units-converter', '/whatsapp-link-generator', '/gmail-alias', '/fake-data', '/mouse-cursor-maker', 
+    '/ai-image-generator', '/ai-chatbot', '/ai-resume-builder', '/ai-email-writer', '/ai-code-generator'
   ];
 
   const routes = tools.map(tool => ({
-    url: `https://mykittool.app${tool}`,
+    url: `https://mykittool.vercel.app${tool}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.8,
@@ -35,7 +36,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     {
-      url: 'https://mykittool.app',
+      url: 'https://mykittool.vercel.app',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1,
