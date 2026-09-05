@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  MessageSquare, 
   Plus, 
   X, 
   Check, 
@@ -22,7 +21,6 @@ import {
   Smartphone,
   Hash,
   Database,
-  Calculator,
   Lock,
   Box,
   FileArchive,
@@ -41,7 +39,20 @@ import {
   Stamp,
   Grid2X2,
   Film,
-  User
+  User,
+  History,
+  MessageSquare,
+  Scale,
+  Activity,
+  MousePointer2,
+  Trophy,
+  Dices,
+  Mic2,
+  Volume2,
+  CloudUpload,
+  Globe2,
+  PanelLeft,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -54,10 +65,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
-// --- Tool Registry for the Picker ---
+// --- Tool Registry ---
 const TOOL_MAP = [
   { id: 'single', label: 'Single QR', href: '/single', icon: QrCode },
   { id: 'bulk', label: 'Bulk QR', href: '/bulk', icon: Layers },
+  { id: 'ai-chat', label: 'AI Chatbot', href: '/ai-chatbot', icon: MessageSquare },
   { id: 'logo', label: 'Logo Maker', href: '/logo-maker', icon: Type },
   { id: 'ocr', label: 'Photo to Text', href: '/ocr', icon: FileCode },
   { id: 'bg-remove', label: 'BG Remove', href: '/background-remove', icon: Eraser },
@@ -82,24 +94,32 @@ const TOOL_MAP = [
   { id: 'collage', label: 'Collage Maker', href: '/collage-maker', icon: Grid2X2 },
   { id: 'gif', label: 'GIF Maker', href: '/images-to-gif', icon: Film },
   { id: 'dp', label: 'WA DP Maker', href: '/whatsapp-dp-maker', icon: User },
+  { id: 'bmi', label: 'BMI Calc', href: '/bmi-calculator', icon: Scale },
+  { id: 'lucky', label: 'Lucky Draw', href: '/lucky-draw', icon: Trophy },
+  { id: 'voice', label: 'Voice Changer', href: '/voice-changer', icon: Mic2 },
+  { id: 'tts', label: 'Text to Speech', href: '/text-to-speech', icon: Volume2 },
+  { id: 'stt', label: 'Speech to Text', href: '/speech-to-text', icon: Activity },
+  { id: 'temp-upload', label: 'Temp Upload', href: '/temp-upload', icon: CloudUpload },
 ];
 
-const STORAGE_KEY = 'mykit_fab_slots_v1';
+const STORAGE_KEY = 'mykit_fab_slots_v2';
 
 export function FloatingActionHub() {
   const router = useRouter();
   const { toast } = useToast();
+  
   const [isOpen, setIsOpen] = useState(false);
   const [slots, setSlots] = useState<(string | null)[]>([null, null, null, null]);
   const [showPicker, setShowAddPicker] = useState(false);
   const [activeSlotIdx, setActiveSlotIdx] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmIdx, setDeleteConfirmIdx] = useState<number | null>(null);
+  const [hoveredSlot, setHoveredSlot] = useState<number | null>(null);
   
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPressActive = useRef(false);
 
-  // --- 1. Persistence ---
+  // --- 1. Persistence Matrix ---
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -111,13 +131,13 @@ export function FloatingActionHub() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(slots));
   }, [slots]);
 
-  // --- 2. Long Press Logic ---
+  // --- 2. Interaction Handlers ---
   const handleStart = (e: any) => {
     isLongPressActive.current = false;
     longPressTimer.current = setTimeout(() => {
       isLongPressActive.current = true;
       setIsOpen(true);
-      window.navigator.vibrate?.(50); // Haptic feedback if supported
+      window.navigator.vibrate?.(50);
     }, 600);
   };
 
@@ -125,14 +145,19 @@ export function FloatingActionHub() {
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
     
     if (!isLongPressActive.current) {
-      // Normal Click Logic
       if (isMain) {
         if (isOpen) setIsOpen(false);
-        else router.push('/ai-chatbot');
+        else {
+          setIsOpen(false);
+          router.push('/ai-chatbot');
+        }
       } else {
         if (slotId) {
           const tool = TOOL_MAP.find(t => t.id === slotId);
-          if (tool) router.push(tool.href);
+          if (tool) {
+            setIsOpen(false);
+            router.push(tool.href);
+          }
         } else {
           setActiveSlotIdx(idx ?? null);
           setShowAddPicker(true);
@@ -155,7 +180,6 @@ export function FloatingActionHub() {
     }, 600);
   };
 
-  // --- 3. Management ---
   const pickTool = (toolId: string) => {
     if (activeSlotIdx !== null) {
       const next = [...slots];
@@ -163,7 +187,8 @@ export function FloatingActionHub() {
       setSlots(next);
       setShowAddPicker(false);
       setSearchQuery('');
-      toast({ title: "Slot Mapped", description: "Tool identity saved to hardware memory." });
+      setIsOpen(false);
+      toast({ title: "Slot Mapped", description: "Identity saved to hardware memory." });
     }
   };
 
@@ -178,60 +203,83 @@ export function FloatingActionHub() {
   const filteredTools = useMemo(() => {
     return TOOL_MAP.filter(t => 
       t.label.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    ).sort((a, b) => a.label.localeCompare(b.label));
   }, [searchQuery]);
 
-  const getToolIcon = (id: string | null) => {
-    if (!id) return <Plus className="w-5 h-5" />;
-    const tool = TOOL_MAP.find(t => t.id === id);
-    if (!tool) return <Plus className="w-5 h-5" />;
-    return <tool.icon className="w-5 h-5" />;
+  const getToolInfo = (id: string | null) => {
+    if (!id) return null;
+    return TOOL_MAP.find(t => t.id === id) || null;
   };
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      {/* Outside Click Interceptor */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-[9000] bg-black/5 animate-in fade-in duration-300"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-center gap-4">
         
         {/* SLOTS MATRIX */}
         <div className={cn(
           "flex flex-col-reverse items-center gap-3 transition-all duration-500 ease-out",
-          isOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-10 pointer-events-none"
+          isOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-12 pointer-events-none"
         )}>
-          {slots.map((s, i) => (
-            <div key={i} className="relative group/slot">
-              <button
-                onMouseDown={handleStart}
-                onMouseUp={(e) => handleEnd(e, false, s, i)}
-                onTouchStart={() => startSlotLongPress(i)}
-                onTouchEnd={(e) => handleEnd(e, false, s, i)}
-                className={cn(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-2xl border active:scale-90",
-                  s ? "bg-white dark:bg-card border-white/10 text-primary" : "bg-white/10 backdrop-blur-xl border-dashed border-white/20 text-white/20 hover:border-primary/40 hover:text-primary"
-                )}
+          {slots.map((s, i) => {
+            const tool = getToolInfo(s);
+            const isHovered = hoveredSlot === i;
+            
+            return (
+              <div 
+                key={i} 
+                className="relative group/slot"
+                onMouseEnter={() => setHoveredSlot(i)}
+                onMouseLeave={() => setHoveredSlot(null)}
               >
-                {getToolIcon(s)}
-              </button>
+                {/* TOOLTIP LABEL */}
+                {tool && isHovered && !deleteConfirmIdx && (
+                  <div className="absolute right-[calc(100%+16px)] top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-black/80 backdrop-blur-xl border border-white/10 text-white shadow-2xl animate-in fade-in slide-in-from-right-2 duration-200 pointer-events-none">
+                    <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{tool.label}</span>
+                  </div>
+                )}
 
-              {/* Delete Overlay */}
-              {deleteConfirmIdx === i && (
-                <div className="absolute inset-0 bg-black/90 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center gap-1.5 z-10 animate-in zoom-in duration-200">
-                   <button onClick={() => removeTool(i)} className="p-1 text-emerald-500 hover:scale-125 transition-transform"><Check className="w-4 h-4" /></button>
-                   <button onClick={() => setDeleteConfirmIdx(null)} className="p-1 text-red-500 hover:scale-125 transition-transform"><X className="w-4 h-4" /></button>
-                </div>
-              )}
-            </div>
-          ))}
+                <button
+                  onMouseDown={handleStart}
+                  onMouseUp={(e) => handleEnd(e, false, s, i)}
+                  onTouchStart={() => startSlotLongPress(i)}
+                  onTouchEnd={(e) => handleEnd(e, false, s, i)}
+                  className={cn(
+                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-2xl border active:scale-90",
+                    s ? "bg-white dark:bg-card border-white/10 text-primary hover:border-primary/40" : "bg-white/10 backdrop-blur-xl border-dashed border-white/20 text-white/20 hover:border-primary/40 hover:text-primary"
+                  )}
+                >
+                  {tool ? <tool.icon className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                </button>
+
+                {/* DELETE PROTOCOL OVERLAY */}
+                {deleteConfirmIdx === i && (
+                  <div className="absolute inset-0 bg-black/95 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center gap-2 z-10 animate-in zoom-in duration-200">
+                     <button onClick={() => removeTool(i)} className="p-1 text-emerald-500 hover:scale-125 transition-transform"><Check className="w-4 h-4" /></button>
+                     <button onClick={() => setDeleteConfirmIdx(null)} className="p-1 text-red-500 hover:scale-125 transition-transform"><X className="w-4 h-4" /></button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* MAIN FAB */}
-        <div className="relative">
+        {/* MAIN FAB NODE */}
+        <div className="relative group/main">
            <button
              onMouseDown={handleStart}
              onMouseUp={(e) => handleEnd(e, true)}
              onTouchStart={handleStart}
              onTouchEnd={(e) => handleEnd(e, true)}
              className={cn(
-               "w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-500 shadow-[0_20px_50px_rgba(37,99,235,0.4)] active:scale-95 group/main overflow-hidden",
+               "w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-500 shadow-[0_20px_50px_rgba(37,99,235,0.4)] active:scale-95 overflow-hidden",
                isOpen ? "bg-white text-black rotate-45" : "bg-primary text-white"
              )}
            >
@@ -240,55 +288,62 @@ export function FloatingActionHub() {
            </button>
            
            {!isOpen && (
-             <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#0a0a0c] animate-pulse" />
+             <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-[3px] border-[#0a0a0c] animate-pulse shadow-lg" />
            )}
         </div>
       </div>
 
-      {/* TOOL PICKER MODAL */}
+      {/* REFINED TOOL PICKER MODAL */}
       <Dialog open={showPicker} onOpenChange={setShowAddPicker}>
-         <DialogContent className="glass-card border-white/20 p-0 overflow-hidden max-w-xl">
-            <DialogHeader className="p-6 border-b border-white/5 bg-secondary/30">
-               <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner">
-                     <Settings2 className="w-5 h-5" />
+         <DialogContent className="glass-card max-w-2xl w-[calc(100%-32px)] border-white/20 p-0 overflow-hidden outline-none flex flex-col max-h-[85vh]">
+            <DialogHeader className="p-6 sm:p-8 border-b border-white/5 bg-secondary/30 shrink-0">
+               <div className="flex items-center gap-5">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner">
+                     <Settings2 className="w-6 h-6" />
                   </div>
                   <div className="space-y-1">
-                     <DialogTitle className="text-xl font-headline font-black uppercase tracking-tight text-white">Map Workspace</DialogTitle>
-                     <DialogDescription className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.3em]">Select unit for hardware slot 0{activeSlotIdx! + 1}</DialogDescription>
+                     <DialogTitle className="text-2xl font-headline font-black uppercase tracking-tight text-white leading-none">Map Studio Unit</DialogTitle>
+                     <DialogDescription className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.3em]">Hardware slot 0{activeSlotIdx! + 1} integration</DialogDescription>
                   </div>
                </div>
             </DialogHeader>
             
-            <div className="p-4 border-b border-white/5">
+            <div className="p-4 sm:p-6 border-b border-white/5 bg-black/20">
                <div className="relative group/search">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
                   <Input 
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search studio registry..."
-                    className="h-12 pl-11 bg-secondary/50 border-white/5 text-xs font-bold uppercase rounded-xl"
+                    className="h-14 pl-12 bg-secondary/50 border-white/10 text-xs font-bold uppercase rounded-2xl shadow-inner"
+                    autoFocus
                   />
                </div>
             </div>
 
-            <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto custom-scrollbar bg-black/20">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 grid grid-cols-2 sm:grid-cols-3 gap-3 bg-black/40">
                {filteredTools.map(t => (
                  <button
                    key={t.id}
                    onClick={() => pickTool(t.id)}
-                   className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all text-left group/item flex flex-col gap-3"
+                   className="p-5 rounded-[2rem] bg-white/[0.03] border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all text-left group/item flex flex-col gap-4"
                  >
-                    <div className="w-8 h-8 rounded-lg bg-background border border-white/5 flex items-center justify-center text-primary/40 group-hover/item:text-primary transition-colors">
-                       <t.icon className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-xl bg-secondary border border-white/5 flex items-center justify-center text-primary/30 group-hover/item:text-primary transition-all shadow-inner">
+                       <t.icon className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60 group-hover/item:text-white">{t.label}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/50 group-hover/item:text-white transition-colors">{t.label}</span>
                  </button>
                ))}
+               {filteredTools.length === 0 && (
+                 <div className="col-span-full py-20 text-center opacity-10">
+                    <History className="w-12 h-12 mx-auto mb-4" />
+                    <p className="text-xs font-black uppercase tracking-widest">No Matches Identified</p>
+                 </div>
+               )}
             </div>
 
-            <div className="p-4 bg-secondary/30 border-t border-white/5 flex justify-center">
-               <p className="text-[8px] font-black uppercase tracking-[0.4em] text-foreground/10">Studio Registry v7.2</p>
+            <div className="p-4 bg-secondary/30 border-t border-white/5 flex justify-center shrink-0">
+               <p className="text-[8px] font-black uppercase tracking-[0.5em] text-foreground/10">Matrix Engine v7.2 Active</p>
             </div>
          </DialogContent>
       </Dialog>
@@ -298,6 +353,8 @@ export function FloatingActionHub() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </>
   );
