@@ -45,6 +45,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -435,23 +436,25 @@ export default function AiImageGeneratorPage() {
         <main className="lg:col-span-7 xl:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 stagger-1">
            <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/40">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-              <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6 sm:px-10">
-                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                       <Activity className="w-5 h-5" />
+              <CardHeader className="py-8 border-b border-border bg-secondary/30">
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                          <Activity className="w-5 h-5" />
+                       </div>
+                       <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Output</CardTitle>
                     </div>
-                    <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Output</CardTitle>
-                 </div>
-                 <div className="flex items-center gap-4">
-                    {resultUrl && prevResultUrl && (
-                      <div className="flex items-center gap-2 bg-background/50 px-3 py-1 rounded-full border border-border">
-                        <span className="text-[8px] font-black uppercase text-foreground/40">Compare A/B</span>
-                        <Switch checked={showComparison} onCheckedChange={setShowComparison} className="scale-50 h-4 w-8" />
-                      </div>
-                    )}
-                    {resultUrl && !isProcessing && (
-                        <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">MASTER SYNTHESIZED</Badge>
-                    )}
+                    <div className="flex items-center gap-4">
+                       {resultUrl && prevResultUrl && (
+                         <div className="flex items-center gap-2 bg-background/50 px-3 py-1 rounded-full border border-border">
+                           <span className="text-[8px] font-black uppercase text-foreground/40">Compare A/B</span>
+                           <Switch checked={showComparison} onCheckedChange={setShowComparison} className="scale-50 h-4 w-8" />
+                         </div>
+                       )}
+                       {resultUrl && !isProcessing && (
+                           <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">MASTER SYNTHESIZED</Badge>
+                       )}
+                    </div>
                  </div>
               </CardHeader>
               
@@ -512,7 +515,7 @@ export default function AiImageGeneratorPage() {
                                        <RefreshCcw className="w-5 h-5 mr-2" /> Re-Sync
                                     </Button>
                                     <Button onClick={() => toggleFavorite({ id: 'temp', prompt, url: resultUrl!, style: activeStyle, aspect, seed: parseInt(seed) || 0, timestamp: Date.now() })} variant="outline" className={cn("h-16 px-6 border-white/10 bg-white/5 rounded-2xl transition-all", favorites.some(f => f.url === resultUrl) ? "text-yellow-500 bg-yellow-500/10 border-yellow-500/20" : "text-white")}>
-                                       <Star className={cn("w-5 h-5", favorites.some(f => f.url === resultUrl) && "fill-current")} />
+                                       <Star className={cn("w-5 h-5", favorites.some(f => f.id === resultUrl) && "fill-current")} />
                                     </Button>
                                     <Button onClick={() => window.open(resultUrl, '_blank')} variant="outline" className="h-16 px-6 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] rounded-2xl">
                                        <Maximize2 className="w-5 h-5" />
