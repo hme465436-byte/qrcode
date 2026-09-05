@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     const prompt = `
-      Write a professional email based on the following identity matrix.
+      Write a professional email based on the following details.
       
       PURPOSE: ${purpose}
       RECIPIENT: ${recipient}
@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
       5. The "body" text should use standard newlines for formatting.
     `;
 
-    const models = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
+    // Multi-Model Failover Matrix
+    const models = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'openai/gpt-oss-20b'];
     let lastError = null;
 
     for (const model of models) {
@@ -75,10 +76,10 @@ export async function POST(req: NextRequest) {
         if (response.status === 429) {
           lastError = "Rate limit reached. Please try again later.";
         } else {
-          lastError = result.error?.message || `Node Error: ${response.status}`;
+          lastError = "Service unavailable. Try again.";
         }
       } catch (e: any) {
-        lastError = e.message;
+        lastError = "Connection error. Try again.";
         continue;
       }
     }
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json({ 
       success: false, 
-      message: "Linguistic synthesis failure." 
+      message: "Service unavailable. Try again." 
     }, { status: 500 });
   }
 }

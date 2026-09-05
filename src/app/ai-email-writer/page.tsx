@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -278,7 +279,7 @@ export default function AiEmailWriterPage() {
                     ) : (
                       <div className="flex-1 flex flex-col items-center justify-center opacity-10 gap-6 py-40 grayscale pointer-events-none">
                          <Mail className="w-24 h-24 text-primary" />
-                         <p className="text-sm font-black uppercase tracking-[0.3em]">Awaiting Identity Signal</p>
+                         <p className="text-sm font-black uppercase tracking-[0.3em]">Your email will show here</p>
                       </div>
                     )}
                  </div>
@@ -295,31 +296,6 @@ export default function AiEmailWriterPage() {
                  )}
               </CardContent>
            </Card>
-
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <ShieldCheck className="w-7 h-7" />
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Privacy Absolute</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Your drafts and inputs are processed server-side via encrypted handshakes and purged immediately after synthesis.
-                  </p>
-                </div>
-             </div>
-             <div className="p-8 rounded-[3rem] bg-secondary border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
-                <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                   <AlignLeft className="w-7 h-7" />
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-[13px] font-black text-foreground uppercase tracking-widest leading-none">Contextual DNA</h4>
-                  <p className="text-[11px] text-foreground/40 leading-relaxed font-medium uppercase">
-                    Utilizing Llama 3 high-speed inference to ensure structural realism and high-fidelity professional tone.
-                  </p>
-                </div>
-             </div>
-          </div>
         </div>
       </div>
       
