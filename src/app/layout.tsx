@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   keywords: 'digital tools, free utilities, qr code generator, photo editor, ocr text extraction, hex converter, aob converter, professional studio, my kit tool',
   authors: [{ name: 'MY KIT TOOL Team' }],
   metadataBase: new URL('https://mykittool.app'), 
+  verification: {
+    google: 'vMj1XN9ziXyU5kBso8wdA_OhZuzhD0o_BGSrSu9uiGU',
+  },
   openGraph: {
     title: 'My Kit Tool',
     description: 'Free online tools including AI chatbot, resume builder, image tools and more.',
