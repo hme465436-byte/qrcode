@@ -5,8 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Scan, 
-  Sun, 
-  Moon,
   Home,
   QrCode,
   Layers,
@@ -78,31 +76,11 @@ export function Navbar() {
   const auth = useAuth();
   const { user, loading: authLoading } = useUser();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem('mykit_theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-      setTheme('light');
-    }
   }, []);
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    if (mounted) {
-      localStorage.setItem('mykit_theme', theme);
-    }
-  }, [theme, mounted]);
-
-  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   const handleLogout = async () => {
     if (auth) {
@@ -197,21 +175,6 @@ export function Navbar() {
                  )}
                </>
              )}
-
-             {/* THEME TOGGLE */}
-             <button 
-                onClick={toggleTheme}
-                title="Theme"
-                className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-secondary/50 border border-white/5 text-foreground/40 hover:text-primary transition-all icon-container-3d"
-             >
-               {!mounted ? (
-                 <div className="w-3.5 h-3.5" /> 
-               ) : theme === 'light' ? (
-                 <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d animate-in zoom-in duration-300" />
-               ) : (
-                 <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d animate-in zoom-in duration-300" />
-               )}
-             </button>
 
              {/* SCANNER */}
              <button 
