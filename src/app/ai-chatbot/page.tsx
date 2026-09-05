@@ -34,7 +34,9 @@ import {
   ArrowRight,
   RefreshCcw,
   Square,
-  Share2
+  Share2,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -93,6 +95,8 @@ const PERSONAS: Persona[] = [
 
 const LOCAL_SESSIONS_KEY = 'mykit_ai_sessions_v6';
 const CUSTOM_API_KEY = 'mykit_ai_custom_api_v1';
+const SCROLL_POS_KEY = 'mykit_ai_scroll_v1';
+
 const INITIAL_CONFIG: ChatConfig = {
   node: 'auto',
   temperature: 0.7,
@@ -212,7 +216,7 @@ export default function AIChatbotPage() {
       const persona = PERSONAS.find(p => p.id === activeSession.persona);
       if (persona) setConfig(prev => ({ ...prev, systemPrompt: persona.prompt }));
     }
-  }, [activeSessionId]);
+  }, [activeSessionId, activeSession?.persona]);
 
   // --- 4. Scroll Restoration Matrix ---
   useEffect(() => {
@@ -483,10 +487,14 @@ export default function AIChatbotPage() {
 
   const renderContent = (content: string, role: string) => {
     if (role !== 'assistant') {
-      return <p className="text-sm sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap break-words">{content}</p>;
+      return (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap break-words">{content}</p>
+        </div>
+      );
     }
     try {
-      const html = DOMPurify.sanitize(marked.parse(content) as string);
+      const html = DOMPurify.sanitize(marked.parse(content, { breaks: true, gfm: true }) as string);
       return <div className="text-sm sm:text-[15px] font-medium leading-relaxed markdown-content" dangerouslySetInnerHTML={{ __html: html }} />;
     } catch (e) {
       return <p className="text-sm sm:text-[15px] font-medium leading-relaxed whitespace-pre-wrap break-words">{content}</p>;
@@ -509,7 +517,7 @@ export default function AIChatbotPage() {
         "absolute inset-y-0 left-0 flex flex-col bg-[#0a0a0c] border-r border-white/5 transition-all duration-500 z-50 overflow-hidden shadow-2xl",
         isSidebarOpen ? "translate-x-0 w-80" : "-translate-x-full w-80"
       )}>
-        <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/20">
+        <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/40">
            <div className="flex items-center gap-3">
               <History className="w-4 h-4 text-primary/40" />
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Threads</span>
@@ -655,7 +663,7 @@ export default function AIChatbotPage() {
                  </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-10 max-w-4xl mx-auto w-full pb-20">
+              <div className="flex flex-col gap-12 max-w-4xl mx-auto w-full pb-20">
                  {activeSession.messages.map((msg, i) => {
                    const isLastAssistant = msg.role === 'assistant' && i === activeSession.messages.length - 1;
                    return (
@@ -671,12 +679,14 @@ export default function AIChatbotPage() {
                       )}>
                          {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
                       </div>
-                      <div className={cn("space-y-2 min-w-0 flex-1 max-w-[88%]", msg.role === 'user' ? "text-right" : "text-left")}>
+                      <div className={cn("space-y-3 min-w-0 flex-1 max-w-[88%]", msg.role === 'user' ? "text-right" : "text-left")}>
                          <div className={cn(
                            "px-4 py-3 rounded-[1.25rem] shadow-xl relative group/card transition-all",
                            msg.role === 'assistant' ? "bg-white/[0.03] border border-white/5 rounded-tl-none" : "bg-primary text-white rounded-tr-none shadow-primary/15"
                          )}>
-                            {renderContent(msg.content, msg.role)}
+                            <div className="w-full">
+                               {renderContent(msg.content, msg.role)}
+                            </div>
                             <div className={cn(
                                "absolute flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all",
                                msg.role === 'assistant' ? "right-3 bottom-2" : "left-3 bottom-2"
@@ -690,7 +700,7 @@ export default function AIChatbotPage() {
                          {/* Action Row Under Bubble */}
                          <div className={cn("flex items-center gap-3 px-2", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
                             {msg.role === 'assistant' ? (
-                               <div className="flex items-center gap-4 opacity-40 hover:opacity-100 transition-opacity">
+                               <div className="flex flex-wrap items-center gap-4 opacity-40 hover:opacity-100 transition-opacity">
                                   <button onClick={() => handleCopy(msg.content, `ai-copy-${i}`)} className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest hover:text-primary transition-colors">
                                      {isCopied === `ai-copy-${i}` ? <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
                                      {isCopied === `ai-copy-${i}` ? 'Copied' : 'Copy'}
@@ -705,7 +715,13 @@ export default function AIChatbotPage() {
                                   )}
                                </div>
                             ) : (
-                               <span className="text-[8px] font-black uppercase text-foreground/20 tracking-widest">You</span>
+                               <div className="flex items-center gap-4 opacity-40 hover:opacity-100 transition-opacity">
+                                  <span className="text-[8px] font-black uppercase text-foreground/20 tracking-widest">You</span>
+                                  <button onClick={() => handleCopy(msg.content, `user-copy-${i}`)} className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest hover:text-primary transition-colors">
+                                     {isCopied === `user-copy-${i}` ? <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
+                                     Copy
+                                  </button>
+                               </div>
                             )}
                             {msg.role === 'user' && i === activeSession.messages.length - 1 && (
                                <button onClick={() => { setInput(msg.content); handleSend(undefined, msg.content); }} className="text-[8px] font-black uppercase text-primary/40 hover:text-primary transition-all">Retry Signal</button>
@@ -871,7 +887,7 @@ export default function AIChatbotPage() {
          )}
 
          {/* Input Matrix */}
-         <div className="p-4 sm:p-5 border-t border-white/5 bg-[#0a0a0c] shrink-0 max-md:pb-2 max-md:px-2">
+         <div className="p-4 sm:p-5 border-t border-white/5 bg-[#0a0a0c] shrink-0 max-md:pb-1 max-md:pt-2 max-md:px-2">
             <div className="max-w-4xl mx-auto w-full relative group/input">
                {/* Quick Templates */}
                <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1 px-1">
@@ -968,14 +984,13 @@ export default function AIChatbotPage() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
-        .markdown-content h1 { @apply text-lg font-bold mb-2 text-foreground; }
-        .markdown-content h2 { @apply text-base font-bold mb-2 text-foreground; }
-        .markdown-content h3 { @apply text-sm font-bold mb-1 text-foreground; }
-        .markdown-content p { @apply mb-3 last:mb-0; }
-        .markdown-content ul, .markdown-content ol { @apply mb-3 pl-4 list-outside; }
-        .markdown-content ul { @apply list-disc; }
-        .markdown-content ol { @apply list-decimal; }
-        .markdown-content li { @apply mb-1; }
+        .markdown-content h1 { font-size: 1.5rem !important; font-weight: 800 !important; margin-top: 1.5rem !important; margin-bottom: 0.75rem !important; display: block !important; color: white !important; }
+        .markdown-content h2 { font-size: 1.25rem !important; font-weight: 800 !important; margin-top: 1.25rem !important; margin-bottom: 0.5rem !important; display: block !important; color: white !important; }
+        .markdown-content h3 { font-size: 1.1rem !important; font-weight: 800 !important; margin-top: 1rem !important; margin-bottom: 0.5rem !important; display: block !important; color: white !important; }
+        .markdown-content p { @apply mb-3 last:mb-0; display: block !important; }
+        .markdown-content ul { list-style-type: disc !important; padding-left: 1.25rem !important; margin-bottom: 1rem !important; display: block !important; }
+        .markdown-content ol { list-style-type: decimal !important; padding-left: 1.25rem !important; margin-bottom: 1rem !important; display: block !important; }
+        .markdown-content li { display: list-item !important; margin-bottom: 0.25rem !important; }
         .markdown-content code { @apply bg-black/40 px-1.5 py-0.5 rounded text-primary font-mono text-[13px] border border-white/5; }
         .markdown-content pre { @apply bg-black/60 p-4 rounded-xl mb-3 overflow-x-auto border border-white/5; }
         .markdown-content pre code { @apply bg-transparent p-0 border-none; }
