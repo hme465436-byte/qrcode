@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -69,6 +70,7 @@ export default function AiCodeGeneratorPage() {
   const [language, setLanguage] = useState('React');
   const [mode, setMode] = useState('new');
   const [extra, setExtra] = useState('');
+  const [improveInput, setImproveInput] = useState('');
   
   // Results State
   const [code, setCode] = useState('');
@@ -85,35 +87,51 @@ export default function AiCodeGeneratorPage() {
     }
   }, []);
 
-  const saveToHistory = (c: string, exp: string) => {
+  const saveToHistory = (c: string, exp: string, m: string = mode) => {
     const next = [{
       id: Math.random().toString(36).substr(2, 9),
       name: prompt.substring(0, 40) || 'New Snippet',
       code: c,
       explanation: exp,
       language,
-      mode,
+      mode: m,
       timestamp: Date.now()
     }, ...history.filter(h => h.code !== c)].slice(0, 20);
     setHistory(next);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
   };
 
-  const handleGenerate = async () => {
-    if (!prompt.trim()) {
+  const handleGenerate = async (isImprove = false) => {
+    const task = isImprove ? improveInput : prompt;
+    if (!task.trim() && !isImprove) {
       toast({ variant: "destructive", title: "Missing Input", description: "Describe your requirement to begin." });
       return;
     }
 
     setIsProcessing(true);
-    setCode('');
-    setExplanation('');
+    // If not improving, clear current output for clean UI
+    if (!isImprove) {
+      setCode('');
+      setExplanation('');
+    }
 
     try {
+      const payload = isImprove ? {
+        mode: 'improve',
+        language,
+        currentCode: code,
+        instruction: improveInput
+      } : {
+        prompt,
+        language,
+        mode,
+        extra
+      };
+
       const response = await fetch('/api/ai-code-generator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, language, mode, extra })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
@@ -121,8 +139,13 @@ export default function AiCodeGeneratorPage() {
       if (response.ok && data.success) {
         setCode(data.code);
         setExplanation(data.explanation);
-        saveToHistory(data.code, data.explanation);
-        toast({ title: "Synthesis Complete", description: "Code matrix established." });
+        saveToHistory(data.code, data.explanation, isImprove ? 'improve' : mode);
+        if (isImprove) {
+          setImproveInput('');
+          toast({ title: "Improvement Synthesized" });
+        } else {
+          toast({ title: "Synthesis Complete", description: "Code matrix established." });
+        }
       } else {
         throw new Error(data.message || "Service unavailable. Try again.");
       }
@@ -145,7 +168,7 @@ export default function AiCodeGeneratorPage() {
     setExplanation(item.explanation);
     setPrompt(item.name);
     setLanguage(item.language);
-    setMode(item.mode || 'new');
+    setMode(item.mode === 'improve' ? 'new' : item.mode);
     toast({ title: "Snippet Restored" });
   };
 
@@ -160,6 +183,7 @@ export default function AiCodeGeneratorPage() {
   const handleReset = () => {
     setPrompt('');
     setExtra('');
+    setImproveInput('');
     setCode('');
     setExplanation('');
     toast({ title: "Studio Reset" });
@@ -265,11 +289,11 @@ export default function AiCodeGeneratorPage() {
                  </div>
 
                  <Button 
-                   onClick={handleGenerate} 
+                   onClick={() => handleGenerate()} 
                    disabled={isProcessing || !prompt.trim()}
                    className="h-16 w-full bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 text-xs uppercase tracking-widest active:scale-95 transition-all"
                  >
-                    {isProcessing ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
+                    {isProcessing && !code ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Zap className="w-5 h-5 mr-3" />}
                     Synthesize Logic
                  </Button>
               </CardContent>
@@ -305,7 +329,7 @@ export default function AiCodeGeneratorPage() {
                                </div>
                             </div>
                             <div className="flex items-center gap-2">
-                               <button onClick={(e) => handleDeleteHistory(e, item.id)} className="p-2 text-foreground/10 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                               <button onClick={(e) => { e.stopPropagation(); handleDeleteHistory(e, item.id); }} className="p-2 text-foreground/10 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
                                   <Trash2 className="w-3.5 h-3.5" />
                                </button>
                                <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-primary transition-all" />
@@ -334,7 +358,7 @@ export default function AiCodeGeneratorPage() {
               
               <CardContent className="flex-1 p-0 flex flex-col overflow-hidden">
                  <div className="flex-1 relative group/output flex flex-col min-h-[400px]">
-                    {isProcessing ? (
+                    {isProcessing && !code ? (
                       <div className="flex-1 flex flex-col items-center justify-center py-40 gap-8">
                          <div className="relative">
                             <div className="w-28 h-28 rounded-full border-4 border-primary/10 border-t-primary animate-spin" />
@@ -383,17 +407,52 @@ export default function AiCodeGeneratorPage() {
                  </div>
 
                  {code && (
-                    <div className="p-8 border-t border-white/5 bg-[#0a0a0c] flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0">
-                       <Button onClick={() => handleCopy(code, 'all')} className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                          {isCopied === 'all' ? <CheckCircle2 className="w-6 h-6 mr-1" /> : <Copy className="w-6 h-6 mr-1" />} Copy Full Logic
-                       </Button>
-                       <div className="flex gap-3">
-                          <Button variant="outline" onClick={handleDownloadCode} className="h-16 px-8 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
-                             <FileDown className="w-5 h-5" />
+                    <div className="p-8 border-t border-white/5 bg-[#0a0a0c] flex flex-col gap-8 shrink-0">
+                       {/* Improve Feature Section */}
+                       <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-500">
+                          <Label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Improve Protocol</Label>
+                          <div className="flex gap-3">
+                             <Input 
+                               value={improveInput}
+                               onChange={e => setImproveInput(e.target.value)}
+                               placeholder="e.g. make it shorter, add comments, fix errors..."
+                               className="h-14 bg-secondary/50 border-border rounded-2xl text-xs font-bold px-6 focus:ring-primary/40"
+                               onKeyDown={e => e.key === 'Enter' && handleGenerate(true)}
+                             />
+                             <Button 
+                              onClick={() => handleGenerate(true)} 
+                              disabled={isProcessing || !improveInput.trim()}
+                              className="h-14 px-8 bg-primary text-white font-black text-[10px] uppercase rounded-2xl shadow-xl shadow-primary/30"
+                             >
+                               {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4 mr-2" />}
+                               Improve
+                             </Button>
+                          </div>
+                          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                             {['shorter', 'add comments', 'handle errors', 'make responsive'].map(s => (
+                               <button 
+                                key={s} 
+                                onClick={() => setImproveInput(s)}
+                                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[8px] font-black uppercase text-white/30 hover:text-primary transition-all whitespace-nowrap"
+                               >
+                                 {s}
+                               </button>
+                             ))}
+                          </div>
+                       </div>
+
+                       <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4 border-t border-white/5">
+                          <Button onClick={() => handleCopy(code, 'all')} className="h-16 flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl flex items-center justify-center gap-4 text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                             {isCopied === 'all' ? <CheckCircle2 className="w-6 h-6 mr-1" /> : <Copy className="w-6 h-6 mr-1" />} Copy Full Logic
                           </Button>
-                          <Button variant="outline" onClick={handleGenerate} className="h-16 px-10 border-white/10 bg-white/5 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary/10 transition-all">
-                             <RefreshCcw className="w-5 h-5 mr-2" /> Re-Forge
-                          </Button>
+                          <div className="flex gap-3">
+                             <Button variant="outline" onClick={handleDownloadCode} className="h-16 px-8 border-white/10 bg-white/5 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                                <FileDown className="w-5 h-5" />
+                             </Button>
+                             <Button variant="outline" onClick={() => handleGenerate()} className="h-16 px-10 border-white/10 bg-white/5 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary/10 transition-all">
+                                <RefreshCcw className="w-5 h-5 mr-2" /> Re-Forge
+                             </Button>
+                          </div>
                        </div>
                     </div>
                  )}

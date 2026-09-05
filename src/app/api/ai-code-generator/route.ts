@@ -4,14 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * @fileOverview Secure Server Node for AI Code Generation.
  * Multi-node failover: Gemini (Primary) -> Groq (Fallback).
- * Supports specialized modes: New Code, Fix Logic, and Technical Explanation.
+ * Supports specialized modes: New Code, Fix Logic, Technical Explanation, and Improve.
  */
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, language, mode, extra } = await req.json();
+    const { prompt, language, mode, extra, currentCode, instruction } = await req.json();
     
     const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
     const groqKey = (process.env.GROQ_API_KEY || '').trim();
@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
         message: "Node configuration missing. Please check server environment." 
       }, { status: 503 });
     }
+
+    const isImprove = mode === 'improve';
 
     const systemPrompt = `You are an expert senior software engineer and architect. 
     Provide valid, clean, and professional code in ${language}.
@@ -35,14 +37,12 @@ export async function POST(req: NextRequest) {
     4. Do not include markdown code blocks (like \`\`\`json) in the response text.
     5. Maintain original intent of the request.
     6. If mode is "fix", identify the error and provide the corrected version.
-    7. If mode is "explain", provide the code but prioritize a detailed breakdown in the explanation field.`;
+    7. If mode is "explain", provide the code but prioritize a detailed breakdown in the explanation field.
+    8. If mode is "improve", you will receive the CURRENT_CODE and an INSTRUCTION. Modify the code strictly following the instruction while keeping the rest of the logic intact.`;
 
-    const userPrompt = `
-      TASK: ${prompt}
-      MODE: ${mode}
-      LANGUAGE: ${language}
-      EXTRA NOTES: ${extra || 'None'}
-    `;
+    const userPrompt = isImprove 
+      ? `INSTRUCTION: ${instruction}\n\nCURRENT_CODE:\n${currentCode}`
+      : `TASK: ${prompt}\nMODE: ${mode}\nLANGUAGE: ${language}\nEXTRA NOTES: ${extra || 'None'}`;
 
     // --- 1. Primary Node: Gemini Matrix ---
     if (geminiKey) {
