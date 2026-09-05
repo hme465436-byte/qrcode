@@ -4,14 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * @fileOverview Secure Server Node for AI Code Generation.
  * Multi-node failover: Gemini (Primary) -> Groq (Fallback).
- * Ensures high-fidelity code synthesis without exposing private keys.
+ * Supports specialized modes: New Code, Fix Logic, and Technical Explanation.
  */
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, language, extra } = await req.json();
+    const { prompt, language, mode, extra } = await req.json();
     
     const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
     const groqKey = (process.env.GROQ_API_KEY || '').trim();
@@ -25,15 +25,21 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `You are an expert senior software engineer and architect. 
     Provide valid, clean, and professional code in ${language}.
+    
+    Current Mode: ${mode || 'new'}
+    
     Rules:
     1. Output strictly as a JSON object with keys "code" and "explanation".
     2. The "code" value should be the actual source code as a string.
-    3. The "explanation" should be a short summary of the logic.
+    3. The "explanation" should be a short summary of the logic and implementation strategy.
     4. Do not include markdown code blocks (like \`\`\`json) in the response text.
-    5. Maintain original intent of the request.`;
+    5. Maintain original intent of the request.
+    6. If mode is "fix", identify the error and provide the corrected version.
+    7. If mode is "explain", provide the code but prioritize a detailed breakdown in the explanation field.`;
 
     const userPrompt = `
       TASK: ${prompt}
+      MODE: ${mode}
       LANGUAGE: ${language}
       EXTRA NOTES: ${extra || 'None'}
     `;
@@ -71,14 +77,13 @@ export async function POST(req: NextRequest) {
                 });
               }
             } catch (e) {
-              // If JSON parse fails, try to extract code manually if it looks like a direct string
               if (text.length > 20) {
                  return NextResponse.json({ success: true, code: text, explanation: 'Direct response generated.' });
               }
             }
           }
         } catch (e) {
-          continue; // Try next model in stack
+          continue; 
         }
       }
     }

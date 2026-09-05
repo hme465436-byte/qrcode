@@ -23,7 +23,10 @@ import {
   Braces,
   ShieldCheck,
   FileDown,
-  Check
+  Check,
+  Wand2,
+  FileEdit,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +39,7 @@ import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
 import { Badge } from '@/components/ui/badge';
 
-const HISTORY_KEY = 'mykit_code_generator_history_v2';
+const HISTORY_KEY = 'mykit_code_generator_history_v3';
 
 interface CodeHistory {
   id: string;
@@ -45,10 +48,17 @@ interface CodeHistory {
   explanation: string;
   timestamp: number;
   language: string;
+  mode: string;
 }
 
 const LANGUAGES = [
-  'React', 'TypeScript', 'JavaScript', 'Python', 'HTML', 'CSS', 'C++', 'Java', 'SQL', 'PHP'
+  'HTML', 'CSS', 'JavaScript', 'React', 'Python', 'TypeScript'
+];
+
+const MODES = [
+  { id: 'new', label: 'New Code', icon: Sparkles },
+  { id: 'fix', label: 'Fix Code', icon: FileEdit },
+  { id: 'explain', label: 'Explain', icon: Info },
 ];
 
 export default function AiCodeGeneratorPage() {
@@ -57,6 +67,7 @@ export default function AiCodeGeneratorPage() {
   // Input State
   const [prompt, setPrompt] = useState('');
   const [language, setLanguage] = useState('React');
+  const [mode, setMode] = useState('new');
   const [extra, setExtra] = useState('');
   
   // Results State
@@ -81,6 +92,7 @@ export default function AiCodeGeneratorPage() {
       code: c,
       explanation: exp,
       language,
+      mode,
       timestamp: Date.now()
     }, ...history.filter(h => h.code !== c)].slice(0, 20);
     setHistory(next);
@@ -101,7 +113,7 @@ export default function AiCodeGeneratorPage() {
       const response = await fetch('/api/ai-code-generator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, language, extra })
+        body: JSON.stringify({ prompt, language, mode, extra })
       });
 
       const data = await response.json();
@@ -133,6 +145,7 @@ export default function AiCodeGeneratorPage() {
     setExplanation(item.explanation);
     setPrompt(item.name);
     setLanguage(item.language);
+    setMode(item.mode || 'new');
     toast({ title: "Snippet Restored" });
   };
 
@@ -158,7 +171,9 @@ export default function AiCodeGeneratorPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `code_export_${Date.now()}.txt`;
+    const extMap: any = { 'React': 'tsx', 'JavaScript': 'js', 'Python': 'py', 'HTML': 'html', 'CSS': 'css', 'TypeScript': 'ts' };
+    const ext = extMap[language] || 'txt';
+    a.download = `studio_export_${Date.now()}.${ext}`;
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: "File Saved" });
@@ -175,7 +190,7 @@ export default function AiCodeGeneratorPage() {
             AI Code <span className="text-primary italic">Generator</span>
           </h1>
           <p className="text-white/40 text-sm md:text-base font-medium mt-4 max-w-2xl leading-relaxed">
-            Professional high-fidelity code synthesis. Generate clean, documented logic across multiple languages using secure multi-node processing.
+            Professional high-fidelity code synthesis. Generate, fix, and explain logic across multiple languages using secure multi-node processing.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 pb-2">
@@ -193,17 +208,38 @@ export default function AiCodeGeneratorPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
               <CardHeader className="py-6 border-b border-border bg-secondary/30">
                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4 text-white">
-                    <Settings2 className="w-5 h-5 text-primary" /> Matrix Parameters
+                    <Settings2 className="w-5 h-5 text-primary" /> Parameters
                  </CardTitle>
               </CardHeader>
               <CardContent className="pt-8 space-y-8">
                  <div className="space-y-6">
+                    <div className="space-y-4">
+                       <Label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Studio Mode</Label>
+                       <div className="grid grid-cols-3 gap-2">
+                          {MODES.map(m => (
+                            <button
+                              key={m.id}
+                              onClick={() => setMode(m.id)}
+                              className={cn(
+                                "flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border transition-all h-20",
+                                mode === m.id ? "bg-primary text-white border-primary shadow-lg scale-105" : "bg-secondary/50 border-border text-foreground/40 hover:text-primary"
+                              )}
+                            >
+                               <m.icon className="w-4 h-4" />
+                               <span className="text-[9px] font-black uppercase tracking-widest">{m.label}</span>
+                            </button>
+                          ))}
+                       </div>
+                    </div>
+
                     <div className="space-y-2">
-                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">Linguistic Request (Task)</Label>
+                       <Label className="text-[9px] font-black text-white/40 uppercase ml-1">
+                          {mode === 'fix' ? 'Code to Fix' : mode === 'explain' ? 'Concept to Explain' : 'Linguistic Request'}
+                       </Label>
                        <Textarea 
                         value={prompt} 
                         onChange={e => setPrompt(e.target.value)} 
-                        placeholder="e.g. Build a secure password hash utility in Node.js..." 
+                        placeholder={mode === 'fix' ? "Paste the code containing the error..." : "e.g. Build a secure password hash utility in Node.js..."} 
                         className="h-32 bg-secondary/50 border-border rounded-2xl text-xs font-bold p-6 resize-none focus:ring-primary/40" 
                        />
                     </div>
@@ -264,6 +300,7 @@ export default function AiCodeGeneratorPage() {
                                <p className="text-xs font-bold text-white truncate uppercase tracking-tight">{item.name}</p>
                                <div className="flex items-center gap-3 mt-1">
                                   <Badge variant="outline" className="text-[6px] py-0 px-2 border-primary/20 text-primary uppercase">{item.language}</Badge>
+                                  <Badge variant="outline" className="text-[6px] py-0 px-2 border-white/10 text-white/30 uppercase">{item.mode}</Badge>
                                   <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{new Date(item.timestamp).toLocaleDateString()}</p>
                                </div>
                             </div>
