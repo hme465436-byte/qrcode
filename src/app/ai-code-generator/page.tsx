@@ -30,7 +30,8 @@ import {
   KeyRound,
   Globe,
   Unplug,
-  Save
+  Save,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -510,7 +511,7 @@ export default function AiCodeGeneratorPage() {
                                onChange={e => setImproveInput(e.target.value)}
                                placeholder="e.g. make it shorter, add comments, fix errors..."
                                className="h-14 bg-secondary/50 border-border rounded-2xl text-xs font-bold px-6 focus:ring-primary/40"
-                               onKeyDown={e => e.key === 'Enter' && handleGenerate(true)}
+                               onKeyDown={(e) => e.key === 'Enter' && handleGenerate(true)}
                              />
                              <Button 
                               onClick={() => handleGenerate(true)} 
