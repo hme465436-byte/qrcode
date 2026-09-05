@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * @fileOverview Secure Server Node for AI Resume Synthesis.
  * Accesses private API keys to interface with Gemini.
  * Sanitizes output to provide clean, professional text structures.
+ * Implements multi-model failover for protocol stability.
  */
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     if (!apiKey) {
       return NextResponse.json({ 
         success: false, 
-        message: "Service unavailable. Host node restricted." 
+        message: "Service unavailable. Try again." 
       }, { status: 503 });
     }
 
@@ -42,42 +43,52 @@ export async function POST(req: NextRequest) {
       5. Output ONLY the resume text without any conversational filler or meta-commentary.
     `;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
+    // Model Failover Matrix
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.5-flash', 'gemini-3.8-flash'];
+    
+    for (const model of models) {
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 2048,
+            }
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+          if (generatedText) {
+            return NextResponse.json({ 
+              success: true, 
+              text: generatedText 
+            });
+          }
         }
-      })
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error?.message || 'Remote node rejection.');
-    }
-
-    const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!generatedText) {
-      throw new Error("Zero linguistic signal received from discovery node.");
+      } catch (e) {
+        // Continue to next model in matrix
+        continue;
+      }
     }
 
     return NextResponse.json({ 
-      success: true, 
-      text: generatedText 
-    });
+      success: false, 
+      message: "Service unavailable. Try again." 
+    }, { status: 500 });
 
   } catch (err: any) {
     console.error('Resume Synthesis Error:', err);
     return NextResponse.json({ 
       success: false, 
-      message: err.message || "Linguistic matrix failure during synthesis." 
+      message: "Service unavailable. Try again." 
     }, { status: 500 });
   }
 }
