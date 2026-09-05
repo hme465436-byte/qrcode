@@ -7,6 +7,7 @@ import { FeedbackRow } from '@/components/qr-canvas/feedback-row';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Suspense } from 'react';
 import { KitRouter } from '@/components/qr-canvas/kit-router';
+import { FloatingActionHub } from '@/components/qr-canvas/floating-action-hub';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -68,6 +69,7 @@ export default function RootLayout({
             <FeedbackRow />
           </main>
           <Footer />
+          <FloatingActionHub />
           <Toaster />
         </FirebaseClientProvider>
       </body>
