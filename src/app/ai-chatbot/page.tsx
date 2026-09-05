@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -351,16 +352,16 @@ export default function AIChatbotPage() {
       } else {
         toast({ 
           variant: "destructive", 
-          title: "Protocol Failure", 
-          description: result.message || "Uplink restricted by server node." 
+          title: "Service Error", 
+          description: "Service unavailable. Please try again." 
         });
       }
     } catch (err: any) {
       if (err.name === 'AbortError') return;
       toast({ 
         variant: "destructive", 
-        title: "Network Error", 
-        description: "Failed to establish binary link with server." 
+        title: "Service Error", 
+        description: "Service unavailable. Please try again." 
       });
     } finally {
       setIsProcessing(false);
@@ -758,7 +759,7 @@ export default function AIChatbotPage() {
               </CardHeader>
               <CardContent className="p-5 space-y-6 overflow-y-auto custom-scrollbar">
                  <div className="space-y-3">
-                    <Label className="text-[9px] font-black uppercase text-foreground/40">Node Access</Label>
+                    <Label className="text-[9px] font-black uppercase text-foreground/40">Performance Profile</Label>
                     <div className="grid grid-cols-2 gap-2">
                        {(['auto', 'groq', 'openrouter', 'custom'] as const).map(n => (
                           <button
@@ -769,7 +770,7 @@ export default function AIChatbotPage() {
                               config.node === n ? "bg-primary text-white border-primary" : "bg-secondary/50 border-white/5 text-white/40 hover:text-white"
                             )}
                           >
-                             {n === 'openrouter' ? 'OR' : n}
+                             {n === 'auto' ? 'Default' : n === 'groq' ? 'Balanced' : n === 'openrouter' ? 'Global' : 'Private'}
                           </button>
                        ))}
                     </div>
@@ -841,10 +842,10 @@ export default function AIChatbotPage() {
                  )}
 
                  <div className="space-y-3">
-                    <Label className="text-[9px] font-black uppercase text-foreground/40">Model Identity</Label>
+                    <Label className="text-[9px] font-black uppercase text-foreground/40">Intelligence Identity</Label>
                     <Select value={config.model} onValueChange={v => setConfig({...config, model: v})}>
                        <SelectTrigger className="h-10 bg-secondary/50 border-border text-[9px] font-bold">
-                          <SelectValue placeholder="Select Model" />
+                          <SelectValue placeholder="Select Profile" />
                        </SelectTrigger>
                        <SelectContent className="glass-card">
                           <SelectItem value="llama-3.1-8b-instant" className="text-[9px] uppercase font-bold">Llama 3.1 (Instant)</SelectItem>
@@ -951,7 +952,7 @@ export default function AIChatbotPage() {
                
                <div className="mt-3 flex items-center justify-between px-4 max-md:px-2">
                   <div className="flex items-center gap-4 text-[8px] font-black uppercase tracking-[0.4em] text-foreground/20">
-                     <span className="flex items-center gap-1.5"><Globe className="w-2.5 h-2.5" /> Node: {config.node === 'custom' ? (customApi.providerName || 'CUSTOM') : config.node?.toUpperCase()}</span>
+                     <span className="flex items-center gap-1.5"><Globe className="w-2.5 h-2.5" /> Service: {config.node === 'custom' ? 'Private' : 'Active'}</span>
                      <span className="hidden xs:inline">•</span>
                      <span className="hidden xs:inline">Memory: {activeSession?.messages.length || 0} Blocks</span>
                   </div>

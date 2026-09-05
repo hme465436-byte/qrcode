@@ -1,6 +1,7 @@
+
 "use client"
 
-import React, { useState, useEffect, useMemo, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react';
 import Link from 'next/link';
 import { 
   QrCode, 
@@ -161,11 +162,11 @@ const TOOLS: Tool[] = [
     href: '/ai-chatbot', 
     icon: MessageIcon, 
     title: 'AI Chatbot', 
-    desc: 'Chat with a fast AI using Groq or OpenRouter.', 
+    desc: 'Chat with a fast AI assistant.', 
     label: 'AI STUDIO', 
     color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
     glowClass: 'bg-indigo-400/10',
-    keywords: ['ai', 'chat', 'bot', 'gpt', 'llama', 'groq', 'openrouter', 'assistant'],
+    keywords: ['ai', 'chat', 'bot', 'gpt', 'llama', 'assistant'],
     category: 'generators'
   },
   { 
@@ -1433,7 +1434,7 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: any }[] = [
 ];
 
 const PHRASES = [
-  'AI Chatbot', 'Llama 3', 'Free AI', 'Groq Chat', 'OpenRouter',
+  'AI Chatbot', 'Llama 3', 'Free AI', 'Assistant',
   'Merge PDF', 'Compress Image', 'QR Generator', 'WhatsApp DP', 
   'Word to PDF', 'Photo Enhance', 'Age Calculator', 'Photo to Text', 
   'Logo Maker', 'Bulk Production', 'Password Studio', 'Color Picker',
@@ -1790,7 +1791,7 @@ export default function Home() {
                  <ShadButton 
                    onClick={handleVisibleCount}
                    variant="outline"
-                   className="h-14 sm:h-16 px-10 sm:px-12 rounded-full border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-[10px] sm:xs backdrop-blur-xl hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] group/see"
+                   className="h-14 sm:h-16 px-10 sm:px-12 rounded-full border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-[0.3em] text-focus-within:xs backdrop-blur-xl hover:bg-primary/10 shadow-xl shadow-primary/5 active:scale-95 transition-all hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] group/see"
                  >
                     <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 group-hover/see:translate-y-1 transition-transform" />
                     See More Tools
