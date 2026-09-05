@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -30,7 +29,13 @@ import {
   X,
   Palette,
   LayoutGrid,
-  FileText
+  FileText,
+  Star,
+  Eye,
+  EyeOff,
+  Crosshair,
+  Hash,
+  Wand2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +43,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -51,6 +58,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { GetHelp } from '@/components/qr-canvas/get-help';
+import { enhanceImagePrompt } from '@/ai/flows/image-prompt-enhancer-flow';
 
 // --- Constants & Matrix Data ---
 
@@ -63,16 +71,18 @@ interface ArchiveItem {
   url: string;
   style: ImageStyle;
   aspect: AspectRatio;
+  seed: number;
   timestamp: number;
+  isFavorite?: boolean;
 }
 
 const STYLE_PRESETS: Record<ImageStyle, { label: string; suffix: string }> = {
   normal: { label: 'Normal', suffix: '' },
-  realistic: { label: 'Realistic', suffix: ', highly detailed, 8k resolution, cinematic lighting, photorealistic, professional photography' },
-  anime: { label: 'Anime', suffix: ', anime style, vibrant colors, clean lines, high quality digital art, studio ghibli inspired' },
-  '3d': { label: '3D Render', suffix: ', octane render, unreal engine 5, 3d isometric, c4d, hyper-detailed, ray tracing' },
-  logo: { label: 'Logo', suffix: ', minimalist logo design, vector art, flat design, white background, high contrast, symbol' },
-  poster: { label: 'Poster', suffix: ', typographic poster design, graphic design style, bold colors, artistic composition' },
+  realistic: { label: 'Realistic', suffix: ', highly detailed, 8k resolution, cinematic lighting, photorealistic, professional photography, dslr' },
+  anime: { label: 'Anime', suffix: ', anime style, vibrant colors, clean lines, high quality digital art, studio ghibli inspired, 4k' },
+  '3d': { label: '3D Render', suffix: ', octane render, unreal engine 5, 3d isometric, c4d, hyper-detailed, ray tracing, cinematic bloom' },
+  logo: { label: 'Logo', suffix: ', minimalist logo design, vector art, flat design, white background, high contrast, symbol, professional branding' },
+  poster: { label: 'Poster', suffix: ', typographic poster design, graphic design style, bold colors, artistic composition, minimal, modern' },
 };
 
 const RANDOM_PROMPTS = [
@@ -86,7 +96,8 @@ const RANDOM_PROMPTS = [
   "A high-tech laboratory with floating holographic interfaces",
 ];
 
-const STORAGE_KEY = 'mykit_ai_image_archive_v2';
+const ARCHIVE_KEY = 'mykit_ai_image_archive_v3';
+const FAVS_KEY = 'mykit_ai_image_favs_v3';
 
 export default function AiImageGeneratorPage() {
   const { toast } = useToast();
@@ -95,24 +106,37 @@ export default function AiImageGeneratorPage() {
   const [prompt, setPrompt] = useState('');
   const [activeStyle, setActiveStyle] = useState<ImageStyle>('normal');
   const [aspect, setAspect] = useState<AspectRatio>('1:1');
+  const [seed, setSeed] = useState<string>('');
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [prevResultUrl, setPrevResultUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  
+  // Visual Meta
+  const [showComparison, setShowComparison] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   
   // Registry State
   const [archive, setArchive] = useState<ArchiveItem[]>([]);
+  const [favorites, setFavorites] = useState<ArchiveItem[]>([]);
   const [showClearConfirm, setShowClearAllConfirm] = useState(false);
 
   // Initialization
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(ARCHIVE_KEY);
+    const savedFavs = localStorage.getItem(FAVS_KEY);
     if (saved) try { setArchive(JSON.parse(saved)); } catch (e) {}
+    if (savedFavs) try { setFavorites(JSON.parse(savedFavs)); } catch (e) {}
   }, []);
 
-  const saveToArchive = (item: ArchiveItem) => {
-    const next = [item, ...archive.filter(p => p.prompt !== item.prompt)].slice(0, 12);
+  const saveArchive = (next: ArchiveItem[]) => {
     setArchive(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    localStorage.setItem(ARCHIVE_KEY, JSON.stringify(next));
+  };
+
+  const saveFavs = (next: ArchiveItem[]) => {
+    setFavorites(next);
+    localStorage.setItem(FAVS_KEY, JSON.stringify(next));
   };
 
   const handleSurprise = () => {
@@ -121,10 +145,25 @@ export default function AiImageGeneratorPage() {
     toast({ title: "Linguistic Signal Injected" });
   };
 
-  const executeSynthesis = async () => {
+  const handleEnhance = async () => {
+    if (!prompt.trim()) return;
+    setIsEnhancing(true);
+    try {
+      const enhanced = await enhanceImagePrompt({ text: prompt });
+      setPrompt(enhanced);
+      toast({ title: "Prompt Optimized", description: "Linguistic matrix expanded." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Enhancement Failed" });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const executeSynthesis = async (overrideSeed?: number) => {
     if (!prompt.trim()) return;
     
     setIsProcessing(true);
+    if (resultUrl) setPrevResultUrl(resultUrl);
     setResultUrl(null);
 
     const dims = {
@@ -134,27 +173,28 @@ export default function AiImageGeneratorPage() {
       '4:5': { w: 800, h: 1000 }
     }[aspect];
 
-    const seed = Math.floor(Math.random() * 1000000);
+    const currentSeed = overrideSeed ?? (seed ? parseInt(seed) : Math.floor(Math.random() * 10000000));
     const fullPrompt = `${prompt.trim()}${STYLE_PRESETS[activeStyle].suffix}`;
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&seed=${seed}&nologo=true`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&seed=${currentSeed}&nologo=true`;
 
     try {
-      // Warm the node
       const response = await fetch(url);
       if (!response.ok) throw new Error("Node restricted");
       
       setResultUrl(url);
-      saveToArchive({
+      const newItem: ArchiveItem = {
         id: Math.random().toString(36).substr(2, 9),
         prompt: prompt.trim(),
         url,
         style: activeStyle,
         aspect,
+        seed: currentSeed,
         timestamp: Date.now()
-      });
+      };
+      saveArchive([newItem, ...archive].slice(0, 12));
       toast({ title: "Master Synthesized", description: "Visual identity isolated." });
     } catch (err) {
-      toast({ variant: "destructive", title: "Protocol Failure", description: "Node busy. Please retry handshake." });
+      toast({ variant: "destructive", title: "Protocol Failure", description: "Discovery node busy." });
       setIsProcessing(false);
     }
   };
@@ -176,32 +216,32 @@ export default function AiImageGeneratorPage() {
     }
   };
 
-  const handleCopy = () => {
-    if (prompt) {
-      navigator.clipboard.writeText(prompt);
-      setIsCopied(true);
-      toast({ title: "Prompt Isolated" });
-      setTimeout(() => setIsCopied(false), 2000);
+  const toggleFavorite = (item: ArchiveItem) => {
+    const isFav = favorites.some(f => f.id === item.id || f.url === item.url);
+    if (isFav) {
+      saveFavs(favorites.filter(f => f.url !== item.url));
+      toast({ title: "Removed from Favorites" });
+    } else {
+      saveFavs([{ ...item, isFavorite: true }, ...favorites].slice(0, 20));
+      toast({ title: "Added to Shortlist" });
     }
+  };
+
+  const reuseFromHistory = (item: ArchiveItem) => {
+    setPrompt(item.prompt);
+    setActiveStyle(item.style);
+    setAspect(item.aspect);
+    setSeed(item.seed.toString());
+    toast({ title: "Matrix Restored" });
   };
 
   const handleClear = () => {
     setPrompt('');
     setResultUrl(null);
+    setPrevResultUrl(null);
+    setSeed('');
     setIsProcessing(false);
     toast({ title: "Studio Reset" });
-  };
-
-  const removeArchiveItem = (id: string) => {
-    setArchive(prev => prev.filter(i => i.id !== id));
-    toast({ title: "Registry Entry Purged" });
-  };
-
-  const clearFullArchive = () => {
-    setArchive([]);
-    localStorage.removeItem(STORAGE_KEY);
-    setShowClearAllConfirm(false);
-    toast({ title: "Full Archive Purged" });
   };
 
   return (
@@ -245,9 +285,14 @@ export default function AiImageGeneratorPage() {
                  <div className="space-y-4">
                     <div className="flex justify-between items-center px-1">
                        <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Linguistic Prompt</Label>
-                       <button onClick={handleSurprise} className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-2 hover:opacity-70 transition-all">
-                          <Dices className="w-3 h-3" /> Surprise Me
-                       </button>
+                       <div className="flex gap-4">
+                          <button onClick={handleEnhance} disabled={isEnhancing || !prompt} className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2 hover:opacity-70 transition-all disabled:opacity-20">
+                            {isEnhancing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />} AI Enhance
+                          </button>
+                          <button onClick={handleSurprise} className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-2 hover:opacity-70 transition-all">
+                             <Dices className="w-3 h-3" /> Surprise
+                          </button>
+                       </div>
                     </div>
                     <Textarea 
                       placeholder="e.g. Cyberpunk city with neon lights, 8k, detailed architecture..."
@@ -257,38 +302,62 @@ export default function AiImageGeneratorPage() {
                     />
                  </div>
 
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-6">
                     <div className="space-y-3">
                        <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Style DNA</Label>
-                       <Select value={activeStyle} onValueChange={(v: ImageStyle) => setActiveStyle(v)}>
-                          <SelectTrigger className="h-12 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px]">
-                             <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="glass-card">
-                             {Object.entries(STYLE_PRESETS).map(([id, s]) => (
-                               <SelectItem key={id} value={id} className="text-[10px] font-black uppercase">{s.label}</SelectItem>
-                             ))}
-                          </SelectContent>
-                       </Select>
+                       <div className="flex flex-wrap gap-2">
+                          {Object.entries(STYLE_PRESETS).map(([id, s]) => (
+                            <button
+                              key={id}
+                              onClick={() => setActiveStyle(id as ImageStyle)}
+                              className={cn(
+                                "px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all",
+                                activeStyle === id ? "bg-primary text-white border-primary shadow-lg" : "bg-secondary/30 border-border text-foreground/40 hover:text-primary"
+                              )}
+                            >
+                               {s.label}
+                            </button>
+                          ))}
+                       </div>
                     </div>
-                    <div className="space-y-3">
-                       <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Aspect Ratio</Label>
-                       <Select value={aspect} onValueChange={(v: AspectRatio) => setAspect(v)}>
-                          <SelectTrigger className="h-12 bg-secondary/50 border-border rounded-xl font-bold uppercase text-[10px]">
-                             <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="glass-card">
-                             <SelectItem value="1:1" className="text-[10px] font-black uppercase">1:1 Square</SelectItem>
-                             <SelectItem value="16:9" className="text-[10px] font-black uppercase">16:9 Cinema</SelectItem>
-                             <SelectItem value="9:16" className="text-[10px] font-black uppercase">9:16 Mobile</SelectItem>
-                             <SelectItem value="4:5" className="text-[10px] font-black uppercase">4:5 Portrait</SelectItem>
-                          </SelectContent>
-                       </Select>
+
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="space-y-3">
+                          <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Aspect Ratio</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                             {(['1:1', '16:9', '9:16', '4:5'] as AspectRatio[]).map(a => (
+                               <button
+                                 key={a}
+                                 onClick={() => setAspect(a)}
+                                 className={cn(
+                                   "h-10 rounded-xl border flex items-center justify-center text-[10px] font-black uppercase transition-all",
+                                   aspect === a ? "bg-primary text-white border-primary shadow-lg" : "bg-secondary/30 border-border text-foreground/40"
+                                 )}
+                               >
+                                  {a}
+                               </button>
+                             ))}
+                          </div>
+                       </div>
+                       <div className="space-y-3">
+                          <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Hardware Seed</Label>
+                          <div className="relative group/seed">
+                             <Input 
+                               type="number"
+                               placeholder="Random"
+                               value={seed}
+                               onChange={e => setSeed(e.target.value)}
+                               className="h-10 bg-secondary/50 border-border rounded-xl text-xs font-mono font-bold pl-8"
+                             />
+                             <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20 group-focus-within/seed:text-primary" />
+                          </div>
+                          <p className="text-[8px] font-black uppercase text-foreground/20 tracking-widest text-right">0 = Randomized</p>
+                       </div>
                     </div>
                  </div>
 
                  <Button 
-                    onClick={executeSynthesis} 
+                    onClick={() => executeSynthesis()} 
                     disabled={isProcessing || !prompt.trim()}
                     className="h-16 w-full bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 text-xs uppercase tracking-widest active:scale-95 transition-all"
                  >
@@ -298,44 +367,67 @@ export default function AiImageGeneratorPage() {
               </CardContent>
            </Card>
 
-           {/* History Module */}
+           {/* Favorites / History Tabs */}
            <Card className="glass-card border-border shadow-xl flex flex-col max-h-[500px]">
-              <CardHeader className="py-4 border-b border-border bg-secondary/30 flex flex-row items-center justify-between shrink-0 px-6">
-                 <div className="flex items-center gap-3">
-                    <History className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-[10px] font-black uppercase text-foreground">Archive Registry</CardTitle>
-                 </div>
-                 {archive.length > 0 && (
-                   <button onClick={() => setShowClearAllConfirm(true)} className="text-[9px] font-black text-foreground/20 hover:text-red-500 uppercase transition-colors">Purge All</button>
-                 )}
-              </CardHeader>
-              <CardContent className="p-0 overflow-y-auto custom-scrollbar flex-1 bg-black/10">
-                 {archive.length === 0 ? (
-                    <div className="py-20 text-center opacity-10 space-y-2">
-                       <LayoutGrid className="w-8 h-8 mx-auto" />
-                       <p className="text-[10px] font-black uppercase tracking-widest">Zero Matrix History</p>
-                    </div>
-                 ) : (
-                    <div className="divide-y divide-white/5">
-                       {archive.map(item => (
-                         <div key={item.id} className="p-4 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => { setPrompt(item.prompt); setActiveStyle(item.style); setAspect(item.aspect); }}>
-                            <div className="flex items-center gap-4 min-w-0">
-                               <div className="w-12 h-12 rounded-xl bg-secondary border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
-                                  <img src={item.url} alt="" className="w-full h-full object-cover" />
+              <Tabs defaultValue="archive" className="w-full h-full flex flex-col">
+                 <TabsList className="bg-secondary/30 border-b border-border p-1 h-12 rounded-none grid grid-cols-2">
+                    <TabsTrigger value="archive" className="text-[9px] font-black uppercase rounded-lg">History</TabsTrigger>
+                    <TabsTrigger value="favs" className="text-[9px] font-black uppercase rounded-lg">Shortlist</TabsTrigger>
+                 </TabsList>
+                 
+                 <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/10">
+                    <TabsContent value="archive" className="m-0 divide-y divide-white/5">
+                       {archive.length === 0 ? (
+                          <div className="py-20 text-center opacity-10 space-y-2">
+                             <History className="w-8 h-8 mx-auto" />
+                             <p className="text-[10px] font-black uppercase tracking-widest">Zero Matrix History</p>
+                          </div>
+                       ) : (
+                          archive.map(item => (
+                            <div key={item.id} className="p-4 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => reuseFromHistory(item)}>
+                               <div className="flex items-center gap-4 min-w-0">
+                                  <div className="w-12 h-12 rounded-xl bg-secondary border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+                                     <img src={item.url} alt="" className="w-full h-full object-cover" />
+                                  </div>
+                                  <div className="min-w-0">
+                                     <p className="text-[11px] font-bold text-foreground truncate uppercase">{item.prompt}</p>
+                                     <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{item.style} • {item.aspect}</p>
+                                  </div>
                                </div>
-                               <div className="min-w-0">
-                                  <p className="text-[11px] font-bold text-foreground truncate uppercase">{item.prompt}</p>
-                                  <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{item.style} • {item.aspect}</p>
+                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button onClick={(e) => { e.stopPropagation(); toggleFavorite(item); }} className={cn("p-2 transition-colors", favorites.some(f => f.url === item.url) ? "text-yellow-500" : "text-foreground/20 hover:text-yellow-500")}><Star className="w-3.5 h-3.5" /></button>
+                                  <button onClick={(e) => { e.stopPropagation(); saveArchive(archive.filter(i => i.id !== item.id)); }} className="p-2 text-foreground/20 hover:text-red-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
                                </div>
                             </div>
-                            <button onClick={(e) => { e.stopPropagation(); removeArchiveItem(item.id); }} className="p-2 text-foreground/10 hover:text-red-500 transition-colors">
-                               <X className="w-3.5 h-3.5" />
-                            </button>
-                         </div>
-                       ))}
-                    </div>
-                 )}
-              </CardContent>
+                          ))
+                       )}
+                    </TabsContent>
+
+                    <TabsContent value="favs" className="m-0 divide-y divide-white/5">
+                       {favorites.length === 0 ? (
+                          <div className="py-20 text-center opacity-10 space-y-2">
+                             <Star className="w-8 h-8 mx-auto" />
+                             <p className="text-[10px] font-black uppercase tracking-widest">No Favorites Identified</p>
+                          </div>
+                       ) : (
+                          favorites.map(item => (
+                            <div key={item.id} className="p-4 flex items-center justify-between group hover:bg-white/5 transition-all cursor-pointer" onClick={() => reuseFromHistory(item)}>
+                               <div className="flex items-center gap-4 min-w-0">
+                                  <div className="w-12 h-12 rounded-xl bg-secondary border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+                                     <img src={item.url} alt="" className="w-full h-full object-cover" />
+                                  </div>
+                                  <div className="min-w-0">
+                                     <p className="text-[11px] font-bold text-foreground truncate uppercase">{item.prompt}</p>
+                                     <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">{item.style} • seed:{item.seed}</p>
+                                  </div>
+                               </div>
+                               <button onClick={(e) => { e.stopPropagation(); toggleFavorite(item); }} className="p-2 text-yellow-500 hover:text-red-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
+                            </div>
+                          ))
+                       )}
+                    </TabsContent>
+                 </div>
+              </Tabs>
            </Card>
         </aside>
 
@@ -350,9 +442,17 @@ export default function AiImageGeneratorPage() {
                     </div>
                     <CardTitle className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Identity Output</CardTitle>
                  </div>
-                 {resultUrl && !isProcessing && (
-                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">MASTER SYNTHESIZED</Badge>
-                 )}
+                 <div className="flex items-center gap-4">
+                    {resultUrl && prevResultUrl && (
+                      <div className="flex items-center gap-2 bg-background/50 px-3 py-1 rounded-full border border-border">
+                        <span className="text-[8px] font-black uppercase text-foreground/40">Compare A/B</span>
+                        <Switch checked={showComparison} onCheckedChange={setShowComparison} className="scale-50 h-4 w-8" />
+                      </div>
+                    )}
+                    {resultUrl && !isProcessing && (
+                        <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-3 py-1">MASTER SYNTHESIZED</Badge>
+                    )}
+                 </div>
               </CardHeader>
               
               <CardContent className="flex-1 p-8 sm:p-12 flex flex-col items-center justify-center relative overflow-hidden bg-checkered">
@@ -377,7 +477,7 @@ export default function AiImageGeneratorPage() {
                         <div className="relative group/master max-w-full flex flex-col items-center gap-10">
                            <div className="relative max-w-full rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ring-white/10 transition-all duration-700">
                              <img 
-                              src={resultUrl} 
+                              src={showComparison ? prevResultUrl || resultUrl : resultUrl} 
                               alt="Generated AI Master" 
                               className={cn(
                                 "max-w-full max-h-[65vh] object-contain transition-all duration-700",
@@ -385,6 +485,9 @@ export default function AiImageGeneratorPage() {
                               )}
                               onLoad={() => setIsProcessing(false)}
                              />
+                             <div className="absolute top-6 left-6 flex gap-2">
+                                <Badge className="bg-black/60 backdrop-blur-md text-[8px] font-black uppercase px-3 border-white/10">{showComparison ? 'PREVIOUS' : 'CURRENT'}</Badge>
+                             </div>
                            </div>
                            
                            {!isProcessing && (
@@ -405,13 +508,13 @@ export default function AiImageGeneratorPage() {
                                     </Button>
                                  </div>
                                  <div className="flex gap-2">
-                                    <Button onClick={executeSynthesis} variant="outline" className="h-16 px-8 border-white/10 bg-white/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-white transition-all">
+                                    <Button onClick={() => executeSynthesis()} variant="outline" className="h-16 px-8 border-white/10 bg-white/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-white transition-all">
                                        <RefreshCcw className="w-5 h-5 mr-2" /> Re-Sync
                                     </Button>
-                                    <Button onClick={handleCopy} variant="outline" className="h-16 px-6 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] rounded-2xl">
-                                       {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                    <Button onClick={() => toggleFavorite({ id: 'temp', prompt, url: resultUrl!, style: activeStyle, aspect, seed: parseInt(seed) || 0, timestamp: Date.now() })} variant="outline" className={cn("h-16 px-6 border-white/10 bg-white/5 rounded-2xl transition-all", favorites.some(f => f.url === resultUrl) ? "text-yellow-500 bg-yellow-500/10 border-yellow-500/20" : "text-white")}>
+                                       <Star className={cn("w-5 h-5", favorites.some(f => f.url === resultUrl) && "fill-current")} />
                                     </Button>
-                                    <Button onClick={() => window.open(resultUrl, '_blank')} variant="outline" className="h-16 px-6 border-white/10 bg-white/5 text-white font-black rounded-2xl">
+                                    <Button onClick={() => window.open(resultUrl, '_blank')} variant="outline" className="h-16 px-6 border-white/10 bg-white/5 text-white font-black uppercase text-[10px] rounded-2xl">
                                        <Maximize2 className="w-5 h-5" />
                                     </Button>
                                  </div>
@@ -424,7 +527,7 @@ export default function AiImageGeneratorPage() {
               </CardContent>
            </Card>
 
-           {/* Security & Reliability Row */}
+           {/* Performance Row */}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="p-8 rounded-[3rem] bg-secondary/50 border border-border flex items-start gap-6 group hover:bg-secondary/80 transition-all duration-500 shadow-lg">
                 <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shrink-0 shadow-lg group-hover:scale-110 transition-transform">
@@ -466,7 +569,7 @@ export default function AiImageGeneratorPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8 flex gap-3">
             <AlertDialogCancel className="h-12 flex-1 rounded-xl border-white/5 bg-white/5 text-[9px] font-black uppercase m-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={clearFullArchive} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Purge All</AlertDialogAction>
+            <AlertDialogAction onClick={() => { setArchive([]); localStorage.removeItem(ARCHIVE_KEY); setShowClearAllConfirm(false); toast({ title: "Archive Purged" }); }} className="h-12 flex-1 rounded-xl bg-destructive text-white font-black uppercase text-[9px] shadow-xl shadow-destructive/20">Purge All</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
