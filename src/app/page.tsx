@@ -1709,21 +1709,21 @@ export default function Home() {
         <div className="w-full max-w-5xl mx-auto animate-reveal relative z-10 px-2 sm:px-4">
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[8px] sm:text-[10px] font-black text-primary uppercase tracking-[0.2em]">
-              <Command className="w-2.5 h-2.5 sm:w-3 sm:h-3 icon-3d" /> Digital Studio v7.2 Pro
+              <Command className="w-2.5 h-2.5 sm:w-3 sm:h-3 icon-3d" /> Free online tools
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[8px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
               Verified {TOOLS.length} Units
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-[8px] sm:text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(59,130,246,0.1)] shadow-primary/20">
-              <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current animate-fade-pulse" style={{ filter: 'drop-shadow(0 0 8px hsl(var(--primary)))' }} /> Dev UMAR FAROOQ
+              <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current animate-fade-pulse" style={{ filter: 'drop-shadow(0 0 8px hsl(var(--primary)))' }} /> 100% free tools
             </div>
           </div>
           
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-headline font-black mb-4 leading-[1.1] sm:leading-[1.1] tracking-tighter text-foreground uppercase max-w-4xl mx-auto overflow-wrap-anywhere px-2">
-            The World’s Most <span className="text-primary">Advanced</span> Tool Studio
+            100% FREE Online <span className="text-primary">Advanced</span> Tool Studio
           </h1>
           <p className="text-xs sm:text-lg text-foreground/40 max-w-2xl mx-auto leading-relaxed font-medium mb-8 px-4 overflow-wrap-anywhere">
-            Professional high-fidelity asset generation and technical data translation. Engineered for high-performance workflows with 100% hardware-native privacy.
+          120+ free online tools for AI, PDF, Image editing & utilities. 100% browser-based, no login required. Fast, safe & free forever.
           </p>
 
           {/* Search & Category Bar */}
