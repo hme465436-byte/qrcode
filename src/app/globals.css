@@ -211,3 +211,13 @@ button {
 .is-typing .feedback-row {
   display: none !important;
 }
+
+/* Fade Pulse for Luxury Glow */
+@keyframes fade-pulse {
+  0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.animate-fade-pulse {
+  animation: fade-pulse 8s ease-in-out infinite;
+}
