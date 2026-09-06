@@ -11,7 +11,7 @@ import {
   ImageIcon, 
   FileText, 
   Zap, 
-  Activity,
+  Activity, 
   History,
   CheckCircle2,
   X,
@@ -99,7 +99,8 @@ import {
   Braces,
   UserPlus,
   Smartphone,
-  Copy
+  Copy,
+  Camera as CameraIcon
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -146,6 +147,7 @@ const TOOLS: Tool[] = [
   { href: '/favicon-generator', title: 'Favicon Studio', desc: 'Generate web icon sets from any image instantly.', category: 'Image', icon: Box, keywords: ['website icon', 'image', 'photo'] },
   { href: '/metadata-remover', title: 'Privacy Purge', desc: 'Strip GPS and EXIF metadata from any photo.', category: 'Image', icon: ShieldCheck, keywords: ['exif', 'gps', 'privacy', 'image', 'photo'] },
   { href: '/color-picker', title: 'Color Picker', desc: 'Extract HEX, RGB, and HSL from any image.', category: 'Image', icon: Pipette, keywords: ['hex', 'rgb', 'image', 'photo'] },
+  { href: '/rgb-picker', title: 'RGB Picker', desc: 'Advanced chromatic engineering and color space translation.', category: 'Image', icon: Palette, keywords: ['rgb', 'hsl', 'color', 'hex'] },
   { href: '/image-converter', title: 'Image Converter', desc: 'Seamlessly switch between PNG and JPG formats.', category: 'Image', icon: RefreshCcw, keywords: ['jpg', 'png', 'jpeg', 'webp', 'image', 'photo'] },
   { href: '/image-resizer', title: 'Image Resizer', desc: 'Scale pixel dimensions with aspect ratio control.', category: 'Image', icon: Maximize, keywords: ['resize', 'scale', 'image', 'photo'] },
   { href: '/image-compressor', title: 'Image Compressor', desc: 'Shrink file size locally with quality control.', category: 'Image', icon: Minimize, keywords: ['compress', 'shrink', 'image', 'photo', 'jpg', 'png'] },
@@ -156,6 +158,8 @@ const TOOLS: Tool[] = [
   { href: '/icon-studio', title: 'Icon Studio', desc: 'Search social icons, recolor, download SVG PNG ICO', category: 'Image', icon: Shapes, keywords: ['svg', 'ico', 'png', 'image'] },
   { href: '/mouse-cursor-maker', title: 'Mouse Cursor Maker', desc: 'Convert any image into a real Windows .cur mouse cursor.', category: 'Image', icon: MousePointer2, keywords: ['cursor', '.cur', 'image'] },
   { href: '/image-gallery', title: 'Image Gallery', desc: 'Extract high-res visuals from global scientific and art registries.', category: 'Image', icon: ImageIcon, keywords: ['gallery', 'photo', 'image'] },
+  { href: '/exif-viewer', title: 'EXIF Viewer', desc: 'Clinical inspection of hidden image headers and GPS data.', category: 'Image', icon: CameraIcon, keywords: ['exif', 'metadata', 'gps', 'photo'] },
+  { href: '/image-url-downloader', title: 'Image URL Downloader', desc: 'Direct image extraction from web and social nodes.', category: 'Image', icon: Download, keywords: ['download', 'url', 'image'] },
 
   // File Tools
   { href: '/reverse-video', title: 'Reverse Video', desc: 'Reverse any video in your browser with FFmpeg.wasm.', category: 'File', icon: RotateCcw, keywords: ['video', 'reverse'] },
@@ -175,6 +179,7 @@ const TOOLS: Tool[] = [
   { href: '/pdf-splitter', title: 'PDF Splitter', desc: 'Extract pages, custom ranges, or chunks from documents.', category: 'File', icon: Scissors, keywords: ['split pdf', 'pdf'] },
   { href: '/pdf-compressor', title: 'PDF Compressor', desc: 'Optimize and shrink PDF document size locally.', category: 'File', icon: Archive, keywords: ['compress pdf', 'shrink pdf', 'pdf'] },
   { href: '/pdf-merger', title: 'PDF Merger', desc: 'Combine multiple PDF documents into a single master file.', category: 'File', icon: Layers, keywords: ['merge pdf', 'combine pdf', 'pdf'] },
+  { href: '/pdf-rotator', title: 'PDF Rotator', desc: 'Clinical orientation management for PDF documents.', category: 'File', icon: RotateCcw, keywords: ['pdf', 'rotate', 'pages'] },
   { href: '/image-to-file', title: 'Image to File', desc: 'Convert imagery to PNG, JPG, WebP, or single-page PDF.', category: 'File', icon: FileUp, keywords: ['image', 'pdf', 'png', 'jpg'] },
   { href: '/file-compressor', title: 'File Compressor', desc: 'Browser-side size reduction for visual and digital assets.', category: 'File', icon: FileArchive, keywords: ['zip', 'compress'] },
   { href: '/image-to-pdf', title: 'Image to PDF', desc: 'Convert multiple images into a professional PDF.', category: 'File', icon: FileDown, keywords: ['jpg to pdf', 'png to pdf', 'images to pdf', 'pdf'] },
@@ -183,6 +188,7 @@ const TOOLS: Tool[] = [
   { href: '/audio-joiner', title: 'Audio Joiner', desc: 'Merge multiple audio files into a single master track.', category: 'File', icon: ListMusic, keywords: ['merge audio', 'combine audio'] },
   { href: '/audio-booster', title: 'Volume Booster', desc: 'Amplify audio levels safely entirely in your browser.', category: 'File', icon: Volume2, keywords: ['increase volume', 'amplify'] },
   { href: '/html-site-rescue', title: 'HTML Site Rescue', desc: 'Recover local index.html + libs into hosting ZIP', category: 'File', icon: Hammer, keywords: ['website recovery', 'html'] },
+  { href: '/file-downloader', title: 'Direct File Downloader', desc: 'Browser-side extraction from direct URLs.', category: 'File', icon: Download, keywords: ['download', 'url', 'file'] },
   
   // Other Tools
   { href: '/voice-changer', title: 'Voice Changer', desc: 'Change your voice live with robot, deep, helium and more effects.', category: 'Other', icon: Mic2, keywords: ['voice effects', 'audio'] },
@@ -236,6 +242,14 @@ const TOOLS: Tool[] = [
   { href: '/duplicate-line-remover', title: 'Line Purge', desc: 'Remove duplicate lines from text or lists instantly.', category: 'Other', icon: AlignLeft, keywords: ['remove duplicate lines'] },
   { href: '/username-forge', title: 'Username Forge', desc: 'Forge unique usernames and check cross-platform availability.', category: 'Other', icon: UserPlus, keywords: ['username generator'] },
   { href: '/hashtag-engine', title: 'Hashtag Engine', desc: 'Generate strong hashtags for social growth and niche discovery', category: 'Other', icon: Hash, keywords: ['hashtag generator'] },
+  { href: '/word-counter', title: 'Word Counter', desc: 'Calculate density, character volume, and precise reading time.', category: 'Other', icon: Calculator, keywords: ['text analysis', 'counter'] },
+  { href: '/markdown-preview', title: 'Markdown Preview', desc: 'Professional real-time Markdown synthesis and HTML output.', category: 'Other', icon: FileEdit, keywords: ['editor', 'preview', 'md'] },
+  { href: '/repeater', title: 'Text Repeater', desc: 'Instantly multiply text or emojis for creative design.', category: 'Other', icon: RefreshCcw, keywords: ['loop', 'multiplier'] },
+  { href: '/code-converter', title: 'Code Converter', desc: 'Professional AOB utility for pattern conversion.', category: 'Other', icon: Code2, keywords: ['hex', 'aob', 'c++', 'python'] },
+  { href: '/dictionary', title: 'Dictionary Studio', desc: 'Linguistic analysis, definitions, and audio pronunciations.', category: 'Other', icon: Book, keywords: ['words', 'meaning'] },
+  { href: '/age-calculator', title: 'Age Calculator', desc: 'Professional chronological analysis matrix.', category: 'Other', icon: Calendar, keywords: ['age', 'time', 'birthday'] },
+  { href: '/code-preview', title: 'Code Preview Lab', desc: 'Sandboxed environment for web project inspection.', category: 'Other', icon: Monitor, keywords: ['web', 'dev', 'html'] },
+  { href: '/media-downloader', title: 'Media Downloader', desc: 'High-performance media discovery and extraction.', category: 'Other', icon: MonitorPlay, keywords: ['video', 'audio', 'download'] },
 ];
 
 const CATEGORIES: { id: 'all' | ToolCategory; label: string; icon: React.ElementType }[] = [
