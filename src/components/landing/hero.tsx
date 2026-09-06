@@ -82,13 +82,13 @@ export function Hero() {
               <span className="text-[9px] font-black uppercase tracking-[0.4em] text-white/70">120+ free tools</span>
            </div>
 
-           {/* Linguistic Secondary Headers in Cards */}
+           {/* Linguistic Secondary Headers in Pill Cards */}
            <div className="flex items-center gap-3 animate-reveal stagger-1">
-              <div className="px-3 py-1.5 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl">
-                <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Free online tools</span>
+              <div className="px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-3xl shadow-2xl">
+                <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/30">Free online tools</span>
               </div>
-              <div className="px-3 py-1.5 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl">
-                <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Free AI tools</span>
+              <div className="px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-3xl shadow-2xl">
+                <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/30">Free AI tools</span>
               </div>
            </div>
         </div>
