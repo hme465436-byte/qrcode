@@ -84,7 +84,7 @@ export function Hero() {
         {/* Refined Luxury Title */}
         <div className="space-y-6 animate-reveal stagger-1">
           <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter leading-[1.1] text-white max-w-3xl mx-auto">
-            Free tools for work at <span className="text-primary italic">My Kit Tool</span>.
+            FREE online <span className="text-primary italic">advanced tool studio</span>
           </h1>
           <p className="max-w-xl mx-auto text-[10px] text-white/40 font-bold uppercase tracking-[0.3em] leading-relaxed">
             Master your digital workflow with 120+ private, instant, and high-fidelity utilities.
