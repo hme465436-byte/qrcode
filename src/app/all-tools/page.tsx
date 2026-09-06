@@ -5,6 +5,17 @@ import { Search, LayoutGrid, List, ArrowRight, BrainCircuit, ImageIcon, FileText
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
+// Add a style tag to hide the scrollbar
+const scrollbarHideStyle = `
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+`;
+
 type ToolCategory = 'AI' | 'Image' | 'File' | 'Other';
 
 interface Tool {
@@ -172,6 +183,7 @@ export default function AllToolsPage() {
 
     return (
       <div className="min-h-screen w-full bg-black text-gray-300 relative overflow-hidden font-sans">
+        <style>{scrollbarHideStyle}</style>
         <div className="absolute inset-0 z-0 opacity-30">
             <div className="absolute inset-0 bg-radial-gradient-purple"></div>
             <div className="absolute inset-0 bg-radial-gradient-blue"></div>
@@ -201,9 +213,9 @@ export default function AllToolsPage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-4xl mx-auto">
-                <div className="w-full sm:flex-grow bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 overflow-hidden">
-                    <div className="flex items-center space-x-1 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4 w-full max-w-4xl mx-auto">
+                <div className="w-full bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 overflow-hidden">
+                    <div className="flex items-center space-x-1 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
                       {CATEGORIES.map((cat) => (
                         <button
                           key={cat.id}
@@ -220,7 +232,7 @@ export default function AllToolsPage() {
                     </div>
                 </div>
 
-                 <div className="flex-shrink-0 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 flex items-center">
+                 <div className="flex-shrink-0 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 flex items-center justify-self-center sm:justify-self-end">
                    <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'grid' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><LayoutGrid className="w-5 h-5" /></button>
                    <button onClick={() => setViewMode('list')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'list' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><List className="w-5 h-5" /></button>
                 </div>
