@@ -1,48 +1,51 @@
 'use client';
 
-import { MousePointer2, UploadCloud, DownloadCloud } from 'lucide-react';
+import { MousePointer2, UploadCloud, DownloadCloud, ShieldCheck } from 'lucide-react';
 
 const steps = [
   {
-    icon: <MousePointer2 className="w-12 h-12 text-cyan-400" />,
-    title: "Choose Your Tool",
-    description: "Browse our collection of 120+ professional tools or use the search bar to find exactly what you need."
+    icon: MousePointer2,
+    title: "1. Select Protocol",
+    description: "Identify the required production unit from the studio registry."
   },
   {
-    icon: <UploadCloud className="w-12 h-12 text-blue-400" />,
-    title: "Process Your Files",
-    description: "Simply drag and drop your files or paste your content. All processing happens securely in your browser."
+    icon: ShieldCheck,
+    title: "2. Local Synthesis",
+    description: "Process data directly in your browser memory. Absolute privacy."
   },
   {
-    icon: <DownloadCloud className="w-12 h-12 text-purple-400" />,
-    title: "Download Instantly",
-    description: "Your results are ready in seconds. Download your converted files with a single click, no waiting required."
+    icon: DownloadCloud,
+    title: "3. Master Export",
+    description: "Download high-fidelity assets instantly to local storage."
   }
 ];
 
 export function HowItWorks() {
   return (
-    <section className="w-full py-16 sm:py-20 bg-gradient-to-b from-[#0F172A] to-[#030712]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Get Started in Seconds</h2>
-          <p className="mt-2 text-base text-gray-400 max-w-xl mx-auto">A seamless workflow from start to finish.</p>
+    <section className="w-full py-24 sm:py-40 bg-[#02040a] relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 w-full h-px bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+      
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-24 space-y-4">
+          <h2 className="text-3xl md:text-5xl font-headline font-black text-white uppercase tracking-tight">Zero Friction <span className="text-primary italic">Workflow</span></h2>
+          <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.4em]">Clinical execution sequence</p>
         </div>
-        <div className="relative">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-1 w-full max-w-2xl bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-purple-500/20 hidden md:block"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-            {steps.map((step, index) => (
-              <div key={index} className="text-center">
-                <div className="flex items-center justify-center mb-6">
-                  <div className="w-24 h-24 rounded-full flex items-center justify-center bg-white/5 border-2 border-white/10 backdrop-blur-sm">
-                    {step.icon}
-                  </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-16 lg:gap-24">
+          {steps.map((step, index) => (
+            <div key={index} className="flex flex-col items-center text-center space-y-8 group">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-primary/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-20 h-20 rounded-[2rem] bg-white/[0.02] border border-white/5 flex items-center justify-center text-white/10 group-hover:text-primary group-hover:border-primary/20 transition-all duration-500 relative z-10 shadow-2xl">
+                  <step.icon className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{step.description}</p>
               </div>
-            ))}
-          </div>
+              <div className="space-y-3">
+                <h3 className="text-sm font-black text-white uppercase tracking-widest">{step.title}</h3>
+                <p className="text-[11px] text-white/30 font-medium leading-relaxed uppercase tracking-tighter max-w-[240px] mx-auto">{step.description}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

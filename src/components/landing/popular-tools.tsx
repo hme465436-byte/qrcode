@@ -8,75 +8,86 @@ import {
   QrCode,
   Mic,
   Volume2,
-  ArrowRight
+  ArrowRight,
+  Zap,
+  Globe,
+  FileText,
+  Activity
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const popularTools = [
   {
     href: '/ai-chatbot',
-    icon: <MessageSquare className="w-12 h-12 text-indigo-400" />,
+    icon: MessageSquare,
     title: 'AI Chatbot',
-    desc: 'Engage with our smart AI assistant.',
+    desc: 'Linguistic synthesis and real-time assistance.',
   },
   {
     href: '/ai-image-generator',
-    icon: <Sparkles className="w-12 h-12 text-rose-400" />,
+    icon: Sparkles,
     title: 'AI Image Generator',
-    desc: 'Create stunning images from text prompts.',
+    desc: 'Neural matrix for high-fidelity visual production.',
   },
   {
     href: '/ai-resume-builder',
-    icon: <Contact2 className="w-12 h-12 text-emerald-400" />,
+    icon: Contact2,
     title: 'AI Resume Builder',
-    desc: 'Build a professional resume in minutes.',
+    desc: 'Professional identity synthesis and formatting.',
   },
   {
     href: '/single',
-    icon: <QrCode className="w-12 h-12 text-blue-400" />,
-    title: 'QR Code Generator',
-    desc: 'Create custom branded QR codes.',
+    icon: QrCode,
+    title: 'Single Studio',
+    desc: 'Branded QR protocols with AI backgrounds.',
   },
   {
     href: '/speech-to-text',
-    icon: <Mic className="w-12 h-12 text-orange-400" />,
+    icon: Mic,
     title: 'Speech to Text',
-    desc: 'Transcribe audio to text accurately.',
+    desc: 'Hardware-native acoustic transcription.',
   },
   {
-    href: '/text-to-speech',
-    icon: <Volume2 className="w-12 h-12 text-cyan-400" />,
-    title: 'Text to Speech',
-    desc: 'Convert text into natural-sounding speech.',
+    href: '/all-units-converter',
+    icon: Activity,
+    title: 'Unit Converter',
+    desc: 'Universal measurement matrix and translation.',
   },
 ];
 
 export function PopularTools() {
   return (
-    <section className="w-full py-16 sm:py-20 bg-[#0F172A]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Most Popular Tools</h2>
-          <p className="mt-2 text-base text-gray-400 max-w-xl mx-auto">Explore our most used tools, trusted by thousands of users daily.</p>
+    <section className="w-full py-24 sm:py-32 bg-[#02040a]">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 px-2">
+          <div className="space-y-3">
+            <h2 className="text-3xl md:text-4xl font-headline font-black text-white uppercase tracking-tight">Featured <span className="text-primary italic">Units</span></h2>
+            <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.4em]">Optimized for professional deployment</p>
+          </div>
+          <Link href="/all-tools" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline underline-offset-8 transition-all">
+            View full registry 0x120
+          </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {popularTools.map((tool) => (
-            <div key={tool.href}>
-              <Link href={tool.href} className="group block h-full">
-                <div className={'flex flex-col justify-between h-full p-8 rounded-xl bg-white/[.02] border border-white/5 backdrop-blur-sm transition-all duration-300 hover:bg-white/5 hover:border-cyan-400/50 hover:shadow-2xl'}>
-                    <div>
-                        <div className="mb-6">
-                            {tool.icon}
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-2">{tool.title}</h3>
-                        <p className="text-sm text-gray-400/80">{tool.desc}</p>
-                    </div>
-                    <div className="mt-8 flex items-center text-sm font-semibold text-gray-400 group-hover:text-white transition-colors duration-300">
-                        Open Tool
-                        <ArrowRight className="h-4 w-4 ml-1.5 transition-transform duration-300 group-hover:translate-x-1" />
-                    </div>
-                </div>
-              </Link>
-            </div>
+            <Link key={tool.href} href={tool.href} className="group block h-full">
+              <div className="flex flex-col justify-between h-full p-10 rounded-[2.5rem] bg-white/[0.01] border border-white/5 transition-all duration-500 hover:bg-white/[0.03] hover:border-primary/20 hover:-translate-y-1 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  <div className="relative z-10">
+                      <div className="mb-10 w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary/40 group-hover:text-primary group-hover:scale-110 transition-all duration-500 border border-white/5 shadow-inner">
+                          <tool.icon className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-xl font-headline font-black text-white mb-3 uppercase tracking-tight">{tool.title}</h3>
+                      <p className="text-[11px] text-white/30 font-medium leading-relaxed uppercase tracking-tighter">{tool.desc}</p>
+                  </div>
+
+                  <div className="mt-12 flex items-center gap-2 text-[9px] font-black text-white/10 group-hover:text-primary uppercase tracking-[0.2em] transition-colors duration-500">
+                      Initialize <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+                  </div>
+              </div>
+            </Link>
           ))}
         </div>
       </div>
