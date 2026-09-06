@@ -241,41 +241,42 @@ export default function AllToolsPage() {
           
           <div className={cn(
               "transition-all duration-300",
-              viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"
+              viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" : "flex flex-col gap-4"
           )}>
             {filteredTools.map(tool => (
                 <a href={tool.href} key={tool.href} className="block group">
                     {viewMode === 'grid' ? (
-                        <div className="group relative flex flex-col justify-between h-full p-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl transition-all duration-300 ease-in-out hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
-                            <div className="absolute inset-0 rounded-2xl transition-all duration-300 group-hover:bg-gradient-to-t from-primary/10 to-transparent"></div>
-                            <div className="relative">
-                                <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800/80 border border-white/10 mb-4",
-                                    tool.category === 'AI' && 'text-cyan-400',
-                                    tool.category === 'Image' && 'text-pink-400',
-                                    tool.category === 'File' && 'text-yellow-400',
-                                    tool.category === 'Other' && 'text-green-400',
-                                )}>
-                                    <tool.icon size={20} />
-                                </div>
-                                <h3 className="font-semibold text-lg text-white">{tool.title}</h3>
-                                <p className="mt-2 text-gray-400 text-sm line-clamp-2 leading-relaxed">{tool.desc}</p>
+                        <div className="relative flex flex-col justify-between h-full p-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20">
+                          <div className="absolute -top-3 -left-3 w-12 h-12 bg-gray-800/80 backdrop-blur-sm border border-white/10 rounded-full flex items-center justify-center transform-gpu group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center",
+                              tool.category === 'AI' && 'bg-cyan-400/20 text-cyan-300',
+                              tool.category === 'Image' && 'bg-pink-400/20 text-pink-300',
+                              tool.category === 'File' && 'bg-yellow-400/20 text-yellow-300',
+                              tool.category === 'Other' && 'bg-green-400/20 text-green-300',
+                            )}>
+                              <tool.icon size={20} />
                             </div>
-                            <div className="relative mt-4">
-                                <span className="text-sm font-medium text-primary transition-colors duration-300 flex items-center gap-1">
-                                    Open <ArrowRight size={14} />
-                                </span>
-                           </div>
+                          </div>
+                          <div className="flex-1 pl-2 pt-10">
+                            <h3 className="font-bold text-lg text-white mb-2">{tool.title}</h3>
+                            <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">{tool.desc}</p>
+                          </div>
+                          <div className="pl-2 mt-6">
+                            <span className="text-sm font-medium text-primary/80 group-hover:text-primary transition-colors duration-300 flex items-center gap-1.5">
+                                Open Tool <ArrowRight size={14} className="transform-gpu transition-transform duration-300 group-hover:translate-x-1" />
+                            </span>
+                          </div>
                         </div>
                     ) : (
                         <div className="py-4 px-5 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-gray-800/70 hover:border-primary/40 transition-all duration-300 ease-in-out flex justify-between items-center">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className={cn("flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-md",
-                                    tool.category === 'AI' && 'text-cyan-400',
-                                    tool.category === 'Image' && 'text-pink-400',
-                                    tool.category === 'File' && 'text-yellow-400',
-                                    tool.category === 'Other' && 'text-green-400',
+                                <div className={cn("flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg",
+                                    tool.category === 'AI' && 'bg-cyan-400/10 text-cyan-300',
+                                    tool.category === 'Image' && 'bg-pink-400/10 text-pink-300',
+                                    tool.category === 'File' && 'bg-yellow-400/10 text-yellow-300',
+                                    tool.category === 'Other' && 'bg-green-400/10 text-green-300',
                                 )}>
-                                    <tool.icon size={18} />
+                                    <tool.icon size={20} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <h3 className="font-medium text-base text-white truncate">{tool.title}</h3>
