@@ -1,21 +1,31 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, LayoutGrid, List, ArrowRight, BrainCircuit, ImageIcon, FileText, Zap } from 'lucide-react';
+import { 
+  Search, 
+  LayoutGrid, 
+  List, 
+  ArrowRight, 
+  BrainCircuit, 
+  ImageIcon, 
+  FileText, 
+  Zap, 
+  Activity,
+  History,
+  CheckCircle2,
+  X,
+  Filter,
+  ChevronRight,
+  Monitor,
+  Layout,
+  Command,
+  HelpCircle
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-
-// Add a style tag to hide the scrollbar
-const scrollbarHideStyle = `
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-`;
+import { Button } from '@/components/ui/button';
 
 type ToolCategory = 'AI' | 'Image' | 'File' | 'Other';
 
@@ -147,6 +157,7 @@ const TOOLS: Tool[] = [
   { href: '/duplicate-line-remover', title: 'Line Purge', desc: 'Remove duplicate lines from text or lists instantly.', category: 'Other', icon: Zap, keywords: ['remove duplicate lines'] },
   { href: '/password-generator', title: 'Password Studio', desc: 'Generate cryptographically-secure strong passwords.', category: 'Other', icon: Zap, keywords: ['strong password'] },
   { href: '/word-counter', title: 'Word Counter', desc: 'Live text analysis and reading time estimation.', category: 'Other', icon: Zap, keywords: ['character count'] },
+  { href: '/color-picker', title: 'Color Picker', desc: 'Extract HEX, RGB, and HSL from any image.', category: 'Other', icon: Zap, keywords: ['hex', 'rgb', 'image', 'photo'] },
   { href: '/rgb-picker', title: 'RGB Studio', desc: 'Precision color picking and space conversion.', category: 'Other', icon: Zap, keywords: ['color picker', 'hex'] },
   { href: '/markdown-preview', title: 'Markdown', desc: 'Live Markdown to HTML synthesis with visual preview.', category: 'Other', icon: Zap, keywords: ['markdown editor'] },
   { href: '/repeater', title: 'Text Repeater', desc: 'Professional emoji and text multiplication.', category: 'Other', icon: Zap, keywords: ['text multiplier'] },
@@ -158,14 +169,12 @@ const TOOLS: Tool[] = [
 ];
 
 const CATEGORIES: { id: 'all' | ToolCategory; label: string; icon: React.ElementType }[] = [
-    { id: 'all', label: 'All', icon: Zap },
+    { id: 'all', label: 'All', icon: Command },
     { id: 'AI', label: 'AI', icon: BrainCircuit },
     { id: 'Image', label: 'Image', icon: ImageIcon },
     { id: 'File', label: 'File', icon: FileText },
     { id: 'Other', label: 'Other', icon: Zap },
 ];
-
-const POPULAR_SEARCHES = ['AI', 'PDF', 'Image', 'Chat', 'Resume'];
 
 const levenshteinDistance = (a: string, b: string): number => {
   const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
@@ -184,37 +193,8 @@ const levenshteinDistance = (a: string, b: string): number => {
   return matrix[b.length][a.length];
 };
 
-const GridSkeleton = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {Array.from({ length: 12 }).map((_, i) => (
-      <div key={i} className="bg-gray-900/50 border border-white/10 rounded-xl p-6 animate-pulse">
-        <div className="h-10 w-10 rounded-lg bg-white/10 mb-4"></div>
-        <div className="h-4 w-3/4 rounded bg-white/10 mb-2"></div>
-        <div className="h-3 w-full rounded bg-white/10"></div>
-        <div className="h-3 w-1/2 rounded bg-white/10 mt-1"></div>
-        <div className="h-4 w-1/4 rounded bg-white/10 mt-4"></div>
-      </div>
-    ))}
-  </div>
-);
-
-const ListSkeleton = () => (
-  <div className="flex flex-col gap-4">
-    {Array.from({ length: 8 }).map((_, i) => (
-      <div key={i} className="bg-gray-900/50 border border-white/10 rounded-xl p-4 flex items-center gap-4 animate-pulse">
-        <div className="h-10 w-10 rounded-lg bg-white/10"></div>
-        <div className="flex-1 space-y-2">
-          <div className="h-4 w-1/3 rounded bg-white/10"></div>
-          <div className="h-3 w-3/4 rounded bg-white/10"></div>
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
 function AllToolsPageContent() {
     const searchParams = useSearchParams();
-    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<'all' | ToolCategory>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -224,22 +204,16 @@ function AllToolsPageContent() {
       if (queryFromUrl) {
         setSearchQuery(queryFromUrl);
       }
-      const timer = setTimeout(() => setLoading(false), 500);
-      return () => clearTimeout(timer);
     }, [searchParams]);
 
-    const { displayedTools, didYouMean, showSuggestionsHeader, showEmptyState, foundCount } = useMemo(() => {
+    const { displayedTools, didYouMean, foundCount } = useMemo(() => {
         const lowerCaseQuery = searchQuery.toLowerCase().trim();
         let categoryFilteredTools = TOOLS.filter(tool => activeCategory === 'all' || tool.category === activeCategory);
 
         if (!lowerCaseQuery) {
-            return { displayedTools: categoryFilteredTools, didYouMean: null, showSuggestionsHeader: false, showEmptyState: false, foundCount: null };
+            return { displayedTools: categoryFilteredTools, didYouMean: null, foundCount: categoryFilteredTools.length };
         }
         
-        if (!/[a-z0-9]/.test(lowerCaseQuery)) {
-             return { displayedTools: [], didYouMean: null, showSuggestionsHeader: false, showEmptyState: true, foundCount: 0 };
-        }
-
         const exactMatches = categoryFilteredTools.filter(tool =>
             tool.title.toLowerCase().includes(lowerCaseQuery) ||
             tool.desc.toLowerCase().includes(lowerCaseQuery) ||
@@ -248,7 +222,7 @@ function AllToolsPageContent() {
         );
 
         if (exactMatches.length > 0) {
-            return { displayedTools: exactMatches, didYouMean: null, showSuggestionsHeader: false, showEmptyState: false, foundCount: exactMatches.length };
+            return { displayedTools: exactMatches, didYouMean: null, foundCount: exactMatches.length };
         }
 
         const allToolsWithDistance = categoryFilteredTools.map(tool => ({
@@ -256,181 +230,184 @@ function AllToolsPageContent() {
             distance: levenshteinDistance(lowerCaseQuery, tool.title.toLowerCase()),
         })).sort((a, b) => a.distance - b.distance);
 
-        const suggestions = allToolsWithDistance.slice(0, 6);
+        const suggestions = allToolsWithDistance.slice(0, 8);
         const bestMatch = suggestions[0];
-
         const didYouMeanSuggestion = (bestMatch && bestMatch.distance > 0 && bestMatch.distance <= 3) ? bestMatch.title : null;
 
         return { 
             displayedTools: suggestions, 
             didYouMean: didYouMeanSuggestion, 
-            showSuggestionsHeader: true, 
-            showEmptyState: suggestions.length === 0,
             foundCount: 0
         };
 
     }, [searchQuery, activeCategory]);
 
     return (
-      <div className="min-h-screen w-full bg-black text-gray-300 relative overflow-hidden font-sans">
-        <style>{scrollbarHideStyle}</style>
-        <div className="absolute inset-0 z-0 opacity-30">
-            <div className="absolute inset-0 bg-radial-gradient-purple"></div>
-            <div className="absolute inset-0 bg-radial-gradient-blue"></div>
+      <div className="min-h-screen w-full bg-[#02040a] text-foreground/80 selection:bg-primary/20">
+        {/* Atmospheric Depth */}
+        <div className="fixed inset-0 pointer-events-none opacity-40">
+            <div className="absolute top-0 right-0 w-[800px] h-[600px] bg-primary/5 blur-[120px] rounded-full" />
+            <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-blue-600/5 blur-[100px] rounded-full" />
         </div>
         
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          
-          <div className="pt-20 pb-12 text-center">
-            <h1 className="text-5xl sm:text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
-              The ToolBox
+        <main className="container mx-auto px-6 py-20 relative z-20">
+          {/* Header Section */}
+          <div className="max-w-4xl mx-auto text-center space-y-6 mb-20 animate-reveal">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
+              <Layout className="w-3.5 h-3.5" /> Studio Registry
+            </div>
+            <h1 className="text-5xl md:text-7xl font-headline font-black text-foreground uppercase tracking-tight leading-none">
+              The <span className="text-primary italic">ToolBox</span>
             </h1>
-            <p className="mt-4 text-base sm:text-lg max-w-3xl mx-auto text-gray-400">
-              Explore our complete suite of {TOOLS.length} free, powerful, and easy-to-use tools designed to streamline your tasks.
+            <p className="text-sm md:text-base text-foreground/40 max-w-2xl mx-auto leading-relaxed uppercase tracking-widest font-medium">
+              Explore our complete suite of {TOOLS.length} free, professional utilities engineered for high-fidelity production.
             </p>
           </div>
 
-          <div className="sticky top-5 z-30 mb-10 space-y-4">
-            <div className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-2xl p-4 w-full max-w-4xl mx-auto shadow-2xl shadow-primary/10">
-              <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+          {/* Sticky Controller Bar */}
+          <div className="sticky top-20 z-[80] mb-12 space-y-6">
+            <div className="max-w-4xl mx-auto w-full group/search">
+               <div className="absolute -inset-4 bg-primary/10 blur-[40px] rounded-full pointer-events-none opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000" />
+               <div className="relative bg-black/60 backdrop-blur-3xl border border-white/5 rounded-3xl h-16 shadow-2xl flex items-center px-6 transition-all group-focus-within/search:border-primary/40">
+                  <Search className="w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
                   <Input
                     type="text"
-                    placeholder={`Search all ${TOOLS.length} tools... (e.g. Image, PDF, AI)`}
+                    placeholder={`Search ${TOOLS.length} tools... (e.g. AI, PDF, Image)`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-12 bg-transparent border-none rounded-full pl-12 pr-28 text-white placeholder-gray-500 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="flex-1 bg-transparent border-none text-sm font-bold placeholder:text-foreground/20 focus-visible:ring-0"
                   />
-                  {searchQuery && foundCount !== null && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs bg-white/10 text-white rounded-full px-2 py-1">
-                      {foundCount} found
-                    </div>
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="p-2 text-foreground/20 hover:text-foreground transition-all">
+                       <X className="w-4 h-4" />
+                    </button>
                   )}
-              </div>
-                <div className="mt-3 flex items-center justify-center gap-2 flex-wrap px-2">
-                  <span className="text-xs text-gray-400 font-medium">Popular:</span>
-                  {POPULAR_SEARCHES.map(term => (
-                      <button 
-                        key={term}
-                        onClick={() => setSearchQuery(term)}
-                        className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300 hover:bg-white/10 hover:border-primary/50 transition-colors"
-                      >
-                        {term}
-                      </button>
-                  ))}
-                </div>
+               </div>
             </div>
 
-            <div className="relative flex justify-center items-center w-full max-w-4xl mx-auto">
-                <div className="w-full sm:w-auto bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 overflow-hidden">
-                    <div className="flex items-center sm:justify-center space-x-1 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+            <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 px-2">
+                <div className="flex bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-2xl p-1.5 shadow-2xl">
+                    <div className="flex items-center space-x-1">
                       {CATEGORIES.map((cat) => (
                         <button
                           key={cat.id}
                           onClick={() => setActiveCategory(cat.id)}
                           className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 whitespace-nowrap",
-                            activeCategory === cat.id ? "bg-primary text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                            "flex items-center gap-2.5 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                            activeCategory === cat.id ? "bg-primary text-white shadow-xl" : "text-foreground/30 hover:text-foreground/60 hover:bg-white/5"
                           )}
                         >
-                          <cat.icon className="w-4 h-4" />
+                          <cat.icon className="w-3.5 h-3.5" />
                           <span>{cat.label}</span>
                         </button>
                       ))}
                     </div>
                 </div>
 
-                 <div className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 h-full items-center bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10">
-                   <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'grid' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><LayoutGrid className="w-5 h-5" /></button>
-                   <button onClick={() => setViewMode('list')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'list' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><List className="w-5 h-5" /></button>
+                 <div className="flex items-center gap-2 bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-2xl p-1.5 shadow-2xl">
+                   <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-xl transition-all", viewMode === 'grid' ? "bg-primary text-white shadow-lg" : "text-foreground/20 hover:text-white")}><LayoutGrid className="w-4 h-4" /></button>
+                   <button onClick={() => setViewMode('list')} className={cn("p-2 rounded-xl transition-all", viewMode === 'list' ? "bg-primary text-white shadow-lg" : "text-foreground/20 hover:text-white")}><List className="w-4 h-4" /></button>
                 </div>
             </div>
           </div>
           
-          {searchQuery && !showEmptyState && (
-            <div className="text-center mb-8">
-              {didYouMean && (
-                <p className="text-gray-400">
-                  Did you mean:{" "}
-                  <button onClick={() => setSearchQuery(didYouMean)} className="text-primary font-semibold hover:underline">
-                    {didYouMean}
-                  </button>
-                  ?
-                </p>
-              )}
-              {showSuggestionsHeader && (
-                <h2 className="text-xl font-bold text-white mt-4">Did you mean these tools?</h2>
-              )}
-            </div>
-          )}
-
-          {loading ? (
-            viewMode === 'grid' ? <GridSkeleton /> : <ListSkeleton />
-          ) : (
-            <div className={cn(
-                "transition-all duration-300 pb-20",
-                viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"
-            )}>
-              {displayedTools.map(tool => (
-                  <a href={tool.href} key={tool.href} className="block group">
-                      {viewMode === 'grid' ? (
-                          <div className="group relative flex flex-col justify-between h-full p-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl transition-all duration-300 ease-in-out hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transform hover:-translate-y-1">
-                              <div className="flex-1">
-                                  <div className={cn("inline-flex h-10 w-10 items-center justify-center rounded-lg mb-4 transition-transform duration-300 group-hover:scale-110",
-                                      tool.category === 'AI' && 'bg-cyan-400/10 text-cyan-300 shadow-inner shadow-cyan-500/10',
-                                      tool.category === 'Image' && 'bg-pink-400/10 text-pink-300 shadow-inner shadow-pink-500/10',
-                                      tool.category === 'File' && 'bg-yellow-400/10 text-yellow-300 shadow-inner shadow-yellow-500/10',
-                                      tool.category === 'Other' && 'bg-green-400/10 text-green-300 shadow-inner shadow-green-500/10',
-                                  )}>
-                                      <tool.icon size={22} />
-                                  </div>
-                                  <h3 className="font-semibold text-base text-white">{tool.title}</h3>
-                                  <p className="mt-2 text-gray-400 text-sm line-clamp-2">{tool.desc}</p>
-                              </div>
-                              <div className="mt-4">
-                                  <span className="text-sm font-medium text-primary/80 group-hover:text-primary transition-colors duration-300 flex items-center gap-1">
-                                      Open <ArrowRight size={14} />
-                                  </span>
-                             </div>
-                          </div>
-                      ) : (
-                          <div className="py-4 px-5 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-gray-800/70 hover:border-primary/40 transition-all duration-300 ease-in-out flex justify-between items-center">
-                              <div className="flex items-center gap-4 flex-1 min-w-0">
-                                  <div className={cn("flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg",
-                                      tool.category === 'AI' && 'bg-cyan-400/10 text-cyan-300',
-                                      tool.category === 'Image' && 'bg-pink-400/10 text-pink-300',
-                                      tool.category === 'File' && 'bg-yellow-400/10 text-yellow-300',
-                                      tool.category === 'Other' && 'bg-green-400/10 text-green-300',
-                                  )}>
-                                      <tool.icon size={20} />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <h3 className="font-medium text-base text-white truncate">{tool.title}</h3>
-                                    <p className="text-sm text-gray-500 line-clamp-1 truncate">{tool.desc}</p>
-                                  </div>
-                              </div>
-                              <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-primary transition-colors ml-6" />
-                          </div>
-                      )}
-                  </a>
-              ))}
-            </div>
-          )}
-
-            {showEmptyState && (
-                <div className="text-center py-24">
-                    <p className="font-bold text-2xl text-gray-500">No tools found.</p>
-                    <p className="text-base text-gray-600 mt-2">Try another search.</p>
+          {/* Status Matrix */}
+          <div className="max-w-5xl mx-auto mb-12 px-4 flex flex-col items-center gap-4">
+             {didYouMean && (
+                <div className="animate-in slide-in-from-top-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
+                    Did you mean:{" "}
+                    <button onClick={() => setSearchQuery(didYouMean)} className="text-primary hover:underline">
+                      {didYouMean}
+                    </button>
+                    ?
+                  </p>
                 </div>
-            )}
+             )}
+             
+             {searchQuery && foundCount === 0 && (
+                <div className="py-32 text-center opacity-10 flex flex-col items-center gap-8">
+                    <AlertCircle className="w-20 h-20 text-primary" />
+                    <div className="space-y-2">
+                       <p className="font-headline font-black text-3xl uppercase tracking-widest">Zero Matches</p>
+                       <p className="text-sm font-bold uppercase">Linguistic signal not found in current matrix.</p>
+                    </div>
+                </div>
+             )}
+          </div>
+
+          {/* Results Matrix */}
+          <div className={cn(
+              "max-w-7xl mx-auto transition-all duration-500 pb-32",
+              viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "flex flex-col gap-2"
+          )}>
+            {displayedTools.map((tool, i) => (
+              <a href={tool.href} key={tool.href} className="block group animate-reveal" style={{ animationDelay: `${i * 10}ms` }}>
+                  {viewMode === 'grid' ? (
+                      <div className="flex flex-col justify-between h-full p-6 bg-white/[0.01] backdrop-blur-3xl border border-white/5 rounded-[2rem] transition-all duration-500 hover:bg-white/[0.03] hover:border-primary/20 shadow-2xl relative overflow-hidden group-hover:-translate-y-1">
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="relative z-10">
+                              <div className={cn("inline-flex h-11 w-11 items-center justify-center rounded-xl mb-6 shadow-inner border border-white/5 transition-all group-hover:scale-110",
+                                  tool.category === 'AI' ? 'bg-cyan-500/10 text-cyan-400' :
+                                  tool.category === 'Image' ? 'bg-purple-500/10 text-purple-400' :
+                                  tool.category === 'File' ? 'bg-amber-500/10 text-amber-400' :
+                                  'bg-blue-500/10 text-blue-400',
+                              )}>
+                                  <tool.icon size={20} />
+                              </div>
+                              <h3 className="font-headline font-black text-lg text-foreground uppercase tracking-tight leading-none mb-3 group-hover:text-primary transition-colors">{tool.title}</h3>
+                              <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase tracking-tighter line-clamp-3">{tool.desc}</p>
+                          </div>
+                          <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-between relative z-10">
+                              <span className="text-[8px] font-black text-foreground/20 group-hover:text-primary transition-colors uppercase tracking-[0.3em]">Initialize</span>
+                              <ChevronRight size={14} className="text-foreground/10 group-hover:text-primary transition-all group-hover:translate-x-1" />
+                         </div>
+                      </div>
+                  ) : (
+                      <div className="py-4 px-6 bg-white/[0.01] backdrop-blur-3xl border border-white/5 rounded-2xl hover:bg-white/[0.04] hover:border-primary/20 transition-all flex justify-between items-center group/row">
+                          <div className="flex items-center gap-6 flex-1 min-w-0">
+                              <div className={cn("flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-xl shadow-inner border border-white/5",
+                                  tool.category === 'AI' ? 'bg-cyan-500/10 text-cyan-400' :
+                                  tool.category === 'Image' ? 'bg-purple-500/10 text-purple-400' :
+                                  tool.category === 'File' ? 'bg-amber-500/10 text-amber-400' :
+                                  'bg-blue-500/10 text-blue-400',
+                              )}>
+                                  <tool.icon size={16} />
+                              </div>
+                              <div className="min-w-0">
+                                <h3 className="font-bold text-sm text-foreground truncate uppercase group-hover/row:text-primary transition-colors">{tool.title}</h3>
+                                <p className="text-[10px] text-foreground/30 font-medium truncate uppercase tracking-tighter">{tool.desc}</p>
+                              </div>
+                          </div>
+                          <div className="flex items-center gap-6 shrink-0">
+                             <Badge variant="outline" className="hidden sm:inline-flex bg-background/50 border-white/5 text-[7px] font-black uppercase tracking-widest text-foreground/20">{tool.category}</Badge>
+                             <ArrowRight className="w-4 h-4 text-foreground/10 group-hover/row:text-primary transition-all group-hover/row:translate-x-1" />
+                          </div>
+                      </div>
+                  )}
+              </a>
+            ))}
+          </div>
         </main>
+        
+        <style jsx global>{`
+          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+          .no-scrollbar::-webkit-scrollbar { display: none; }
+          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        `}</style>
       </div>
     );
 }
 
 export default function AllToolsPage() {
   return (
-    <Suspense>
+    <Suspense fallback={
+       <div className="min-h-screen flex items-center justify-center bg-[#02040a]">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+       </div>
+    }>
       <AllToolsPageContent />
     </Suspense>
   );
