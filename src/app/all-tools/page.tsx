@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, LayoutGrid, List, ArrowRight, BrainCircuit, ImageIcon, FileText, Zap } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -211,16 +212,21 @@ const ListSkeleton = () => (
   </div>
 );
 
-export default function AllToolsPage() {
+function AllToolsPageContent() {
+    const searchParams = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<'all' | ToolCategory>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
     useEffect(() => {
+      const queryFromUrl = searchParams.get('q');
+      if (queryFromUrl) {
+        setSearchQuery(queryFromUrl);
+      }
       const timer = setTimeout(() => setLoading(false), 500);
       return () => clearTimeout(timer);
-    }, []);
+    }, [searchParams]);
 
     const { displayedTools, didYouMean, showSuggestionsHeader, showEmptyState, foundCount } = useMemo(() => {
         const lowerCaseQuery = searchQuery.toLowerCase().trim();
@@ -419,5 +425,13 @@ export default function AllToolsPage() {
             )}
         </main>
       </div>
+    );
+}
+
+export default function AllToolsPage() {
+  return (
+    <Suspense>
+      <AllToolsPageContent />
+    </Suspense>
   );
 }
