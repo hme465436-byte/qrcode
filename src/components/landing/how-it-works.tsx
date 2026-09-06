@@ -41,7 +41,7 @@ export function HowItWorks() {
               </div>
               <div className="space-y-3">
                 <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">{step.title}</h3>
-                <p className="text-[10px] text-white/20 font-medium leading-relaxed uppercase tracking-tighter max-w-[240px] mx-auto">{step.description}</p>
+                <p className="text-[10px] text-white/40 font-medium leading-relaxed uppercase tracking-tighter max-w-[240px] mx-auto">{step.description}</p>
               </div>
             </div>
           ))}

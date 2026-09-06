@@ -79,7 +79,7 @@ export function PopularTools() {
             <h2 className="text-2xl md:text-4xl font-headline font-black text-white uppercase tracking-tight leading-none">
               Featured <span className="text-primary italic">tools</span>
             </h2>
-            <p className="text-[9px] text-white/20 font-black uppercase tracking-[0.3em]">Popular tools</p>
+            <p className="text-[9px] text-white/40 font-black uppercase tracking-[0.3em]">Popular tools</p>
           </div>
           <Link href="/all-tools" className="inline-flex items-center gap-3 text-[10px] font-black text-primary uppercase tracking-widest hover:gap-4 transition-all group">
             See all tools <ArrowRight className="w-3.5 h-3.5" />
@@ -104,10 +104,10 @@ export function PopularTools() {
                           <tool.icon className="w-5 h-5" />
                       </div>
                       <h3 className="text-xl font-headline font-black text-white mb-3 uppercase tracking-tight leading-none">{tool.title}</h3>
-                      <p className="text-[11px] text-white/30 font-medium leading-relaxed uppercase tracking-tighter">{tool.desc}</p>
+                      <p className="text-[11px] text-white/50 font-medium leading-relaxed uppercase tracking-tighter">{tool.desc}</p>
                   </div>
 
-                  <div className="mt-12 flex items-center gap-3 text-[9px] font-black text-white/5 group-hover:text-primary uppercase tracking-[0.3em] transition-colors duration-500">
+                  <div className="mt-12 flex items-center gap-3 text-[9px] font-black text-white/20 group-hover:text-primary uppercase tracking-[0.3em] transition-colors duration-500">
                       Open <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
                   </div>
               </div>

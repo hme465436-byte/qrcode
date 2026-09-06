@@ -31,7 +31,7 @@ export function Hero() {
         {/* Subtle Brand Identifier */}
         <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-3xl animate-reveal shadow-2xl">
            <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
-           <span className="text-[9px] font-black uppercase tracking-[0.4em] text-white/50">120+ free tools</span>
+           <span className="text-[9px] font-black uppercase tracking-[0.4em] text-white/70">120+ free tools</span>
         </div>
         
         {/* Refined Luxury Title */}
@@ -39,7 +39,7 @@ export function Hero() {
           <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter leading-[1.1] text-white max-w-3xl mx-auto">
             Free tools for work.
           </h1>
-          <p className="max-w-xl mx-auto text-[10px] text-white/20 font-bold uppercase tracking-[0.3em] leading-relaxed">
+          <p className="max-w-xl mx-auto text-[10px] text-white/40 font-bold uppercase tracking-[0.3em] leading-relaxed">
             100% Safe • Local Processing • Zero Data Logging
           </p>
         </div>
@@ -54,7 +54,7 @@ export function Hero() {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Search all tools..." 
-                className="w-full h-full bg-transparent border-none pl-16 pr-32 text-sm font-medium focus-visible:ring-0 placeholder:text-white/10"
+                className="w-full h-full bg-transparent border-none pl-16 pr-32 text-sm font-medium focus-visible:ring-0 placeholder:text-white/20"
                />
                <div className="absolute right-2.5">
                   <Button type="submit" className="h-11 px-8 rounded-xl bg-white text-black hover:bg-white/90 text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95">
@@ -69,12 +69,12 @@ export function Hero() {
         <div className="flex items-center justify-center gap-12 pt-6 animate-reveal stagger-3">
           <button 
             onClick={() => router.push('/all-tools')}
-            className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-primary transition-all"
+            className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-primary transition-all"
           >
             See all tools <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </button>
           
-          <div className="hidden sm:flex items-center gap-8 text-[9px] font-black text-white/5 uppercase tracking-[0.4em]">
+          <div className="hidden sm:flex items-center gap-8 text-[9px] font-black text-white/20 uppercase tracking-[0.4em]">
              <div className="flex items-center gap-2.5">
                 <ShieldCheck className="w-4 h-4" />
                 <span>Private</span>
