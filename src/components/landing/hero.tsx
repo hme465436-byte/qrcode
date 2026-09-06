@@ -47,7 +47,10 @@ export function Hero() {
         {/* Integrated Discovery Node (Search) */}
         <div className="w-full max-w-xl animate-reveal stagger-2 px-4">
           <form onSubmit={handleSearch} className="relative group/search">
-            <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-transparent rounded-3xl blur-xl opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000" />
+            {/* Persistent Luxury Glow */}
+            <div className="absolute -inset-1.5 bg-primary/15 rounded-3xl blur-2xl opacity-40 animate-pulse pointer-events-none" />
+            
+            {/* Search Field Container */}
             <div className="relative flex items-center bg-black/40 backdrop-blur-3xl border border-white/10 rounded-2xl h-16 shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] transition-all group-focus-within/search:border-primary/40 group-focus-within/search:bg-black/60">
                <Search className="absolute left-6 w-5 h-5 text-white/10 group-focus-within/search:text-primary transition-colors" />
                <Input 
