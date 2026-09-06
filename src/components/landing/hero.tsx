@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,13 +11,26 @@ export function Hero() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   
-  // --- Typewriter Matrix ---
+  // --- Linguistic Typewriter Matrix ---
   const [placeholderText, setPlaceholderText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [loopNum, setLoopNum] = useState(0);
   const [typingSpeed, setTypingSpeed] = useState(150);
 
-  const words = useMemo(() => ['AI Chatbot', 'Resume', 'PDF', 'Image'], []);
+  const words = useMemo(() => [
+    'AI Chatbot', 
+    'Resume Builder', 
+    'PDF Merger', 
+    'Image Generator', 
+    'Logo Maker', 
+    'Photo to Text', 
+    'Background Remove', 
+    'Password Generator',
+    'Units Converter',
+    'Speed Test',
+    'Email Writer',
+    'QR Studio'
+  ], []);
 
   useEffect(() => {
     const handleTyping = () => {
@@ -125,5 +138,3 @@ export function Hero() {
     </section>
   );
 }
-
-import { useMemo } from 'react';
