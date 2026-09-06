@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface PostMetadata {
@@ -160,7 +161,7 @@ export default function BlogLandingPage() {
                   </div>
                   <div className="flex items-center justify-center lg:justify-start gap-4">
                      <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Read Full Guide</span>
-                     <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-2 transition-transform" />
+                     <ChevronRight className="w-5 h-5 text-primary group-hover:translate-x-2 transition-transform" />
                   </div>
                </div>
             </Card>
