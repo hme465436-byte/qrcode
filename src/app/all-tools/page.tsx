@@ -31,7 +31,7 @@ const TOOLS: Tool[] = [
   // AI Tools
   { href: '/ai-chatbot', title: 'AI Chatbot', desc: 'Chat with a fast AI assistant.', category: 'AI', icon: BrainCircuit, keywords: ['artificial intelligence', 'conversation', 'bot', 'chat'] },
   { href: '/ai-resume-builder', title: 'AI Resume Builder', desc: 'Create a clean professional resume in minutes.', category: 'AI', icon: BrainCircuit, keywords: ['cv', 'job application', 'career', 'resume'] },
-  { href: '/ai-email-writer', title: 'AI Email Writer', desc: 'Write a clean email in seconds.', category: 'AI', icon: BrainCircuit, keywords: ['compose', 'mail', 'message'] },
+  { href: '/ai-email-writer', title: 'AI Email Writer', desc: 'Write a clean email in seconds.', category: 'AI', icon: BrainCircuit, keywords: ['compose', 'mail', 'message', 'email'] },
   { href: '/ai-code-generator', title: 'AI Code Generator', desc: 'Create code from a simple request.', category: 'AI', icon: BrainCircuit, keywords: ['programming', 'scripting', 'develop', 'code'] },
   { href: '/ai-image-generator', title: 'AI Image Generator', desc: 'Create images from text for free.', category: 'AI', icon: BrainCircuit, keywords: ['art', 'drawing', 'dalle', 'image', 'img', 'photo'] },
   { href: '/speech-to-text', title: 'Speech to Text', desc: 'Convert your voice into text instantly in the browser.', category: 'AI', icon: BrainCircuit, keywords: ['transcribe', 'voice typing'] },
@@ -197,6 +197,7 @@ export default function AllToolsPage() {
         const exactMatches = categoryFilteredTools.filter(tool =>
             tool.title.toLowerCase().includes(lowerCaseQuery) ||
             tool.desc.toLowerCase().includes(lowerCaseQuery) ||
+            tool.href.toLowerCase().includes(lowerCaseQuery) ||
             (tool.keywords && tool.keywords.some(k => k.toLowerCase().includes(lowerCaseQuery)))
         );
 
@@ -208,24 +209,28 @@ export default function AllToolsPage() {
         let bestMatch: { title: string; distance: number } | null = null;
 
         for (const tool of categoryFilteredTools) {
-            const distance = levenshteinDistance(lowerCaseQuery, tool.title.toLowerCase());
-            if (distance <= 3) {
+            const titleDistance = levenshteinDistance(lowerCaseQuery, tool.title.toLowerCase());
+            if (titleDistance <= 3) {
                 suggestions.push(tool);
             }
-            if (!bestMatch || distance < bestMatch.distance) {
-                bestMatch = { title: tool.title, distance };
+            if (!bestMatch || titleDistance < bestMatch.distance) {
+                bestMatch = { title: tool.title, distance: titleDistance };
             }
         }
 
         const didYouMean = (bestMatch && bestMatch.distance > 0 && bestMatch.distance <= 2) ? bestMatch.title : null;
-        suggestions.sort((a, b) => levenshteinDistance(lowerCaseQuery, a.title.toLowerCase()) - levenshteinDistance(lowerCaseQuery, b.title.toLowerCase()));
+        
+        suggestions = suggestions.sort((a, b) => {
+            const aDistance = levenshteinDistance(lowerCaseQuery, a.title.toLowerCase());
+            const bDistance = levenshteinDistance(lowerCaseQuery, b.title.toLowerCase());
+            return aDistance - bDistance;
+        });
 
         return { exactMatches: [], suggestions, didYouMean };
     }, [searchQuery, activeCategory]);
 
     const { exactMatches, suggestions, didYouMean } = searchResult;
-    const displayedTools = exactMatches.length > 0 ? exactMatches : (suggestions.length > 0 ? suggestions : []);
-
+    const displayedTools = exactMatches.length > 0 ? exactMatches : suggestions;
     const showEmptyState = displayedTools.length === 0 && searchQuery;
     const showSuggestionsHeader = exactMatches.length === 0 && suggestions.length > 0;
 
