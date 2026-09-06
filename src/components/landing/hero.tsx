@@ -6,6 +6,7 @@ import { Search, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SpaceBackground } from '@/components/mykittool/space-background';
+import { cn } from '@/lib/utils';
 
 export function Hero() {
   const router = useRouter();
@@ -91,22 +92,22 @@ export function Hero() {
         </div>
 
         {/* Integrated Discovery Node (Search) */}
-        <div className="w-full max-w-xl animate-reveal stagger-2 px-4">
+        <div className="w-full max-w-xl animate-reveal stagger-2 px-4 relative">
+          {/* Always-on luxury glow background */}
+          <div className="absolute -inset-10 bg-primary/20 blur-[60px] rounded-full pointer-events-none opacity-50 animate-search-glow" />
+          
           <form onSubmit={handleSearch} className="relative group/search">
-            {/* Persistent Luxury Glow */}
-            <div className="absolute -inset-1.5 bg-primary/15 rounded-3xl blur-2xl opacity-40 animate-pulse pointer-events-none" />
-            
             {/* Search Field Container */}
-            <div className="relative flex items-center bg-black/40 backdrop-blur-3xl border border-white/10 rounded-2xl h-16 shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] transition-all group-focus-within/search:border-primary/40 group-focus-within/search:bg-black/60">
-               <Search className="absolute left-6 w-5 h-5 text-white/10 group-focus-within/search:text-primary transition-colors" />
+            <div className="relative flex items-center bg-black/60 backdrop-blur-3xl border-2 border-primary/40 rounded-[2.5rem] h-20 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] transition-all group-focus-within/search:border-primary">
+               <Search className="absolute left-8 w-6 h-6 text-primary/40 group-focus-within/search:text-primary transition-colors" />
                <Input 
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={`Search ${placeholderText}...`} 
-                className="w-full h-full bg-transparent border-none pl-16 pr-32 text-sm font-medium focus-visible:ring-0 placeholder:text-white/20"
+                className="w-full h-full bg-transparent border-none pl-20 pr-36 text-base font-bold placeholder:text-white/20 focus-visible:ring-0"
                />
-               <div className="absolute right-2.5">
-                  <Button type="submit" className="h-11 px-8 rounded-xl bg-white text-black hover:bg-white/90 text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95">
+               <div className="absolute right-3">
+                  <Button type="submit" className="h-14 px-10 rounded-[1.8rem] bg-white text-black hover:bg-white/90 text-xs font-black uppercase tracking-widest shadow-2xl transition-all active:scale-95">
                      Search
                   </Button>
                </div>
