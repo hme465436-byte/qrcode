@@ -241,31 +241,29 @@ export default function AllToolsPage() {
           
           <div className={cn(
               "transition-all duration-300",
-              viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" : "flex flex-col gap-4"
+              viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"
           )}>
             {filteredTools.map(tool => (
                 <a href={tool.href} key={tool.href} className="block group">
                     {viewMode === 'grid' ? (
-                        <div className="relative flex flex-col justify-between h-full p-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20">
-                          <div className="absolute -top-3 -left-3 w-12 h-12 bg-gray-800/80 backdrop-blur-sm border border-white/10 rounded-full flex items-center justify-center transform-gpu group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center",
-                              tool.category === 'AI' && 'bg-cyan-400/20 text-cyan-300',
-                              tool.category === 'Image' && 'bg-pink-400/20 text-pink-300',
-                              tool.category === 'File' && 'bg-yellow-400/20 text-yellow-300',
-                              tool.category === 'Other' && 'bg-green-400/20 text-green-300',
-                            )}>
-                              <tool.icon size={20} />
+                        <div className="group relative flex flex-col justify-between h-full p-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl transition-all duration-300 ease-in-out hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transform hover:-translate-y-1">
+                            <div className="flex-1">
+                                <div className={cn("inline-flex h-10 w-10 items-center justify-center rounded-lg mb-4 transition-transform duration-300 group-hover:scale-110",
+                                    tool.category === 'AI' && 'bg-cyan-400/10 text-cyan-300 shadow-inner shadow-cyan-500/10',
+                                    tool.category === 'Image' && 'bg-pink-400/10 text-pink-300 shadow-inner shadow-pink-500/10',
+                                    tool.category === 'File' && 'bg-yellow-400/10 text-yellow-300 shadow-inner shadow-yellow-500/10',
+                                    tool.category === 'Other' && 'bg-green-400/10 text-green-300 shadow-inner shadow-green-500/10',
+                                )}>
+                                    <tool.icon size={22} />
+                                </div>
+                                <h3 className="font-semibold text-base text-white">{tool.title}</h3>
+                                <p className="mt-2 text-gray-400 text-sm line-clamp-2">{tool.desc}</p>
                             </div>
-                          </div>
-                          <div className="flex-1 pl-2 pt-10">
-                            <h3 className="font-bold text-lg text-white mb-2">{tool.title}</h3>
-                            <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">{tool.desc}</p>
-                          </div>
-                          <div className="pl-2 mt-6">
-                            <span className="text-sm font-medium text-primary/80 group-hover:text-primary transition-colors duration-300 flex items-center gap-1.5">
-                                Open Tool <ArrowRight size={14} className="transform-gpu transition-transform duration-300 group-hover:translate-x-1" />
-                            </span>
-                          </div>
+                            <div className="mt-4">
+                                <span className="text-sm font-medium text-primary/80 group-hover:text-primary transition-colors duration-300 flex items-center gap-1">
+                                    Open <ArrowRight size={14} />
+                                </span>
+                           </div>
                         </div>
                     ) : (
                         <div className="py-4 px-5 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-gray-800/70 hover:border-primary/40 transition-all duration-300 ease-in-out flex justify-between items-center">
