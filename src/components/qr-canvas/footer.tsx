@@ -60,6 +60,7 @@ export function Footer() {
               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Studio</h4>
               <nav className="flex flex-col gap-4">
                 {[
+                  { label: 'All Tools', href: '/all-tools' },
                   { label: 'Single QR', href: '/single' },
                   { label: 'Bulk Mode', href: '/bulk' },
                   { label: 'Logo Maker', href: '/logo-maker' },
