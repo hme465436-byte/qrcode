@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
@@ -415,21 +414,21 @@ function AllToolsPageContent() {
             {displayedTools.map((tool, i) => (
               <a href={tool.href} key={tool.href} className="block group animate-reveal" style={{ animationDelay: `${i * 10}ms` }}>
                   {viewMode === 'grid' ? (
-                      <div className="flex flex-col justify-between h-full p-6 bg-white/[0.01] backdrop-blur-3xl border border-white/5 rounded-[2rem] transition-all duration-500 hover:bg-white/[0.03] hover:border-primary/20 shadow-2xl relative overflow-hidden group-hover:-translate-y-1">
+                      <div className="flex flex-col justify-between h-full p-5 bg-white/[0.01] backdrop-blur-3xl border border-white/5 rounded-3xl transition-all duration-500 hover:bg-white/[0.03] hover:border-primary/20 shadow-2xl relative overflow-hidden group-hover:-translate-y-1">
                           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
                           <div className="relative z-10">
-                              <div className={cn("inline-flex h-11 w-11 items-center justify-center rounded-xl mb-6 shadow-inner border border-white/5 transition-all group-hover:scale-110",
+                              <div className={cn("inline-flex h-9 w-9 items-center justify-center rounded-xl mb-4 shadow-inner border border-white/5 transition-all group-hover:scale-110",
                                   tool.category === 'AI' ? 'bg-cyan-500/10 text-cyan-400' :
                                   tool.category === 'Image' ? 'bg-purple-500/10 text-purple-400' :
                                   tool.category === 'File' ? 'bg-amber-500/10 text-amber-400' :
                                   'bg-blue-500/10 text-blue-400',
                               )}>
-                                  <tool.icon size={20} />
+                                  <tool.icon size={18} />
                               </div>
-                              <h3 className="font-headline font-black text-lg text-foreground uppercase tracking-tight leading-none mb-3 group-hover:text-primary transition-colors">{tool.title}</h3>
-                              <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase tracking-tighter line-clamp-3">{tool.desc}</p>
+                              <h3 className="font-headline font-black text-base text-foreground uppercase tracking-tight leading-none mb-2 group-hover:text-primary transition-colors">{tool.title}</h3>
+                              <p className="text-[10px] text-foreground/40 font-medium leading-relaxed uppercase tracking-tighter line-clamp-2">{tool.desc}</p>
                           </div>
-                          <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-between relative z-10">
+                          <div className="mt-6 pt-3 border-t border-white/5 flex items-center justify-between relative z-10">
                               <span className="text-[8px] font-black text-foreground/20 group-hover:text-primary transition-colors uppercase tracking-[0.3em]">Initialize</span>
                               <ChevronRight size={14} className="text-foreground/10 group-hover:text-primary transition-all group-hover:translate-x-1" />
                          </div>
