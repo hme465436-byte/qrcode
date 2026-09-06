@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -80,6 +81,7 @@ export function Footer() {
               <nav className="flex flex-col gap-5">
                 {[
                   { label: 'Help Center', href: '/faq' },
+                  { label: 'Studio Guides', href: '/blog' },
                   { label: 'Buy me a coffee', href: '/donate' },
                   { label: 'About', href: '/about' },
                   { label: 'Privacy Policy', href: '/privacy' },

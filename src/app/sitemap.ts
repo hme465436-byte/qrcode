@@ -1,3 +1,4 @@
+
 import { MetadataRoute } from 'next';
 
 const toolHrefs = [
@@ -123,13 +124,22 @@ const toolHrefs = [
   '/mouse-cursor-maker'
 ];
 
+const blogHrefs = [
+  '/blog',
+  '/blog/remove-background-free',
+  '/blog/merge-pdf-online',
+  '/blog/compress-pdf-online',
+  '/blog/image-to-pdf',
+  '/blog/ai-resume-free'
+];
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const allTools = ['/all-tools', ...toolHrefs];
-  const routes = allTools.map(tool => ({
-    url: `https://mykittool.vercel.app${tool}`,
+  const allRoutes = ['/all-tools', ...toolHrefs, ...blogHrefs];
+  const routes = allRoutes.map(route => ({
+    url: `https://mykittool.vercel.app${route}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
-    priority: 0.8,
+    priority: route.startsWith('/blog') ? 0.7 : 0.8,
   }));
 
   return [
