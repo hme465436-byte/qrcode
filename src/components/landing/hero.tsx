@@ -75,14 +75,23 @@ export function Hero() {
       </div>
 
       <div className="relative z-10 w-full max-w-5xl mx-auto px-6 flex flex-col items-center text-center space-y-12">
-        {/* Subtle Brand Identifier */}
-        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-3xl animate-reveal shadow-2xl">
-           <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
-           <span className="text-[9px] font-black uppercase tracking-[0.4em] text-white/70">120+ free tools</span>
+        <div className="flex flex-col items-center gap-6">
+           {/* Subtle Brand Identifier */}
+           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-3xl animate-reveal shadow-2xl">
+              <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
+              <span className="text-[9px] font-black uppercase tracking-[0.4em] text-white/70">120+ free tools</span>
+           </div>
+
+           {/* Linguistic Secondary Headers */}
+           <div className="flex items-center gap-8 animate-reveal stagger-1">
+              <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Free online tools</span>
+              <div className="w-1 h-1 rounded-full bg-white/5" />
+              <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Free AI tools</span>
+           </div>
         </div>
         
         {/* Refined Luxury Title */}
-        <div className="space-y-6 animate-reveal stagger-1">
+        <div className="space-y-6 animate-reveal stagger-2">
           <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter leading-[1.1] text-white max-w-3xl mx-auto">
             FREE online <span className="text-primary italic">advanced tool studio</span>
           </h1>
@@ -92,7 +101,7 @@ export function Hero() {
         </div>
 
         {/* Integrated Discovery Node (Search) */}
-        <div className="w-full max-w-lg animate-reveal stagger-2 px-4 relative">
+        <div className="w-full max-w-lg animate-reveal stagger-3 px-4 relative">
           {/* Lighter always-on luxury glow background */}
           <div className="absolute -inset-6 bg-primary/10 blur-[40px] rounded-full pointer-events-none opacity-40 animate-search-glow" />
           
@@ -116,7 +125,7 @@ export function Hero() {
         </div>
 
         {/* Global Nav CTA */}
-        <div className="flex items-center justify-center gap-12 pt-6 animate-reveal stagger-3">
+        <div className="flex items-center justify-center gap-12 pt-6 animate-reveal stagger-4">
           <button 
             onClick={() => router.push('/all-tools')}
             className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-primary transition-all"
