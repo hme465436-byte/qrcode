@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
@@ -355,7 +356,7 @@ function AllToolsPageContent() {
                </div>
             </div>
 
-            <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 px-2 w-full">
+            <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 px-2 w-full">
                 <div className="w-full sm:w-auto overflow-x-auto no-scrollbar bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-2xl p-1.5 shadow-2xl">
                     <div className="flex items-center space-x-1 min-w-max">
                       {CATEGORIES.map((cat) => (
