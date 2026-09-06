@@ -79,7 +79,7 @@ export function PopularTools() {
   return (
     <section className="w-full py-20 sm:py-24 bg-[#02040a]">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 px-2">
+        <div className="flex flex-col items-center text-center gap-6 mb-16 px-2">
           <div className="space-y-3">
             <h2 className="text-2xl md:text-4xl font-headline font-black text-white uppercase tracking-tight leading-none">
               Featured <span className="text-primary italic">tools</span>
