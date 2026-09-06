@@ -17,15 +17,12 @@ import {
   QrCode, 
   Layers, 
   Zap, 
-  Clock, 
   Globe, 
   Scissors, 
   Archive, 
   FileDown, 
   Mic2, 
-  Activity, 
   Smartphone, 
-  Network, 
   Lock, 
   ShieldAlert, 
   Fingerprint, 
@@ -41,7 +38,7 @@ import {
   BookOpen,
   Calendar,
   Type,
-  ShieldCheck
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -76,6 +73,7 @@ const TOOL_DETAILS: Record<string, { title: string, desc: string, icon: any }> =
   '/ai-email-writer': { title: 'AI Email Writer', desc: 'Draft professional emails instantly.', icon: Sparkles },
   '/ai-code-generator': { title: 'AI Code Gen', desc: 'Synthesize code from requests.', icon: Code2 },
   '/ai-resume-builder': { title: 'AI Resume', desc: 'Create high-fidelity resumes.', icon: User },
+  '/ai-campaign-planner': { title: 'AI Campaign', desc: 'Strategy and niche discovery.', icon: Zap },
   '/ai-image-generator': { title: 'AI Image Gen', desc: 'Create visuals from text.', icon: Sparkles },
   '/background-remove': { title: 'BG Remove', desc: 'Isolate subjects from photos.', icon: Eraser },
   '/logo-maker': { title: 'Logo Maker', desc: 'Design premium text-based logos.', icon: Type },
@@ -96,7 +94,7 @@ const TOOL_DETAILS: Record<string, { title: string, desc: string, icon: any }> =
   '/holidays': { title: 'Holidays', desc: 'Global public holiday matrix.', icon: Calendar },
   '/ip-finder': { title: 'IP Finder', desc: 'Isolate network identities.', icon: Smartphone },
   '/dns-lookup': { title: 'DNS Lookup', desc: 'Clinical DNS auditing.', icon: Globe },
-  '/website-trust-checker': { title: 'Trust Checker', desc: 'Domain security diagnostics.', icon: ShieldCheck },
+  '/website-trust-checker': { title: 'Trust Checker', desc: 'Domain security diagnostics.', icon: Shield },
   '/speed-test': { title: 'Speed Test', desc: 'Network pulse telemetry.', icon: Zap },
   '/password-generator': { title: 'Password Gen', desc: 'Secure entropy generation.', icon: Lock },
   '/password-breach-checker': { title: 'Breach Checker', desc: 'Verify identity exposure.', icon: ShieldAlert },
