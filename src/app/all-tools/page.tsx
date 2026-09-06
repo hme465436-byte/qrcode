@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
@@ -21,11 +20,14 @@ import {
   Monitor,
   Layout,
   Command,
-  HelpCircle
+  HelpCircle,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 type ToolCategory = 'AI' | 'Image' | 'File' | 'Other';
 
@@ -164,6 +166,8 @@ const TOOLS: Tool[] = [
   { href: '/hex-converter', title: 'Hex Converter', desc: 'Convert binary files to hexadecimal matrix.', category: 'Other', icon: Zap, keywords: ['binary to hex'] },
   { href: '/code-converter', title: 'AOB Converter', desc: 'Professional AOB pattern conversion utility.', category: 'Other', icon: Zap, keywords: ['array of bytes'] },
   { href: '/dictionary', title: 'Dictionary', desc: 'Professional English word search and definitions.', category: 'Other', icon: Zap, keywords: ['word definition'] },
+  { href: '/png-finder', title: 'PNG Finder Studio', desc: 'Search and download PNG images for editing', category: 'Other', icon: Zap, keywords: ['transparent', 'image', 'png'] },
+  { href: '/icon-studio', title: 'Icon Studio', desc: 'Search social icons, recolor, download SVG PNG ICO', category: 'Other', icon: Zap, keywords: ['svg', 'ico', 'png', 'image'] },
   { href: '/username-forge', title: 'Username Forge', desc: 'Forge unique usernames and check cross-platform availability.', category: 'Other', icon: Zap, keywords: ['username generator'] },
   { href: '/hashtag-engine', title: 'Hashtag Engine', desc: 'Generate strong hashtags for social growth and niche discovery', category: 'Other', icon: Zap, keywords: ['hashtag generator'] },
 ];
