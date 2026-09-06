@@ -38,7 +38,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 
 type RedactionType = 'blur' | 'pixelate' | 'black' | 'white';
 type RedactionShape = 'rect' | 'oval';

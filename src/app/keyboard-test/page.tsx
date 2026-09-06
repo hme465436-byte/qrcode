@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 
 // --- Keyboard Layout Matrix ---
 const ROWS = [

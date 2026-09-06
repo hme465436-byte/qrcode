@@ -82,7 +82,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import * as actions from './actions';
 import { differenceInDays, format, isBefore, isAfter } from 'date-fns';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 import Link from 'next/link';
 
 // --- Utilities ---

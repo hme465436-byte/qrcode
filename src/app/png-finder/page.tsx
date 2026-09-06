@@ -47,7 +47,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 import { searchPngAction, getSuggestionsAction, PngResult } from './actions';
 import {
   Dialog,

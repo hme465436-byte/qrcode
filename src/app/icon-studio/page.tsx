@@ -37,7 +37,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 import { searchIconsAction, IconResult } from './actions';
 
 export default function IconStudioPage() {

@@ -31,7 +31,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Html5Qrcode } from 'html5-qrcode';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 
 interface WifiInfo {
   ssid: string;

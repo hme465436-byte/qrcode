@@ -31,7 +31,7 @@ import { useAuth, useUser } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { SpaceBackground } from '@/components/qr-canvas/space-background';
+import { SpaceBackground } from '@/components/mykittool/space-background';
 import { cn } from '@/lib/utils';
 
 export default function LoginPage() {

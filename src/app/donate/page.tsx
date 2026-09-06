@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/accordion";
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 
 export default function DonatePage() {
   const { toast } = useToast();

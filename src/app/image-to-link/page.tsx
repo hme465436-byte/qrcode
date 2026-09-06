@@ -44,7 +44,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import Link from 'next/link';
 import { uploadToImgBB, testImgBBKey } from './actions';

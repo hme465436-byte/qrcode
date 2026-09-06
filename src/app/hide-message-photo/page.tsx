@@ -45,7 +45,7 @@ import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 
 // --- Production Protocol Constants ---
 const MAGIC = "MK_ST_V2"; // Versioned Magic String

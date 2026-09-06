@@ -1,13 +1,13 @@
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
-import { Navbar } from '@/components/qr-canvas/navbar';
-import { Footer } from '@/components/qr-canvas/footer';
+import { Navbar } from '@/components/mykittool/navbar';
+import { Footer } from '@/components/mykittool/footer';
 import { Toaster } from '@/components/ui/toaster';
-import { FeedbackRow } from '@/components/qr-canvas/feedback-row';
+import { FeedbackRow } from '@/components/mykittool/feedback-row';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Suspense } from 'react';
-import { KitRouter } from '@/components/qr-canvas/kit-router';
-import { FloatingActionHub } from '@/components/qr-canvas/floating-action-hub';
+import { KitRouter } from '@/components/mykittool/kit-router';
+import { FloatingActionHub } from '@/components/mykittool/floating-action-hub';
 
 export const viewport: Viewport = {
   width: 'device-width',

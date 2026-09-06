@@ -128,7 +128,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button as ShadButton } from '@/components/ui/button';
-import { SpaceBackground } from '@/components/qr-canvas/space-background';
+import { SpaceBackground } from '@/components/mykittool/space-background';
 import { Card, CardContent } from '@/components/ui/card';
 
 const VIEW_MODE_KEY = 'mykit_view_mode';

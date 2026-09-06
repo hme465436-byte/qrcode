@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Tesseract from 'tesseract.js';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 import { recognizeTextOcrSpace } from './actions';
 
 type EngineMode = 'idle' | 'cloud' | 'local';

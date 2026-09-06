@@ -43,7 +43,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 
 type FrameStyle = 'solid' | 'double' | 'dashed' | 'gradient' | 'polaroid' | 'film' | 'vintage-gold' | 'neon-glow';
 type PatternType = 'none' | 'dots' | 'stripes' | 'checker';

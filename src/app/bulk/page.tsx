@@ -1,9 +1,9 @@
 "use client"
 
 import React from 'react';
-import { QrGeneratorContainer } from '@/components/qr-canvas/qr-generator-container';
+import { QrGeneratorContainer } from '@/components/mykittool/qr-generator-container';
 import { Layers, Zap } from 'lucide-react';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 
 export default function BulkQRPage() {
   return (

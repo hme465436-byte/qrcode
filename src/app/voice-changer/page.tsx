@@ -47,7 +47,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 
 type EffectId = 'normal' | 'robot' | 'male' | 'female' | 'child' | 'deep' | 'helium' | 'radio' | 'alien' | 'echo';
 

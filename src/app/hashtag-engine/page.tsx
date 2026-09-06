@@ -43,7 +43,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { GetHelp } from '@/components/qr-canvas/get-help';
+import { GetHelp } from '@/components/mykittool/get-help';
 import { fetchHashtagsAction, TagResult } from './actions';
 
 const STORAGE_KEY_TOPIC = 'mykit_hashtag_last_topic';
