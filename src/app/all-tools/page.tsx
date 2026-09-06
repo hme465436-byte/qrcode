@@ -1,5 +1,10 @@
-"use client"
+'use client';
+
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { Search, LayoutGrid, List, ArrowRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 interface Tool {
   href: string;
@@ -7,6 +12,7 @@ interface Tool {
   desc: string;
 }
 
+// The full, unmodified list of 120+ tools.
 const TOOLS: Tool[] = [
   { href: '/single', title: 'Single Studio', desc: 'Branded QR codes with logos and AI backgrounds.' },
   { href: '/ai-chatbot', title: 'AI Chatbot', desc: 'Chat with a fast AI assistant.' },
@@ -131,30 +137,90 @@ const TOOLS: Tool[] = [
 ];
 
 export default function AllToolsPage() {
-  return (
-    <div className="bg-background text-foreground min-h-screen">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-primary tracking-tight">
-            All Tools
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            A complete list of all the free tools available on this website.
-          </p>
+    const [searchQuery, setSearchQuery] = useState('');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+    const filteredTools = useMemo(() => {
+        const lowerCaseQuery = searchQuery.toLowerCase().trim();
+        if (!lowerCaseQuery) return TOOLS;
+        return TOOLS.filter(tool => 
+            tool.title.toLowerCase().includes(lowerCaseQuery) ||
+            tool.desc.toLowerCase().includes(lowerCaseQuery)
+        );
+    }, [searchQuery]);
+
+    const isEmpty = filteredTools.length === 0;
+
+    return (
+      <div className="min-h-screen w-full bg-black text-gray-300 relative overflow-hidden font-sans">
+        <div className="absolute inset-0 z-0 opacity-40">
+            <div className="absolute inset-0 bg-radial-gradient-purple"></div>
+            <div className="absolute inset-0 bg-radial-gradient-blue"></div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {TOOLS.map((tool) => (
-            <div key={tool.href} className="p-6 bg-card rounded-2xl shadow-lg hover:shadow-primary/20 transition-shadow duration-300">
-              <Link href={tool.href} className="group">
-                <h2 className="text-2xl font-bold text-card-foreground group-hover:text-primary transition-colors duration-300">
-                  {tool.title}
-                </h2>
-                <p className="mt-2 text-muted-foreground">{tool.desc}</p>
-              </Link>
+        
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 relative z-20">
+          <div className="text-center mb-16 md:mb-20">
+            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
+              All Tools
+            </h1>
+            <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-gray-400 font-light">
+              Free tools on My Kit Tool.
+            </p>
+          </div>
+
+          <div className="sticky top-5 z-30 mb-20">
+            <div className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 max-w-lg mx-auto shadow-2xl shadow-primary/10 flex items-center gap-2">
+                <div className="relative flex-grow">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
+                  <Input
+                    type="text"
+                    placeholder={`Search ${TOOLS.length}+ tools...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full h-12 bg-transparent border-none rounded-full pl-12 pr-4 text-white placeholder-gray-500 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
+
+                 <div className="flex items-center p-1 rounded-full bg-black/30 border border-white/10">
+                   <button onClick={() => setViewMode('grid')} className={cn("p-2.5 rounded-full transition-colors duration-300", viewMode === 'grid' ? "bg-primary text-white" : "text-gray-400 hover:text-white")}><LayoutGrid className="w-5 h-5" /></button>
+                   <button onClick={() => setViewMode('list')} className={cn("p-2.5 rounded-full transition-colors duration-300", viewMode === 'list' ? "bg-primary text-white" : "text-gray-400 hover:text-white")}><List className="w-5 h-5" /></button>
+                </div>
             </div>
-          ))}
-        </div>
-      </main>
-    </div>
+          </div>
+          
+          <div className={cn(
+              viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" : "flex flex-col gap-4"
+          )}>
+            {filteredTools.map(tool => (
+                <a href={tool.href} key={tool.href} className="block group">
+                    {viewMode === 'grid' ? (
+                        <div className="relative h-full p-8 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-3xl shadow-xl hover:shadow-primary/20 hover:border-primary/40 hover:-translate-y-2 transition-all duration-300 ease-in-out">
+                            <div className="absolute top-5 right-5 text-gray-600 group-hover:text-primary transition-colors duration-300">
+                                <ArrowRight size={20} />
+                            </div>
+                            <h3 className="font-bold text-xl text-white">{tool.title}</h3>
+                            <p className="mt-3 text-gray-400 text-base leading-relaxed line-clamp-3">{tool.desc}</p>
+                        </div>
+                    ) : (
+                        <div className="py-5 px-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl hover:bg-gray-900/80 hover:border-primary/40 transition-all duration-300 ease-in-out flex justify-between items-center">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-lg text-white truncate">{tool.title}</h3>
+                              <p className="text-base text-gray-500 line-clamp-1 truncate">{tool.desc}</p>
+                            </div>
+                            <ArrowRight className="w-5 h-5 text-gray-700 group-hover:text-primary transition-colors ml-6" />
+                        </div>
+                    )}
+                </a>
+            ))}
+          </div>
+
+            {isEmpty && (
+                <div className="text-center py-24">
+                    <p className="font-bold text-2xl text-gray-500">No Tools Found</p>
+                    <p className="text-base text-gray-600 mt-2">Try a different search query.</p>
+                </div>
+            )}
+        </main>
+      </div>
   );
 }
