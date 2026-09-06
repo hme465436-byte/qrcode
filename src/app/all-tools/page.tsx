@@ -355,15 +355,15 @@ function AllToolsPageContent() {
                </div>
             </div>
 
-            <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 px-2">
-                <div className="flex bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-2xl p-1.5 shadow-2xl">
-                    <div className="flex items-center space-x-1">
+            <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 px-2 w-full">
+                <div className="w-full sm:w-auto overflow-x-auto no-scrollbar bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-2xl p-1.5 shadow-2xl">
+                    <div className="flex items-center space-x-1 min-w-max">
                       {CATEGORIES.map((cat) => (
                         <button
                           key={cat.id}
                           onClick={() => setActiveCategory(cat.id)}
                           className={cn(
-                            "flex items-center gap-2.5 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                            "flex items-center gap-2.5 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                             activeCategory === cat.id ? "bg-primary text-white shadow-xl" : "text-foreground/30 hover:text-foreground/60 hover:bg-white/5"
                           )}
                         >
@@ -451,7 +451,7 @@ function AllToolsPageContent() {
                           </div>
                           <div className="flex items-center gap-6 shrink-0">
                              <Badge variant="outline" className="hidden sm:inline-flex bg-background/50 border-white/5 text-[7px] font-black uppercase tracking-widest text-foreground/20">{tool.category}</Badge>
-                             <ArrowRight className="w-4 h-4 text-foreground/10 group-hover/row:text-primary transition-all group-hover/row:translate-x-1" />
+                             <ArrowRight className="w-4 h-4 text-foreground/10 group-hover:text-primary transition-all group-hover/row:translate-x-1" />
                           </div>
                       </div>
                   )}
