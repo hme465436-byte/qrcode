@@ -186,12 +186,16 @@ export default function AllToolsPage() {
     const [activeCategory, setActiveCategory] = useState<'all' | ToolCategory>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-    const searchResult = useMemo(() => {
+    const { displayedTools, didYouMean, showSuggestionsHeader, showEmptyState } = useMemo(() => {
         const lowerCaseQuery = searchQuery.toLowerCase().trim();
         const categoryFilteredTools = TOOLS.filter(tool => activeCategory === 'all' || tool.category === activeCategory);
 
         if (!lowerCaseQuery) {
-            return { exactMatches: categoryFilteredTools, suggestions: [], didYouMean: null };
+            return { displayedTools: categoryFilteredTools, didYouMean: null, showSuggestionsHeader: false, showEmptyState: false };
+        }
+        
+        if (!/[a-z]/.test(lowerCaseQuery)) {
+             return { displayedTools: [], didYouMean: null, showSuggestionsHeader: false, showEmptyState: true };
         }
 
         const exactMatches = categoryFilteredTools.filter(tool =>
@@ -202,37 +206,27 @@ export default function AllToolsPage() {
         );
 
         if (exactMatches.length > 0) {
-            return { exactMatches, suggestions: [], didYouMean: null };
+            return { displayedTools: exactMatches, didYouMean: null, showSuggestionsHeader: false, showEmptyState: false };
         }
 
-        let suggestions: Tool[] = [];
-        let bestMatch: { title: string; distance: number } | null = null;
+        const allToolsWithDistance = categoryFilteredTools.map(tool => ({
+            ...tool,
+            distance: levenshteinDistance(lowerCaseQuery, tool.title.toLowerCase()),
+        })).sort((a, b) => a.distance - b.distance);
 
-        for (const tool of categoryFilteredTools) {
-            const titleDistance = levenshteinDistance(lowerCaseQuery, tool.title.toLowerCase());
-            if (titleDistance <= 3) {
-                suggestions.push(tool);
-            }
-            if (!bestMatch || titleDistance < bestMatch.distance) {
-                bestMatch = { title: tool.title, distance: titleDistance };
-            }
-        }
+        const suggestions = allToolsWithDistance.slice(0, 6);
+        const bestMatch = suggestions[0];
 
-        const didYouMean = (bestMatch && bestMatch.distance > 0 && bestMatch.distance <= 2) ? bestMatch.title : null;
-        
-        suggestions = suggestions.sort((a, b) => {
-            const aDistance = levenshteinDistance(lowerCaseQuery, a.title.toLowerCase());
-            const bDistance = levenshteinDistance(lowerCaseQuery, b.title.toLowerCase());
-            return aDistance - bDistance;
-        });
+        const didYouMeanSuggestion = (bestMatch && bestMatch.distance > 0 && bestMatch.distance <= 3) ? bestMatch.title : null;
 
-        return { exactMatches: [], suggestions, didYouMean };
+        return { 
+            displayedTools: suggestions, 
+            didYouMean: didYouMeanSuggestion, 
+            showSuggestionsHeader: true, 
+            showEmptyState: suggestions.length === 0
+        };
+
     }, [searchQuery, activeCategory]);
-
-    const { exactMatches, suggestions, didYouMean } = searchResult;
-    const displayedTools = exactMatches.length > 0 ? exactMatches : suggestions;
-    const showEmptyState = displayedTools.length === 0 && searchQuery;
-    const showSuggestionsHeader = exactMatches.length === 0 && suggestions.length > 0;
 
     return (
       <div className="min-h-screen w-full bg-black text-gray-300 relative overflow-hidden font-sans">
@@ -304,7 +298,7 @@ export default function AllToolsPage() {
                 </p>
               )}
               {showSuggestionsHeader && (
-                <h2 className="text-xl font-bold text-white mt-4">Suggested Tools</h2>
+                <h2 className="text-xl font-bold text-white mt-4">Did you mean these tools?</h2>
               )}
             </div>
           )}
