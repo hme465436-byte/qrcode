@@ -91,29 +91,29 @@ export function PopularTools() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           {popularTools.map((tool) => (
-            <Link key={tool.href} href={tool.href} className={cn("group block h-full", tool.className)}>
+            <Link key={tool.href} href={tool.href} className={cn("group block", tool.className)}>
               <div className={cn(
-                "flex flex-col justify-between h-full p-7 rounded-[2.5rem] bg-white/[0.01] border border-white/5 transition-all duration-500 hover:bg-white/[0.02] hover:-translate-y-1 shadow-2xl relative overflow-hidden",
+                "flex flex-col justify-between h-full p-6 rounded-3xl bg-white/[0.01] border border-white/5 transition-all duration-500 hover:bg-white/[0.02] hover:border-white/10 shadow-2xl relative overflow-hidden",
                 tool.border
               )}>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                   
                   <div className="relative z-10">
                       <div className={cn(
-                        "mb-6 w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-500 border border-white/5 shadow-inner group-hover:scale-110",
+                        "mb-4 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 border border-white/5 shadow-inner group-hover:scale-110",
                         tool.bg,
                         tool.color
                       )}>
-                          <tool.icon className="w-5 h-5" />
+                          <tool.icon className="w-4 h-4" />
                       </div>
-                      <h3 className="text-lg font-headline font-black text-white mb-2 uppercase tracking-tight leading-none">{tool.title}</h3>
-                      <p className="text-[10px] text-white/40 font-medium leading-relaxed uppercase tracking-tighter group-hover:text-white/60 transition-colors">{tool.desc}</p>
+                      <h3 className="text-base font-headline font-black text-white mb-2 uppercase tracking-tight leading-none">{tool.title}</h3>
+                      <p className="text-[10px] text-white/40 font-medium leading-relaxed uppercase tracking-tighter group-hover:text-white/60 transition-colors line-clamp-2">{tool.desc}</p>
                   </div>
 
-                  <div className="mt-8 flex items-center gap-3 text-[9px] font-black text-white/20 group-hover:text-primary uppercase tracking-[0.3em] transition-colors duration-500">
-                      Open <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+                  <div className="mt-6 flex items-center gap-3 text-[8px] font-black text-white/10 group-hover:text-primary uppercase tracking-[0.3em] transition-colors duration-500">
+                      Open <ArrowRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
                   </div>
               </div>
             </Link>
