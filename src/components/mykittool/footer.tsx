@@ -59,7 +59,7 @@ export function Footer() {
 
           <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-16">
             <div className="space-y-8">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-primary">Studio Units</h4>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-primary">Tools</h4>
               <nav className="flex flex-col gap-5">
                 {[
                   { label: 'All Tools', href: '/all-tools' },
@@ -81,7 +81,7 @@ export function Footer() {
                 {[
                   { label: 'Help Center', href: '/faq' },
                   { label: 'Buy me a coffee', href: '/donate' },
-                  { label: 'About Studio', href: '/about' },
+                  { label: 'About', href: '/about' },
                   { label: 'Privacy Policy', href: '/privacy' },
                   { label: 'Terms of Service', href: '/terms' },
                 ].map((link) => (

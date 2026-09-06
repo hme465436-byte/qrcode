@@ -28,7 +28,7 @@ export function Hero() {
         {/* Subtle Brand Identifier */}
         <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/[0.02] border border-white/5 backdrop-blur-3xl animate-reveal shadow-2xl">
            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-           <span className="text-[9px] font-black uppercase tracking-[0.5em] text-white/40">120+ Pro Utility Units</span>
+           <span className="text-[9px] font-black uppercase tracking-[0.5em] text-white/40">120+ free tools</span>
         </div>
         
         {/* Refined Luxury Title */}
@@ -50,12 +50,12 @@ export function Hero() {
                <Input 
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="Search pro tools..." 
+                placeholder="Search tools..." 
                 className="w-full h-full bg-transparent border-none pl-20 pr-40 text-base font-medium focus-visible:ring-0 placeholder:text-white/10"
                />
                <div className="absolute right-3">
                   <Button type="submit" className="h-14 px-8 rounded-2xl bg-white text-black hover:bg-white/90 text-[11px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95">
-                     Initialize
+                     Search
                   </Button>
                </div>
             </div>
@@ -68,7 +68,7 @@ export function Hero() {
             onClick={() => router.push('/all-tools')}
             className="group flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.4em] text-white/30 hover:text-primary transition-all"
           >
-            Explore all tools <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            See all tools <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </button>
           
           <div className="hidden sm:flex items-center gap-8 text-[9px] font-black text-white/5 uppercase tracking-[0.3em]">

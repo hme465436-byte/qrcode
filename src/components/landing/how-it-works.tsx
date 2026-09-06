@@ -5,18 +5,18 @@ import { MousePointer2, DownloadCloud, ShieldCheck, Zap } from 'lucide-react';
 const steps = [
   {
     icon: MousePointer2,
-    title: "1. Select Protocol",
-    description: "Identify the required production unit from the studio registry."
+    title: "1. Choose a tool",
+    description: "Identify the tool you need from our collection."
   },
   {
     icon: ShieldCheck,
-    title: "2. Local Synthesis",
-    description: "Process data directly in your browser memory. Absolute privacy."
+    title: "2. Use it in your browser",
+    description: "Process everything locally on your device for absolute privacy."
   },
   {
     icon: DownloadCloud,
-    title: "3. Master Export",
-    description: "Download high-fidelity assets instantly to local storage."
+    title: "3. Download or copy",
+    description: "Save your result instantly to your computer or phone."
   }
 ];
 
@@ -27,8 +27,7 @@ export function HowItWorks() {
       
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         <div className="text-center mb-32 space-y-4 animate-reveal">
-          <h2 className="text-4xl md:text-6xl font-headline font-black text-white uppercase tracking-tight leading-none">Zero Friction <span className="text-primary italic">Workflow</span></h2>
-          <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.5em]">Clinical execution sequence</p>
+          <h2 className="text-4xl md:text-6xl font-headline font-black text-white uppercase tracking-tight leading-none">How it <span className="text-primary italic">works</span></h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-20 lg:gap-32">

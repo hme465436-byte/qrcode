@@ -59,12 +59,12 @@ export function PopularTools() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-20 px-2">
           <div className="space-y-4">
             <h2 className="text-4xl md:text-6xl font-headline font-black text-white uppercase tracking-tight leading-none">
-              Featured <span className="text-primary italic">Units</span>
+              Featured <span className="text-primary italic">tools</span>
             </h2>
-            <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.4em]">Hardware-Optimized Nodes</p>
+            <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.4em]">Popular tools</p>
           </div>
           <Link href="/all-tools" className="inline-flex items-center gap-3 text-[11px] font-black text-primary uppercase tracking-widest hover:gap-4 transition-all group">
-            Browse full registry <ArrowRight className="w-4 h-4" />
+            See all tools <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -83,7 +83,7 @@ export function PopularTools() {
                   </div>
 
                   <div className="mt-16 flex items-center gap-3 text-[10px] font-black text-white/5 group-hover:text-primary uppercase tracking-[0.3em] transition-colors duration-700">
-                      Initialize Studio <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1.5" />
+                      Open <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1.5" />
                   </div>
               </div>
             </Link>
