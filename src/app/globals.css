@@ -124,6 +124,15 @@
   .animate-search-glow {
     animation: search-glow 4s ease-in-out infinite;
   }
+
+  @keyframes soft-pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+  }
+
+  .animate-soft-pulse {
+    animation: soft-pulse 4s ease-in-out infinite;
+  }
 }
 
 .font-headline {
