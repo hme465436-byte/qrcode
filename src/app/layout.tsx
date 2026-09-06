@@ -18,8 +18,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'My Kit Tool | Free Online Tools',
-  description: 'Free online tools for chat, resume, images, logos, code, email and more. Professional high-fidelity utilities with zero-storage local privacy at My Kit Tool.',
-  keywords: 'free online tools, ai chatbot, resume builder, image editor, ocr, pdf tools, qr code generator, hex converter, developer tools, my kit tool, aob converter, background remover',
+  description: 'My Kit Tool offers a powerful suite of free online tools, including AI-powered utilities, comprehensive PDF and image editors, and much more. All tools are private, secure, and work directly in your browser.',
+  keywords: 'free online tools, ai tools, pdf editor, image converter, qr code generator, developer tools, my kit tool, privacy-focused tools, browser-based utilities',
   authors: [{ name: 'MY KIT TOOL Team' }],
   metadataBase: new URL('https://mykittool.vercel.app'),
   alternates: {
@@ -29,18 +29,18 @@ export const metadata: Metadata = {
     google: 'vMj1XN9ziXyU5kBso8wdA_OhZuzhD0o_BGSrSu9uiGU',
   },
   openGraph: {
-    title: 'My Kit Tool | Free Online Tools',
-    description: 'Free online tools for chat, resume, images, logos, code, email and more at My Kit Tool.',
+    title: 'My Kit Tool | Your Ultimate Suite of Free Online Tools',
+    description: 'Discover a vast collection of free tools for AI, PDF, image editing, and more. My Kit Tool provides powerful, private, and easy-to-use utilities for all your needs.',
     type: 'website',
     url: 'https://mykittool.vercel.app',
     siteName: 'MY KIT TOOL',
-    images: [{ url: 'https://picsum.photos/seed/mykit-seo/1200/630' }],
+    images: [{ url: 'https://mykittool.vercel.app/og-image.png' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'My Kit Tool | Free Online Tools',
-    description: 'Free online tools for chat, resume, images, logos, code, email and more at My Kit Tool.',
-    images: ['https://picsum.photos/seed/mykit-twitter/1200/630'],
+    title: 'My Kit Tool | Free Online Tools for Every Task',
+    description: 'Supercharge your productivity with My Kit Tool. Access a wide range of free, secure, and browser-based tools for AI, PDF, images, and more.',
+    images: ['https://mykittool.vercel.app/twitter-image.png'],
   },
 };
 
@@ -54,11 +54,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-        <script 
-          src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.9.2/lib/qr-code-styling.min.js" 
-          async
-        />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body 
         className="font-body bg-background text-foreground antialiased selection:bg-primary/20 selection:text-foreground overflow-x-hidden w-full max-w-full"
