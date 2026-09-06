@@ -33,8 +33,6 @@ const steps = [
 export function HowItWorks() {
   return (
     <section className="w-full py-24 sm:py-32 bg-[#02040a] relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-      
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         <div className="text-center mb-24 space-y-4 animate-reveal">
           <h2 className="text-2xl md:text-4xl font-headline font-black text-white uppercase tracking-tight leading-none">
