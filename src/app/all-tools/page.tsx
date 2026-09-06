@@ -213,8 +213,8 @@ export default function AllToolsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4 w-full max-w-4xl mx-auto">
-                <div className="w-full bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 overflow-hidden">
+            <div className="relative flex justify-center items-center w-full max-w-4xl mx-auto">
+                <div className="w-full sm:w-auto bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 overflow-hidden">
                     <div className="flex items-center sm:justify-center space-x-1 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
                       {CATEGORIES.map((cat) => (
                         <button
@@ -232,7 +232,7 @@ export default function AllToolsPage() {
                     </div>
                 </div>
 
-                 <div className="flex-shrink-0 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 flex items-center justify-self-center sm:justify-self-end">
+                 <div className="absolute right-0 top-1/2 -translate-y-1/2 h-full flex items-center bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10">
                    <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'grid' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><LayoutGrid className="w-5 h-5" /></button>
                    <button onClick={() => setViewMode('list')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'list' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><List className="w-5 h-5" /></button>
                 </div>
