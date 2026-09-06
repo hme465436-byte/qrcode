@@ -82,11 +82,14 @@ export function Hero() {
               <span className="text-[9px] font-black uppercase tracking-[0.4em] text-white/70">120+ free tools</span>
            </div>
 
-           {/* Linguistic Secondary Headers */}
-           <div className="flex items-center gap-8 animate-reveal stagger-1">
-              <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Free online tools</span>
-              <div className="w-1 h-1 rounded-full bg-white/5" />
-              <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Free AI tools</span>
+           {/* Linguistic Secondary Headers in Cards */}
+           <div className="flex items-center gap-3 animate-reveal stagger-1">
+              <div className="px-3 py-1.5 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl">
+                <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Free online tools</span>
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-2xl">
+                <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Free AI tools</span>
+              </div>
            </div>
         </div>
         
@@ -102,11 +105,9 @@ export function Hero() {
 
         {/* Integrated Discovery Node (Search) */}
         <div className="w-full max-w-lg animate-reveal stagger-3 px-4 relative">
-          {/* Lighter always-on luxury glow background */}
           <div className="absolute -inset-6 bg-primary/10 blur-[40px] rounded-full pointer-events-none opacity-40 animate-search-glow" />
           
           <form onSubmit={handleSearch} className="relative group/search">
-            {/* Slimmer Search Field Container */}
             <div className="relative flex items-center bg-black/60 backdrop-blur-3xl border border-primary/30 rounded-full h-14 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8)] transition-all group-focus-within/search:border-primary">
                <Search className="absolute left-6 w-3.5 h-3.5 text-primary/40 group-focus-within/search:text-primary transition-colors" />
                <Input 
