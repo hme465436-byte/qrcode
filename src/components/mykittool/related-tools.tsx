@@ -105,7 +105,6 @@ const TOOL_DETAILS: Record<string, { title: string, desc: string, icon: any }> =
   '/file-compressor': { title: 'File Compressor', desc: 'Browser-side size reduction.', icon: FileArchive },
   '/markdown-preview': { title: 'MD Preview', desc: 'Real-time markup synthesis.', icon: FileEdit },
   '/code-preview': { title: 'Code Preview', desc: 'Sandboxed dev environment.', icon: Monitor },
-  '/audio-booster-v2': { title: 'Audio Booster', desc: 'Amplify signal intensity.', icon: Volume2 }
 };
 
 const FALLBACK_TOOLS = ['/ai-chatbot', '/ai-resume-builder', '/all-tools'];
