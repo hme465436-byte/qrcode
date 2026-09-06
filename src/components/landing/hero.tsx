@@ -1,51 +1,53 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, PlayCircle } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Hero() {
   return (
-    <section className="relative w-full h-screen min-h-[700px] flex items-center justify-center bg-gradient-to-b from-[#030712] to-[#0F172A] text-white overflow-hidden">
+    <section className="relative w-full h-[90vh] min-h-[600px] flex items-center justify-center bg-[#020617] text-white overflow-hidden">
+      {/* Premium Atmospheric Depth */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-blue-500/30 to-purple-500/30 rounded-full animate-pulse blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-cyan-400/20 to-indigo-500/20 rounded-full animate-pulse-slow blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-tl from-rose-400/20 to-orange-500/20 rounded-full animate-pulse-slower blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 w-[1000px] h-[1000px] bg-primary/10 rounded-full blur-[120px] transform -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,rgba(255,255,255,0.03)_1px,transparent_0)] bg-[size:40px_40px] pointer-events-none" />
       </div>
 
-      <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
-        <div className="inline-block mb-6">
-            <div className="px-4 py-2 text-sm font-semibold text-cyan-300 bg-cyan-900/50 border border-cyan-400/30 rounded-full backdrop-blur-sm">
-                120+ Free Tools Now Available
+      <div className="relative z-10 text-center max-w-5xl mx-auto px-6 space-y-10">
+        <div className="inline-block animate-reveal">
+            <div className="px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-primary bg-primary/5 border border-primary/20 rounded-full backdrop-blur-md shadow-2xl">
+                120+ Pro Utility Units Active
             </div>
         </div>
         
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 leading-tight">
-          The Ultimate Free
-          <br />
-          Online Tool Studio
+        <h1 className="text-5xl md:text-8xl font-headline font-black tracking-tighter leading-[0.95] text-foreground animate-reveal stagger-1">
+          Free AI, PDF <br />
+          <span className="text-primary italic">and Image tools</span>
         </h1>
         
-        <p className="mt-6 text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
-          Access 120+ professional-grade tools for AI, PDF, Image, Video & more. 100% browser-based, zero registration, complete privacy.
+        <p className="max-w-2xl mx-auto text-sm md:text-lg text-foreground/40 font-medium leading-relaxed uppercase tracking-widest animate-reveal stagger-2">
+          High-performance digital production units. 100% browser-side synthesis with absolute privacy and zero-latency hardware access.
         </p>
         
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button asChild size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 hover:scale-105 transition-transform duration-300">
-            <Link href="/all-tools">Explore All Tools <ArrowRight className="w-5 h-5 ml-2" /></Link>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="h-14 px-8 text-lg font-bold rounded-full border-2 border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 hover:border-white/30 transition-all duration-300">
-            <Link href="#">
-              <PlayCircle className="w-5 h-5 mr-2" />
-              View Demo
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4 animate-reveal stagger-3">
+          <Button asChild size="lg" className="h-16 px-10 text-xs font-black uppercase tracking-[0.2em] rounded-2xl bg-primary text-white shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all duration-500">
+            <Link href="/all-tools">
+              Explore all tools 
+              <ArrowRight className="w-4 h-4 ml-3" />
             </Link>
           </Button>
-        </div>
-        
-        <div className="mt-10 flex items-center justify-center gap-x-8 text-sm text-gray-500 font-medium">
-            <span className="flex items-center gap-2">✓ 100% Free</span>
-            <span className="flex items-center gap-2">✓ No Login Required</span>
-            <span className="flex items-center gap-2">✓ Secure & Private</span>
+          
+          <div className="flex items-center gap-6 px-8 h-16 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-xl">
+             <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Secure Node</span>
+             </div>
+             <div className="w-[1px] h-4 bg-white/10" />
+             <div className="flex items-center gap-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-primary/40" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Local Only</span>
+             </div>
+          </div>
         </div>
       </div>
     </section>
