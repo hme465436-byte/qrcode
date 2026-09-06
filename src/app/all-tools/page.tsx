@@ -188,7 +188,7 @@ export default function AllToolsPage() {
           </div>
 
           <div className="sticky top-5 z-30 mb-12 space-y-4">
-            <div className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 max-w-2xl mx-auto shadow-2xl shadow-primary/10">
+            <div className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 w-full max-w-4xl mx-auto shadow-2xl shadow-primary/10">
               <div className="relative w-full">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
                   <Input
@@ -201,24 +201,26 @@ export default function AllToolsPage() {
               </div>
             </div>
 
-            <div className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 max-w-2xl mx-auto shadow-2xl shadow-primary/10 flex items-center justify-between">
-                <div className="flex items-center space-x-1">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors duration-300 whitespace-nowrap",
-                        activeCategory === cat.id ? "bg-primary text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
-                      )}
-                    >
-                      <cat.icon className="w-4 h-4" />
-                      <span>{cat.label}</span>
-                    </button>
-                  ))}
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-4xl mx-auto">
+                <div className="w-full sm:flex-grow bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 overflow-hidden">
+                    <div className="flex items-center space-x-1 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+                      {CATEGORIES.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => setActiveCategory(cat.id)}
+                          className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 whitespace-nowrap",
+                            activeCategory === cat.id ? "bg-primary text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                          )}
+                        >
+                          <cat.icon className="w-4 h-4" />
+                          <span>{cat.label}</span>
+                        </button>
+                      ))}
+                    </div>
                 </div>
 
-                 <div className="flex items-center p-1 rounded-full bg-black/20 border border-white/10">
+                 <div className="flex-shrink-0 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 flex items-center">
                    <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'grid' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><LayoutGrid className="w-5 h-5" /></button>
                    <button onClick={() => setViewMode('list')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'list' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><List className="w-5 h-5" /></button>
                 </div>
