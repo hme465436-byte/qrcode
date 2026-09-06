@@ -2,6 +2,7 @@ import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Navbar } from '@/components/mykittool/navbar';
 import { ToolNav } from '@/components/mykittool/tool-nav';
+import { RelatedTools } from '@/components/mykittool/related-tools';
 import { Footer } from '@/components/mykittool/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { FeedbackRow } from '@/components/mykittool/feedback-row';
@@ -72,6 +73,9 @@ export default function RootLayout({
                 <KitRouter>
                   {children}
                 </KitRouter>
+              </Suspense>
+              <Suspense fallback={null}>
+                <RelatedTools />
               </Suspense>
             </div>
             <FeedbackRow />
