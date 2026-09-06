@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -16,7 +16,8 @@ import {
   FileText,
   User,
   Clock,
-  ExternalLink
+  ChevronRight,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,6 +29,7 @@ interface BlogPost {
   icon: any;
   toolUrl: string;
   toolLabel: string;
+  category: 'PDF' | 'Image' | 'AI';
   steps: string[];
   tips: string[];
 }
@@ -36,6 +38,7 @@ const POSTS: Record<string, BlogPost> = {
   'remove-background-free': {
     title: 'Remove Background from Image Free',
     subtitle: 'High-fidelity subject isolation via neural extraction nodes.',
+    category: 'Image',
     icon: Eraser,
     toolUrl: '/background-remove',
     toolLabel: 'Launch Background Remover',
@@ -55,6 +58,7 @@ const POSTS: Record<string, BlogPost> = {
   'merge-pdf-online': {
     title: 'Merge PDF Files Online',
     subtitle: 'Clinical document unification with zero-latency P2P logic.',
+    category: 'PDF',
     icon: Layers,
     toolUrl: '/pdf-merger',
     toolLabel: 'Launch PDF Merger',
@@ -74,6 +78,7 @@ const POSTS: Record<string, BlogPost> = {
   'compress-pdf-online': {
     title: 'Compress PDF Files Locally',
     subtitle: 'Optimize document volume through structural dictionary minification.',
+    category: 'PDF',
     icon: Archive,
     toolUrl: '/pdf-compressor',
     toolLabel: 'Launch PDF Compressor',
@@ -93,6 +98,7 @@ const POSTS: Record<string, BlogPost> = {
   'image-to-pdf': {
     title: 'Convert Images to PDF Master',
     subtitle: 'Professional visual-to-document wrap with 1:1 pixel mapping.',
+    category: 'PDF',
     icon: FileText,
     toolUrl: '/image-to-pdf',
     toolLabel: 'Launch Image to PDF',
@@ -112,6 +118,7 @@ const POSTS: Record<string, BlogPost> = {
   'ai-resume-free': {
     title: 'Make a Resume with AI',
     subtitle: 'Forging professional identities via high-entropy linguistic synthesis.',
+    category: 'AI',
     icon: User,
     toolUrl: '/ai-resume-builder',
     toolLabel: 'Launch Resume Builder',
@@ -135,11 +142,18 @@ export default function BlogPostPage() {
   const router = useRouter();
   const post = POSTS[slug as string];
 
+  const relatedGuides = useMemo(() => {
+    if (!post) return [];
+    return Object.entries(POSTS)
+      .filter(([key, p]) => key !== slug && p.category === post.category)
+      .slice(0, 3);
+  }, [slug, post]);
+
   if (!post) {
     return (
       <div className="container mx-auto px-6 py-32 text-center">
         <h1 className="text-2xl font-black text-foreground/40 uppercase">Node Not Found</h1>
-        <Button asChild className="mt-8">
+        <Button asChild className="mt-8 h-12 px-8 rounded-xl bg-primary text-white">
            <Link href="/blog">Back to Registry</Link>
         </Button>
       </div>
@@ -147,7 +161,7 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="container mx-auto px-6 py-12 md:py-24 max-w-4xl">
+    <div className="container mx-auto px-6 py-12 md:py-24 max-w-5xl">
       {/* Back Protocol */}
       <div className="mb-16 animate-reveal">
         <button 
@@ -161,19 +175,23 @@ export default function BlogPostPage() {
            <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shrink-0">
               <post.icon className="w-10 h-10" />
            </div>
-           <div className="space-y-2">
-              <h1 className="text-4xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight leading-none">{post.title}</h1>
-              <p className="text-sm md:text-base text-foreground/40 font-medium uppercase tracking-widest">{post.subtitle}</p>
+           <div className="space-y-2 min-w-0">
+              <h1 className="text-4xl md:text-6xl font-headline font-black text-foreground uppercase tracking-tight leading-none truncate">{post.title}</h1>
+              <div className="flex items-center gap-4">
+                 <p className="text-[10px] font-black text-primary uppercase tracking-widest">{post.category} PROTOCOL</p>
+                 <span className="text-white/10">•</span>
+                 <p className="text-sm text-foreground/40 font-medium uppercase tracking-widest">{post.subtitle}</p>
+              </div>
            </div>
         </div>
 
         <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent mb-12" />
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start mb-32">
            <div className="md:col-span-8 space-y-12">
               <div className="space-y-8">
                  <h3 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary" /> Execution Protocol
+                    <CheckCircle2 className="w-5 h-5 text-primary" /> How to use
                  </h3>
                  <div className="space-y-6">
                     {post.steps.map((step, i) => (
@@ -200,13 +218,13 @@ export default function BlogPostPage() {
               <Card className="glass-card p-8 border-border rounded-[2.5rem] bg-black/20">
                  <div className="space-y-6">
                     <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2">
-                       <Zap className="w-3.5 h-3.5" /> Studio Tips
+                       <Zap className="w-3.5 h-3.5" /> Quick Tips
                     </h4>
                     <ul className="space-y-4">
                        {post.tips.map((tip, i) => (
                          <li key={i} className="flex items-start gap-3">
                             <ArrowRight className="w-3 h-3 text-primary mt-1 shrink-0" />
-                            <span className="text-[11px] font-bold text-foreground/40 leading-relaxed uppercase tracking-tighter">{tip}</span>
+                            <span className="text-[10px] font-bold text-foreground/40 leading-relaxed uppercase tracking-tighter">{tip}</span>
                          </li>
                        ))}
                     </ul>
@@ -217,20 +235,54 @@ export default function BlogPostPage() {
                  <div className="flex items-center gap-4">
                     <ShieldCheck className="w-10 h-10 text-primary/40 shrink-0" />
                     <div className="space-y-0.5">
-                       <p className="text-[10px] font-black uppercase text-foreground leading-none">Privacy Sovereign</p>
+                       <p className="text-[10px] font-black uppercase text-foreground leading-none">Privacy First</p>
                        <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">100% Local Production</p>
                     </div>
                  </div>
                  <div className="flex items-center gap-4">
                     <Clock className="w-10 h-10 text-primary/40 shrink-0" />
                     <div className="space-y-0.5">
-                       <p className="text-[10px] font-black uppercase text-foreground leading-none">Instant Handshake</p>
-                       <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">Zero latency encoding</p>
+                       <p className="text-[10px] font-black uppercase text-foreground leading-none">Fast & Easy</p>
+                       <p className="text-[8px] font-bold text-foreground/20 uppercase tracking-widest">No waiting in line</p>
                     </div>
                  </div>
               </div>
            </aside>
         </div>
+
+        {/* Related Section */}
+        {relatedGuides.length > 0 && (
+          <section className="pt-20 border-t border-white/5 space-y-12 animate-in fade-in duration-1000">
+             <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                   <BookOpen className="w-5 h-5" />
+                </div>
+                <div className="space-y-0.5">
+                   <h3 className="text-xl font-headline font-black text-foreground uppercase tracking-tight">You might also like</h3>
+                   <p className="text-[9px] font-black text-foreground/20 uppercase tracking-[0.3em]">Related Protocols</p>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {relatedGuides.map(([rSlug, rPost]) => (
+                  <Link key={rSlug} href={`/blog/${rSlug}`} className="group block">
+                    <Card className="glass-card p-8 rounded-[2.5rem] bg-white/[0.01] border-white/5 hover:border-primary/30 transition-all flex flex-col h-full gap-6">
+                       <div className="flex items-center justify-between">
+                          <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-primary/40 group-hover:text-primary transition-all">
+                             <rPost.icon className="w-6 h-6" />
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-white/10 group-hover:text-primary transition-all" />
+                       </div>
+                       <div className="space-y-2">
+                          <h4 className="text-lg font-headline font-black text-foreground uppercase leading-tight group-hover:text-primary transition-colors">{rPost.title}</h4>
+                          <p className="text-[10px] text-foreground/30 font-medium uppercase tracking-widest line-clamp-2">{rPost.subtitle}</p>
+                       </div>
+                    </Card>
+                  </Link>
+                ))}
+             </div>
+          </section>
+        )}
       </div>
     </div>
   );
