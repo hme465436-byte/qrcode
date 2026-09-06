@@ -99,7 +99,7 @@ export function Hero() {
           <form onSubmit={handleSearch} className="relative group/search">
             {/* Slimmer Search Field Container */}
             <div className="relative flex items-center bg-black/60 backdrop-blur-3xl border border-primary/30 rounded-full h-14 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8)] transition-all group-focus-within/search:border-primary">
-               <Search className="absolute left-6 w-4 h-4 text-primary/40 group-focus-within/search:text-primary transition-colors" />
+               <Search className="absolute left-6 w-3.5 h-3.5 text-primary/40 group-focus-within/search:text-primary transition-colors" />
                <Input 
                 value={query}
                 onChange={e => setQuery(e.target.value)}
@@ -108,7 +108,7 @@ export function Hero() {
                />
                <div className="absolute right-1.5">
                   <Button type="submit" size="icon" className="h-11 w-11 rounded-full bg-white text-black hover:bg-white/90 shadow-xl transition-all active:scale-95 border-none">
-                     <Search className="w-4 h-4" />
+                     <Search className="w-3.5 h-3.5" />
                   </Button>
                </div>
             </div>
