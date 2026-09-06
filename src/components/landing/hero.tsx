@@ -75,20 +75,20 @@ export function Hero() {
       </div>
 
       <div className="relative z-10 w-full max-w-5xl mx-auto px-6 flex flex-col items-center text-center space-y-12">
-        <div className="flex flex-wrap items-center justify-center gap-2 animate-reveal">
+        <div className="flex flex-wrap items-center justify-center gap-3 animate-reveal">
            {/* Primary Brand Badge */}
-           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-3xl shadow-lg shadow-primary/5 transition-all hover:border-primary/50 group/badge cursor-default whitespace-nowrap">
+           <div className="inline-flex h-6 items-center gap-1.5 px-3 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-3xl shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all hover:border-primary/50 group/badge cursor-default whitespace-nowrap">
               <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
               <span className="text-[8px] font-black uppercase tracking-widest text-primary">120+ free tools</span>
            </div>
 
            {/* Secondary Identity Badges */}
-           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/[0.03] border border-primary/20 backdrop-blur-3xl transition-all hover:border-primary/40 group/pill cursor-default whitespace-nowrap">
-              <span className="text-[8px] font-black uppercase tracking-widest text-white/30 group-hover:pill:text-white/60 transition-colors">Free online tools</span>
+           <div className="inline-flex h-6 items-center px-3 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-3xl shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all hover:border-primary/30 group/pill cursor-default whitespace-nowrap">
+              <span className="text-[8px] font-black uppercase tracking-widest text-white/30 group-hover/pill:text-white/60 transition-colors">Free online tools</span>
            </div>
            
-           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/[0.03] border border-primary/20 backdrop-blur-3xl transition-all hover:border-primary/40 group/pill cursor-default whitespace-nowrap">
-              <span className="text-[8px] font-black uppercase tracking-widest text-white/30 group-hover:pill:text-white/60 transition-colors">Free AI tools</span>
+           <div className="inline-flex h-6 items-center px-3 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-3xl shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all hover:border-primary/30 group/pill cursor-default whitespace-nowrap">
+              <span className="text-[8px] font-black uppercase tracking-widest text-white/30 group-hover/pill:text-white/60 transition-colors">Free AI tools</span>
            </div>
         </div>
         
