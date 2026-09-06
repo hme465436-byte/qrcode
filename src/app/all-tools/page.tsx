@@ -215,7 +215,7 @@ export default function AllToolsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4 w-full max-w-4xl mx-auto">
                 <div className="w-full bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10 overflow-hidden">
-                    <div className="flex items-center space-x-1 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+                    <div className="flex items-center sm:justify-center space-x-1 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
                       {CATEGORIES.map((cat) => (
                         <button
                           key={cat.id}
