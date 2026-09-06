@@ -15,7 +15,6 @@ interface Tool {
   icon: React.ElementType;
 }
 
-// The full list of 120+ tools, now with categories and icons.
 const TOOLS: Tool[] = [
   // AI Tools
   { href: '/ai-chatbot', title: 'AI Chatbot', desc: 'Chat with a fast AI assistant.', category: 'AI', icon: BrainCircuit },
@@ -234,22 +233,24 @@ export default function AllToolsPage() {
             {filteredTools.map(tool => (
                 <a href={tool.href} key={tool.href} className="block group">
                     {viewMode === 'grid' ? (
-                        <div className="group relative h-full p-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl transition-all duration-300 ease-in-out hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
-                           <div className="absolute inset-0 rounded-2xl transition-all duration-300 group-hover:bg-gradient-to-t from-primary/10 to-transparent"></div>
-                           <div className="relative">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800/80 border border-white/10",
-                                        tool.category === 'AI' && 'text-cyan-400',
-                                        tool.category === 'Image' && 'text-pink-400',
-                                        tool.category === 'File' && 'text-yellow-400',
-                                        tool.category === 'Other' && 'text-green-400',
-                                    )}>
-                                        <tool.icon size={20} />
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-500 group-hover:text-primary transition-colors duration-300">Open</span>
+                        <div className="group relative flex flex-col justify-between h-full p-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl transition-all duration-300 ease-in-out hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
+                            <div className="absolute inset-0 rounded-2xl transition-all duration-300 group-hover:bg-gradient-to-t from-primary/10 to-transparent"></div>
+                            <div className="relative">
+                                <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800/80 border border-white/10 mb-4",
+                                    tool.category === 'AI' && 'text-cyan-400',
+                                    tool.category === 'Image' && 'text-pink-400',
+                                    tool.category === 'File' && 'text-yellow-400',
+                                    tool.category === 'Other' && 'text-green-400',
+                                )}>
+                                    <tool.icon size={20} />
                                 </div>
                                 <h3 className="font-semibold text-lg text-white">{tool.title}</h3>
                                 <p className="mt-2 text-gray-400 text-sm line-clamp-2 leading-relaxed">{tool.desc}</p>
+                            </div>
+                            <div className="relative mt-4">
+                                <span className="text-sm font-medium text-primary transition-colors duration-300 flex items-center gap-1">
+                                    Open <ArrowRight size={14} />
+                                </span>
                            </div>
                         </div>
                     ) : (
