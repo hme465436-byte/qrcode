@@ -1,4 +1,3 @@
-
 import { MetadataRoute } from 'next';
 
 const toolHrefs = [
@@ -130,7 +129,8 @@ const blogHrefs = [
   '/blog/merge-pdf-online',
   '/blog/compress-pdf-online',
   '/blog/image-to-pdf',
-  '/blog/ai-resume-free'
+  '/blog/ai-resume-free',
+  '/blog/ai-email-writer-guide'
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
