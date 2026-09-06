@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Search, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { SpaceBackground } from '@/components/mykittool/space-background';
 import { cn } from '@/lib/utils';
 
 export function Hero() {
@@ -83,10 +82,9 @@ export function Hero() {
 
   return (
     <section className="relative w-full min-h-[75vh] flex flex-col items-center justify-center bg-[#02040a] text-white overflow-hidden pt-20 pb-12">
-      {/* Premium Atmospheric Depth & Particles */}
+      {/* Premium Atmospheric Depth */}
       <div className="absolute inset-0 z-0">
-        <SpaceBackground />
-        {/* Animated Luxury Glow - Reduced complexity for LCP */}
+        {/* Static Luxury Glow */}
         <div className="absolute top-1/2 left-1/2 w-[1000px] h-[600px] bg-primary/5 rounded-full blur-[150px] transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-40" />
       </div>
 
