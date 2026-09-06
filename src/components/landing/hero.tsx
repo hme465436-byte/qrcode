@@ -28,7 +28,7 @@ export function Hero() {
         {/* Subtle Brand Identifier */}
         <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/[0.02] border border-white/5 backdrop-blur-3xl animate-reveal shadow-2xl">
            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-           <span className="text-[9px] font-black uppercase tracking-[0.5em] text-white/40">Studio Standard</span>
+           <span className="text-[9px] font-black uppercase tracking-[0.5em] text-white/40">120+ Pro Utility Units</span>
         </div>
         
         {/* Refined Luxury Title */}
