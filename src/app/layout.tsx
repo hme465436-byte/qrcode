@@ -9,7 +9,6 @@ import { FeedbackRow } from '@/components/mykittool/feedback-row';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Suspense } from 'react';
 import { KitRouter } from '@/components/mykittool/kit-router';
-import { FloatingActionHub } from '@/components/mykittool/floating-action-hub';
 import { UsageTracker } from '@/components/mykittool/usage-tracker';
 
 export const viewport: Viewport = {
@@ -83,7 +82,6 @@ export default function RootLayout({
             <FeedbackRow />
           </main>
           <Footer />
-          <FloatingActionHub />
           <Toaster />
         </FirebaseClientProvider>
       </body>

@@ -258,6 +258,7 @@ export function FloatingActionHub() {
                   onMouseUp={(e) => handleEnd(e, false, s, i)}
                   onTouchStart={(e) => !isOpen ? handleStart(e) : startSlotLongPress(i)}
                   onTouchEnd={(e) => handleEnd(e, false, s, i)}
+                  aria-label={tool ? `Open ${tool.label}` : `Assign tool to slot ${i + 1}`}
                   className={cn(
                     "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-2xl border active:scale-90",
                     s ? "bg-white dark:bg-card border-white/10 text-primary hover:border-primary/40" : "bg-white/10 backdrop-blur-xl border-dashed border-white/20 text-white/20 hover:border-primary/40 hover:text-primary"
@@ -269,8 +270,8 @@ export function FloatingActionHub() {
                 {/* DELETE PROTOCOL OVERLAY */}
                 {deleteConfirmIdx === i && (
                   <div className="absolute inset-0 bg-black/95 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center gap-2 z-10 animate-in zoom-in duration-200">
-                     <button onClick={() => removeTool(i)} className="p-1 text-emerald-500 hover:scale-125 transition-transform"><Check className="w-4 h-4" /></button>
-                     <button onClick={() => setDeleteConfirmIdx(null)} className="p-1 text-red-500 hover:scale-125 transition-transform"><X className="w-4 h-4" /></button>
+                     <button onClick={() => removeTool(i)} className="p-1 text-emerald-500 hover:scale-125 transition-transform" aria-label="Confirm Remove"><Check className="w-4 h-4" /></button>
+                     <button onClick={() => setDeleteConfirmIdx(null)} className="p-1 text-red-500 hover:scale-125 transition-transform" aria-label="Cancel Remove"><X className="w-4 h-4" /></button>
                   </div>
                 )}
               </div>
@@ -285,6 +286,7 @@ export function FloatingActionHub() {
              onMouseUp={(e) => handleEnd(e, true)}
              onTouchStart={handleStart}
              onTouchEnd={(e) => handleEnd(e, true)}
+             aria-label="Open Studio AI Assistant or Hub"
              className={cn(
                "w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-500 shadow-[0_20px_50px_rgba(37,99,235,0.4)] active:scale-95 overflow-hidden",
                isOpen ? "bg-white text-black rotate-45" : "bg-primary text-white"
@@ -324,6 +326,7 @@ export function FloatingActionHub() {
                     placeholder="Search studio registry..."
                     className="h-14 pl-12 bg-secondary/50 border-white/10 text-xs font-bold uppercase rounded-2xl shadow-inner"
                     autoFocus
+                    aria-label="Filter tool registry"
                   />
                </div>
                {activeSlotIdx !== null && slots[activeSlotIdx] && (
@@ -343,6 +346,7 @@ export function FloatingActionHub() {
                    key={t.id}
                    onClick={() => pickTool(t.id)}
                    className="p-5 rounded-[2rem] bg-white/[0.03] border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all text-left group/item flex flex-col gap-4"
+                   aria-label={`Select ${t.label}`}
                  >
                     <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-primary/30 group-hover/item:text-primary transition-all shadow-inner">
                        <t.icon className="w-5 h-5" />

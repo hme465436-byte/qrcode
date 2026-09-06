@@ -23,7 +23,6 @@ import {
   Fingerprint
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { QrScannerModal } from './qr-scanner-modal';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import {
@@ -35,6 +34,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from '@/components/ui/button';
+import dynamic from 'next/dynamic';
+
+const QrScannerModal = dynamic(() => import('./qr-scanner-modal').then(mod => mod.QrScannerModal), {
+  ssr: false,
+});
 
 /**
  * Static Logo Component
@@ -93,7 +97,7 @@ export function Navbar() {
     <>
       <header className="fixed top-0 left-0 right-0 z-[100] w-full max-w-full overflow-hidden border-b border-white/5 bg-background/80 backdrop-blur-xl h-16 transition-all duration-300">
         <div className="container mx-auto px-3 sm:px-4 md:px-6 h-full flex items-center justify-between gap-1 sm:gap-4 max-w-full box-border">
-          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group transition-transform active:scale-95 min-w-0">
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group transition-transform active:scale-95 min-w-0" aria-label="My Kit Tool Home">
             <Logo />
           </Link>
           
@@ -121,6 +125,7 @@ export function Navbar() {
                 pathname === '/about' ? "text-primary border-primary/20" : "text-foreground/40"
               )}
               title="About Studio"
+              aria-label="About My Kit Tool"
              >
                 <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d" />
              </Link>
@@ -132,6 +137,7 @@ export function Navbar() {
                 pathname === '/donate' ? "text-primary border-primary/20" : "text-foreground/40"
               )}
               title="Support Developer"
+              aria-label="Support the Developer"
              >
                 <Coffee className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d" />
              </Link>
@@ -142,7 +148,10 @@ export function Navbar() {
                  {user ? (
                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-2 px-3 h-8 sm:h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary transition-all hover:bg-primary/20 icon-container-3d">
+                        <button 
+                          className="flex items-center gap-2 px-3 h-8 sm:h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary transition-all hover:bg-primary/20 icon-container-3d"
+                          aria-label="User Account Menu"
+                        >
                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d" />
                            <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Account</span>
                         </button>
@@ -168,6 +177,7 @@ export function Navbar() {
                    <Link 
                     href="/login"
                     className="flex items-center gap-2 px-2 sm:px-5 h-8 sm:h-10 rounded-xl bg-white/5 border border-white/10 text-foreground/40 hover:text-primary hover:bg-white/10 transition-all shadow-xl icon-container-3d"
+                    aria-label="Login to your account"
                    >
                       <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
                       <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest">Account</span>
@@ -180,6 +190,7 @@ export function Navbar() {
              <button 
                 onClick={() => setIsScannerOpen(true)}
                 className="flex items-center justify-center sm:gap-2 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] w-8 h-8 sm:w-auto sm:px-5 sm:py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 icon-container-3d"
+                aria-label="Open QR Scanner"
              >
               <Scan className="w-3.5 h-3.5 sm:w-4 sm:h-4 icon-3d" />
               <span className="hidden sm:inline">Scanner</span>
@@ -188,7 +199,7 @@ export function Navbar() {
         </div>
       </header>
 
-      <QrScannerModal isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} />
+      {isScannerOpen && <QrScannerModal isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} />}
     </>
   );
 }
