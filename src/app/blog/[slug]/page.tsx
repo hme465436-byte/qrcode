@@ -1,6 +1,7 @@
+
 "use client"
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -24,8 +25,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface BlogPost {
-  title: string;
+  seoTitle: string;
+  h1: string;
   subtitle: string;
+  intro: string;
   icon: any;
   toolUrl: string;
   toolLabel: string;
@@ -36,18 +39,19 @@ interface BlogPost {
 
 const POSTS: Record<string, BlogPost> = {
   'remove-background-free': {
-    title: 'Remove Image Background',
-    subtitle: 'High-fidelity subject isolation via neural extraction nodes.',
+    seoTitle: 'How to remove background from an image for free | My Kit Tool',
+    h1: 'Remove Image Background for Free',
+    subtitle: 'Isolate subjects instantly with high-fidelity neural extraction.',
+    intro: 'Removing backgrounds is essential for creating professional product photos, transparent logos, and creative composites. Our studio uses advanced local processing to ensure your images are sanitized without losing quality.',
     category: 'Image',
     icon: Eraser,
     toolUrl: '/background-remove',
-    toolLabel: 'Launch Background Remover',
+    toolLabel: 'Initialize Background Remover',
     steps: [
-      'Select or drop your visual asset into the "Inbound Matrix" viewport.',
-      'Initialize a session (Auth required) to maintain registry privacy.',
-      'Click "Execute Extraction" to trigger the neural isolation node.',
-      'Review the sanitized master in the A/B comparison visualization.',
-      'Download the final master as a high-fidelity transparent PNG.'
+      'Import or drop your visual asset into the "Inbound Matrix" viewport.',
+      'Initialize your session to maintain local registry privacy.',
+      'Execute the neural isolation protocol to strip the background.',
+      'Download your final master as a high-fidelity transparent PNG.'
     ],
     tips: [
       'High-contrast lighting yields the most accurate extraction.',
@@ -56,18 +60,19 @@ const POSTS: Record<string, BlogPost> = {
     ]
   },
   'merge-pdf-online': {
-    title: 'Merge PDF Files Online',
-    subtitle: 'Clinical document unification with zero-latency P2P logic.',
+    seoTitle: 'How to merge PDF files online | My Kit Tool',
+    h1: 'Merge PDF Files Online',
+    subtitle: 'Combine multiple documents into one professional PDF master.',
+    intro: 'Unified documentation is key for professional reporting and archival. Our merger utility allows you to organize multiple PDF files into a single, cohesive document with zero-latency local logic.',
     category: 'PDF',
     icon: Layers,
     toolUrl: '/pdf-merger',
-    toolLabel: 'Launch PDF Merger',
+    toolLabel: 'Initialize PDF Merger',
     steps: [
       'Drop your PDF documents into the "Sequence Manager" buffer.',
-      'Rearrange the page matrix using the Up/Down arrow protocols.',
-      'Click "Merge Documents" to begin the binary unification cycle.',
-      'Monitor the progress bar as WASM synthesizes the master file.',
-      'Save the unified document master directly to your local storage.'
+      'Arrange the document matrix using the reordering controls.',
+      'Execute the merge protocol to unify the binary data.',
+      'Save the final unified PDF master directly to your device.'
     ],
     tips: [
       'The engine preserves original resolution and metadata.',
@@ -76,18 +81,19 @@ const POSTS: Record<string, BlogPost> = {
     ]
   },
   'compress-pdf-online': {
-    title: 'Compress PDF Files Locally',
-    subtitle: 'Optimize document volume through structural dictionary minification.',
+    seoTitle: 'How to compress a PDF file | My Kit Tool',
+    h1: 'Compress PDF Files Online',
+    subtitle: 'Reduce document size via structural dictionary minification.',
+    intro: 'Large PDF files can be difficult to share or upload. Our compression studio optimizes your document volume by cleaning internal metadata and compacting the file structure locally.',
     category: 'PDF',
     icon: Archive,
     toolUrl: '/pdf-compressor',
-    toolLabel: 'Launch PDF Compressor',
+    toolLabel: 'Initialize PDF Compressor',
     steps: [
       'Inject your PDF payload into the "Production Pipeline" zone.',
-      'Select your compression protocol (Eco, Standard, or Intensive).',
-      'Execute the "Purge" command to start structural optimization.',
-      'Review the "Reduction Analytics" for final volume savings.',
-      'Download the sanitized and optimized PDF master.'
+      'Select a compression protocol (Eco, Standard, or Intensive).',
+      'Execute the purge command to start structural optimization.',
+      'Download the optimized PDF master with reduced file size.'
     ],
     tips: [
       'Intensive mode removes unreferenced objects for max savings.',
@@ -96,18 +102,19 @@ const POSTS: Record<string, BlogPost> = {
     ]
   },
   'image-to-pdf': {
-    title: 'Convert Images to PDF Master',
+    seoTitle: 'How to convert images to PDF | My Kit Tool',
+    h1: 'Convert Images to PDF Master',
     subtitle: 'Professional visual-to-document wrap with 1:1 pixel mapping.',
+    intro: 'Transforming photos into a document format is perfect for portfolios, reports, and digital books. This tool wraps your images into a high-resolution PDF while maintaining original visual fidelity.',
     category: 'PDF',
     icon: FileText,
     toolUrl: '/image-to-pdf',
-    toolLabel: 'Launch Image to PDF',
+    toolLabel: 'Initialize Image to PDF',
     steps: [
       'Drop JPG, PNG, or WebP files into the "Visual Payload" area.',
-      'Set your "Page Architecture" (Dynamic Fit or ISO A4).',
-      'Organize the image stack in the queue pipeline.',
-      'Click "Synthesize PDF" to render the document matrix.',
-      'Save the final multi-page PDF master.'
+      'Configure your page architecture as Dynamic Fit or ISO A4.',
+      'Synthesize the PDF to render the document matrix.',
+      'Export and save the final multi-page PDF master.'
     ],
     tips: [
       'Use 300 DPI settings for high-resolution print compatibility.',
@@ -116,17 +123,18 @@ const POSTS: Record<string, BlogPost> = {
     ]
   },
   'ai-resume-free': {
-    title: 'Make a Resume with AI',
-    subtitle: 'Forging professional identities via high-entropy linguistic synthesis.',
+    seoTitle: 'How to make a resume with AI | My Kit Tool',
+    h1: 'Create a Professional Resume with AI',
+    subtitle: 'Forging career identities via high-entropy linguistic synthesis.',
+    intro: 'A well-structured resume is the foundation of professional growth. Our AI-driven builder uses impactful action verbs and achieves consistent formatting to pass automated screening nodes.',
     category: 'AI',
     icon: User,
     toolUrl: '/ai-resume-builder',
-    toolLabel: 'Launch Resume Builder',
+    toolLabel: 'Initialize Resume Builder',
     steps: [
-      'Populate the "Identity Matrix" with your skills and work history.',
-      'Select a "Linguistic Tone" (Professional, Simple, or Strong).',
-      'Execute the synthesis to generate the draft content.',
-      'Review and refine the text in the "Executive Editor" viewport.',
+      'Populate the identity matrix with your skills and work history.',
+      'Select your preferred tone (Professional, Simple, or Strong).',
+      'Execute the AI synthesis to generate your draft content.',
       'Export the finalized resume as a print-ready PDF master.'
     ],
     tips: [
@@ -136,18 +144,19 @@ const POSTS: Record<string, BlogPost> = {
     ]
   },
   'ai-email-writer-guide': {
-    title: 'Write Emails with AI',
-    subtitle: 'Compose professional communications via high-fidelity synthesis.',
+    seoTitle: 'How to write an email with AI | My Kit Tool',
+    h1: 'Write Professional Emails with AI',
+    subtitle: 'Compose executive communications via high-fidelity synthesis.',
+    intro: 'Writing clear, concise emails can take time. Our AI email studio drafts professional messages for any purpose, from job applications to client follow-ups, with precision tone control.',
     category: 'AI',
     icon: Mail,
     toolUrl: '/ai-email-writer',
-    toolLabel: 'Launch Email Writer',
+    toolLabel: 'Initialize Email Writer',
     steps: [
-      'Specify the "Purpose" of your email and the intended recipient.',
-      'Select a "Linguistic Tone" (Professional, Friendly, or Direct).',
-      'Optionally add "Extra Details" for specific context injection.',
-      'Click "Create Email" to synthesize the subject and body.',
-      'Copy the final result or save the draft to your local registry.'
+      'Specify the email purpose and the intended recipient.',
+      'Select a linguistic tone that matches your communication style.',
+      'Synthesize the subject and body via the AI engine.',
+      'Copy the final result to your clipboard for instant use.'
     ],
     tips: [
       'Using the "Short" length protocol is best for mobile recipients.',
@@ -162,6 +171,12 @@ export default function BlogPostPage() {
   const router = useRouter();
   const post = POSTS[slug as string];
 
+  useEffect(() => {
+    if (post) {
+      document.title = post.seoTitle;
+    }
+  }, [post]);
+
   const relatedGuides = useMemo(() => {
     if (!post) return [];
     return Object.entries(POSTS)
@@ -172,7 +187,7 @@ export default function BlogPostPage() {
   if (!post) {
     return (
       <div className="container mx-auto px-6 py-32 text-center bg-[#0a0a0c] min-h-screen">
-        <h1 className="text-2xl font-black text-white/40 uppercase">Node Not Found</h1>
+        <h1 className="text-2xl font-black text-white/40 uppercase">Protocol Not Found</h1>
         <Button asChild className="mt-8 h-12 px-8 rounded-xl bg-primary text-white">
            <Link href="/blog">Back to Registry</Link>
         </Button>
@@ -181,7 +196,7 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="bg-[#0a0a0c] min-h-screen">
+    <div className="bg-[#0a0a0c] min-h-screen selection:bg-primary/20">
       <div className="container mx-auto px-6 py-12 md:py-24 max-w-5xl">
         {/* Back Protocol */}
         <div className="mb-16 animate-reveal">
@@ -197,11 +212,13 @@ export default function BlogPostPage() {
                 <post.icon className="w-10 h-10" />
             </div>
             <div className="space-y-2 min-w-0">
-                <h1 className="text-4xl md:text-6xl font-headline font-black text-white uppercase tracking-tight leading-none truncate">{post.title}</h1>
+                <h1 className="text-4xl md:text-6xl font-headline font-black text-white uppercase tracking-tight leading-none truncate">
+                  {post.h1}
+                </h1>
                 <div className="flex items-center gap-4">
                   <p className="text-[10px] font-black text-primary uppercase tracking-widest">{post.category} PROTOCOL</p>
                   <span className="text-white/10">•</span>
-                  <p className="text-sm text-white/40 font-medium uppercase tracking-widest">{post.subtitle}</p>
+                  <p className="text-sm text-white/40 font-medium uppercase tracking-widest">Guide</p>
                 </div>
             </div>
           </div>
@@ -210,9 +227,15 @@ export default function BlogPostPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start mb-32">
             <div className="md:col-span-8 space-y-12">
+                <div className="space-y-6">
+                   <p className="text-lg text-white/60 leading-relaxed font-medium">
+                     {post.intro}
+                   </p>
+                </div>
+
                 <div className="space-y-8">
                   <h3 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-primary" /> How to use
+                      <CheckCircle2 className="w-5 h-5 text-primary" /> Execution Protocol
                   </h3>
                   <div className="space-y-6">
                       {post.steps.map((step, i) => (
@@ -239,7 +262,7 @@ export default function BlogPostPage() {
                 <Card className="glass-card p-8 border-white/10 rounded-[2.5rem] bg-black/20">
                   <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5" /> Quick Tips
+                        <Zap className="w-3.5 h-3.5" /> Studio Tips
                       </h4>
                       <ul className="space-y-4">
                         {post.tips.map((tip, i) => (
@@ -256,15 +279,15 @@ export default function BlogPostPage() {
                   <div className="flex items-center gap-4">
                       <ShieldCheck className="w-10 h-10 text-primary/40 shrink-0" />
                       <div className="space-y-0.5">
-                        <p className="text-[10px] font-black uppercase text-white leading-none">Privacy First</p>
-                        <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest">100% Local Production</p>
+                        <p className="text-[10px] font-black uppercase text-white leading-none">Privacy Safe</p>
+                        <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest">100% Local Logic</p>
                       </div>
                   </div>
                   <div className="flex items-center gap-4">
                       <Clock className="w-10 h-10 text-primary/40 shrink-0" />
                       <div className="space-y-0.5">
                         <p className="text-[10px] font-black uppercase text-white leading-none">Fast & Easy</p>
-                        <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest">No waiting in line</p>
+                        <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest">Zero latency sync</p>
                       </div>
                   </div>
                 </div>
@@ -280,7 +303,7 @@ export default function BlogPostPage() {
                   </div>
                   <div className="space-y-0.5">
                     <h3 className="text-xl font-headline font-black text-white uppercase tracking-tight">You might also like</h3>
-                    <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Related Protocols</p>
+                    <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Related Guides</p>
                   </div>
               </div>
 
@@ -295,7 +318,7 @@ export default function BlogPostPage() {
                             <ChevronRight className="w-5 h-5 text-white/10 group-hover:text-primary transition-all" />
                         </div>
                         <div className="space-y-2">
-                            <h4 className="text-lg font-headline font-black text-white uppercase leading-tight group-hover:text-primary transition-colors">{rPost.title}</h4>
+                            <h4 className="text-lg font-headline font-black text-white uppercase leading-tight group-hover:text-primary transition-colors">{rPost.h1}</h4>
                             <p className="text-[10px] text-white/30 font-medium uppercase tracking-widest line-clamp-2">{rPost.subtitle}</p>
                         </div>
                       </Card>
