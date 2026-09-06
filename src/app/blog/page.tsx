@@ -31,7 +31,8 @@ import {
   ShieldCheck,
   TrendingUp,
   RotateCcw,
-  ArrowRight
+  ArrowRight,
+  ChevronDown
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -106,7 +107,6 @@ const POSTS: PostMetadata[] = [
   }
 ];
 
-// Unified list of all tools for the compact guide section
 const ALL_TOOLS = [
   { name: 'AI Chatbot', href: '/ai-chatbot', howTo: 'Type any request to get instant high-fidelity AI responses.' },
   { name: 'AI Resume Builder', href: '/ai-resume-builder', howTo: 'Enter your history to synthesize a professional PDF resume.' },
@@ -206,44 +206,44 @@ export default function BlogLandingPage() {
   const featuredPost = POSTS[0];
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16 max-w-6xl bg-[#02040a] min-h-screen">
+    <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-5xl bg-[#02040a] min-h-screen">
       {/* Header Matrix */}
-      <div className="mb-12 animate-reveal">
-        <Link href="/" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30 hover:text-primary transition-all mb-8 group">
-          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" /> Back to Studio
+      <div className="mb-8 animate-reveal">
+        <Link href="/" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:text-primary transition-all mb-6 group">
+          <ArrowLeft className="w-3 h-3 transition-transform group-hover:-translate-x-1" /> Back to Studio
         </Link>
         
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-          <div className="space-y-4">
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-1">
-               <BookOpen className="w-3.5 h-3.5" /> Knowledge Matrix
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div className="space-y-3">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
+               <BookOpen className="w-3 h-3" /> Knowledge Matrix
              </div>
-             <h1 className="text-4xl md:text-6xl font-headline font-black text-white uppercase tracking-tight leading-none">
+             <h1 className="text-3xl md:text-5xl font-headline font-black text-white uppercase tracking-tight leading-none">
                Studio <span className="text-primary italic">Guides</span>
              </h1>
-             <p className="text-[11px] md:text-sm text-white/40 font-medium max-w-xl uppercase tracking-widest leading-relaxed">
-               Simple how-to for My Kit Tool. Master your professional workflow with high-fidelity instructional protocols.
+             <p className="text-[10px] md:text-[12px] text-white/40 font-medium max-w-lg uppercase tracking-widest leading-relaxed">
+               Simple how-to for My Kit Tool. Master your professional workflow.
              </p>
           </div>
 
-          <div className="flex flex-col gap-4 w-full lg:w-80">
+          <div className="flex flex-col gap-3 w-full lg:w-72">
             <div className="relative group/search">
-               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
+               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
                <Input 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search protocols..."
-                className="h-11 pl-12 bg-secondary/50 border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                className="h-10 pl-10 bg-secondary/50 border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest"
                />
             </div>
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
                {['all', 'PDF', 'Image', 'AI'].map((c) => (
                  <button
                   key={c}
                   onClick={() => setActiveCategory(c as any)}
                   className={cn(
-                    "px-4 py-1.5 rounded-xl border text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
-                    activeCategory === c ? "bg-primary text-white border-primary shadow-lg" : "bg-white/5 border-white/5 text-white/40 hover:text-white"
+                    "px-3 py-1.5 rounded-lg border text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                    activeCategory === c ? "bg-primary text-white border-primary shadow-md" : "bg-white/5 border-white/5 text-white/40 hover:text-white"
                   )}
                  >
                    {c}
@@ -256,22 +256,22 @@ export default function BlogLandingPage() {
 
       {/* Featured Section */}
       {!searchQuery && activeCategory === 'all' && (
-        <section className="mb-12 animate-reveal stagger-1">
+        <section className="mb-10 animate-reveal">
           <Link href={`/blog/${featuredPost.slug}`} className="group block">
-            <Card className="glass-card border-primary/20 bg-primary/[0.03] p-6 sm:p-10 rounded-[2.5rem] relative overflow-hidden flex flex-col lg:flex-row items-center gap-8">
-               <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[2rem] bg-background border-4 border-primary/20 flex items-center justify-center shadow-2xl shrink-0 group-hover:scale-105 transition-transform duration-700">
-                  <featuredPost.icon className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+            <Card className="glass-card border-primary/20 bg-primary/[0.02] p-6 rounded-[2rem] relative overflow-hidden flex flex-col lg:flex-row items-center gap-6">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
+               <div className="w-16 h-16 rounded-[1.5rem] bg-background border-4 border-primary/20 flex items-center justify-center shadow-xl shrink-0 group-hover:scale-105 transition-transform duration-700">
+                  <featuredPost.icon className="w-8 h-8 text-primary" />
                </div>
-               <div className="flex-1 space-y-4 text-center lg:text-left min-w-0">
-                  <div className="space-y-2">
-                     <Badge className="bg-primary text-white text-[8px] font-black uppercase tracking-widest px-3 py-0.5">Featured Protocol</Badge>
-                     <h2 className="text-2xl sm:text-4xl font-headline font-black text-white uppercase tracking-tight leading-tight">{featuredPost.title}</h2>
-                     <p className="text-base text-white/40 font-medium leading-relaxed max-w-2xl">{featuredPost.desc}</p>
+               <div className="flex-1 space-y-3 text-center lg:text-left min-w-0">
+                  <div className="space-y-1.5">
+                     <Badge className="bg-primary text-white text-[7px] font-black uppercase tracking-widest px-2 py-0.5">Featured Protocol</Badge>
+                     <h2 className="text-xl sm:text-3xl font-headline font-black text-white uppercase tracking-tight leading-tight">{featuredPost.title}</h2>
+                     <p className="text-[12px] text-white/40 font-medium leading-relaxed max-w-xl">{featuredPost.desc}</p>
                   </div>
-                  <div className="flex items-center justify-center lg:justify-start gap-3">
-                     <span className="text-[9px] font-black text-primary uppercase tracking-[0.4em]">Read Full Guide</span>
-                     <ChevronRight className="w-4 h-4 text-primary group-hover:translate-x-1.5 transition-transform" />
+                  <div className="flex items-center justify-center lg:justify-start gap-2">
+                     <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em]">Read Full Guide</span>
+                     <ChevronRight className="w-3 h-3 text-primary group-hover:translate-x-1 transition-transform" />
                   </div>
                </div>
             </Card>
@@ -280,40 +280,40 @@ export default function BlogLandingPage() {
       )}
 
       {/* Trending Detailed Guides */}
-      <div className="space-y-6 mb-20">
-        <h3 className="text-xl font-headline font-black text-white/40 uppercase tracking-tight ml-2">Trending Protocols</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-4 mb-16">
+        <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em] ml-2">Trending Protocols</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPosts.map((post, i) => {
             if (!searchQuery && activeCategory === 'all' && post.slug === featuredPost.slug) return null;
             return (
-              <Link key={post.slug} href={`/blog/${post.slug}`} className="group block animate-reveal" style={{ animationDelay: `${i * 50}ms` }}>
-                <Card className="glass-card border-white/5 bg-secondary/10 hover:border-primary/30 hover:bg-secondary/20 transition-all duration-500 p-6 sm:p-8 rounded-3xl relative overflow-hidden flex flex-col h-full">
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+              <Link key={post.slug} href={`/blog/${post.slug}`} className="group block animate-reveal" style={{ animationDelay: `${i * 30}ms` }}>
+                <Card className="glass-card border-white/5 bg-secondary/10 hover:border-primary/30 hover:bg-secondary/20 transition-all duration-500 p-5 rounded-2xl relative overflow-hidden flex flex-col h-full">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                   
-                  <div className="flex items-start justify-between mb-8">
+                  <div className="flex items-start justify-between mb-6">
                       <div className={cn(
-                        "w-12 h-12 rounded-2xl bg-background border border-white/5 flex items-center justify-center shadow-2xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-3",
+                        "w-10 h-10 rounded-xl bg-background border border-white/5 flex items-center justify-center shadow-lg transition-all duration-700 group-hover:scale-110",
                         post.color
                       )}>
-                          <post.icon className="w-6 h-6" />
+                          <post.icon className="w-5 h-5" />
                       </div>
-                      <Badge variant="outline" className="bg-background/50 border-white/5 text-[7px] font-black uppercase tracking-widest text-white/20">{post.category}</Badge>
+                      <Badge variant="outline" className="bg-background/50 border-white/5 text-[6px] font-black uppercase tracking-widest text-white/20">{post.category}</Badge>
                   </div>
 
-                  <div className="flex-1 space-y-3 min-w-0">
-                      <div className="space-y-1.5">
-                        <h2 className="text-lg sm:text-xl font-headline font-black text-white uppercase tracking-tight group-hover:text-primary transition-colors leading-tight line-clamp-2">
+                  <div className="flex-1 space-y-2 min-w-0">
+                      <div className="space-y-1">
+                        <h2 className="text-base font-headline font-black text-white uppercase tracking-tight group-hover:text-primary transition-colors leading-tight line-clamp-1">
                             {post.title}
                         </h2>
-                        <p className="text-[11px] text-white/40 font-medium leading-relaxed uppercase tracking-widest line-clamp-2">
+                        <p className="text-[10px] text-white/30 font-medium leading-relaxed uppercase tracking-tighter line-clamp-2">
                             {post.shortText}
                         </p>
                       </div>
                   </div>
 
-                  <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-between relative z-10">
-                      <span className="text-[9px] font-black uppercase text-white/20 group-hover:text-primary tracking-[0.3em] transition-colors">Read Protocol</span>
-                      <ChevronRight size={16} className="text-white/10 group-hover:text-primary transition-all group-hover:translate-x-1" />
+                  <div className="mt-6 pt-3 border-t border-white/5 flex items-center justify-between relative z-10">
+                      <span className="text-[7px] font-black uppercase text-white/10 group-hover:text-primary tracking-[0.3em] transition-colors">Read</span>
+                      <ChevronRight size={12} className="text-white/10 group-hover:text-primary transition-all group-hover:translate-x-0.5" />
                   </div>
                 </Card>
               </Link>
@@ -323,26 +323,25 @@ export default function BlogLandingPage() {
       </div>
 
       {/* ALL TOOLS COMPACT GUIDES */}
-      <div className="space-y-8 pb-32">
-        <div className="flex items-center gap-4 px-2">
-           <LayoutGrid className="w-5 h-5 text-primary/40" />
-           <h3 className="text-xl font-headline font-black text-white/40 uppercase tracking-tight">Complete Registry Guides</h3>
+      <div className="space-y-6 pb-20">
+        <div className="flex items-center gap-3 px-2">
+           <LayoutGrid className="w-4 h-4 text-primary/40" />
+           <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em]">Complete Registry</h3>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
            {filteredTools.map((tool, i) => (
-             <Card key={i} className="glass-card p-5 rounded-3xl border-white/5 bg-white/[0.01] hover:border-primary/20 transition-all group">
-                <div className="space-y-3">
+             <Card key={i} className="glass-card p-4 rounded-xl border-white/5 bg-white/[0.01] hover:border-primary/20 transition-all group">
+                <div className="space-y-2.5">
                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-black text-white uppercase tracking-tight truncate max-w-[150px] group-hover:text-primary transition-colors">{tool.name}</h4>
-                      <Badge variant="outline" className="text-[7px] border-white/5 bg-white/5 text-white/20">Protocol</Badge>
+                      <h4 className="text-[11px] font-black text-white uppercase tracking-tight truncate max-w-[150px] group-hover:text-primary transition-colors">{tool.name}</h4>
                    </div>
-                   <p className="text-[10px] text-white/40 font-medium leading-relaxed uppercase tracking-tighter line-clamp-2 min-h-[30px]">
+                   <p className="text-[9px] text-white/30 font-medium leading-relaxed uppercase tracking-tighter line-clamp-2 min-h-[26px]">
                       {tool.howTo}
                    </p>
-                   <div className="pt-3 border-t border-white/5">
-                      <Button asChild variant="ghost" className="h-9 w-full rounded-xl bg-primary/5 text-primary text-[8px] font-black uppercase hover:bg-primary hover:text-white transition-all">
-                         <Link href={tool.href}>Initialize Tool <ArrowRight className="w-3 h-3 ml-2" /></Link>
+                   <div className="pt-2.5 border-t border-white/5">
+                      <Button asChild variant="ghost" className="h-8 w-full rounded-lg bg-primary/5 text-primary text-[7px] font-black uppercase hover:bg-primary hover:text-white transition-all">
+                         <Link href={tool.href}>Initialize <ArrowRight className="w-2.5 h-2.5 ml-1.5" /></Link>
                       </Button>
                    </div>
                 </div>
@@ -350,23 +349,23 @@ export default function BlogLandingPage() {
            ))}
 
            {filteredTools.length === 0 && (
-             <div className="col-span-full py-20 text-center opacity-10">
-                <Search className="w-12 h-12 mx-auto mb-4" />
-                <p className="text-sm font-black uppercase tracking-[0.4em]">Zero Matches identified in registry</p>
+             <div className="col-span-full py-12 text-center opacity-10">
+                <Search className="w-10 h-10 mx-auto mb-3" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Zero Matches identified</p>
              </div>
            )}
         </div>
       </div>
       
       {/* Footer Signal */}
-      <div className="pt-16 border-t border-white/5 text-center">
-         <p className="text-[8px] font-black text-white/10 uppercase tracking-[0.5em]">Linguistic Knowledge Matrix v7.3</p>
+      <div className="pt-10 border-t border-white/5 text-center">
+         <p className="text-[7px] font-black text-white/5 uppercase tracking-[0.5em]">Linguistic Knowledge Matrix v7.3</p>
       </div>
 
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/10 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
