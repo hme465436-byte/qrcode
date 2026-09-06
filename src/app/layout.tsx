@@ -1,6 +1,7 @@
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Navbar } from '@/components/mykittool/navbar';
+import { ToolNav } from '@/components/mykittool/tool-nav';
 import { Footer } from '@/components/mykittool/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { FeedbackRow } from '@/components/mykittool/feedback-row';
@@ -62,12 +63,17 @@ export default function RootLayout({
       >
         <FirebaseClientProvider>
           <Navbar />
-          <main className="min-h-screen pt-16 w-full max-w-full">
+          <main className="min-h-screen pt-16 flex flex-col w-full max-w-full">
             <Suspense fallback={null}>
-              <KitRouter>
-                {children}
-              </KitRouter>
+              <ToolNav />
             </Suspense>
+            <div className="flex-1 w-full max-w-full">
+              <Suspense fallback={null}>
+                <KitRouter>
+                  {children}
+                </KitRouter>
+              </Suspense>
+            </div>
             <FeedbackRow />
           </main>
           <Footer />

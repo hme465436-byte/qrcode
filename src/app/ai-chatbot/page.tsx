@@ -502,7 +502,7 @@ export default function AIChatbotPage() {
   };
 
   return (
-    <div className="flex h-[calc(100dvh-64px)] w-full overflow-hidden bg-[#060608] selection:bg-primary/20 relative">
+    <div className="flex h-[calc(100dvh-112px)] w-full overflow-hidden bg-[#060608] selection:bg-primary/20 relative">
       
       {/* SIDEBAR OVERLAY */}
       {isSidebarOpen && (
@@ -559,7 +559,6 @@ export default function AIChatbotPage() {
                         autoFocus
                         value={renameValue}
                         onChange={e => setRenameValue(e.target.value)}
-                        onBlur={() => renameSession(s.id)}
                         onKeyDown={e => e.key === 'Enter' && renameSession(s.id)}
                         className="h-10 bg-background border-primary/40 text-[11px] uppercase font-bold"
                        />

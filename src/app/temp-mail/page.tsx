@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -481,31 +480,11 @@ export default function TempMailPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-12 md:py-20 max-w-7xl">
-      <div className="mb-12 animate-reveal flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div className="min-w-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest mb-4">
-            <Zap className="w-3.5 h-3.5" /> Linguistic Suite Pro
-          </div>
-          <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground uppercase tracking-tight">
-            Temp <span className="text-primary italic">Mail Studio</span>
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-           <GetHelp toolId="temp-mail" />
-           <button 
-            onClick={() => setIsMuted(!isMuted)} 
-            className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-foreground/40 hover:text-primary transition-all"
-           >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-           </button>
-           <PollingNode email={email} isRefreshing={isRefreshing} onSync={fetchMessages} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+    <div className="flex flex-1 w-full overflow-hidden bg-[#060608] selection:bg-primary/20 relative">
+      <div className="container mx-auto px-4 flex flex-col h-full">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start overflow-hidden pt-4 pb-12">
         {/* Left Column: Controls & History */}
-        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700">
+        <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-6 duration-700 overflow-y-auto custom-scrollbar h-full pr-2">
            <Card className="glass-card border-border shadow-2xl overflow-hidden">
               <CardHeader className="py-6 border-b border-border bg-secondary/30 flex flex-row items-center justify-between">
                  <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-4 text-foreground">
@@ -520,8 +499,8 @@ export default function TempMailPage() {
                     <div className="space-y-3">
                        <Label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Active Server Node</Label>
                        <Select value={provider} onValueChange={handleProviderChange}>
-                          <SelectTrigger className="h-14 bg-secondary border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest">
-                             <SelectValue />
+                          <SelectTrigger className="h-14 bg-secondary/50 border-border rounded-2xl font-bold uppercase text-[10px] tracking-widest">
+                             <SelectValue placeholder="Choose Provider" />
                           </SelectTrigger>
                           <SelectContent className="glass-card">
                              {allProviders.map(p => (
@@ -585,7 +564,7 @@ export default function TempMailPage() {
            </Card>
 
            <Card className="glass-card border-border shadow-xl flex flex-col max-h-[350px]">
-              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex flex-row items-center justify-between shrink-0">
+              <CardHeader className="py-4 border-b border-white/5 bg-secondary/30 flex items-center justify-between shrink-0">
                  <div className="flex items-center gap-3">
                     <History className="w-4 h-4 text-primary" />
                     <CardTitle className="text-[10px] font-black uppercase text-foreground">Identity Registry</CardTitle>
@@ -618,8 +597,8 @@ export default function TempMailPage() {
         </div>
 
         {/* Right Column: Registry & Reader */}
-        <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000">
-           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col min-h-[600px] bg-black/10">
+        <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-right-6 duration-1000 h-full overflow-hidden flex flex-col">
+           <Card className="glass-card border-border shadow-2xl overflow-hidden relative flex flex-col flex-1 bg-black/10">
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               <CardHeader className="py-8 border-b border-border bg-secondary/30 flex flex-col gap-6 shrink-0">
                  <div className="flex flex-row items-center justify-between">
@@ -689,6 +668,7 @@ export default function TempMailPage() {
               </CardContent>
            </Card>
         </div>
+      </div>
       </div>
 
       {/* Custom Node Modal */}
@@ -849,7 +829,7 @@ export default function TempMailPage() {
       </Dialog>
       
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { @apply bg-transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -858,4 +838,3 @@ export default function TempMailPage() {
     </div>
   );
 }
-
