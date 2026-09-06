@@ -12,6 +12,22 @@ export function Hero() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   
+  // --- Usage Logic ---
+  const [usageCount, setUsageCount] = useState(0);
+
+  useEffect(() => {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const raw = localStorage.getItem('mykit_local_usage_log');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.date === todayStr) {
+          setUsageCount(data.paths.length);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
   // --- Linguistic Typewriter Matrix ---
   const [placeholderText, setPlaceholderText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -122,10 +138,22 @@ export function Hero() {
                </div>
             </div>
           </form>
+
+          {/* Honest Trust Line */}
+          <div className="mt-4 flex flex-col items-center gap-1.5 animate-reveal stagger-4">
+             <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                Free tools for resume, PDF and images.
+             </p>
+             {usageCount > 0 && (
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/60">
+                   You used {usageCount} {usageCount === 1 ? 'tool' : 'tools'} today on this device only.
+                </p>
+             )}
+          </div>
         </div>
 
         {/* Global Nav CTA */}
-        <div className="flex items-center justify-center gap-12 pt-6 animate-reveal stagger-4">
+        <div className="flex items-center justify-center gap-12 pt-2 animate-reveal stagger-4">
           <button 
             onClick={() => router.push('/all-tools')}
             className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-primary transition-all"

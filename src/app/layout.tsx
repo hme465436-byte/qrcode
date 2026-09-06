@@ -10,6 +10,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Suspense } from 'react';
 import { KitRouter } from '@/components/mykittool/kit-router';
 import { FloatingActionHub } from '@/components/mykittool/floating-action-hub';
+import { UsageTracker } from '@/components/mykittool/usage-tracker';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -63,6 +64,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <FirebaseClientProvider>
+          <UsageTracker />
           <Navbar />
           <main className="min-h-screen pt-16 flex flex-col w-full max-w-full">
             <Suspense fallback={null}>
