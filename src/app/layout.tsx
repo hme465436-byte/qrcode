@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'My Kit Tool | Free Online Tools',
-  description: 'My Kit Tool is a free website for AI, PDF and image tools. Access over 120+ professional online utilities for free, including AI Chatbot, Resume Builder, and PDF management.',
+  description: 'My Kit Tool free AI, PDF and image tools. Access over 120+ professional online utilities including AI Chatbot, Resume Builder, and PDF management for free.',
   keywords: 'free online tools, ai tools, pdf editor, image converter, qr code generator, developer tools, my kit tool, privacy-focused tools, browser-based utilities',
   authors: [{ name: 'MY KIT TOOL Team' }],
   metadataBase: new URL('https://mykittool.vercel.app'),
