@@ -20,7 +20,7 @@ const popularTools = [
     desc: 'Advanced linguistic synthesis and real-time assistance.',
     color: 'text-cyan-400',
     bg: 'bg-cyan-400/10',
-    border: 'group-hover:border-cyan-500/20',
+    border: 'group-hover:border-cyan-500/30',
     className: 'lg:col-span-4'
   },
   {
@@ -30,7 +30,7 @@ const popularTools = [
     desc: 'High-fidelity visual production.',
     color: 'text-purple-400',
     bg: 'bg-purple-400/10',
-    border: 'group-hover:border-purple-500/20',
+    border: 'group-hover:border-purple-500/30',
     className: 'lg:col-span-2'
   },
   {
@@ -40,7 +40,7 @@ const popularTools = [
     desc: 'Professional identity formatting.',
     color: 'text-emerald-400',
     bg: 'bg-emerald-400/10',
-    border: 'group-hover:border-emerald-500/20',
+    border: 'group-hover:border-emerald-500/30',
     className: 'lg:col-span-2'
   },
   {
@@ -50,7 +50,7 @@ const popularTools = [
     desc: 'Branded QR protocols.',
     color: 'text-amber-400',
     bg: 'bg-amber-400/10',
-    border: 'group-hover:border-amber-500/20',
+    border: 'group-hover:border-amber-500/30',
     className: 'lg:col-span-2'
   },
   {
@@ -60,7 +60,7 @@ const popularTools = [
     desc: 'Acoustic transcription.',
     color: 'text-rose-400',
     bg: 'bg-rose-400/10',
-    border: 'group-hover:border-rose-500/20',
+    border: 'group-hover:border-rose-500/30',
     className: 'lg:col-span-2'
   },
   {
@@ -70,7 +70,7 @@ const popularTools = [
     desc: 'Universal measurement matrix and translation for global standards.',
     color: 'text-blue-400',
     bg: 'bg-blue-400/10',
-    border: 'group-hover:border-blue-500/20',
+    border: 'group-hover:border-blue-500/30',
     className: 'lg:col-span-6'
   },
 ];
@@ -95,10 +95,10 @@ export function PopularTools() {
           {popularTools.map((tool) => (
             <Link key={tool.href} href={tool.href} className={cn("group block", tool.className)}>
               <div className={cn(
-                "flex flex-col justify-between h-full p-6 rounded-3xl bg-white/[0.01] border border-white/5 transition-all duration-500 hover:bg-white/[0.02] hover:border-white/10 shadow-2xl relative overflow-hidden",
+                "flex flex-col justify-between h-full p-6 rounded-3xl bg-white/[0.01] border border-white/5 transition-all duration-500 hover:bg-white/[0.03] hover:border-white/10 hover:-translate-y-1 shadow-2xl relative overflow-hidden",
                 tool.border
               )}>
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                   
                   <div className="relative z-10">
                       <div className={cn(
