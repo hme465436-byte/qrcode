@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Hero() {
@@ -20,7 +20,7 @@ export function Hero() {
             </div>
         </div>
         
-        <h1 className="text-5xl md:text-8xl font-headline font-black tracking-tighter leading-[0.95] text-foreground animate-reveal stagger-1">
+        <h1 className="text-5xl md:text-8xl font-headline font-black tracking-tighter leading-[0.95] text-white animate-reveal stagger-1">
           Free AI, PDF <br />
           <span className="text-primary italic">and Image tools</span>
         </h1>
