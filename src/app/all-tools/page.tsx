@@ -186,6 +186,9 @@ export default function AllToolsPage() {
     const [activeCategory, setActiveCategory] = useState<'all' | ToolCategory>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+    const aiToolsCount = useMemo(() => TOOLS.filter(t => t.category === 'AI').length, []);
+    const fileToolsCount = useMemo(() => TOOLS.filter(t => t.category === 'File').length, []);
+
     const { displayedTools, didYouMean, showSuggestionsHeader, showEmptyState } = useMemo(() => {
         const lowerCaseQuery = searchQuery.toLowerCase().trim();
         const categoryFilteredTools = TOOLS.filter(tool => activeCategory === 'all' || tool.category === activeCategory);
@@ -236,14 +239,26 @@ export default function AllToolsPage() {
             <div className="absolute inset-0 bg-radial-gradient-blue"></div>
         </div>
         
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 relative z-20">
-          <div className="text-center mb-12">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
+          
+          <div className="pt-20 pb-10 text-center">
+            <h1 className="text-5xl sm:text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
               All Tools
             </h1>
-            <p className="mt-4 text-base sm:text-lg text-gray-400 font-light">
-              <span className="font-semibold text-primary">{TOOLS.length}</span> free tools on My Kit Tool.
+            <p className="mt-3 text-base sm:text-lg max-w-2xl mx-auto text-gray-400">
+              A complete suite of {TOOLS.length} powerful, free, and easy-to-use tools to streamline your tasks.
             </p>
+            <div className="mt-6 flex justify-center items-center gap-2 sm:gap-3 flex-wrap">
+              <span className="bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs sm:text-sm font-medium">
+                {TOOLS.length} Free Tools
+              </span>
+              <span className="bg-cyan-400/10 border border-cyan-400/20 rounded-full px-3 py-1 text-xs sm:text-sm font-medium text-cyan-300">
+                {aiToolsCount} AI Tools
+              </span>
+              <span className="bg-yellow-400/10 border border-yellow-400/20 rounded-full px-3 py-1 text-xs sm:text-sm font-medium text-yellow-300">
+                {fileToolsCount} File Tools
+              </span>
+            </div>
           </div>
 
           <div className="sticky top-5 z-30 mb-12 space-y-4">
