@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,39 @@ import { SpaceBackground } from '@/components/mykittool/space-background';
 export function Hero() {
   const router = useRouter();
   const [query, setQuery] = useState('');
+  
+  // --- Typewriter Matrix ---
+  const [placeholderText, setPlaceholderText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loopNum, setLoopNum] = useState(0);
+  const [typingSpeed, setTypingSpeed] = useState(150);
+
+  const words = useMemo(() => ['AI Chatbot', 'Resume', 'PDF', 'Image'], []);
+
+  useEffect(() => {
+    const handleTyping = () => {
+      const i = loopNum % words.length;
+      const fullText = words[i];
+
+      setPlaceholderText(
+        isDeleting
+          ? fullText.substring(0, placeholderText.length - 1)
+          : fullText.substring(0, placeholderText.length + 1)
+      );
+
+      setTypingSpeed(isDeleting ? 50 : 150);
+
+      if (!isDeleting && placeholderText === fullText) {
+        setTimeout(() => setIsDeleting(true), 2000);
+      } else if (isDeleting && placeholderText === '') {
+        setIsDeleting(false);
+        setLoopNum(loopNum + 1);
+      }
+    };
+
+    const timer = setTimeout(handleTyping, typingSpeed);
+    return () => clearTimeout(timer);
+  }, [placeholderText, isDeleting, loopNum, typingSpeed, words]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +89,7 @@ export function Hero() {
                <Input 
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="Search all tools..." 
+                placeholder={`Search ${placeholderText}...`} 
                 className="w-full h-full bg-transparent border-none pl-16 pr-32 text-sm font-medium focus-visible:ring-0 placeholder:text-white/20"
                />
                <div className="absolute right-2.5">
@@ -92,3 +125,5 @@ export function Hero() {
     </section>
   );
 }
+
+import { useMemo } from 'react';
