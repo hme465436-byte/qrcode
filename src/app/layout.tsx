@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'My Kit Tool | Free Online Tools',
-  description: 'My Kit Tool offers a powerful suite of free online tools, including AI-powered utilities, comprehensive PDF and image editors, and much more. All tools are private, secure, and work directly in your browser.',
+  description: 'My Kit Tool is a free website for AI, PDF and image tools. Access over 120+ professional online utilities for free, including AI Chatbot, Resume Builder, and PDF management.',
   keywords: 'free online tools, ai tools, pdf editor, image converter, qr code generator, developer tools, my kit tool, privacy-focused tools, browser-based utilities',
   authors: [{ name: 'MY KIT TOOL Team' }],
   metadataBase: new URL('https://mykittool.vercel.app'),
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     google: 'vMj1XN9ziXyU5kBso8wdA_OhZuzhD0o_BGSrSu9uiGU',
   },
   openGraph: {
-    title: 'My Kit Tool | Your Ultimate Suite of Free Online Tools',
-    description: 'Discover a vast collection of free tools for AI, PDF, image editing, and more. My Kit Tool provides powerful, private, and easy-to-use utilities for all your needs.',
+    title: 'My Kit Tool | Free Online Tools',
+    description: '120+ free online tools for AI, PDF, Images, and more at My Kit Tool. Fast, private, and secure.',
     type: 'website',
     url: 'https://mykittool.vercel.app',
     siteName: 'MY KIT TOOL',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'My Kit Tool | Free Online Tools for Every Task',
+    title: 'My Kit Tool | Free Online Tools',
     description: 'Supercharge your productivity with My Kit Tool. Access a wide range of free, secure, and browser-based tools for AI, PDF, images, and more.',
     images: ['https://mykittool.vercel.app/twitter-image.png'],
   },
