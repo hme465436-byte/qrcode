@@ -100,6 +100,7 @@ import {
   UserPlus,
   Smartphone,
   Copy,
+  Download,
   Camera as CameraIcon
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -193,6 +194,7 @@ const TOOLS: Tool[] = [
   // Other Tools
   { href: '/voice-changer', title: 'Voice Changer', desc: 'Change your voice live with robot, deep, helium and more effects.', category: 'Other', icon: Mic2, keywords: ['voice effects', 'audio'] },
   { href: '/whatsapp-link-generator', title: 'WhatsApp Link', desc: 'Generate instant chat links with custom messages.', category: 'Other', icon: MessageSquare, keywords: ['whatsapp', 'link generator'] },
+  { href: '/all-tools', title: 'The ToolBox', desc: 'Complete registry of all professional studio units.', category: 'Other', icon: LayoutGrid, keywords: ['all tools', 'directory'] },
   { href: '/all-units-converter', title: 'All Units Converter', desc: 'Convert Length, Weight, Temp, and more.', category: 'Other', icon: Activity, keywords: ['unit converter', 'measurement'] },
   { href: '/fake-data', title: 'Fake Data Generator', desc: 'Generate realistic fake data for testing.', category: 'Other', icon: Database, keywords: ['test data', 'dummy data'] },
   { href: '/username-checker', title: 'Username Checker', desc: 'Check username availability across 20+ major platforms.', category: 'Other', icon: Search, keywords: ['social media', 'username'] },
@@ -348,9 +350,9 @@ function AllToolsPageContent() {
             </p>
           </div>
 
-          {/* Sticky Controller Bar */}
-          <div className="sticky top-20 z-[80] mb-12 space-y-6">
-            <div className="max-w-4xl mx-auto w-full group/search">
+          {/* Recalibrated Desktop Controller Bar */}
+          <div className="sticky top-20 z-[80] mb-12 flex flex-col items-center gap-6">
+            <div className="w-full max-w-4xl group/search">
                <div className="absolute -inset-4 bg-primary/10 blur-[40px] rounded-full pointer-events-none opacity-0 group-focus-within/search:opacity-100 transition-opacity duration-1000" />
                <div className="relative bg-black/60 backdrop-blur-3xl border border-white/5 rounded-3xl h-16 shadow-2xl flex items-center px-6 transition-all group-focus-within/search:border-primary/40">
                   <Search className="w-4 h-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
@@ -369,8 +371,8 @@ function AllToolsPageContent() {
                </div>
             </div>
 
-            <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 px-2 w-full">
-                <div className="w-full sm:w-auto overflow-x-auto no-scrollbar bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-2xl p-1.5 shadow-2xl">
+            <div className="flex items-center justify-center gap-4 w-full px-2">
+                <div className="w-auto overflow-x-auto no-scrollbar bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-2xl p-1.5 shadow-2xl">
                     <div className="flex items-center space-x-1 min-w-max">
                       {CATEGORIES.map((cat) => (
                         <button
@@ -388,7 +390,7 @@ function AllToolsPageContent() {
                     </div>
                 </div>
 
-                 <div className="flex items-center gap-2 bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-2xl p-1.5 shadow-2xl">
+                 <div className="flex items-center gap-2 bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-2xl p-1.5 shadow-2xl shrink-0">
                    <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-xl transition-all", viewMode === 'grid' ? "bg-primary text-white shadow-lg" : "text-foreground/20 hover:text-white")}><LayoutGrid className="w-4 h-4" /></button>
                    <button onClick={() => setViewMode('list')} className={cn("p-2 rounded-xl transition-all", viewMode === 'list' ? "bg-primary text-white shadow-lg" : "text-foreground/20 hover:text-white")}><List className="w-4 h-4" /></button>
                 </div>
@@ -420,7 +422,7 @@ function AllToolsPageContent() {
              )}
           </div>
 
-          {/* Results Matrix */}
+          {/* Compact Results Matrix */}
           <div className={cn(
               "max-w-7xl mx-auto transition-all duration-500 pb-32",
               viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "flex flex-col gap-2"
