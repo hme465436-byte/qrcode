@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, LayoutGrid, List, ArrowRight, BrainCircuit, ImageIcon, FileText, Zap } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -164,6 +164,8 @@ const CATEGORIES: { id: 'all' | ToolCategory; label: string; icon: React.Element
     { id: 'Other', label: 'Other', icon: Zap },
 ];
 
+const POPULAR_SEARCHES = ['AI', 'PDF', 'Image', 'Chat', 'Resume'];
+
 const levenshteinDistance = (a: string, b: string): number => {
   const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
   for (let i = 0; i <= a.length; i += 1) matrix[0][i] = i;
@@ -181,24 +183,55 @@ const levenshteinDistance = (a: string, b: string): number => {
   return matrix[b.length][a.length];
 };
 
+const GridSkeleton = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {Array.from({ length: 12 }).map((_, i) => (
+      <div key={i} className="bg-gray-900/50 border border-white/10 rounded-xl p-6 animate-pulse">
+        <div className="h-10 w-10 rounded-lg bg-white/10 mb-4"></div>
+        <div className="h-4 w-3/4 rounded bg-white/10 mb-2"></div>
+        <div className="h-3 w-full rounded bg-white/10"></div>
+        <div className="h-3 w-1/2 rounded bg-white/10 mt-1"></div>
+        <div className="h-4 w-1/4 rounded bg-white/10 mt-4"></div>
+      </div>
+    ))}
+  </div>
+);
+
+const ListSkeleton = () => (
+  <div className="flex flex-col gap-4">
+    {Array.from({ length: 8 }).map((_, i) => (
+      <div key={i} className="bg-gray-900/50 border border-white/10 rounded-xl p-4 flex items-center gap-4 animate-pulse">
+        <div className="h-10 w-10 rounded-lg bg-white/10"></div>
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-1/3 rounded bg-white/10"></div>
+          <div className="h-3 w-3/4 rounded bg-white/10"></div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 export default function AllToolsPage() {
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState<'all' | ToolCategory>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-    const aiToolsCount = useMemo(() => TOOLS.filter(t => t.category === 'AI').length, []);
-    const fileToolsCount = useMemo(() => TOOLS.filter(t => t.category === 'File').length, []);
+    useEffect(() => {
+      const timer = setTimeout(() => setLoading(false), 500);
+      return () => clearTimeout(timer);
+    }, []);
 
-    const { displayedTools, didYouMean, showSuggestionsHeader, showEmptyState } = useMemo(() => {
+    const { displayedTools, didYouMean, showSuggestionsHeader, showEmptyState, foundCount } = useMemo(() => {
         const lowerCaseQuery = searchQuery.toLowerCase().trim();
-        const categoryFilteredTools = TOOLS.filter(tool => activeCategory === 'all' || tool.category === activeCategory);
+        let categoryFilteredTools = TOOLS.filter(tool => activeCategory === 'all' || tool.category === activeCategory);
 
         if (!lowerCaseQuery) {
-            return { displayedTools: categoryFilteredTools, didYouMean: null, showSuggestionsHeader: false, showEmptyState: false };
+            return { displayedTools: categoryFilteredTools, didYouMean: null, showSuggestionsHeader: false, showEmptyState: false, foundCount: null };
         }
         
-        if (!/[a-z]/.test(lowerCaseQuery)) {
-             return { displayedTools: [], didYouMean: null, showSuggestionsHeader: false, showEmptyState: true };
+        if (!/[a-z0-9]/.test(lowerCaseQuery)) {
+             return { displayedTools: [], didYouMean: null, showSuggestionsHeader: false, showEmptyState: true, foundCount: 0 };
         }
 
         const exactMatches = categoryFilteredTools.filter(tool =>
@@ -209,7 +242,7 @@ export default function AllToolsPage() {
         );
 
         if (exactMatches.length > 0) {
-            return { displayedTools: exactMatches, didYouMean: null, showSuggestionsHeader: false, showEmptyState: false };
+            return { displayedTools: exactMatches, didYouMean: null, showSuggestionsHeader: false, showEmptyState: false, foundCount: exactMatches.length };
         }
 
         const allToolsWithDistance = categoryFilteredTools.map(tool => ({
@@ -226,7 +259,8 @@ export default function AllToolsPage() {
             displayedTools: suggestions, 
             didYouMean: didYouMeanSuggestion, 
             showSuggestionsHeader: true, 
-            showEmptyState: suggestions.length === 0
+            showEmptyState: suggestions.length === 0,
+            foundCount: 0
         };
 
     }, [searchQuery, activeCategory]);
@@ -241,38 +275,44 @@ export default function AllToolsPage() {
         
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
           
-          <div className="pt-20 pb-10 text-center">
+          <div className="pt-20 pb-12 text-center">
             <h1 className="text-5xl sm:text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
-              All Tools
+              The ToolBox
             </h1>
-            <p className="mt-3 text-base sm:text-lg max-w-2xl mx-auto text-gray-400">
-              A complete suite of {TOOLS.length} powerful, free, and easy-to-use tools to streamline your tasks.
+            <p className="mt-4 text-base sm:text-lg max-w-3xl mx-auto text-gray-400">
+              Explore our complete suite of {TOOLS.length} free, powerful, and easy-to-use tools designed to streamline your tasks.
             </p>
-            <div className="mt-6 flex justify-center items-center gap-2 sm:gap-3 flex-wrap">
-              <span className="bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs sm:text-sm font-medium">
-                {TOOLS.length} Free Tools
-              </span>
-              <span className="bg-cyan-400/10 border border-cyan-400/20 rounded-full px-3 py-1 text-xs sm:text-sm font-medium text-cyan-300">
-                {aiToolsCount} AI Tools
-              </span>
-              <span className="bg-yellow-400/10 border border-yellow-400/20 rounded-full px-3 py-1 text-xs sm:text-sm font-medium text-yellow-300">
-                {fileToolsCount} File Tools
-              </span>
-            </div>
           </div>
 
-          <div className="sticky top-5 z-30 mb-12 space-y-4">
-            <div className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 w-full max-w-4xl mx-auto shadow-2xl shadow-primary/10">
-              <div className="relative w-full">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
+          <div className="sticky top-5 z-30 mb-10 space-y-4">
+            <div className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-2xl p-4 w-full max-w-4xl mx-auto shadow-2xl shadow-primary/10">
+              <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                   <Input
                     type="text"
-                    placeholder={`Search over ${TOOLS.length} tools...`}
+                    placeholder={`Search all ${TOOLS.length} tools... (e.g. Image, PDF, AI)`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-12 bg-transparent border-none rounded-full pl-12 pr-4 text-white placeholder-gray-500 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="w-full h-12 bg-transparent border-none rounded-full pl-12 pr-28 text-white placeholder-gray-500 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
+                  {searchQuery && foundCount !== null && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs bg-white/10 text-white rounded-full px-2 py-1">
+                      {foundCount} found
+                    </div>
+                  )}
               </div>
+                <div className="mt-3 flex items-center justify-center gap-2 flex-wrap px-2">
+                  <span className="text-xs text-gray-400 font-medium">Popular:</span>
+                  {POPULAR_SEARCHES.map(term => (
+                      <button 
+                        key={term}
+                        onClick={() => setSearchQuery(term)}
+                        className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300 hover:bg-white/10 hover:border-primary/50 transition-colors"
+                      >
+                        {term}
+                      </button>
+                  ))}
+                </div>
             </div>
 
             <div className="relative flex justify-center items-center w-full max-w-4xl mx-auto">
@@ -294,7 +334,7 @@ export default function AllToolsPage() {
                     </div>
                 </div>
 
-                 <div className="absolute right-0 top-1/2 -translate-y-1/2 h-full flex items-center bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10">
+                 <div className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 h-full items-center bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-2 shadow-2xl shadow-primary/10">
                    <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'grid' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><LayoutGrid className="w-5 h-5" /></button>
                    <button onClick={() => setViewMode('list')} className={cn("p-2 rounded-full transition-colors duration-300", viewMode === 'list' ? "bg-primary text-white" : "text-gray-500 hover:text-white")}><List className="w-5 h-5" /></button>
                 </div>
@@ -318,54 +358,58 @@ export default function AllToolsPage() {
             </div>
           )}
 
-          <div className={cn(
-              "transition-all duration-300",
-              viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"
-          )}>
-            {displayedTools.map(tool => (
-                <a href={tool.href} key={tool.href} className="block group">
-                    {viewMode === 'grid' ? (
-                        <div className="group relative flex flex-col justify-between h-full p-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl transition-all duration-300 ease-in-out hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transform hover:-translate-y-1">
-                            <div className="flex-1">
-                                <div className={cn("inline-flex h-10 w-10 items-center justify-center rounded-lg mb-4 transition-transform duration-300 group-hover:scale-110",
-                                    tool.category === 'AI' && 'bg-cyan-400/10 text-cyan-300 shadow-inner shadow-cyan-500/10',
-                                    tool.category === 'Image' && 'bg-pink-400/10 text-pink-300 shadow-inner shadow-pink-500/10',
-                                    tool.category === 'File' && 'bg-yellow-400/10 text-yellow-300 shadow-inner shadow-yellow-500/10',
-                                    tool.category === 'Other' && 'bg-green-400/10 text-green-300 shadow-inner shadow-green-500/10',
-                                )}>
-                                    <tool.icon size={22} />
-                                </div>
-                                <h3 className="font-semibold text-base text-white">{tool.title}</h3>
-                                <p className="mt-2 text-gray-400 text-sm line-clamp-2">{tool.desc}</p>
-                            </div>
-                            <div className="mt-4">
-                                <span className="text-sm font-medium text-primary/80 group-hover:text-primary transition-colors duration-300 flex items-center gap-1">
-                                    Open <ArrowRight size={14} />
-                                </span>
-                           </div>
-                        </div>
-                    ) : (
-                        <div className="py-4 px-5 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-gray-800/70 hover:border-primary/40 transition-all duration-300 ease-in-out flex justify-between items-center">
-                            <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className={cn("flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg",
-                                    tool.category === 'AI' && 'bg-cyan-400/10 text-cyan-300',
-                                    tool.category === 'Image' && 'bg-pink-400/10 text-pink-300',
-                                    tool.category === 'File' && 'bg-yellow-400/10 text-yellow-300',
-                                    tool.category === 'Other' && 'bg-green-400/10 text-green-300',
-                                )}>
-                                    <tool.icon size={20} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-medium text-base text-white truncate">{tool.title}</h3>
-                                  <p className="text-sm text-gray-500 line-clamp-1 truncate">{tool.desc}</p>
-                                </div>
-                            </div>
-                            <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-primary transition-colors ml-6" />
-                        </div>
-                    )}
-                </a>
-            ))}
-          </div>
+          {loading ? (
+            viewMode === 'grid' ? <GridSkeleton /> : <ListSkeleton />
+          ) : (
+            <div className={cn(
+                "transition-all duration-300 pb-20",
+                viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"
+            )}>
+              {displayedTools.map(tool => (
+                  <a href={tool.href} key={tool.href} className="block group">
+                      {viewMode === 'grid' ? (
+                          <div className="group relative flex flex-col justify-between h-full p-6 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl transition-all duration-300 ease-in-out hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transform hover:-translate-y-1">
+                              <div className="flex-1">
+                                  <div className={cn("inline-flex h-10 w-10 items-center justify-center rounded-lg mb-4 transition-transform duration-300 group-hover:scale-110",
+                                      tool.category === 'AI' && 'bg-cyan-400/10 text-cyan-300 shadow-inner shadow-cyan-500/10',
+                                      tool.category === 'Image' && 'bg-pink-400/10 text-pink-300 shadow-inner shadow-pink-500/10',
+                                      tool.category === 'File' && 'bg-yellow-400/10 text-yellow-300 shadow-inner shadow-yellow-500/10',
+                                      tool.category === 'Other' && 'bg-green-400/10 text-green-300 shadow-inner shadow-green-500/10',
+                                  )}>
+                                      <tool.icon size={22} />
+                                  </div>
+                                  <h3 className="font-semibold text-base text-white">{tool.title}</h3>
+                                  <p className="mt-2 text-gray-400 text-sm line-clamp-2">{tool.desc}</p>
+                              </div>
+                              <div className="mt-4">
+                                  <span className="text-sm font-medium text-primary/80 group-hover:text-primary transition-colors duration-300 flex items-center gap-1">
+                                      Open <ArrowRight size={14} />
+                                  </span>
+                             </div>
+                          </div>
+                      ) : (
+                          <div className="py-4 px-5 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-gray-800/70 hover:border-primary/40 transition-all duration-300 ease-in-out flex justify-between items-center">
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
+                                  <div className={cn("flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg",
+                                      tool.category === 'AI' && 'bg-cyan-400/10 text-cyan-300',
+                                      tool.category === 'Image' && 'bg-pink-400/10 text-pink-300',
+                                      tool.category === 'File' && 'bg-yellow-400/10 text-yellow-300',
+                                      tool.category === 'Other' && 'bg-green-400/10 text-green-300',
+                                  )}>
+                                      <tool.icon size={20} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className="font-medium text-base text-white truncate">{tool.title}</h3>
+                                    <p className="text-sm text-gray-500 line-clamp-1 truncate">{tool.desc}</p>
+                                  </div>
+                              </div>
+                              <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-primary transition-colors ml-6" />
+                          </div>
+                      )}
+                  </a>
+              ))}
+            </div>
+          )}
 
             {showEmptyState && (
                 <div className="text-center py-24">
