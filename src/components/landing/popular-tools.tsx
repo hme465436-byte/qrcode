@@ -19,36 +19,54 @@ const popularTools = [
     icon: MessageSquare,
     title: 'AI Chatbot',
     desc: 'Linguistic synthesis and real-time assistance.',
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-400/10',
+    border: 'group-hover:border-cyan-500/20'
   },
   {
     href: '/ai-image-generator',
     icon: Sparkles,
     title: 'AI Image Gen',
     desc: 'Neural matrix for high-fidelity visual production.',
+    color: 'text-purple-400',
+    bg: 'bg-purple-400/10',
+    border: 'group-hover:border-purple-500/20'
   },
   {
     href: '/ai-resume-builder',
     icon: Contact2,
     title: 'Resume Builder',
     desc: 'Professional identity synthesis and formatting.',
+    color: 'text-emerald-400',
+    bg: 'bg-emerald-400/10',
+    border: 'group-hover:border-emerald-500/20'
   },
   {
     href: '/single',
     icon: QrCode,
     title: 'Single Studio',
     desc: 'Branded QR protocols with AI backgrounds.',
+    color: 'text-amber-400',
+    bg: 'bg-amber-400/10',
+    border: 'group-hover:border-amber-500/20'
   },
   {
     href: '/speech-to-text',
     icon: Mic,
     title: 'Speech to Text',
     desc: 'Hardware-native acoustic transcription.',
+    color: 'text-rose-400',
+    bg: 'bg-rose-400/10',
+    border: 'group-hover:border-rose-500/20'
   },
   {
     href: '/all-units-converter',
     icon: Activity,
     title: 'Unit Converter',
     desc: 'Universal measurement matrix and translation.',
+    color: 'text-blue-400',
+    bg: 'bg-blue-400/10',
+    border: 'group-hover:border-blue-500/20'
   },
 ];
 
@@ -71,11 +89,18 @@ export function PopularTools() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {popularTools.map((tool) => (
             <Link key={tool.href} href={tool.href} className="group block h-full">
-              <div className="flex flex-col justify-between h-full p-8 rounded-[2.5rem] bg-white/[0.01] border border-white/5 transition-all duration-500 hover:bg-white/[0.02] hover:border-primary/20 hover:-translate-y-1 shadow-2xl relative overflow-hidden">
+              <div className={cn(
+                "flex flex-col justify-between h-full p-8 rounded-[2.5rem] bg-white/[0.01] border border-white/5 transition-all duration-500 hover:bg-white/[0.02] hover:-translate-y-1 shadow-2xl relative overflow-hidden",
+                tool.border
+              )}>
                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                   
                   <div className="relative z-10">
-                      <div className="mb-6 w-12 h-12 rounded-xl bg-secondary/50 flex items-center justify-center text-primary/30 group-hover:text-primary group-hover:scale-110 transition-all duration-500 border border-white/5 shadow-inner">
+                      <div className={cn(
+                        "mb-6 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 border border-white/5 shadow-inner group-hover:scale-110",
+                        tool.bg,
+                        tool.color
+                      )}>
                           <tool.icon className="w-5 h-5" />
                       </div>
                       <h3 className="text-xl font-headline font-black text-white mb-3 uppercase tracking-tight leading-none">{tool.title}</h3>
